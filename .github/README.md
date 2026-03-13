@@ -8,7 +8,7 @@ Use the official VS Code documentation as the authoritative reference for Copilo
 
 - Custom instructions: https://code.visualstudio.com/docs/copilot/customization/custom-instructions
 - Prompt files: https://code.visualstudio.com/docs/copilot/customization/prompt-files
-- Custom agents: https://code.visualstudio.com/docs/copilot/customization/copilot-agents
+- Custom agents: https://code.visualstudio.com/docs/copilot/customization/custom-agents
 - Agent Skills: https://code.visualstudio.com/docs/copilot/customization/agent-skills
 - Hooks: https://code.visualstudio.com/docs/copilot/customization/hooks
 - Agent plugins: https://code.visualstudio.com/docs/copilot/customization/agent-plugins
@@ -19,7 +19,6 @@ Use the official VS Code documentation as the authoritative reference for Copilo
 Copilot customizations in this repository must stay aligned with:
 
 - Business logic: `docs/architecture/README.md`
-- Entity semantics: `.serena\memories\*`
 - Codebase reference baseline: `docs/architecture/README.md` and established code patterns
 
 ## Customization Selection Matrix
@@ -44,7 +43,7 @@ Design or refactor Copilot customization assets in this order:
 2. Use the corresponding official VS Code documentation before editing files:
    - instructions → https://code.visualstudio.com/docs/copilot/customization/custom-instructions
    - prompts → https://code.visualstudio.com/docs/copilot/customization/prompt-files
-   - agents → https://code.visualstudio.com/docs/copilot/customization/copilot-agents
+   - agents → https://code.visualstudio.com/docs/copilot/customization/custom-agents
    - skills → https://code.visualstudio.com/docs/copilot/customization/agent-skills
    - hooks → https://code.visualstudio.com/docs/copilot/customization/hooks
    - plugins → https://code.visualstudio.com/docs/copilot/customization/agent-plugins
@@ -109,7 +108,7 @@ Design or refactor Copilot customization assets in this order:
 
 ### `.github/agents/`
 
-- Follow https://code.visualstudio.com/docs/copilot/customization/copilot-agents.
+- Follow https://code.visualstudio.com/docs/copilot/customization/custom-agents.
 - Use least-privilege `tools`.
 - Use agent-scoped `hooks` only when behavior must run exclusively with that agent.
 - Keep repository agents in `.github/agents/`; do not create `.github/agents/plugins/`.
@@ -170,11 +169,10 @@ The repository now follows these consolidation rules:
 
 These documents are stable link targets for prompts and agents that need repository context:
 
-- `docs/domain-glossary.md`
-- `docs/project-structure.md`
-- `docs/persistence-model-overview.md`
 - `docs/architecture/README.md`
-- `.serena\memories\*`
+- `docs/architecture/catalog/business-entities.md`
+- `docs/architecture/glossary/business-terms.md`
+- `docs/architecture/adr/README.md`
 
 ## Change Workflow
 

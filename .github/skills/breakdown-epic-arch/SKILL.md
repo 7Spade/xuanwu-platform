@@ -33,7 +33,7 @@ description: 'Generate high-level technical architecture for an Epic from a PRD 
 ## Guardrails
 - Respect existing architectural boundaries defined in `docs/architecture/`.
 - Do not introduce new cross-boundary dependencies without an explicit justification.
-- Align all entity names with `.serena\memories\*`.
+- Align all entity names with `docs/architecture/glossary/business-terms.md`.
 
 ## Source of Truth
 - Architecture SSOT: `docs/architecture/README.md`
