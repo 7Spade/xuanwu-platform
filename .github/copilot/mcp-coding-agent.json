@@ -1,5 +1,16 @@
 {
   "mcpServers": {
+    "agent-memory": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["--from", "agent-memory-server", "agent-memory", "mcp"],
+      "env": {
+        "REDIS_URL": "$COPILOT_MCP_REDIS_URL",
+        "OPENAI_API_KEY": "$COPILOT_MCP_OPENAI_API_KEY",
+        "DISABLE_AUTH": "true"
+      },
+      "tools": ["*"]
+    },
     "filesystem": {
       "type": "stdio",
       "command": "npx",

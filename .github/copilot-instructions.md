@@ -139,6 +139,7 @@ Several MCP servers require dependencies that are **not pre-installed** on that 
 |------------|-----------|---------------------|
 | `serena` | `uv` / `uvx` | `.github/workflows/copilot-setup-steps.yml` installs `uv` via `astral-sh/setup-uv@v5` |
 | `markitdown` | `uv` / `uvx` | Same — `markitdown-mcp` is a Python tool run via `uvx` |
+| `agent-memory` | `uv` / `uvx` | Same — `agent-memory-server` is a Python package launched via `uvx` |
 
 The `.github/workflows/copilot-setup-steps.yml` workflow runs automatically before the Coding Agent starts work.
 Do **not** remove or rename the `copilot-setup-steps` job inside that file — Copilot only recognises that exact name.
@@ -162,6 +163,11 @@ Copy the ready-to-paste configuration from `.github/copilot/mcp-coding-agent.jso
 > `COPILOT_MCP_FIREBASE_SERVICE_ACCOUNT_KEY_PATH` pointing to a service account key JSON file, or remove that entry from
 > the configuration if Firebase inspection is not needed during agent sessions.
 
+> **agent-memory note:** To use agent-memory in the Coding Agent, add two Copilot environment secrets:
+> `COPILOT_MCP_REDIS_URL` (Redis Cloud TLS URL, e.g. `rediss://default:PASSWORD@host:port`) and
+> `COPILOT_MCP_OPENAI_API_KEY` (OpenAI API key for embeddings/generation).
+> For local VS Code use, the server prompts for these values via input dialogs on first start.
+
 ## Available MCP Tools
 
 The following MCP servers are configured in `.vscode/mcp.json` (local VS Code chat) and the [GitHub Coding Agent settings](https://github.com/7Spade/xuanwu-platform/settings/copilot/coding_agent) (Coding Agent browser tasks).
@@ -169,6 +175,7 @@ Reference them in agent `tools:` lists using `<server-name>/*`.
 
 | Server | Key | Primary Use |
 |--------|-----|-------------|
+| Agent Memory | `agent-memory/*` | Persistent cross-session memory for agents (Redis-backed semantic search) |
 | Firebase | `firebase-mcp-server/*` | Firebase project management, Firestore, Auth, and App Hosting |
 | Everything | `everything/*` | General-purpose MCP protocol testing and utilities |
 | Filesystem | `filesystem/*` | Local file read/write operations |

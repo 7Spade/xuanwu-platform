@@ -1,5 +1,29 @@
 {
+  "inputs": [
+    {
+      "id": "agentMemoryRedisUrl",
+      "type": "promptString",
+      "description": "Redis URL for agent-memory-server (e.g. rediss://default:PASSWORD@host:port)",
+      "password": true
+    },
+    {
+      "id": "agentMemoryOpenaiKey",
+      "type": "promptString",
+      "description": "OpenAI API key for agent-memory-server embeddings and generation",
+      "password": true
+    }
+  ],
   "servers": {
+    "agent-memory": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["--from", "agent-memory-server", "agent-memory", "mcp"],
+      "env": {
+        "REDIS_URL": "${input:agentMemoryRedisUrl}",
+        "OPENAI_API_KEY": "${input:agentMemoryOpenaiKey}",
+        "DISABLE_AUTH": "true"
+      }
+    },
     "filesystem": {
       "type": "stdio",
       "command": "npx",
