@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getFirebaseApp, resolvedFirebaseConfig } from "@/shared-infra/firebase/app";
-import { initAppCheck } from "@/shared-infra/firebase/app-check";
-import { getFirebaseAnalytics } from "@/shared-infra/firebase/analytics";
-import { getFirebaseAuth } from "@/shared-infra/firebase/auth";
-import { getFirestoreDb } from "@/shared-infra/firebase/firestore";
-import { getFirebaseDatabase } from "@/shared-infra/firebase/database";
-import { getFirebaseStorage } from "@/shared-infra/firebase/storage";
+import { getFirebaseApp, resolvedFirebaseConfig } from "@/shared/firebase/app";
+import { initAppCheck } from "@/shared/firebase/app-check";
+import { getFirebaseAnalytics } from "@/shared/firebase/analytics";
+import { getFirebaseAuth } from "@/shared/firebase/auth";
+import { getFirestoreDb } from "@/shared/firebase/firestore";
+import { getFirebaseDatabase } from "@/shared/firebase/database";
+import { getFirebaseStorage } from "@/shared/firebase/storage";
 import {
   collection,
   getDocs,
@@ -15,8 +15,8 @@ import {
   query,
 } from "firebase/firestore";
 import { signInAnonymously } from "firebase/auth";
-import { dbRef, onValue } from "@/shared-infra/firebase/database";
-import { ref as storageRef, listAll } from "@/shared-infra/firebase/storage";
+import { dbRef, onValue } from "@/shared/firebase/database";
+import { ref as storageRef, listAll } from "@/shared/firebase/storage";
 
 // ---------------------------------------------------------------------------
 // Types

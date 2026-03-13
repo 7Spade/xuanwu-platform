@@ -5,8 +5,8 @@
  * or application-layer use cases.
  *
  * @example
- * import { getFirebaseAuth } from "@/shared-infra/firebase";
- * import { getFirestoreDb }  from "@/shared-infra/firebase";
+ * import { getFirebaseAuth } from "@/shared/firebase";
+ * import { getFirestoreDb }  from "@/shared/firebase";
  */
 
 export { getFirebaseApp } from "./app";
