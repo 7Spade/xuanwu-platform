@@ -1,7 +1,7 @@
 ---
 name: 'xuanwu-research'
 description: 'Project-specific Xuanwu research and context agent for codebase discovery, Context7-backed docs lookup, knowledge-graph sync, and session context initialization.'
-tools: ['fetch', 'codebase', 'search', 'context7/*', 'repomix/*', 'markitdown/*', 'filesystem/*', 'serena/*']
+tools: ['fetch', 'codebase', 'search', 'context7/*', 'repomix/*', 'markitdown/*', 'filesystem/*', 'serena/*', 'agent-memory/*']
 handoffs:
   - label: 'Return to orchestrator'
     agent: xuanwu-orchestrator
@@ -34,13 +34,21 @@ This agent is the single Xuanwu entry point for project context, repository rese
 - Repomix-based broad repo inspection when needed.
 - Context initialization and knowledge-graph-aware summaries.
 
-## Serena memory workflow
+## Memory workflow
 
+### Serena project memories (file-backed)
 1. **Load prior context** — run the Serena session-start sequence and inspect `serena-list_memories` before discovery to avoid duplicating known facts.
 2. **Gather new findings** — use `serena/*`, `codebase`, `search`, `context7/*`, or `repomix/*` to collect factual information.
 3. **Persist durable facts** — after discovery, write or update Serena memories with `serena-write_memory` or `serena-edit_memory`.
 4. **Remove stale context** — if prior memories are contradicted by current findings, delete or rename them with Serena memory tools.
 5. **Summarize with citations** — return findings with file/line references so downstream agents can verify them.
+
+### Agent Memory (Redis-backed cross-session semantic search)
+Use `agent-memory/*` to persist and retrieve facts that should survive across multiple separate sessions:
+- Call `agent-memory-search_long_term_memory` at the start of a session to retrieve relevant prior context.
+- Call `agent-memory-create_long_term_memories` to save important findings (architecture decisions, recurring patterns, confirmed conventions) for future sessions.
+- Use `agent-memory-memory_prompt` to enrich a query with prior session context before synthesizing an answer.
+- Prefer `serena/*` for project-scoped notes; prefer `agent-memory/*` for cross-session semantic recall.
 
 ## Boundaries
 - Prefer factual findings over recommendations unless asked.

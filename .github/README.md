@@ -114,6 +114,23 @@ Design or refactor Copilot customization assets in this order:
 - Keep repository agents in `.github/agents/`; do not create `.github/agents/plugins/`.
 - If a bundled plugin is needed, manage it through VS Code plugin settings rather than this folder. For the plugin model, see https://code.visualstudio.com/docs/copilot/customization/agent-plugins and treat marketplace or `chat.plugins.paths` bundles as plugins; treat `.github/agents/*.agent.md` files as repository agents.
 
+**MCP tool assignment guide (add only what the agent genuinely needs):**
+
+| MCP tool | Assign to |
+|----------|-----------|
+| `serena/*` | All repository agents that touch code or docs |
+| `agent-memory/*` | `xuanwu-research` (knowledge gathering), `xuanwu-orchestrator` (session context) |
+| `context7/*` | `xuanwu-research` (version-accurate framework docs) |
+| `repomix/*` | `xuanwu-research`, `xuanwu-docs`, `xuanwu-architect`, `xuanwu-architecture-chief`, `xuanwu-repo-browser` |
+| `markitdown/*` | `xuanwu-research`, `xuanwu-docs` (URL/file → Markdown conversion) |
+| `sequential-thinking/*` | `xuanwu-software-planner`, `xuanwu-sequential-thinking`, `xuanwu-product`, `xuanwu-architect`, `ddd-orchestrator`, `xuanwu-quality` |
+| `software-planning/*` | `xuanwu-orchestrator`, `xuanwu-commander`, `xuanwu-software-planner` |
+| `playwright/*` | `xuanwu-ui`, `xuanwu-test-expert` (browser automation) |
+| `next-devtools/*` | `xuanwu-ui`, `xuanwu-test-expert`, `xuanwu-architect`, `xuanwu-quality` (Next.js diagnostics) |
+| `shadcn/*` | `xuanwu-ui`, `xuanwu-implementer` (component registry) |
+| `firebase-mcp-server/*` | `xuanwu-implementer`, `xuanwu-ops`, `xuanwu-quality`, `ddd-infrastructure` (Firebase inspection) |
+| `filesystem/*` | Agents that need direct file I/O beyond `editFiles` |
+
 ### `.github/hooks/`
 
 - Follow https://code.visualstudio.com/docs/copilot/customization/hooks.

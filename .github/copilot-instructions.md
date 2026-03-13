@@ -56,9 +56,30 @@ If a task touches business rules or domain terminology, read the SSOT documents 
 
 ## Knowledge Persistence
 
+Two complementary memory systems are available. Use them together for best results.
+
+### `store_memory` (VS Code built-in)
 When VS Code Copilot Chat built-in memory is available (`github.copilot.chat.copilotMemory.enabled`), use `store_memory` to persist important project conventions, patterns, and preferences so they carry forward across separate conversations.
 
 - Prioritize persisting: naming conventions, architectural decisions, recurring patterns, and facts that are unlikely to be obvious from a limited code sample.
+
+### `agent-memory/*` (Redis-backed cross-session semantic search)
+Use `agent-memory/*` for durable, searchable cross-session memory stored in Redis:
+
+| Tool | When to use |
+|------|-------------|
+| `agent-memory-search_long_term_memory` | Retrieve prior session facts at the start of a task |
+| `agent-memory-create_long_term_memories` | Persist architecture decisions, confirmed conventions, and important patterns |
+| `agent-memory-memory_prompt` | Enrich a query with prior session context before responding |
+
+**`agent-memory/*` vs `serena/*` memory:**
+
+| Concern | Use |
+|---------|-----|
+| Project-scoped file notes (saved to `.serena/memories/`) | `serena-write_memory` / `serena-list_memories` |
+| Cross-session semantic recall (Redis vector search) | `agent-memory-create_long_term_memories` / `agent-memory-search_long_term_memory` |
+
+The `xuanwu-research` and `xuanwu-orchestrator` agents are the primary users of `agent-memory/*`.
 
 ## Firebase MCP Usage
 
