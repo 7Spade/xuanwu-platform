@@ -8,11 +8,18 @@
  */
 export default async function SlugLayout({
   children,
+  sidebar,
   params,
 }: {
   children: React.ReactNode;
+  sidebar: React.ReactNode;
   params: Promise<{ slug: string }>;
 }) {
   await params;
-  return <>{children}</>;
+  return (
+    <>
+      {sidebar}
+      {children}
+    </>
+  );
 }
