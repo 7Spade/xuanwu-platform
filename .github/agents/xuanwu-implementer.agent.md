@@ -1,7 +1,7 @@
 ---
 name: 'xuanwu-implementer'
 description: 'Project-specific Xuanwu implementation agent for Next.js, React, TypeScript, server/client boundaries, and focused type migrations.'
-tools: ['codebase', 'search', 'editFiles', 'runCommands', 'runTasks', 'runTests', 'findTestFiles', 'shadcn/*', 'filesystem/*', 'serena/*']
+tools: ['codebase', 'search', 'editFiles', 'runCommands', 'runTasks', 'runTests', 'findTestFiles', 'shadcn/*', 'filesystem/*', 'serena/*', 'firebase-mcp-server/*']
 handoffs:
   - label: 'Return to orchestrator'
     agent: xuanwu-orchestrator

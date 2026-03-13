@@ -27,7 +27,7 @@ Use these rules when refactoring existing `src/` code toward the 4-layer DDD mod
 
 - If a file mixes multiple layer responsibilities, split it by ownership before adding more behavior.
 - Keep existing `index.ts` exports stable until downstream callers are migrated.
-- Add new shared abstractions to `src/shared-kernel/` only when they are truly cross-slice or already reused.
+- Keep shared abstractions slice-local; extract to `src/shared/` only when the abstraction is proven to be genuinely reused across multiple slices.
 - Keep slice-specific ports, entities, and DTO mapping close to the owning slice until reuse is proven.
 - Prefer wrapper seams and re-export bridges over temporary direct imports that violate layer direction.
 

@@ -1,7 +1,7 @@
 ---
 name: 'xuanwu-quality'
 description: 'Project-specific Xuanwu quality agent for lint/build/test review, security checks, Firebase-rule scrutiny, performance review, reliability, and post-edit auto-quality enforcement.'
-tools: ['codebase', 'search', 'editFiles', 'runCommands', 'filesystem/*', 'next-devtools/*', 'sequential-thinking/*', 'serena/*']
+tools: ['codebase', 'search', 'editFiles', 'runCommands', 'filesystem/*', 'next-devtools/*', 'sequential-thinking/*', 'serena/*', 'firebase-mcp-server/*']
 handoffs:
   - label: 'Return to orchestrator'
     agent: xuanwu-orchestrator

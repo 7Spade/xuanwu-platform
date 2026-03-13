@@ -61,11 +61,35 @@ When VS Code Copilot Chat built-in memory is available (`github.copilot.chat.cop
 
 - Prioritize persisting: naming conventions, architectural decisions, recurring patterns, and facts that are unlikely to be obvious from a limited code sample.
 
+## Firebase MCP Usage
+
+This project is built on Firebase (`xuanwu-i-00708880-4e2d8`). The `firebase-mcp-server` MCP is pre-configured with the project ID. Use it to inspect and manage Firebase resources directly from agent tasks rather than writing one-off Admin SDK code.
+
+### When to use firebase-mcp-server
+
+| Scenario | Preferred tool |
+|----------|----------------|
+| Inspect Firestore collections/documents | `firebase-mcp-server/*` |
+| Check or validate Security Rules | `firebase-mcp-server/*` |
+| List Auth users or check custom claims | `firebase-mcp-server/*` |
+| Query Storage bucket paths | `firebase-mcp-server/*` |
+| Trigger or inspect Firebase Hosting deploys | `firebase-mcp-server/*` |
+| Server-side mutations in production code | Admin SDK in Server Actions |
+| Real-time subscriptions in the browser | Web SDK in Client Components |
+
+### Tool selection priority for Firebase work
+
+```
+firebase-mcp-server/* (inspect/admin) > Admin SDK (server mutations) > Web SDK (client real-time)
+```
+
+- For **data inspection**: use `firebase-mcp-server/*` — no code change needed.
+- For **server-side writes**: use the Admin SDK in Server Actions or Route Handlers.
+- For **client real-time**: use the Web SDK in Client Components.
+
 ## Serena MCP Usage
 
 If Serena MCP is configured in `.vscode/mcp.json`, it is the preferred code-intelligence tool. Agents must prefer Serena over raw file search whenever working with TypeScript symbols, references, or project memory.
-
-### Code intelligence (read-only)
 
 Prefer these tools over `grep`, `codebase`, or `search` when exploring TypeScript code:
 
@@ -106,6 +130,44 @@ Serena symbol tools > grep/glob > filesystem > raw codebase search
 - Shared multi-agent conventions: `AGENTS.md`
 - File-scoped rules: `.github/instructions/*.instructions.md`
 
+## GitHub Coding Agent Environment Setup
+
+The Coding Agent runs in a fresh Ubuntu environment (GitHub Actions runner) for each session.
+Several MCP servers require dependencies that are **not pre-installed** on that runner:
+
+| MCP server | Dependency | How it is installed |
+|------------|-----------|---------------------|
+| `serena` | `uv` / `uvx` | `.github/workflows/copilot-setup-steps.yml` installs `uv` via `astral-sh/setup-uv@v5` |
+| `markitdown` | `uv` / `uvx` | Same — `markitdown-mcp` is a Python tool run via `uvx` |
+| `agent-memory` | `uv` / `uvx` | Same — `agent-memory-server` is a Python package launched via `uvx` |
+
+The `.github/workflows/copilot-setup-steps.yml` workflow runs automatically before the Coding Agent starts work.
+Do **not** remove or rename the `copilot-setup-steps` job inside that file — Copilot only recognises that exact name.
+
+### Coding Agent MCP configuration
+
+The Coding Agent requires a **different JSON format** from `.vscode/mcp.json`:
+
+| Aspect | VS Code (`.vscode/mcp.json`) | Coding Agent (Settings UI) |
+|--------|------------------------------|----------------------------|
+| Top-level key | `servers` | `mcpServers` |
+| Type value | `"stdio"` | `"stdio"` or `"local"` |
+| `tools` field | Not required | **Required** for every server |
+| `${workspaceFolder}` | Supported | Use `"."` instead |
+| Env var secrets | Any name | Must be prefixed `COPILOT_MCP_` |
+
+Copy the ready-to-paste configuration from `.github/copilot/mcp-coding-agent.json` into
+[Settings → Copilot → Coding agent → MCP configuration](https://github.com/7Spade/xuanwu-platform/settings/copilot/coding_agent).
+
+> **firebase-mcp-server note:** To use firebase-mcp-server in the Coding Agent, add a Copilot environment secret named
+> `COPILOT_MCP_FIREBASE_SERVICE_ACCOUNT_KEY_PATH` pointing to a service account key JSON file, or remove that entry from
+> the configuration if Firebase inspection is not needed during agent sessions.
+
+> **agent-memory note:** To use agent-memory in the Coding Agent, add two Copilot environment secrets:
+> `COPILOT_MCP_REDIS_URL` (Redis Cloud TLS URL, e.g. `rediss://default:PASSWORD@host:port`) and
+> `COPILOT_MCP_OPENAI_API_KEY` (OpenAI API key for embeddings/generation).
+> For local VS Code use, the server prompts for these values via input dialogs on first start.
+
 ## Available MCP Tools
 
 The following MCP servers are configured in `.vscode/mcp.json` (local VS Code chat) and the [GitHub Coding Agent settings](https://github.com/7Spade/xuanwu-platform/settings/copilot/coding_agent) (Coding Agent browser tasks).
@@ -113,6 +175,7 @@ Reference them in agent `tools:` lists using `<server-name>/*`.
 
 | Server | Key | Primary Use |
 |--------|-----|-------------|
+| Agent Memory | `agent-memory/*` | Persistent cross-session memory for agents (Redis-backed semantic search) |
 | Firebase | `firebase-mcp-server/*` | Firebase project management, Firestore, Auth, and App Hosting |
 | Everything | `everything/*` | General-purpose MCP protocol testing and utilities |
 | Filesystem | `filesystem/*` | Local file read/write operations |
