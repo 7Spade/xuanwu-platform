@@ -31,8 +31,10 @@ yarn-error.log*
 .env*.local
 .env
 
-# vercel
-.vercel
+# screenshots (playwright output)
+*.png
+*.jpeg
+*.jpg
 
 # typescript
 *.tsbuildinfo
