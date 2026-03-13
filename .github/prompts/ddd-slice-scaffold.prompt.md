@@ -12,7 +12,7 @@ This prompt drives the full DDD cycle for a new bounded context from scratch.
 ## What is scaffolded
 
 ```
-src/modules/{slice-name}/
+src/modules/{module-name}.module/
 ├── index.ts                         ← Public API (Presentation exports only)
 │
 ├── domain.{context}/                ← Step 1: Domain Layer
@@ -40,7 +40,7 @@ src/modules/{slice-name}/
 
 ## Workflow
 
-1. Read domain glossary from `docs/architecture/models/domain-model.md`.
+1. Read domain glossary from `docs/architecture/catalog/business-entities.md` and `docs/architecture/glossary/business-terms.md`.
 2. **Domain Layer** (ddd-domain-modeler): Entity + VOs + Events.
 3. **Application Layer** (ddd-application-layer): Use cases + Server Actions + Queries.
 4. **Infrastructure Layer** (ddd-infrastructure): Repository + Outbox + EventBus adapters.
@@ -54,7 +54,7 @@ src/modules/{slice-name}/
 - Application layer MUST call only port interfaces.
 - Infrastructure MUST implement port interfaces.
 - `index.ts` MUST export only Presentation-safe APIs.
-- Follow naming from `docs/architecture/README.md` and `.serena\memories\*`.
+- Follow naming from `docs/architecture/README.md` and Serena project memories.
 
 ## Output Contract
 
@@ -64,6 +64,6 @@ src/modules/{slice-name}/
 - Integration tests for application use cases with mocked ports.
 - Updated `src/modules/README.md` slice table.
 
-Slice name: ${input:sliceName:e.g. reporting.module}
+Module name: ${input:moduleName:e.g. reporting.module}
 Main aggregate: ${input:aggregate:e.g. ReportEntity}
 Primary use cases: ${input:usecases:e.g. CreateReport, ApproveReport, ArchiveReport}

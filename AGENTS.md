@@ -12,7 +12,7 @@ Conventions shared across all GitHub Copilot agents in this repository.
 ## Architecture Constraints
 
 - Respect the 4-layer DDD dependency direction: Presentation → Application → Domain ← Infrastructure.
-- Port interfaces live in the owning slice's `domain.*/_ports.ts`, not in a shared kernel.
+- Port interfaces live in the owning module's `domain.*/_ports.ts`, not in a shared kernel.
 - Infrastructure adapters live in `src/modules/{module}/infra.{adapter}/`.
 - Firebase SDK calls must stay inside `src/modules/{module}/infra.*` or `src/infrastructure/firebase/`.
 

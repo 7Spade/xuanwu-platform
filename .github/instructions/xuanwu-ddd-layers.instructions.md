@@ -25,7 +25,7 @@ All code in `src/` MUST respect the layer dependency direction defined below.
 ┌──────────────┴───────────────┐
 │ Domain Layer                 │  src/**/domain.*/
 │ (Entities / ValueObjects /   │  (value objects, ports, and events
-│  Domain Services / Rules)    │   live inside the owning slice)
+│  Domain Services / Rules)    │   live inside the owning module)
 └──────────────▲───────────────┘
                │ depends on
 ┌──────────────┴───────────────┐
@@ -107,6 +107,6 @@ UI Action
 
 ## References
 - Architecture SSOT: `docs/architecture/README.md`
-- Domain model: `docs/architecture/models/domain-model.md`
-- Application services: `docs/architecture/blueprints/application-service-spec.md`
-- Infrastructure spec: `docs/architecture/guidelines/infrastructure-spec.md`
+- Business entities: `docs/architecture/catalog/business-entities.md`
+- Event catalog: `docs/architecture/catalog/event-catalog.md`
+- ADR index: `docs/architecture/adr/README.md`

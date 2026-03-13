@@ -13,17 +13,14 @@ Follow a clear and modular project structure.
 Use the following structure when possible:
 
 - src/ — application source code
-- components/ — reusable UI components
-- modules/ — Domain Modules (Bounded Contexts, Modular DDD)
-- services/ — business logic or API services
-- lib/ — shared utilities
-- tests/ — unit and integration tests
+- src/modules/ — Domain Modules (Bounded Contexts, Modular DDD — lives inside `src/`)
+- src/shared/ — shared utilities and infrastructure helpers
 - docs/ — documentation
 - scripts/ — build or automation scripts
 
 ## Module organization
 
-Each feature module should contain:
+Each Domain Module should contain:
 
 - index file (public exports)
 - implementation files
@@ -32,10 +29,12 @@ Each feature module should contain:
 
 Example
 
-feature/
-  feature.service.ts
-  feature.types.ts
-  feature.test.ts
+src/modules/<name>.module/
+  index.ts
+  domain.<aggregate>/_entity.ts
+  core/_use-cases.ts
+  infra.<adapter>/_repository.ts
+  _components/<ComponentName>.tsx
 
 ## Rules
 

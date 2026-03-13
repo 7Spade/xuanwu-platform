@@ -32,13 +32,13 @@ This prompt drives Step 3 of the DDD cycle: implement port interfaces with concr
 - MUST use transactional outbox pattern [S1] for aggregate saves.
 - NO business logic inside adapters — only data mapping and I/O.
 - Firebase SDK calls MUST stay inside `src/modules/{module}/infra.*`.
-- Feature slice `domain.*` and `core/` folders must never import from `firebase`.
+- Domain module `domain.*` and `core/` folders must never import from `firebase`.
 
 ## Output Contract
 
-- Adapter class in `src/modules/infra.*/` or `src/modules/{module}/infra.outbox/`.
+- Adapter class in `src/modules/{module}/infra.*/` or `src/modules/{module}/infra.outbox/`.
 - Port interface in `src/modules/{module}/domain.*/_ports.ts` (if new).
 - Adapter tests using Firestore emulator or mocks.
 
-Bounded context / slice: ${input:context:e.g. workspace.module}
+Bounded context / module: ${input:context:e.g. workspace.module}
 Adapter type and name: ${input:adapter:e.g. FirestoreTaskRepository}

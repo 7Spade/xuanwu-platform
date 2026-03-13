@@ -59,7 +59,7 @@ It covers all four layers and the agent/prompt kit that drives the DDD developme
 | 3 | Infrastructure | `ddd-infrastructure` | `/ddd-infrastructure-adapter` |
 | 4 | Presentation | `xuanwu-ui` / `xuanwu-implementer` | `/xuanwu-ui` / `/xuanwu-implementer` |
 
-Full cycle shortcut: `/ddd-module-scaffold` via `ddd-orchestrator`.
+Full cycle shortcut: `/ddd-slice-scaffold` via `ddd-orchestrator`.
 Audit existing code: `/ddd-layer-audit` via `ddd-orchestrator`.
 
 ## Domain Layer Patterns
@@ -136,7 +136,7 @@ export async function confirmOrderUseCase(
 
 ### Server Action (Presentation → Application bridge)
 ```typescript
-// src/modules/{module}/_actions.ts
+// src/modules/{module}/core/_actions.ts
 'use server'
 export async function confirmOrderAction(orderId: string): Promise<ActionResult> {
   const session = await getServerSession()
@@ -204,12 +204,12 @@ export type { OrderDTO, OrderStatus } from './_contract'
 | `/ddd-application-service` | Design/implement use cases and application services |
 | `/ddd-infrastructure-adapter` | Implement repository or outbox adapters |
 | `/ddd-layer-audit` | Audit layer compliance and D24 violations |
-| `/ddd-module-scaffold` | Scaffold a complete new DDD module (all 4 layers) |
+| `/ddd-slice-scaffold` | Scaffold a complete new DDD module (all 4 layers) |
 
 ## Related Repository Files
 
 - DDD layer rules: `.github/instructions/xuanwu-ddd-layers.instructions.md`
 - Architecture SSOT: `docs/architecture/README.md`
-- Domain model: `docs/architecture/models/domain-model.md`
-- Application service spec: `docs/architecture/blueprints/application-service-spec.md`
+- Business entities: `docs/architecture/catalog/business-entities.md`
+- Event catalog: `docs/architecture/catalog/event-catalog.md`
 - Domain modules: `src/modules/README.md`

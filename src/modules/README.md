@@ -1,6 +1,6 @@
-# modules/
+# src/modules/
 
-`modules/` は **Domain Modules（領域模組）** の集合です。
+`src/modules/` は **Domain Modules（領域模組）** の集合です。
 
 各モジュールは独立した **Bounded Context（境界付けられたコンテキスト）** であり、
 4層の Modular DDD アーキテクチャに従います。
@@ -10,7 +10,7 @@
 ## Module とは / What is a Module?
 
 ```
-modules/
+src/modules/
 └── <module-name>.module/          # Bounded Context の単位
     ├── index.ts                   # 🚪 Public API（バレル export のみ）
     │

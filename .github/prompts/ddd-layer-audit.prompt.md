@@ -24,7 +24,7 @@ This prompt audits compliance with the 4-layer DDD dependency direction rule.
 
 ### D24 Firebase Violations
 - `import { Firestore } from 'firebase/firestore'` in domain module files.
-- Direct Firebase SDK usage outside `src/modules/infra.*`.
+- Direct Firebase SDK usage outside `src/modules/<module>/infra.*` or `src/infrastructure/firebase/`.
 
 ### Port Contract Gaps
 - Application calling infrastructure adapters by concrete class name (not via port interface).

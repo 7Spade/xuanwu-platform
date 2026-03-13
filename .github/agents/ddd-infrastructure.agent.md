@@ -25,7 +25,7 @@ This agent owns concrete adapters and compatibility seams for external systems.
 1. Implement or reuse a port interface before introducing a concrete adapter dependency.
 2. Keep adapter code focused on mapping, I/O, transactions, retries, and transport concerns.
 3. Preserve existing public APIs when possible with thin re-export or wrapper seams.
-4. Place adapters in the owning slice under `src/modules/{module}/infra.{adapter}/`.
+4. Place adapters in the owning module under `src/modules/{module}/infra.{adapter}/`.
 5. Add adapter tests with mocks or emulators when the change affects persistence semantics.
 
 ## Boundaries

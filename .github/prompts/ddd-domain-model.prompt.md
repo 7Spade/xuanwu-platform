@@ -2,7 +2,7 @@
 name: ddd-domain-model
 description: 'Design or implement Domain Layer elements: Entities, Value Objects, Aggregates, Domain Services, and invariant rules for a Xuanwu bounded context.'
 agent: 'ddd-domain-modeler'
-argument-hint: 'Bounded context and entity to model, e.g.: workspace.slice TaskEntity | skill-xp.slice SkillLevelVO'
+argument-hint: 'Bounded context and entity to model, e.g.: workspace.module TaskEntity | skill-xp.module SkillLevelVO'
 ---
 
 # DDD Domain Model Workflow
@@ -18,7 +18,7 @@ This prompt drives Step 1 of the DDD cycle: design pure domain objects with no I
 
 ## Workflow
 
-1. Read the domain glossary from `docs/architecture/models/domain-model.md`.
+1. Read the domain glossary from `docs/architecture/catalog/business-entities.md` and `docs/architecture/glossary/business-terms.md`.
 2. Identify the Aggregate Root and its consistency boundary.
 3. List Value Objects that the entity owns.
 4. Define domain events emitted by this entity.
@@ -39,5 +39,5 @@ This prompt drives Step 1 of the DDD cycle: design pure domain objects with no I
 - `_events.ts` — Domain events emitted.
 - Unit tests alongside each domain object.
 
-Context / slice: ${input:context:e.g. workspace.slice}
+Context / module: ${input:context:e.g. workspace.module}
 Entity or VO to design: ${input:entity:e.g. TaskEntity}

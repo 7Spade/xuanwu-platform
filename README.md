@@ -37,7 +37,7 @@ Configure the following MCP servers at **[Settings → Copilot → Coding Agent]
 | ⭐⭐⭐ | **Repomix** | `npx repomix --mcp` | Pack the full repository into an AI-readable snapshot; enables agents to understand the entire DDD layer structure at once |
 | ⭐⭐⭐ | **Context7** | `npx @upstash/context7-mcp` | Retrieve version-accurate Next.js 15, React 19, and Tailwind v4 documentation on demand |
 | ⭐⭐⭐ | **Sequential Thinking** | `npx @modelcontextprotocol/server-sequential-thinking` | Multi-step structured reasoning — essential for DDD layer decomposition, domain modeling, and debugging complex route boundaries |
-| ⭐⭐⭐ | **Software Planning** | `npx @joshuarileydev/software-planning-tool` | Implementation plan and todo tracking across DDD slices and parallel route features |
+| ⭐⭐⭐ | **Software Planning** | `npx @joshuarileydev/software-planning-tool` | Implementation plan and todo tracking across DDD modules and parallel route features |
 | ⭐⭐⭐ | **Serena** | `uvx --from git+https://github.com/oraios/serena serena start-mcp-server --context ide` | Deep TypeScript symbol navigation, cross-file rename, and persistent per-project memory across sessions |
 | ⭐⭐⭐ | **Firebase** | `npx firebase-mcp-server` | Firestore, Firebase Auth, and Firebase App Hosting management — core to this project's infrastructure |
 
@@ -139,7 +139,7 @@ This repository ships a complete set of GitHub Copilot customizations under `.gi
 | `/xuanwu-product` | Product feature definition |
 | `/xuanwu-architecture-realign` | Align architecture docs with code reality |
 | `/xuanwu-ssot-sync` | Sync docs with single source of truth |
-| `/ddd-slice-scaffold` | Scaffold a new DDD slice (all 4 layers) |
+| `/ddd-slice-scaffold` | Scaffold a new DDD module (all 4 layers) |
 | `/ddd-domain-model` | Design or refine a domain model |
 | `/ddd-application-service` | Create or update an application service |
 | `/ddd-infrastructure-adapter` | Create a repository adapter or external service |

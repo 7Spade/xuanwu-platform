@@ -182,7 +182,7 @@ They live in the module's presentation layer (`src/modules/<module>/presentation
 
 ---
 
-## Issue 10：`.github/instructions/xuanwu-application-architecture.instructions.md` — 仍使用 Feature Slice 術語
+## Issue 10：`.github/instructions/xuanwu-application-architecture.instructions.md` — 仍使用 Feature Slice 術語 ✅ FIXED
 
 **檔案：** `.github/instructions/xuanwu-application-architecture.instructions.md`  
 **嚴重程度：** 中
@@ -197,9 +197,9 @@ They live in the module's presentation layer (`src/modules/<module>/presentation
 | 第 9 行（章節標題） | `## Feature Slice Architecture` | `## Domain Module Architecture` |
 | 第 11–14 行（規則） | `feature queries.ts / feature adapters / cross-feature imports / feature READMEs` | `module queries.ts / module adapters / cross-module imports / module READMEs` |
 
-### 建議修正
+### 修正
 
-更新 `xuanwu-application-architecture.instructions.md` 中的所有 "feature" / "slice" 術語為 "module" / "Domain Module"。
+已更新 `xuanwu-application-architecture.instructions.md` 中的所有 "feature" / "slice" 術語為 "module" / "Domain Module"。
 
 ---
 
@@ -221,6 +221,79 @@ They live in the module's presentation layer (`src/modules/<module>/presentation
 
 ---
 
+## Issue 12：多個 DDD 相關檔案 — 引用不存在的 `docs/architecture/` 子目錄 ✅ FIXED
+
+**檔案：** `.github/instructions/xuanwu-ddd-layers.instructions.md`（第 110–112 行）、`.github/skills/ddd-architecture/SKILL.md`（第 213–214 行）、`.github/prompts/ddd-domain-model.prompt.md`（第 21 行）、`.github/prompts/ddd-slice-scaffold.prompt.md`（第 43 行）  
+**嚴重程度：** 中
+
+### 問題描述
+
+多個 DDD 指令/技能/提示檔案引用了不存在的 `docs/architecture/` 子目錄：
+
+| 引用路徑 | 實際存在？ |
+|---------|----------|
+| `docs/architecture/models/domain-model.md` | ❌ 不存在 |
+| `docs/architecture/blueprints/application-service-spec.md` | ❌ 不存在 |
+| `docs/architecture/guidelines/infrastructure-spec.md` | ❌ 不存在 |
+
+`docs/architecture/` 實際只有：`README.md`、`adr/`、`catalog/`、`diagrams/`、`glossary/`
+
+### 修正
+
+已將所有幻象路徑替換為實際存在的文件路徑：
+- `docs/architecture/models/domain-model.md` → `docs/architecture/catalog/business-entities.md` + `docs/architecture/glossary/business-terms.md`
+- `docs/architecture/blueprints/application-service-spec.md` → `docs/architecture/README.md`
+- `docs/architecture/guidelines/infrastructure-spec.md` → `docs/architecture/README.md`
+
+---
+
+## Issue 13：`.github/prompts/ddd-slice-scaffold.prompt.md` — `.serena\memories\*` 幻象本地路徑
+
+**檔案：** `.github/prompts/ddd-slice-scaffold.prompt.md`（第 57 行）  
+**嚴重程度：** 低
+
+### 問題描述
+
+Guardrails 章節引用 `.serena\memories\*`（Windows 反斜線格式路徑），但 `.serena/` 目錄**不存在**於本地儲存庫中。Serena 的 memories 是透過 MCP 伺服器管理的，不是本地目錄。
+
+### 修正
+
+已將 `.serena\memories\*` 替換為 `Serena project memories`（描述性文字，不引用本地路徑）。
+
+---
+
+## Issue 14：多個 prompt/agent/instruction 檔案 — 仍使用 "slice" 術語或路徑慣例不符 ✅ FIXED
+
+**嚴重程度：** 低至中
+
+### 問題描述
+
+以下檔案在 PR #10 重命名後仍有殘留 "slice" 術語或路徑不符合 `<name>.module/` 慣例：
+
+| 檔案 | 問題 |
+|------|------|
+| `.github/prompts/xuanwu-refactor.prompt.md` | argument-hint 範例使用 `src/modules/auth/service.ts`（缺少 `.module` 後綴） |
+| `.github/prompts/xuanwu-architect.prompt.md` | description 使用 "vertical slices"；modes 使用 "slice boundaries"、"Vertical slice design"；argument-hint 使用 "reporting slice" |
+| `.github/prompts/xuanwu-code-review.prompt.md` | argument-hint 使用 `review src/modules/auth`（缺少 `.module` 後綴） |
+| `.github/prompts/ddd-infrastructure-adapter.prompt.md` | "Feature slice domain.*"；輸出路徑 `src/modules/infra.*/`（缺少模組段） |
+| `.github/prompts/ddd-layer-audit.prompt.md` | D24 規則中 `src/modules/infra.*` 路徑無效（缺少模組段） |
+| `.github/prompts/ddd-domain-model.prompt.md` | argument-hint 和 input 使用 `.slice` 後綴 |
+| `.github/prompts/ddd-slice-scaffold.prompt.md` | scaffold 路徑使用 `{slice-name}` 而非 `{module-name}.module` |
+| `AGENTS.md` | "owning slice" → "owning module" |
+| `.github/instructions/xuanwu-ddd-layers.instructions.md` | "live inside the owning slice" |
+| `.github/instructions/xuanwu-repo-structure.instructions.md` | "modules/" 誤導為根層目錄；範例使用 `feature/` 路徑 |
+| `.github/agents/ddd-infrastructure.agent.md` | "owning slice" |
+| `.github/skills/ddd-architecture/SKILL.md` | 引用不存在的 `/ddd-module-scaffold` 提示；Server Action 路徑錯誤（`_actions.ts` 而非 `core/_actions.ts`） |
+| `.github/skills/x-framework-guardian/SKILL.md` | "切片" → "模組"；"cross-slice" → "cross-module" |
+| `README.md` | "DDD slices" 術語 |
+| `src/modules/README.md` | 路徑描述為 `modules/` 而非 `src/modules/` |
+
+### 修正
+
+已批次修正所有上述檔案中的術語和路徑。
+
+---
+
 ## 摘要表 / Summary
 
 | # | 嚴重程度 | 受影響檔案 | 問題類型 | 狀態 |
@@ -234,5 +307,8 @@ They live in the module's presentation layer (`src/modules/<module>/presentation
 | 7 | 低 | `src/design-system/tokens/README.md`、`src/infrastructure/firebase/README.md` | 文件範例描述尚未實現的組件如同現有功能 | ✅ Fixed |
 | 8 | 中 | `docs/architecture/README.md` | VIs 路徑錯誤（`presentation/` → `_components/`） | ✅ Fixed |
 | 9 | 高 | `.github/agents/xuanwu-ui.agent.md` | i18n 指示引用不存在的 JSON 檔案路徑 | ✅ Fixed |
-| 10 | 中 | `.github/instructions/xuanwu-application-architecture.instructions.md` | 仍使用 Feature Slice 術語而非 Domain Module | ⚠️ Open |
+| 10 | 中 | `.github/instructions/xuanwu-application-architecture.instructions.md` | 仍使用 Feature Slice 術語而非 Domain Module | ✅ Fixed |
 | 11 | 低 | `.github/copilot-instructions.md` | 仍使用 "slice boundaries" 術語 | ✅ Fixed |
+| 12 | 中 | 多個 DDD 指令/技能/提示檔案 | 引用不存在的 `docs/architecture/models/`、`blueprints/`、`guidelines/` | ✅ Fixed |
+| 13 | 低 | `.github/prompts/ddd-slice-scaffold.prompt.md` | `.serena\memories\*` 幻象本地路徑 | ✅ Fixed |
+| 14 | 低至中 | 14 個 prompt/agent/instruction/skill 檔案 | 殘留 "slice" 術語或路徑慣例不符 `<name>.module/` | ✅ Fixed |
