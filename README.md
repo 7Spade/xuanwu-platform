@@ -38,7 +38,7 @@ Configure the following MCP servers at **[Settings → Copilot → Coding Agent]
 | ⭐⭐⭐ | **Context7** | `npx @upstash/context7-mcp` | Retrieve version-accurate Next.js 15, React 19, and Tailwind v4 documentation on demand |
 | ⭐⭐⭐ | **Sequential Thinking** | `npx @modelcontextprotocol/server-sequential-thinking` | Multi-step structured reasoning — essential for DDD layer decomposition, domain modeling, and debugging complex route boundaries |
 | ⭐⭐⭐ | **Software Planning** | `npx @joshuarileydev/software-planning-tool` | Implementation plan and todo tracking across DDD slices and parallel route features |
-| ⭐⭐⭐ | **Serena** | `uvx serena` | Deep TypeScript symbol navigation, cross-file rename, and persistent per-project memory across sessions |
+| ⭐⭐⭐ | **Serena** | `uvx --from git+https://github.com/oraios/serena serena start-mcp-server --context ide` | Deep TypeScript symbol navigation, cross-file rename, and persistent per-project memory across sessions |
 | ⭐⭐⭐ | **Firebase** | `npx firebase-mcp-server` | Firestore, Firebase Auth, and Firebase App Hosting management — core to this project's infrastructure |
 
 ### 🔧 Recommended MCP Servers
@@ -67,7 +67,7 @@ Configure the following MCP servers at **[Settings → Copilot → Coding Agent]
     "shadcn":              { "type": "stdio", "command": "npx", "args": ["-y", "shadcn@latest", "mcp"], "tools": ["*"] },
     "markitdown":          { "type": "stdio", "command": "uvx", "args": ["markitdown-mcp"], "tools": ["*"] },
     "everything":          { "type": "stdio", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-everything"], "tools": ["*"] },
-    "serena":              { "type": "stdio", "command": "uvx", "args": ["serena"], "tools": ["*"] },
+    "serena":              { "type": "stdio", "command": "uvx", "args": ["--from", "git+https://github.com/oraios/serena", "serena", "start-mcp-server", "--context", "ide", "--project", "."], "tools": ["*"] },
     "firebase-mcp-server": { "type": "stdio", "command": "npx", "args": ["-y", "firebase-mcp-server"], "env": { "FIREBASE_PROJECT_ID": "xuanwu-i-00708880-4e2d8", "SERVICE_ACCOUNT_KEY_PATH": "$COPILOT_MCP_FIREBASE_SERVICE_ACCOUNT_KEY_PATH" }, "tools": ["*"] }
   }
 }

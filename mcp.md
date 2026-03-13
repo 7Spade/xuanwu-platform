@@ -88,7 +88,16 @@
     "serena": {
       "type": "stdio",
       "command": "uvx",
-      "args": ["serena"],
+      "args": [
+        "--from",
+        "git+https://github.com/oraios/serena",
+        "serena",
+        "start-mcp-server",
+        "--context",
+        "ide",
+        "--project",
+        "."
+      ],
       "tools": ["*"]
     },
     "firebase-mcp-server": {
@@ -107,7 +116,7 @@
 
 > **注意事項：**
 > - `filesystem` 伺服器：Coding Agent 使用 `"."` （執行目錄即 repo 根目錄）；VS Code 本機使用 `"${workspaceFolder}"` （VS Code 變數替換）。兩者行為相同，格式不同。
-> - `serena` 需要 `uv` / `uvx` 工具。若 Coding Agent 環境缺少，請在 `.github/workflows/copilot-setup-steps.yml` 加入安裝步驟。
+> - `serena` 需要 `uv` / `uvx` 工具（已由 `copilot-setup-steps.yml` 安裝）。使用 `uvx --from git+https://github.com/oraios/serena` 從 GitHub 安裝最新版；`--context ide` 針對 IDE 環境最佳化工具集；`--project .` 指定專案根目錄，啟用單一專案模式（自動停用不必要的 activate_project 工具）。
 > - `firebase-mcp-server` 已綁定至 Firebase 專案 `xuanwu-i-00708880-4e2d8`。Admin SDK 功能（Firestore write、Auth 管理等）需要 Service Account：在 GitHub 或 Copilot 環境的 Secrets 設定 `COPILOT_MCP_FIREBASE_SERVICE_ACCOUNT_KEY`（JSON 字串）。唯讀 / 結構查詢只需 `FIREBASE_PROJECT_ID`，本機開發亦可透過 `firebase login` 取得 ADC 憑證。
 > - `agent-memory` 需要 `uv` / `uvx`（已由 `copilot-setup-steps.yml` 安裝）。需設定兩個 Copilot 環境 Secrets：`COPILOT_MCP_REDIS_URL`（Redis TLS URL，格式：`rediss://default:PASSWORD@host:port`）及 `COPILOT_MCP_OPENAI_API_KEY`（OpenAI API key，用於 embedding 與 generation）。本機 VS Code 使用時，伺服器啟動時會透過 input 對話框提示輸入。
 > - `agent-memory` 的 `DISABLE_AUTH: "true"`：**此設定僅在 stdio 模式下安全。** stdio 模式下伺服器透過 stdin/stdout 與 MCP host（VS Code / Copilot Coding Agent）通訊，不對外暴露任何網路端口，因此 OAuth2/JWT 驗證不適用且無需啟用。存取控制完全由 MCP host 本身（VS Code 或 GitHub Copilot）管理。若改用 SSE/HTTP 模式部署至公開網路，**必須移除 `DISABLE_AUTH` 並設定完整 OAuth2 認證**（參考 `agent-memory-server` [Authentication 文件](https://redis.github.io/agent-memory-server/authentication/)）。
