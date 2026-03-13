@@ -1,0 +1,260 @@
+sequenceDiagram
+    autonumber
+
+    actor User as User / 使用者
+    actor OrgOwner as Organization Owner / 組織擁有者
+    actor Maintainer as Maintainer / 維護者
+    actor Assignee as Task Assignee / 任務指派人
+    actor Collaborator as Collaborator / 協作者
+
+    participant Org as Organization / 組織
+    participant NS as Namespace / 命名空間
+    participant Team as Team / 團隊
+    participant WFSched as Workforce Scheduling / 人力排程
+    participant Settlement as Settlement Layer / 結算層
+    participant AR as AR / Accounts Receivable / 應收帳款
+    participant AP as AP / Accounts Payable / 應付帳款
+
+    participant WS as Workspace / 工作空間
+    participant WBS as WBS Module / WBS 模組
+    participant Issue as Issue Module / 議題模組
+    participant Files as File Module / 檔案模組
+    participant Intel as Intelligence Layer / 智能層
+    participant DocParse as Document Parsing / 文件解析
+    participant ObjExtract as Object Extraction / 物件提取
+    participant QA as QA Review / 質量檢查
+    participant Acceptance as Acceptance / 驗收
+
+    participant CR as Change Request / 變更請求
+    participant Review as Reviewer / Domain Owner / 審查者 / 領域擁有者
+    participant Rules as Baseline Governance Rules / 基線治理規則
+    participant Queue as Merge Queue / 合併佇列
+    participant Main as Protected Baseline / 受保護基線
+
+    participant EventBus as Event Bus / 事件匯流排
+    participant Notify as Notification Engine / 通知引擎
+    participant Inbox as Inbox / Email / Mobile / 站內信 / 電子郵件 / 行動推播
+    participant Social as Star / Watch / Follow Graph / 收藏 / 關注 / 追蹤圖譜
+    participant Feed as Dashboard / Discovery / 儀表板 / 探索
+    participant Work as Work Items / Milestones / Dependencies / 工作項目 / 里程碑 / 依賴
+    participant Apps as Other Workspace Apps / 其他工作空間能力
+    participant Forks as Fork Network / 分支網路
+    participant Sec as Integrity and Policy Automation / 完整性與政策自動化
+    participant Achv as Achievement Rules / 成就規則
+    participant Profile as User Profile / 使用者檔案
+
+    rect rgb(240, 248, 255)
+        Note over User,Team: A. SaaS Layer — Organization and Namespace Provisioning\nSaaS 層 — 組織與命名空間建立
+
+        alt user creates organization\n使用者建立組織
+            User->>Org: create organization\n建立組織
+            Org->>NS: register organization namespace\n註冊組織命名空間
+            Org-->>User: user becomes organization owner\n使用者成為組織擁有者
+            OrgOwner->>Team: create teams and assign members\n建立團隊並配置成員
+            OrgOwner->>WS: create workspace under organization\n在組織下建立工作空間
+            NS->>WS: bind workspace under organization namespace\n將工作空間綁定到組織命名空間
+            OrgOwner->>WS: assign maintainer(s) to workspace\n指派維護者到工作空間
+            WS-->>Maintainer: maintainer role granted\n維護者角色授權完成
+            OrgOwner->>WS: invite collaborators or teams\n邀請協作者或團隊
+            WS-->>Collaborator: send collaboration invitation\n發送協作邀請
+            Collaborator->>WS: accept invitation\n接受邀請
+            WS->>Team: bind collaborator to org role or team scope\n綁定協作者到組織角色或團隊範圍
+        else user creates personal workspace\n使用者建立個人工作空間
+            User->>NS: register personal namespace\n註冊個人命名空間
+            User->>WS: create personal workspace\n建立個人工作空間
+            NS->>WS: bind workspace under personal namespace\n將工作空間綁定到個人命名空間
+            User->>WS: assign maintainer(s) to workspace\n指派維護者到工作空間
+            WS-->>Maintainer: maintainer role granted\n維護者角色授權完成
+            User->>WS: invite individual collaborators\n邀請個人協作者
+            WS-->>Collaborator: send collaboration invitation\n發送協作邀請
+            Collaborator->>WS: accept invitation\n接受邀請
+            WS->>WS: apply direct collaborator permissions\n套用直接協作者權限
+        end
+    end
+
+    rect rgb(255, 250, 235)
+        Note over WS,WFSched: B. SaaS ↔ Workspace Boundary — Workforce Scheduling\nSaaS ↔ Workspace 交界 — 人力排程
+
+        WS->>WBS: define tasks requiring workforce assignment\n定義需要人力指派的任務
+        WBS->>WFSched: submit task requirements (skill, time window, effort)\n提交任務需求（技能、時間窗口、工時）
+        WFSched->>Org: request available member assignment from organization\n向組織請求可用成員指派
+        Org->>Team: query team capacity and availability\n查詢團隊容量與可用性
+        Team-->>WFSched: return available members and time slots\n回傳可用成員與時間窗口
+        OrgOwner->>WFSched: approve or adjust assignment schedule\n核准或調整指派排程
+        WFSched->>WBS: assign member and scheduled time to task\n將成員與排程時間指派到任務
+        WBS-->>Assignee: task assignment notification with scheduled time\n發送含排程時間的任務指派通知
+        WFSched->>EventBus: publish workforce assignment events\n發布人力指派事件
+    end
+
+    rect rgb(245, 255, 245)
+        Note over Maintainer,Acceptance: C. Workspace Layer — WBS Task Lifecycle State Machine\nWorkspace 層 — WBS 任務生命週期狀態機
+
+        WBS->>WBS: task state → Pending\n任務狀態 → 待處理
+
+        Assignee->>WBS: start task on scheduled time\n在排程時間開始任務
+        WBS->>WBS: task state → In Progress\n任務狀態 → 進行中
+
+        Assignee->>WS: submit WBS task work snapshot\n提交 WBS 任務工作快照
+        WS->>WBS: route WBS change set\n路由 WBS 變更集
+        WBS->>CR: create or synchronize change request\n建立或同步變更請求
+        CR->>Review: request review\n請求審查
+
+        alt changes requested\n要求修改
+            Review-->>CR: request changes\n要求修改
+            CR-->>Assignee: block and return feedback\n阻擋並回饋
+            Assignee->>Issue: open issue (e.g. #1 #2 #3)\n開立議題（例如 #1 #2 #3）
+            Issue-->>Assignee: return issueId\n回傳議題編號
+            Issue->>WBS: link issueId to blocked task\n將議題關聯到阻擋中任務
+            Assignee->>Issue: resolve issue\n解決議題
+            Issue->>WBS: unblock linked task\n解除任務阻擋
+            Assignee->>WS: publish updated task snapshot\n發布更新後任務快照
+            WS->>WBS: route updated WBS change set\n路由更新後 WBS 變更集
+            WBS->>CR: synchronize change request\n同步變更請求
+            Review-->>CR: approve latest revision\n核准最新版本
+        else approved directly\n直接核准
+            Review-->>CR: approve\n核准
+        end
+
+        WBS->>WBS: task state → Done\n任務狀態 → 完成
+
+        WBS->>QA: submit completed task for QA review\n提交完成任務進行質檢
+        QA->>QA: task state → QA In Review\n任務狀態 → 質檢中
+
+        alt QA failed\nQA 未通過
+            QA-->>WBS: reject with issue reference\n拒絕並附議題引用
+            WBS->>WBS: task state → In Progress\n任務狀態 → 退回進行中
+            WBS-->>Assignee: notify rework required\n通知需要返工
+        else QA passed\nQA 通過
+            QA->>Acceptance: forward for acceptance\n轉交驗收
+            Acceptance->>Acceptance: task state → Acceptance Review\n任務狀態 → 驗收審查中
+
+            alt acceptance rejected\n驗收拒絕
+                Acceptance-->>WBS: reject with feedback\n拒絕並附回饋
+                WBS->>WBS: task state → In Progress\n任務狀態 → 退回進行中
+                WBS-->>Assignee: notify rework required\n通知需要返工
+            else acceptance approved\n驗收通過
+                Acceptance->>WBS: mark task accepted\n標記任務已驗收
+                WBS->>WBS: task state → Accepted\n任務狀態 → 已驗收
+            end
+        end
+    end
+
+    rect rgb(248, 240, 255)
+        Note over Files,ObjExtract: D. Workspace Layer — Intelligence Layer (Files → Parsing → Extraction)\nWorkspace 層 — 智能層（檔案 → 解析 → 提取）
+
+        User->>Files: upload files and folders\n上傳檔案與資料夾
+        Files->>Files: persist binary, metadata, and file versions\n保存二進位內容、中繼資料與檔案版本
+        Files->>WS: validate workspace policy and access scope\n驗證工作空間政策與存取範圍
+        Files->>EventBus: publish file uploaded events\n發布檔案上傳事件
+
+        alt file is parseable document\n檔案為可解析文件
+            Files->>Intel: trigger intelligence pipeline\n觸發智能處理管線
+            Intel->>DocParse: parse document content\n解析文件內容
+            DocParse->>DocParse: extract text, structure, tables, metadata\n提取文字、結構、表格、中繼資料
+            DocParse->>ObjExtract: forward parsed content\n轉發解析後內容
+            ObjExtract->>ObjExtract: extract actionable objects\n提取可操作物件
+            Note right of ObjExtract: e.g. dates, amounts, parties,\ndeliverables, obligations\n例如日期、金額、當事方、\n交付物、義務
+            ObjExtract->>WBS: attach extracted objects to related tasks\n將提取物件關聯到相關任務
+            ObjExtract->>Work: populate work items from extracted data\n從提取資料填充工作項目
+            ObjExtract->>EventBus: publish extraction completed events\n發布提取完成事件
+        end
+
+        User->>Files: download files by permission\n依權限下載檔案
+        Files->>EventBus: publish file downloaded events\n發布檔案下載事件
+    end
+
+    rect rgb(245, 245, 255)
+        Note over WBS,AP: E. SaaS Layer — Settlement Layer (AR and AP)\nSaaS 層 — 結算層（應收與應付帳款）
+
+        WBS->>Settlement: trigger settlement on task accepted\n任務驗收後觸發結算
+
+        alt billable deliverable to client\n向客戶計費的交付物
+            Settlement->>AR: create accounts receivable record\n建立應收帳款記錄
+            AR->>AR: generate invoice linked to task and workspace\n生成與任務及工作空間關聯的發票
+            AR-->>OrgOwner: notify invoice issued\n通知發票已開立
+        end
+
+        alt payable to assignee or vendor\n應付給指派人或供應商
+            Settlement->>AP: create accounts payable record\n建立應付帳款記錄
+            AP->>AP: calculate payment linked to task completion\n計算與任務完成關聯的付款
+            AP-->>Assignee: notify payment scheduled\n通知付款排程
+        end
+
+        Settlement->>EventBus: publish settlement events\n發布結算事件
+    end
+
+    rect rgb(248, 252, 248)
+        Note over CR,Main: F. Workspace Layer — Merge Decision\nWorkspace 層 — 合併決策
+
+        Maintainer->>CR: click merge\n嘗試合併
+        CR->>Rules: evaluate approvals and governance checks\n評估核准與治理檢查
+        Rules-->>CR: allow or deny\n允許或拒絕
+
+        alt require merge queue enabled\n啟用 merge queue
+            CR->>Queue: enqueue change request\n加入變更請求佇列
+            Queue->>Queue: compose merge set\n組合合併集合
+            Queue->>Queue: execute governance validation\n執行治理驗證
+            alt group passed\n群組通過
+                Queue->>Main: merge validated group\n合併驗證通過群組
+                Main-->>WS: update workspace baseline history\n更新工作空間基線歷史
+                WS-->>WBS: refresh WBS baseline projection\n刷新 WBS 基線投影
+                WBS-->>CR: mark merged and close\n標記已合併並關閉
+            else group failed\n群組失敗
+                Queue-->>CR: dequeue failed item and rebuild\n移除失敗項目並重建
+            end
+        else normal protected-baseline merge\n一般受保護基線合併
+            CR->>Main: merge when governance is satisfied\n條件滿足後直接合併
+            Main-->>WS: update workspace baseline history\n更新工作空間基線歷史
+            WS-->>WBS: refresh WBS baseline projection\n刷新 WBS 基線投影
+            WBS-->>CR: mark merged and close\n標記已合併並關閉
+        end
+    end
+
+    rect rgb(255, 245, 250)
+        Note over WS,Inbox: G. Event Bus and Notification Delivery\n事件匯流排與通知分發
+
+        WS->>EventBus: publish workspace-level events\n發布工作空間層級事件
+        WBS->>EventBus: publish WBS domain events\n發布 WBS 領域事件
+        CR->>EventBus: publish review and state-change events\n發布審查與狀態事件
+        Issue->>EventBus: publish issue created / updated / closed events\n發布議題建立 / 更新 / 關閉事件
+        EventBus->>Notify: route events by subscription rules\n依訂閱規則路由事件
+        Notify->>Notify: resolve recipients by participation, mention, watch, team\n依參與、提及、關注、團隊解析收件者
+        Notify->>Inbox: deliver inbox notification\n投遞站內通知
+        Inbox-->>User: email / mobile / push surfaces\n電子郵件 / 行動推播呈現
+        User->>Inbox: triage, save, done, unsubscribe\n分流、儲存、完成、取消訂閱
+    end
+
+    rect rgb(240, 255, 248)
+        Note over User,Profile: H. SaaS Extensions — Discovery and Social Graph\nSaaS 擴展 — 探索與社交圖譜
+
+        NS->>WS: resolve workspace path and ownership scope\n解析工作空間路徑與所有權範圍
+        User->>Social: star or watch workspace, follow users\n收藏或關注工作空間，追蹤使用者
+        Social->>Feed: contribute discovery and ranking signals\n提供探索與排序訊號
+        Feed-->>User: dashboard and recommendation updates\n更新儀表板與推薦
+
+        User->>Work: create or update work items, milestones, dependencies\n建立或更新工作項目、里程碑、依賴
+        Work->>WBS: attach WBS structured records\n掛載 WBS 結構化紀錄
+
+        User->>Apps: use docs, goals, forms, and assets modules\n使用文件、目標、表單與資產等模組
+        Apps->>WS: persist non-WBS workspace records\n保存非 WBS 的工作空間紀錄
+
+        User->>Forks: fork a workspace planning branch\n分叉工作空間規劃分支
+        Forks->>CR: submit merge-back proposal\n透過變更請求提交回併提案
+
+        WS->>Sec: run cross-module consistency and policy checks\n執行跨模組一致性與政策檢查
+        WBS->>Sec: run WBS dependency, schedule, and resource checks\n執行 WBS 依賴、排程與資源檢查
+        Sec->>Notify: emit governance alerts\n發出治理警示
+    end
+
+    rect rgb(245, 245, 255)
+        Note over Assignee,Profile: I. Achievement Post-Processing\n成就系統後處理
+
+        Assignee->>Achv: complete qualifying WBS task activity\n完成符合條件的 WBS 任務活動
+        Achv->>Achv: evaluate rules and milestones\n比對規則與里程碑
+        alt matched\n符合條件
+            Achv->>Profile: unlock and render badge\n解鎖並顯示徽章
+            Profile-->>Assignee: achievement visible on profile\n個人檔案可見成就
+        else not matched\n不符合條件
+            Achv-->>Assignee: keep as regular contribution\n保留為一般貢獻
+        end
+    end

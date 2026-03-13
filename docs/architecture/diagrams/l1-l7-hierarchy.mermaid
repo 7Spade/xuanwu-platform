@@ -1,0 +1,96 @@
+```mermaid
+---
+title: Serena — L1–L7 Architecture Hierarchy / 七層架構視覺化
+---
+graph TB
+
+    subgraph L1["L1 — User Interface Layer / 使用者介面層"]
+        direction LR
+        L1A["Web App\nNext.js App Router"]
+        L1B["Mobile App\nReact Native"]
+        L1C["API Clients\nSDK / CLI"]
+    end
+
+    subgraph L2["L2 — SaaS Application Layer / SaaS 應用層"]
+        direction LR
+        L2A["Organization & Namespace\n組織與命名空間管理"]
+        L2B["Team Management\n團隊管理"]
+        L2C["Workforce Scheduling\n人力排程"]
+        L2D["Settlement Layer\nAR / AP 結算"]
+        L2E["Discovery & Social Graph\n探索與社交圖譜"]
+        L2F["Achievement Engine\n成就引擎"]
+    end
+
+    subgraph L3["L3 — Workspace Layer / 工作空間層"]
+        direction LR
+        L3A["Workspace Governance\n工作空間治理\nBaseline · CR · Merge Queue"]
+        L3B["WBS Module\nWBS 模組\nTask · State Machine · Dependency"]
+        L3C["Issue Module\n議題模組\n#ID · Link · Unblock"]
+        L3D["File Module\n檔案模組\nBinary · Version · Policy"]
+    end
+
+    subgraph L4["L4 — Intelligence Layer / 智能層"]
+        direction LR
+        L4A["Document Parsing\n文件解析\nText · Structure · Tables · Metadata"]
+        L4B["Object Extraction\n物件提取\nDate · Amount · Party · Obligation"]
+        L4C["Genkit AI Flows\nPrompt Pipeline · Tool Calling · Model Abstraction"]
+    end
+
+    subgraph L5["L5 — Integration and Event Layer / 整合與事件層"]
+        direction LR
+        L5A["Event Bus\n事件匯流排\nDomain Events · Pub / Sub"]
+        L5B["Notification Engine\n通知引擎\nRecipient Resolution · Dedup · Dispatch"]
+        L5C["Integrity & Policy Automation\n完整性與政策自動化\nCross-module Checks · Governance Alerts"]
+        L5D["Workforce Scheduling Bridge\n人力排程橋接\nSaaS ↔ Workspace Boundary"]
+    end
+
+    subgraph L6["L6 — Data Layer / 資料層"]
+        direction LR
+        L6A["Firestore\nCollections · Subcollections · Security Rules"]
+        L6B["Firebase Storage\nBinary Files · CDN · Access Control"]
+        L6C["Firebase Auth\nUID · Claims · Session"]
+        L6D["Search Index\nWorkspace · Issue · User Discovery"]
+    end
+
+    subgraph L7["L7 — Infrastructure and Platform / 基礎設施與平台"]
+        direction LR
+        L7A["Firebase Hosting\nEdge CDN · SSR · Static Assets"]
+        L7B["Cloud Functions\nServerless Backend · Triggers · Scheduled Jobs"]
+        L7C["Firebase Studio\nCloud Project Design · Emulator Suite"]
+        L7D["Observability\nLogs · Traces · Alerts"]
+    end
+
+    %% Vertical flow
+    L1 --> L2
+    L1 --> L3
+    L2 --> L3
+    L2 --> L5
+    L3 --> L4
+    L3 --> L5
+    L4 --> L5
+    L5 --> L6
+    L2 --> L6
+    L3 --> L6
+    L6 --> L7
+
+    %% Cross-layer notes
+    L2C -.->|"SaaS ↔ Workspace\nboundary"| L3B
+    L4C -.->|"AI pipeline\ntrigger"| L4A
+    L2D -.->|"triggered by\nAccepted state"| L3B
+
+    classDef l1style fill:#1E3A5F,stroke:#1E3A5F,color:#fff,rx:8
+    classDef l2style fill:#2C5F8A,stroke:#2C5F8A,color:#fff
+    classDef l3style fill:#1D7A5A,stroke:#1D7A5A,color:#fff
+    classDef l4style fill:#6B3FA0,stroke:#6B3FA0,color:#fff
+    classDef l5style fill:#A0522D,stroke:#A0522D,color:#fff
+    classDef l6style fill:#2E7D9A,stroke:#2E7D9A,color:#fff
+    classDef l7style fill:#555555,stroke:#555555,color:#fff
+
+    class L1A,L1B,L1C l1style
+    class L2A,L2B,L2C,L2D,L2E,L2F l2style
+    class L3A,L3B,L3C,L3D l3style
+    class L4A,L4B,L4C l4style
+    class L5A,L5B,L5C,L5D l5style
+    class L6A,L6B,L6C,L6D l6style
+    class L7A,L7B,L7C,L7D l7style
+```

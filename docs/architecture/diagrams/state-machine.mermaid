@@ -1,0 +1,64 @@
+```mermaid
+---
+title: WBS Task State Machine / WBS 任務狀態機
+---
+stateDiagram-v2
+    direction TB
+
+    [*] --> Pending : Task created and assigned\n任務建立並完成指派
+
+    Pending --> InProgress : Assignee starts task\n指派人開始任務
+
+    InProgress --> Done : Assignee submits snapshot\nand CR is approved\n提交快照且 CR 核准
+
+    InProgress --> Blocked : Issue opened (#1 #2 #3)\n開立議題
+
+    Blocked --> InProgress : Issue resolved\n議題解決
+
+    Done --> QAInReview : Submitted for QA\n提交質檢
+
+    QAInReview --> AcceptanceReview : QA passed\nQA 通過
+
+    QAInReview --> InProgress : QA failed\nAttach issue reference\nQA 未通過，附議題引用
+
+    AcceptanceReview --> Accepted : Acceptance approved\n驗收通過
+
+    AcceptanceReview --> InProgress : Acceptance rejected\nAttach feedback\n驗收拒絕，附回饋
+
+    Accepted --> [*] : Triggers Settlement Layer\n觸發結算層
+
+    state InProgress {
+        direction LR
+        Editing --> Reviewing : Submit snapshot\n提交快照
+        Reviewing --> Editing : Changes requested\n要求修改
+        Reviewing --> ReadyToSubmit : CR approved\nCR 核准
+    }
+
+    state AcceptanceReview {
+        direction LR
+        StakeholderCheck --> SignOff : Requirements met\n符合需求
+        StakeholderCheck --> Rework : Requirements not met\n不符合需求
+    }
+
+    note right of Pending
+        Workforce Scheduling
+        has confirmed assignee
+        and time window
+        人力排程已確認
+        指派人與時間窗口
+    end note
+
+    note right of Blocked
+        Task cannot progress
+        until ALL linked issues
+        are resolved
+        所有關聯議題解決前
+        任務無法繼續
+    end note
+
+    note right of Accepted
+        AR record created
+        AP record created
+        應收 / 應付帳款建立
+    end note
+```
