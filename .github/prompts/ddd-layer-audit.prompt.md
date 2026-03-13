@@ -24,7 +24,7 @@ This prompt audits compliance with the 4-layer DDD dependency direction rule.
 
 ### D24 Firebase Violations
 - `import { Firestore } from 'firebase/firestore'` in feature slice files.
-- Direct Firebase SDK usage outside `src/features/infra.*` and `src/shared-infra/`.
+- Direct Firebase SDK usage outside `src/features/infra.*`.
 
 ### Port Contract Gaps
 - Application calling infrastructure adapters by concrete class name (not via port interface).
@@ -35,7 +35,7 @@ This prompt audits compliance with the 4-layer DDD dependency direction rule.
 1. Scan `_actions.ts`, `_queries.ts`, `core/_use-cases.ts` for import violations.
 2. Scan `domain.*/_entity.ts` and `domain.*/_value-objects.ts` for framework imports.
 3. Scan `_components/` and `app/` for direct domain or infrastructure imports.
-4. Check `src/shared-kernel/ports/` for completeness of port interfaces.
+4. Check each slice's `domain.*/_ports.ts` for completeness of port interfaces.
 5. List violations by severity: BLOCKER (D24) / MAJOR (wrong-direction) / MINOR (thin layer breach).
 6. Suggest remediation for each violation following DDD patterns.
 

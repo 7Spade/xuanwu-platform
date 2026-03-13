@@ -20,7 +20,7 @@ Copilot customizations in this repository must stay aligned with:
 
 - Business logic: `docs/architecture/README.md`
 - Entity semantics: `.serena\memories\*`
-- Codebase reference baseline: `.github/skills/xuanwu-skill/SKILL.md`
+- Codebase reference baseline: `docs/architecture/README.md` and established code patterns
 
 ## Customization Selection Matrix
 
@@ -85,7 +85,7 @@ Design or refactor Copilot customization assets in this order:
 - `README.md` is the user-facing quick entry point; keep only the high-level navigation and prompt command catalog there.
 - `docs/copilot/customization/*.md` remains the local reference mirror of the official VS Code customization docs and should be cited rather than paraphrased repeatedly.
 - `.vscode/settings.json` is the effective loader configuration; documentation must describe the configuration that is actually enabled there.
-- `.github/skills/xuanwu-skill/SKILL.md` is the active VS Code project skill and repository codebase reference baseline; `skills/SKILL.md` is a redirect pointer to this location.
+- `.github/skills/` is the canonical project skill location; each skill lives in its own folder with a `SKILL.md` entry point.
 - Keep the customization folders intentionally small and consistent: prefer project-specific `xuanwu-<function>.*.md` files that absorb overlapping personas, rules, and workflows into functional suites.
 
 ## Canonical Repository Layout
@@ -142,7 +142,7 @@ Design or refactor Copilot customization assets in this order:
 - Follow `docs/copilot/customization/agent-skills.md`.
 - Each skill must live in its own folder with a `SKILL.md`.
 - Skill descriptions must clearly say what the skill does and when to use it.
-- Repository skill discovery points to `.github/skills/`; `xuanwu-skill` is the active project skill entry point at `.github/skills/xuanwu-skill/SKILL.md`.
+- Repository skill discovery points to `.github/skills/`; each skill has its own folder with a `SKILL.md` entry point.
 
 ## Current Consolidation Decisions
 
@@ -175,7 +175,6 @@ These documents are stable link targets for prompts and agents that need reposit
 - `docs/persistence-model-overview.md`
 - `docs/architecture/README.md`
 - `.serena\memories\*`
-- `.github/skills/xuanwu-skill/SKILL.md`
 
 ## Change Workflow
 

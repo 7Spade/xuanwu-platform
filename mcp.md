@@ -1,7 +1,7 @@
 # MCP Server Configuration
 
 > **格式說明**
-> - **GitHub Coding Agent 設定頁**（`mcpServers`）使用 `type: "local"` 和必要的 `tools` 欄位。
+> - **GitHub Coding Agent 設定頁**（`mcpServers`）使用 `type: "stdio"` 和必要的 `tools` 欄位。
 > - **VS Code 本機 Copilot Chat**（`.vscode/mcp.json`）使用 `servers` 鍵和 `type: "stdio"`，無 `tools` 欄位。
 > - 兩份配置已同步至 `.vscode/mcp.json`（本機）與下方 JSON（Coding Agent）。
 
@@ -26,73 +26,73 @@
       "tools": ["*"]
     },
     "filesystem": {
-      "type": "local",
+      "type": "stdio",
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
       "tools": ["*"]
     },
     "repomix": {
-      "type": "local",
+      "type": "stdio",
       "command": "npx",
       "args": ["-y", "repomix", "--mcp"],
       "tools": ["*"]
     },
     "context7": {
-      "type": "local",
+      "type": "stdio",
       "command": "npx",
       "args": ["-y", "@upstash/context7-mcp"],
       "tools": ["*"]
     },
     "sequential-thinking": {
-      "type": "local",
+      "type": "stdio",
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
       "tools": ["*"]
     },
     "software-planning": {
-      "type": "local",
+      "type": "stdio",
       "command": "npx",
       "args": ["-y", "@joshuarileydev/software-planning-tool"],
       "tools": ["*"]
     },
     "playwright": {
-      "type": "local",
+      "type": "stdio",
       "command": "npx",
       "args": ["-y", "@playwright/mcp@latest"],
       "tools": ["*"]
     },
     "next-devtools": {
-      "type": "local",
+      "type": "stdio",
       "command": "npx",
       "args": ["-y", "@next/mcp"],
       "tools": ["*"]
     },
     "shadcn": {
-      "type": "local",
+      "type": "stdio",
       "command": "npx",
       "args": ["-y", "shadcn@latest", "mcp"],
       "tools": ["*"]
     },
     "markitdown": {
-      "type": "local",
+      "type": "stdio",
       "command": "uvx",
       "args": ["markitdown-mcp"],
       "tools": ["*"]
     },
     "everything": {
-      "type": "local",
+      "type": "stdio",
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-everything"],
       "tools": ["*"]
     },
     "serena": {
-      "type": "local",
+      "type": "stdio",
       "command": "uvx",
       "args": ["serena"],
       "tools": ["*"]
     },
     "firebase-mcp-server": {
-      "type": "local",
+      "type": "stdio",
       "command": "npx",
       "args": ["-y", "firebase-mcp-server"],
       "env": {

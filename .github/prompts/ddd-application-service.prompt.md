@@ -18,7 +18,7 @@ This prompt drives Step 2 of the DDD cycle: thin orchestration layer using domai
 
 ## Workflow
 
-1. Identify the port interfaces needed (IRepository, IEventBus, etc.) from `src/shared-kernel/ports/`.
+1. Identify the port interfaces needed (IRepository, IEventBus, etc.) from the slice's `domain.*/_ports.ts`.
 2. Write the use case function signature with explicit `deps` (port interfaces).
 3. Implement: load aggregate → apply domain behavior → persist → emit event.
 4. Keep all `if/else` business rules inside domain methods.
