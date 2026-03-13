@@ -10,44 +10,64 @@
 {
   "mcpServers": {
     "filesystem": {
+      "type": "local",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."]
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
+      "tools": ["*"]
     },
     "repomix": {
+      "type": "local",
       "command": "npx",
-      "args": ["-y", "repomix", "--mcp"]
+      "args": ["-y", "repomix", "--mcp"],
+      "tools": ["*"]
     },
     "context7": {
+      "type": "local",
       "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp"]
+      "args": ["-y", "@upstash/context7-mcp"],
+      "tools": ["*"]
     },
     "sequential-thinking": {
+      "type": "local",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "tools": ["*"]
     },
     "software-planning": {
+      "type": "local",
       "command": "npx",
-      "args": ["-y", "@joshuarileydev/software-planning-tool"]
+      "args": ["-y", "@joshuarileydev/software-planning-tool"],
+      "tools": ["*"]
     },
     "playwright": {
+      "type": "local",
       "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest"]
+      "args": ["-y", "@playwright/mcp@latest"],
+      "tools": ["*"]
     },
     "next-devtools": {
+      "type": "local",
       "command": "npx",
-      "args": ["-y", "@next/mcp"]
+      "args": ["-y", "@next/mcp"],
+      "tools": ["*"]
     },
     "shadcn": {
+      "type": "local",
       "command": "npx",
-      "args": ["-y", "shadcn@latest"]
+      "args": ["-y", "shadcn@latest"],
+      "tools": ["*"]
     },
     "markitdown": {
+      "type": "local",
       "command": "npx",
-      "args": ["-y", "markitdown-mcp"]
+      "args": ["-y", "markitdown-mcp"],
+      "tools": ["*"]
     },
     "everything": {
+      "type": "local",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-everything"]
+      "args": ["-y", "@modelcontextprotocol/server-everything"],
+      "tools": ["*"]
     }
   }
 }
@@ -63,8 +83,10 @@
 
 ```json
 "serena": {
+  "type": "local",
   "command": "uvx",
-  "args": ["serena"]
+  "args": ["serena"],
+  "tools": ["*"]
 }
 ```
 
@@ -72,8 +94,10 @@
 
 ```json
 "firebase-mcp-server": {
+  "type": "local",
   "command": "npx",
-  "args": ["-y", "firebase-mcp-server"]
+  "args": ["-y", "firebase-mcp-server"],
+  "tools": ["*"]
 }
 ```
 
