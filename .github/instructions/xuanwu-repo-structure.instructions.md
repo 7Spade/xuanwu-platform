@@ -14,7 +14,7 @@ Use the following structure when possible:
 
 - src/ — application source code
 - components/ — reusable UI components
-- features/ — feature modules
+- modules/ — Domain Modules (Bounded Contexts, Modular DDD)
 - services/ — business logic or API services
 - lib/ — shared utilities
 - tests/ — unit and integration tests

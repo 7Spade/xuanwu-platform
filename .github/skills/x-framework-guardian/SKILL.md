@@ -66,7 +66,7 @@ and docs/architecture/README.md. Please provide the Drift Report and Compliance 
 #### 邊界巡邏（Boundary Audit）
 
 ```text
-執行 Boundary Audit。檢查 src/features/ 下是否有檔案直接 import 其他切片的
+執行 Boundary Audit。檢查 src/modules/ 下是否有檔案直接 import 其他切片的
 內部路徑（如 domain.* 或 _ 開頭檔案），而非透過 index.ts。
 請列出違規行號與重構建議。
 ```
@@ -98,7 +98,7 @@ and docs/architecture/README.md. Please provide the Drift Report and Compliance 
 #### 邏輯鏈驗證
 
 ```text
-追蹤 src/features/{feature}.slice 的邏輯流向。
+追蹤 src/modules/{module}.module 的邏輯流向。
 它是否嚴格遵守 docs/architecture/README.md 定義的 L0 -> L3 -> L4 -> L5 流程？
 特別檢查是否有 Command 流程直接回傳大量 Query Data 的違規。
 ```

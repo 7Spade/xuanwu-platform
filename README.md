@@ -193,7 +193,7 @@ This repository ships a complete set of GitHub Copilot customizations under `.gi
 
 ## 🏗 Architecture Overview
 
-This project follows a **Modular Domain-Driven Design (Modular DDD)** architecture with **Next.js 15 parallel routing**. Each bounded context is a self-contained feature slice under `src/features/`; slices communicate only through their public `index.ts` barrel.
+This project follows a **Modular Domain-Driven Design (Modular DDD)** architecture with **Next.js 15 parallel routing**. Each bounded context is a self-contained **Domain Module** under `src/modules/`; modules communicate only through their public `index.ts` barrel.
 
 ### Design System
 

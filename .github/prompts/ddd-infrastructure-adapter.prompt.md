@@ -2,7 +2,7 @@
 name: ddd-infrastructure-adapter
 description: 'Design or implement Infrastructure Layer adapters: Firestore Repository, Event Bus, Outbox writer, Storage adapter — fulfilling port interfaces for a Xuanwu bounded context.'
 agent: 'ddd-infrastructure'
-argument-hint: 'Context and adapter type, e.g.: workspace.slice FirestoreTaskRepository | skill-xp.slice XpOutboxWriter'
+argument-hint: 'Context and adapter type, e.g.: workspace.module FirestoreTaskRepository | skill-xp.module XpOutboxWriter'
 ---
 
 # DDD Infrastructure Adapter Workflow
@@ -15,7 +15,7 @@ This prompt drives Step 3 of the DDD cycle: implement port interfaces with concr
 2. **Outbox Writer** — Transactional event publishing via the outbox pattern [S1].
 3. **Storage Adapter** — Firebase Storage upload/download operations.
 4. **Queue Adapter** — Cloud Tasks or background job integration.
-5. **D24 Remediation** — Move Firebase SDK calls from feature slices into proper adapters.
+5. **D24 Remediation** — Move Firebase SDK calls from domain modules into proper adapters.
 
 ## Workflow
 
@@ -31,14 +31,14 @@ This prompt drives Step 3 of the DDD cycle: implement port interfaces with concr
 - Adapter class MUST implement a port interface — no standalone concrete class.
 - MUST use transactional outbox pattern [S1] for aggregate saves.
 - NO business logic inside adapters — only data mapping and I/O.
-- Firebase SDK calls MUST stay inside `src/features/{slice}/infra.*`.
+- Firebase SDK calls MUST stay inside `src/modules/{module}/infra.*`.
 - Feature slice `domain.*` and `core/` folders must never import from `firebase`.
 
 ## Output Contract
 
-- Adapter class in `src/features/infra.*/` or `src/features/{slice}/infra.outbox/`.
-- Port interface in `src/features/{slice}/domain.*/_ports.ts` (if new).
+- Adapter class in `src/modules/infra.*/` or `src/modules/{module}/infra.outbox/`.
+- Port interface in `src/modules/{module}/domain.*/_ports.ts` (if new).
 - Adapter tests using Firestore emulator or mocks.
 
-Bounded context / slice: ${input:context:e.g. workspace.slice}
+Bounded context / slice: ${input:context:e.g. workspace.module}
 Adapter type and name: ${input:adapter:e.g. FirestoreTaskRepository}

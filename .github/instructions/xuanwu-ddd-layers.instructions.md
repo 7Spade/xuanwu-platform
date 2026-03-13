@@ -6,7 +6,7 @@ applyTo: "src/**/*.{ts,tsx,js,jsx}"
 
 # Xuanwu DDD Layer Rules
 
-This project follows a strict 4-layer DDD architecture inside each feature slice.
+This project follows a strict 4-layer DDD architecture inside each Domain Module.
 All code in `src/` MUST respect the layer dependency direction defined below.
 
 ## Layer Diagram
@@ -29,7 +29,7 @@ All code in `src/` MUST respect the layer dependency direction defined below.
 └──────────────▲───────────────┘
                │ depends on
 ┌──────────────┴───────────────┐
-│ Infrastructure Layer         │  src/features/<slice>/infra.*/
+│ Infrastructure Layer         │  src/modules/<module>/infra.*/
 │ (DB / API / Queue / Storage) │  (Firebase adapters, repo impls)
 └──────────────────────────────┘
 ```
@@ -45,7 +45,7 @@ All code in `src/` MUST respect the layer dependency direction defined below.
 ### Application Layer (Use Cases / Application Services)
 - MUST NOT import from Presentation or Infrastructure directly.
 - MUST call Domain objects (entities, value objects, domain services) for business logic.
-- MUST call Infrastructure via **port interfaces** defined within the same feature slice's domain layer.
+- MUST call Infrastructure via **port interfaces** defined within the same Domain Module's domain layer.
 - MUST NOT contain business rule logic — delegate to Domain layer.
 - Orchestrates: load aggregate → apply domain logic → persist via port → emit event.
 
@@ -57,37 +57,37 @@ All code in `src/` MUST respect the layer dependency direction defined below.
 - Domain Services handle logic that doesn't belong to a single entity.
 
 ### Infrastructure Layer (Repositories / Adapters / Queue / Storage)
-- MUST implement port interfaces defined within the owning feature slice's domain layer.
+- MUST implement port interfaces defined within the owning Domain Module's domain layer.
 - MUST NOT contain business logic.
 - MUST NOT be imported by Application or Domain layers directly (use ports).
-- Adapter implementations live in `src/features/<slice>/infra.<adapter>/`.
+- Adapter implementations live in `src/modules/<module>/infra.<adapter>/`.
 
 ## Forbidden Imports (violates layer direction)
 
 ```typescript
 // ❌ Application layer calling Infrastructure directly (bypass port)
-import { FirestoreAdapter } from '@/features/org.slice/infra.firestore/_repository'
+import { FirestoreAdapter } from '@/modules/org.module/infra.firestore/_repository'
 
 // ❌ Domain layer importing Application logic
-import { createTaskUseCase } from '@/features/workspace.slice/core/_use-cases'
+import { createTaskUseCase } from '@/modules/workspace.module/core/_use-cases'
 
 // ❌ Presentation calling Domain directly (must go through Application)
-import { TaskEntity } from '@/features/workspace.slice/domain.tasks/_entity'
+import { TaskEntity } from '@/modules/workspace.module/domain.tasks/_entity'
 
 // ✅ Correct: Presentation → Application
-import { createTask } from '@/features/workspace.slice'
+import { createTask } from '@/modules/workspace.module'
 
 // ✅ Correct: Application → Domain (entity/VO)
 import { TaskEntity } from './_entity'
 
-// ✅ Correct: Application → Port interface defined in the same slice
+// ✅ Correct: Application → Port interface defined in the same module
 import type { ITaskRepository } from './domain.tasks/_ports'
 ```
 
 ## File Placement Rules per Layer
 
-| Layer | Allowed paths in a slice |
-|-------|--------------------------|
+| Layer | Allowed paths in a module |
+|-------|---------------------------|
 | Presentation | `_components/`, `index.ts` public API re-exports |
 | Application | `core/_use-cases.ts`, `core/_actions.ts`, `_actions.ts`, `_queries.ts` |
 | Domain | `domain.*/_entity.ts`, `domain.*/_value-objects.ts`, `domain.*/_service.ts` |

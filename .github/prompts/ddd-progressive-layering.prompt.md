@@ -2,7 +2,7 @@
 name: ddd-progressive-layering
 description: 'Progressively migrate an existing Xuanwu slice toward Layered Architecture in Domain-Driven Design with compatibility seams, boundary audits, and the smallest safe refactor sequence.'
 agent: 'ddd-orchestrator'
-argument-hint: 'Scope and goal, e.g.: src/features/workspace.slice/domain.tasks | extract TaskEntity + ITaskRepository without breaking callers'
+argument-hint: 'Scope and goal, e.g.: src/modules/workspace.module/domain.tasks | extract TaskEntity + ITaskRepository without breaking callers'
 ---
 
 # Progressive DDD Layering Workflow
@@ -42,6 +42,6 @@ Use this prompt for legacy or mixed-responsibility code that needs to move towar
 - Do not move infrastructure before the domain vocabulary and port boundary are clear.
 - Follow `docs/architecture/README.md`, `.github/instructions/xuanwu-ddd-layers.instructions.md`, and `.github/instructions/xuanwu-ddd-progressive-migration.instructions.md`.
 
-Scope: ${input:scope:e.g. src/features/workspace.slice/domain.tasks}
+Scope: ${input:scope:e.g. src/modules/workspace.module/domain.tasks}
 Goal: ${input:goal:e.g. isolate TaskEntity + TaskRepository port and remove Firebase from use cases}
 Constraints: ${input:constraints:e.g. keep current exports stable, no route renames, keep tests green}

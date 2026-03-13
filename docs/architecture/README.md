@@ -9,7 +9,7 @@
 
 **xuanwu-platform** is a Next.js 15 platform built with **Modular Domain-Driven Design (Modular DDD)** and parallel routing, implementing the Serena operational work management system.
 
-**Modular DDD** means every bounded context lives in its own self-contained feature slice under `src/features/`. Slices expose a single public `index.ts` barrel; no slice imports the internal files of another. This modular boundary is enforced in addition to the 4-layer DDD direction rules (Presentation → Application → Domain ← Infrastructure).
+**Modular DDD** means every bounded context lives in its own self-contained **Domain Module** under `src/modules/`. Each module exposes a single public `index.ts` barrel; no module imports the internal files of another. This modular boundary is enforced in addition to the 4-layer DDD direction rules (Presentation → Application → Domain ← Infrastructure).
 
 | Concern | Choice |
 |---------|--------|
@@ -42,16 +42,16 @@
 
 ## DDD Layer Architecture / DDD 層次架構
 
-This project follows a strict 4-layer DDD architecture within each feature slice.
+This project follows a strict 4-layer DDD architecture within each Domain Module.
 
 ### Layer Responsibilities
 
 | Layer | Location | Responsibility | Allowed dependencies |
 |-------|----------|----------------|----------------------|
-| **Domain** | `src/features/<slice>/domain.<aggregate>/` | Entities, value objects, aggregates, domain events, port interfaces | None (pure business logic) |
-| **Application** | `src/features/<slice>/core/_use-cases.ts`, `_actions.ts`, `_queries.ts` | Use cases, application services, DTOs, command/query objects | Domain layer only |
-| **Infrastructure** | `src/features/<slice>/infra.<adapter>/` | Repository implementations, external API adapters, Firebase integration, persistence | Domain + Application port interfaces |
-| **UI / Presentation** | `src/features/<slice>/_components/`, `src/app/` | React components, Next.js pages and route handlers | Application layer (via DTOs) |
+| **Domain** | `src/modules/<module>/domain.<aggregate>/` | Entities, value objects, aggregates, domain events, port interfaces | None (pure business logic) |
+| **Application** | `src/modules/<module>/core/_use-cases.ts`, `_actions.ts`, `_queries.ts` | Use cases, application services, DTOs, command/query objects | Domain layer only |
+| **Infrastructure** | `src/modules/<module>/infra.<adapter>/` | Repository implementations, external API adapters, Firebase integration, persistence | Domain + Application port interfaces |
+| **UI / Presentation** | `src/modules/<module>/_components/`, `src/app/` | React components, Next.js pages and route handlers | Application layer (via DTOs) |
 
 ### Layer Direction Rules
 
@@ -89,16 +89,16 @@ See [Service Boundary](./catalog/service-boundary.md) for crossing protocols and
 
 ---
 
-## Domain Slices / 領域切片
+## Domain Modules / 領域模組
 
-| Slice | Location | Layer | Description |
-|-------|----------|-------|-------------|
-| Organization | `src/features/org.slice/` | SaaS | Org, Namespace, Team |
-| Workspace | `src/features/workspace.slice/` | Workspace | Workspace, WBS, Issues, CR |
-| File & Intel | `src/features/file.slice/` | Workspace | Files, Document Parsing, Object Extraction |
-| Settlement | `src/features/settlement.slice/` | SaaS | AR, AP, Settlement records |
+| Module | Location | Layer | Description |
+|--------|----------|-------|-------------|
+| Organization | `src/modules/org.module/` | SaaS | Org, Namespace, Team |
+| Workspace | `src/modules/workspace.module/` | Workspace | Workspace, WBS, Issues, CR |
+| File & Intel | `src/modules/file.module/` | Workspace | Files, Document Parsing, Object Extraction |
+| Settlement | `src/modules/settlement.module/` | SaaS | AR, AP, Settlement records |
 
-> Expand this table as slices are implemented. Each slice is self-contained — ports, value objects, and infrastructure adapters live inside the slice, not in shared global directories.
+> Expand this table as modules are implemented. Each module is self-contained — ports, value objects, and infrastructure adapters live inside the module, not in shared global directories.
 
 ---
 

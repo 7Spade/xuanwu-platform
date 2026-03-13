@@ -10,7 +10,7 @@ It covers all four layers and the agent/prompt kit that drives the DDD developme
 
 ## When to use
 
-- Designing a new feature slice with proper DDD layering.
+- Designing a new domain module with proper DDD layering.
 - Auditing existing code for layer boundary violations.
 - Implementing entities, value objects, aggregates, or use cases.
 - Wiring infrastructure adapters to port interfaces.
@@ -21,31 +21,31 @@ It covers all four layers and the agent/prompt kit that drives the DDD developme
 ```
 ┌──────────────────────────────────────────────┐
 │ Presentation Layer                           │
-│ src/app/, src/features/{slice}/_components/  │
+│ src/app/, src/modules/{module}/_components/  │
 │ UI components, Server Actions (thin wrapper) │
 └─────────────────────▲────────────────────────┘
                       │ calls (Application API only)
 ┌─────────────────────┴────────────────────────┐
 │ Application Layer                            │
-│ src/features/{slice}/core/_use-cases.ts      │
-│ src/features/{slice}/core/_actions.ts        │
-│ src/features/{slice}/core/_queries.ts        │
+│ src/modules/{module}/core/_use-cases.ts      │
+│ src/modules/{module}/core/_actions.ts        │
+│ src/modules/{module}/core/_queries.ts        │
 │ Use Cases, Command Handlers, Query Handlers  │
 └─────────────────────▲────────────────────────┘
                       │ calls (Domain objects)
-                      │ calls (Port interfaces in same slice)
+                      │ calls (Port interfaces in same module)
 ┌─────────────────────┴────────────────────────┐
 │ Domain Layer                                 │
-│ src/features/{slice}/domain.*/_entity.ts     │
-│ src/features/{slice}/domain.*/_value-objects │
-│ src/features/{slice}/domain.*/_ports.ts      │
+│ src/modules/{module}/domain.*/_entity.ts     │
+│ src/modules/{module}/domain.*/_value-objects │
+│ src/modules/{module}/domain.*/_ports.ts      │
 │ Entities, VOs, Domain Services, Events       │
 └─────────────────────▲────────────────────────┘
                       │ implements (Port interfaces)
 ┌─────────────────────┴────────────────────────┐
 │ Infrastructure Layer                         │
-│ src/features/{slice}/infra.{adapter}/        │
-│ src/features/{slice}/infra.outbox/           │
+│ src/modules/{module}/infra.{adapter}/        │
+│ src/modules/{module}/infra.outbox/           │
 │ Firestore repos, Event Bus, Outbox, Storage  │
 └──────────────────────────────────────────────┘
 ```
@@ -59,14 +59,14 @@ It covers all four layers and the agent/prompt kit that drives the DDD developme
 | 3 | Infrastructure | `ddd-infrastructure` | `/ddd-infrastructure-adapter` |
 | 4 | Presentation | `xuanwu-ui` / `xuanwu-implementer` | `/xuanwu-ui` / `/xuanwu-implementer` |
 
-Full cycle shortcut: `/ddd-slice-scaffold` via `ddd-orchestrator`.
+Full cycle shortcut: `/ddd-module-scaffold` via `ddd-orchestrator`.
 Audit existing code: `/ddd-layer-audit` via `ddd-orchestrator`.
 
 ## Domain Layer Patterns
 
 ### Entity (Aggregate Root)
 ```typescript
-// src/features/{slice}/domain.{context}/_entity.ts
+// src/modules/{module}/domain.{context}/_entity.ts
 export class OrderEntity {
   private _events: DomainEvent[] = []
 
@@ -116,7 +116,7 @@ export class OrderId {
 
 ### Use Case (Command Handler)
 ```typescript
-// src/features/{slice}/core/_use-cases.ts
+// src/modules/{module}/core/_use-cases.ts
 export async function confirmOrderUseCase(
   cmd: ConfirmOrderCommand,
   deps: { repo: IOrderRepository; events: IEventBus }
@@ -136,7 +136,7 @@ export async function confirmOrderUseCase(
 
 ### Server Action (Presentation → Application bridge)
 ```typescript
-// src/features/{slice}/_actions.ts
+// src/modules/{module}/_actions.ts
 'use server'
 export async function confirmOrderAction(orderId: string): Promise<ActionResult> {
   const session = await getServerSession()
@@ -166,7 +166,7 @@ export class FirestoreOrderRepository implements IOrderRepository {
 ## Port Interface Pattern
 
 ```typescript
-// src/features/{slice}/domain.{context}/_ports.ts
+// src/modules/{module}/domain.{context}/_ports.ts
 export interface IOrderRepository {
   findById(id: OrderId): Promise<OrderEntity | null>
   save(order: OrderEntity): Promise<void>
@@ -177,7 +177,7 @@ export interface IOrderRepository {
 ## Slice Public API Pattern
 
 ```typescript
-// src/features/{slice}/index.ts
+// src/modules/{module}/index.ts
 // ONLY export presentation-safe APIs
 export { confirmOrderAction } from './core/_actions'
 export { getOrdersQuery } from './core/_queries'
@@ -204,7 +204,7 @@ export type { OrderDTO, OrderStatus } from './_contract'
 | `/ddd-application-service` | Design/implement use cases and application services |
 | `/ddd-infrastructure-adapter` | Implement repository or outbox adapters |
 | `/ddd-layer-audit` | Audit layer compliance and D24 violations |
-| `/ddd-slice-scaffold` | Scaffold a complete new DDD slice (all 4 layers) |
+| `/ddd-module-scaffold` | Scaffold a complete new DDD module (all 4 layers) |
 
 ## Related Repository Files
 
@@ -212,4 +212,4 @@ export type { OrderDTO, OrderStatus } from './_contract'
 - Architecture SSOT: `docs/architecture/README.md`
 - Domain model: `docs/architecture/models/domain-model.md`
 - Application service spec: `docs/architecture/blueprints/application-service-spec.md`
-- Feature slices: `src/features/README.md`
+- Domain modules: `src/modules/README.md`

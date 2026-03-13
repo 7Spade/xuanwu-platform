@@ -2,7 +2,7 @@
 name: xuanwu-architect
 description: 'Design or audit Xuanwu architecture: vertical slices, boundary compliance, remediation, legacy decoupling, logic design, and performance-sensitive structural changes.'
 agent: 'xuanwu-architect'
-argument-hint: 'Target path or architecture task, e.g.: src/features/workspace.slice | design new reporting slice'
+argument-hint: 'Target path or architecture task, e.g.: src/modules/workspace.module | design new reporting slice'
 ---
 
 # Xuanwu Architecture Workflow
