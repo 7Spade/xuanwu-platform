@@ -135,14 +135,18 @@ UI Action (React component / form)
 
 | Module | Layer | Bounded Context |
 |--------|-------|----------------|
-| `org.module/` | SaaS | Organization · Namespace · Team · Identity (User) |
+| `org.module/` | SaaS | Organization · Team · Identity (User) |
+| `namespace.module/` | SaaS | Namespace (shared: org namespaces + personal user namespaces) |
 | `workspace.module/` | Workspace | Workspace · WBS · Issue · CR · QA · Acceptance · Baseline |
 | `file.module/` | Workspace | File · FileVersion · Document Intelligence (DocParse · ObjExtract) |
+| `work.module/` | Workspace | Work Items · Milestones · Dependencies |
+| `fork.module/` | Workspace | Fork Network (planning branches · merge-back proposals) |
 | `workforce.module/` | Bridge | Workforce Scheduling (SaaS ↔ Workspace) |
 | `settlement.module/` | SaaS | Settlement · AR · AP |
 | `notification.module/` | SaaS (cross-cutting) | Notification Engine · Inbox · Email · Mobile Push |
 | `social.module/` | SaaS | Social Graph (Star/Watch/Follow) · Feed · Dashboard · Discovery |
-| `achievement.module/` | SaaS | Achievement Rules · Badge Unlocking · User Profile achievements |
+| `achievement.module/` | SaaS | Achievement Rules · Badge Unlocking |
+| `profile.module/` | SaaS (cross-cutting) | User Profile (aggregates from social.module + achievement.module) |
 
 ---
 

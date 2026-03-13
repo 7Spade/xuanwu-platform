@@ -356,6 +356,83 @@ src/modules/
 
 ---
 
+## Issue 16：`org.module` 和 `achievement.module` — `Namespace` 與 `Profile` 應為獨立 Module ✅ FIXED
+
+**檔案：** `docs/architecture/README.md`（Domain Modules 章節）、`src/modules/README.md`、`src/modules/org.module/`、`src/modules/achievement.module/`
+**嚴重程度：** 高
+
+### 問題描述
+
+#### 16-A：`NS`（Namespace）被歸入 `org.module`，但應為獨立模組
+
+`core-logic.mermaid` Section A 顯示 Namespace 同時服務兩個路徑：
+
+| 路徑 | 操作 |
+|------|------|
+| 組織建立路徑 | `Org->>NS: register organization namespace` |
+| 個人工作空間路徑 | `User->>NS: register personal namespace` |
+| 共享行為 | `NS->>WS: bind workspace under [org|personal] namespace` |
+| Section H | `NS->>WS: resolve workspace path and ownership scope` |
+
+`NS` 不是 `org.module` 的子集 — 它是一個**獨立的共享服務**，同時被組織和個人用戶使用。將它歸入 `org.module` 會造成個人工作空間依賴組織模組的錯誤邊界。
+
+#### 16-B：`Profile`（使用者檔案）被歸入 `achievement.module`，但應為獨立模組
+
+`Profile` 在 Section H（`Note over User,Profile: H. SaaS Extensions`）的章節標題中出現，表明它不僅屬於成就系統。多個 bounded context 寫入或讀取 Profile：
+
+| 模組 | 對 Profile 的操作 |
+|------|------------------|
+| `achievement.module` | `Achv->>Profile: unlock and render badge` |
+| `social.module` | 社交圖譜上下文中讀取用戶 Profile 資料 |
+
+`Profile` 是跨領域的讀寫匯聚點，應為獨立模組。
+
+#### 16-C：其他尚未有獨立 Module 的 Participant
+
+| Participant | 所在章節 | 說明 |
+|-------------|---------|------|
+| `Work`（Work Items / Milestones / Dependencies） | Section H | 輕量規劃原語，與 WBS Tasks 不同；`Work->>WBS: attach WBS structured records` |
+| `Forks`（Fork Network） | Section H | 工作空間規劃分支管理；`Forks->>CR: submit merge-back proposal` |
+| `Apps`（Other Workspace Apps） | Section H | 文件、目標、表單、資產等模組 — 定義較模糊，暫歸入 `workspace.module` 待後續細化 |
+
+### 修正
+
+已新增 4 個 Domain Module 的完整目錄骨架（共計 12 個模組）：
+
+```
+src/modules/
+├── namespace.module/   ← 新增（從 org.module 提取）
+│   ├── index.ts
+│   ├── domain.namespace/  (_entity, _value-objects, _ports, _events)
+│   ├── core/              (_use-cases, _actions, _queries)
+│   ├── infra.firestore/   (_repository, _mapper)
+│   └── _components/
+├── profile.module/     ← 新增（從 achievement.module 提取）
+│   ├── index.ts
+│   ├── domain.profile/
+│   ├── core/
+│   ├── infra.firestore/
+│   └── _components/
+├── work.module/        ← 新增
+│   ├── index.ts
+│   ├── domain.work/
+│   ├── core/
+│   ├── infra.firestore/
+│   └── _components/
+└── fork.module/        ← 新增
+    ├── index.ts
+    ├── domain.fork/
+    ├── core/
+    ├── infra.firestore/
+    └── _components/
+```
+
+已更新 `org.module/index.ts` 說明 Namespace 已遷移至 `namespace.module`。
+已更新 `achievement.module/index.ts` 說明 Profile 已遷移至 `profile.module`，並透過 `IProfileBadgeWritePort` 跨模組寫入。
+已更新 `docs/architecture/README.md` 和 `src/modules/README.md` 的 Domain Modules 表格以反映完整的 12 個模組。
+
+---
+
 ## 摘要表 / Summary
 
 | # | 嚴重程度 | 受影響檔案 | 問題類型 | 狀態 |
@@ -375,3 +452,4 @@ src/modules/
 | 13 | 低 | `.github/prompts/ddd-slice-scaffold.prompt.md` | `.serena\memories\*` 幻象本地路徑 | ✅ Fixed |
 | 14 | 低至中 | 14 個 prompt/agent/instruction/skill 檔案 | 殘留 "slice" 術語或路徑慣例不符 `<name>.module/` | ✅ Fixed |
 | 15 | 高 | `docs/architecture/README.md`、`src/modules/README.md`、`src/modules/` | `core-logic.mermaid` 中 3 個 Bounded Context（Notification、Social、Achievement）未對應到任何 Domain Module | ✅ Fixed |
+| 16 | 高 | `org.module/`、`achievement.module/`、`docs/architecture/README.md`、`src/modules/README.md` | `Namespace` 被錯誤歸入 `org.module`；`Profile` 被錯誤歸入 `achievement.module`；`Work`、`Fork` 無獨立 Module | ✅ Fixed |
