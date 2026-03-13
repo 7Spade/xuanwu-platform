@@ -24,6 +24,7 @@ This index covers all PRs in the xuanwu-platform repository (2026-03-13).
 - `project/overview` — Purpose, tech stack, key architectural decisions
 - `project/commands` — Development, lint, type-check commands; task completion workflow
 - `project/architecture` — Domain modules, DDD layers, design system, Firebase structure, App Router layout
+- `project/domain-lookup` — **Domain Routing Table**: 15 domains × 核心問題 × 主要概念 + Decision Flowchart. Use when deciding which module to implement a new feature in.
 
 ### PR history memories
 - `pr-history/pr-01-parallel-routes` — Next.js @sidebar parallel routes
