@@ -52,7 +52,7 @@
     "software-planning": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@joshuarileydev/software-planning-tool"],
+      "args": ["-y", "github:NightTrek/Software-planning-mcp"],
       "tools": ["*"]
     },
     "playwright": {
@@ -64,7 +64,7 @@
     "next-devtools": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@next/mcp"],
+      "args": ["-y", "next-devtools-mcp@latest"],
       "tools": ["*"]
     },
     "shadcn": {

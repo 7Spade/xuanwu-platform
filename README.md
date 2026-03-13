@@ -37,7 +37,7 @@ Configure the following MCP servers at **[Settings → Copilot → Coding Agent]
 | ⭐⭐⭐ | **Repomix** | `npx repomix --mcp` | Pack the full repository into an AI-readable snapshot; enables agents to understand the entire DDD layer structure at once |
 | ⭐⭐⭐ | **Context7** | `npx @upstash/context7-mcp` | Retrieve version-accurate Next.js 15, React 19, and Tailwind v4 documentation on demand |
 | ⭐⭐⭐ | **Sequential Thinking** | `npx @modelcontextprotocol/server-sequential-thinking` | Multi-step structured reasoning — essential for DDD layer decomposition, domain modeling, and debugging complex route boundaries |
-| ⭐⭐⭐ | **Software Planning** | `npx @joshuarileydev/software-planning-tool` | Implementation plan and todo tracking across DDD modules and parallel route features |
+| ⭐⭐⭐ | **Software Planning** | `npx github:NightTrek/Software-planning-mcp` | Implementation plan and todo tracking across DDD modules and parallel route features |
 | ⭐⭐⭐ | **Serena** | `uvx --from git+https://github.com/oraios/serena serena start-mcp-server --context ide` | Deep TypeScript symbol navigation, cross-file rename, and persistent per-project memory across sessions |
 | ⭐⭐⭐ | **Firebase** | `npx firebase-mcp-server` | Firestore, Firebase Auth, and Firebase App Hosting management — core to this project's infrastructure |
 
@@ -46,7 +46,7 @@ Configure the following MCP servers at **[Settings → Copilot → Coding Agent]
 | Priority | Server Name | npm / install | Why it matters for this project |
 |----------|-------------|---------------|----------------------------------|
 | ⭐⭐ | **Playwright** | `npx @playwright/mcp@latest` | Browser automation for end-to-end testing of Next.js parallel routes and intercepting routes |
-| ⭐⭐ | **Next.js DevTools** | `npx @next/mcp` | Next.js dev-server diagnostics, route inspection, and runtime performance analysis |
+| ⭐⭐ | **Next.js DevTools** | `npx next-devtools-mcp@latest` | Next.js dev-server diagnostics, route inspection, and runtime performance analysis |
 | ⭐⭐ | **shadcn/ui** | `npx shadcn@latest` | Install and compose shadcn/ui components without leaving Copilot — accelerates UI layer implementation |
 | ⭐⭐ | **Markitdown** | `npx markitdown-mcp` | Convert external URLs and design docs to Markdown for AI consumption during research and architecture tasks |
 | ⭐ | **Everything** | `npx @modelcontextprotocol/server-everything` | General-purpose MCP protocol testing and utility tasks |
@@ -61,9 +61,9 @@ Configure the following MCP servers at **[Settings → Copilot → Coding Agent]
     "repomix":             { "type": "stdio", "command": "npx", "args": ["-y", "repomix", "--mcp"], "tools": ["*"] },
     "context7":            { "type": "stdio", "command": "npx", "args": ["-y", "@upstash/context7-mcp"], "tools": ["*"] },
     "sequential-thinking": { "type": "stdio", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"], "tools": ["*"] },
-    "software-planning":   { "type": "stdio", "command": "npx", "args": ["-y", "@joshuarileydev/software-planning-tool"], "tools": ["*"] },
+    "software-planning":   { "type": "stdio", "command": "npx", "args": ["-y", "github:NightTrek/Software-planning-mcp"], "tools": ["*"] },
     "playwright":          { "type": "stdio", "command": "npx", "args": ["-y", "@playwright/mcp@latest"], "tools": ["*"] },
-    "next-devtools":       { "type": "stdio", "command": "npx", "args": ["-y", "@next/mcp"], "tools": ["*"] },
+    "next-devtools":       { "type": "stdio", "command": "npx", "args": ["-y", "next-devtools-mcp@latest"], "tools": ["*"] },
     "shadcn":              { "type": "stdio", "command": "npx", "args": ["-y", "shadcn@latest", "mcp"], "tools": ["*"] },
     "markitdown":          { "type": "stdio", "command": "uvx", "args": ["markitdown-mcp"], "tools": ["*"] },
     "everything":          { "type": "stdio", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-everything"], "tools": ["*"] },
