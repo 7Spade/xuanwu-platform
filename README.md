@@ -72,6 +72,8 @@ Configure the following MCP servers at **[Settings → Copilot → Coding Agent]
 ```
 
 > **Why these MCPs?** The GitHub Copilot Coding Agent browser environment operates without a local IDE. MCP servers provide the agent with tools to read/write files, fetch documentation, plan multi-step implementations, and validate changes — all remotely. For a DDD + Next.js parallel routing project, Repomix (codebase snapshot), Context7 (framework docs), Serena (TypeScript symbol intelligence), and Sequential Thinking (layered reasoning) are the highest-leverage additions.
+>
+> **`filesystem` path note:** The Coding Agent config above uses `"."` (execution dir = repo root). The VS Code local config in `.vscode/mcp.json` uses `"${workspaceFolder}"` (VS Code variable substitution). Both resolve to the repo root — the format differs by environment.
 
 ---
 

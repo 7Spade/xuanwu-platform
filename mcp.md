@@ -91,6 +91,7 @@
 ```
 
 > **注意事項：**
+> - `filesystem` 伺服器：Coding Agent 使用 `"."` （執行目錄即 repo 根目錄）；VS Code 本機使用 `"${workspaceFolder}"` （VS Code 變數替換）。兩者行為相同，格式不同。
 > - `serena` 需要 `uv` / `uvx` 工具。若 Coding Agent 環境缺少，請在 `.github/workflows/copilot-setup-steps.yml` 加入安裝步驟。
 > - `firebase-mcp-server` 需要 Firebase 認證。請在 Copilot 環境的 `Secrets` 中設定 `COPILOT_MCP_FIREBASE_*` 對應的憑證，並透過 `env:` 欄位注入。
 
