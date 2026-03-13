@@ -162,3 +162,30 @@ export async function getUser(idToken: string) {
 
 > ⚠️ `FIREBASE_SERVICE_ACCOUNT_JSON` is server-only and must **never** be prefixed with `NEXT_PUBLIC_`.
 > Client-side config values (`NEXT_PUBLIC_*`) are intentionally public — Firebase security is enforced via Security Rules and App Check.
+
+---
+
+## 6️⃣ 與 Presentation 層整合（Vis + PDnD）
+
+Firebase 資料供應給 `presentation/` 層的 Vis.js 和 PDnD 組件。完整整合指南請參見：
+
+👉 [`src/design-system/presentation/README.md`](../../design-system/presentation/README.md)
+
+**資料流摘要：**
+
+```
+Firestore / RealtimeDB
+  └→ Server Action（cacheAside from functions/db/cacheLayer）
+      └→ serialised props（networkNodes / timelineItems / VisDateMetadata）
+          └→ VisNetwork / VisTimeline / DragDropBoard（presentation 層渲染）
+              └→ 用戶操作 → commitBatch（回寫 Firestore）
+```
+
+**presentation 層用到的關鍵 Firebase 模組：**
+
+| 模組 | 用途 |
+|------|------|
+| `functions/db/cacheLayer.ts` — `cacheAside` | Server Action 讀取 networkNodes / timelineItems |
+| `functions/db/batchWrite.ts` — `commitBatch` | 拖拽 / 節點變更後批次回寫 |
+| `client/firestore.ts` — `getFirestoreDb` | 客戶端低頻 `onSnapshot`（選擇性） |
+| `shared/interfaces` — `VisDateMetadata` | vis-date 時間位置契約 |
