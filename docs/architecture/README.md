@@ -73,8 +73,8 @@ The system is divided into two primary layers with a governing boundary between 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                            SaaS Layer                                    │
-│  Identity · Account · Organization · Namespace  ·  Settlement  ·        │
-│  Social  ·  Notification  ·  Achievement                                 │
+│  Identity · Account (+ Teams/Membership) · Namespace  ·  Settlement  ·  │
+│  Social  ·  Notification  ·  Achievement  ·  Audit  ·  Search           │
 │              ┌──────────────────────┐                                    │
 │              │  Workforce Scheduling │  ← Bridge                        │
 │              └──────────────────────┘                                    │
@@ -83,7 +83,8 @@ The system is divided into two primary layers with a governing boundary between 
 ┌───────────────────────────────▼──────────────────────────────────────────┐
 │                        Workspace Layer                                   │
 │  Workspace · WBS · Issue · CR · QA · Acceptance · Baseline ·            │
-│  Files · Intelligence Pipeline · Work Items/Milestones · Fork Network   │
+│  Files · Intelligence Pipeline · Work Items/Milestones · Fork Network · │
+│  Collaboration (Comments · Presence · Co-editing)                        │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -96,8 +97,7 @@ See [Service Boundary](./catalog/service-boundary.md) for crossing protocols and
 | Module | Location | Layer | Description |
 |--------|----------|-------|-------------|
 | Identity | `src/modules/identity.module/` | SaaS (cross-cutting) | Authentication · Credentials · Sessions · Identity Providers (replaces raw Firebase Auth) |
-| Account | `src/modules/account.module/` | SaaS | Unified Account entity (AccountType: personal \| organization) · Public profile · Badges |
-| Organization | `src/modules/org.module/` | SaaS | Organization operational concerns: Team, member governance (org Account entity is in account.module) |
+| Account | `src/modules/account.module/` | SaaS | Unified Account entity (AccountType: personal \| organization) · Public profile · Team + Membership governance (absorbed from removed org.module) |
 | Namespace | `src/modules/namespace.module/` | SaaS | Namespace (shared path-resolution: org account namespaces + personal account namespaces) |
 | Workspace | `src/modules/workspace.module/` | Workspace | Workspace, WBS, Issue, CR, QA, Acceptance, Baseline |
 | File & Intel | `src/modules/file.module/` | Workspace | Files, Document Parsing, Object Extraction, Intelligence Pipeline |
@@ -108,8 +108,12 @@ See [Service Boundary](./catalog/service-boundary.md) for crossing protocols and
 | Notification | `src/modules/notification.module/` | SaaS (cross-cutting) | Notification Engine, Inbox, Email, Mobile Push |
 | Social | `src/modules/social.module/` | SaaS | Social Graph (Star/Watch/Follow), Feed, Dashboard, Discovery |
 | Achievement | `src/modules/achievement.module/` | SaaS | Achievement Rules, Badge Unlocking (projected to account.module via IAccountBadgeWritePort) |
+| Collaboration | `src/modules/collaboration.module/` | Workspace (cross-cutting) | Comments, Reactions, Presence, Co-editing sessions |
+| Search | `src/modules/search.module/` | SaaS (cross-cutting) | Full-text + semantic search index, unified query surface |
+| Audit | `src/modules/audit.module/` | SaaS (cross-cutting) | Audit trail (immutable), Policy automation (Sec), Compliance reports |
 
 > Each module is self-contained — ports, value objects, and infrastructure adapters live inside the module, not in shared global directories.
+> Every module folder contains a `README.md` documenting its bounded context, aggregates, and cross-module dependencies.
 > See [`core-logic.mermaid`](./diagrams/core-logic.mermaid) for the full interaction sequence that drove this module decomposition.
 
 ---

@@ -496,6 +496,53 @@ src/modules/
 
 ---
 
+## Issue 18：新增 `collaboration.module`、`search.module`、`audit.module`；移除 `org.module`；補全 `README.md` ✅ FIXED
+
+**檔案：** `src/modules/`、`docs/architecture/README.md`、`src/modules/README.md`  
+**嚴重程度：** 高
+
+### 問題描述
+
+| 缺失點 | 描述 |
+|--------|------|
+| 無 `collaboration.module` | 平台無統一的協作邊界（評論、回應、即時在場、協同編輯） |
+| 無 `search.module` | 跨 BC 的全文/語意搜尋沒有獨立 Bounded Context |
+| 無 `audit.module` | `core-logic.mermaid` 的 `Sec`（完整性與政策自動化）參與者未被分配到任何模組；稽核日誌也缺乏歸屬 |
+| `org.module` 冗餘 | Team/Membership 操作關切點可由 `account.module`（AccountType: organization）的子聚合吸收 |
+| 所有模組缺少 `README.md` | 沒有每個模組的邊界、聚合、跨模組依賴說明文件 |
+
+### 修正
+
+新增 3 個 Domain Module 骨架，移除 1 個冗餘 Module，並為所有 15 個模組新增 `README.md`（13 - 1 + 3 = 15）：
+
+```
+src/modules/
+├── collaboration.module/  ← 新增（評論、回應、在場、協同編輯）
+├── search.module/         ← 新增（全文/語意搜尋索引 + 查詢介面）
+├── audit.module/          ← 新增（不可變稽核日誌、Sec 政策自動化）
+└── org.module/            ← 移除（Team/Membership 吸收至 account.module）
+```
+
+**每個模組均新增 `README.md`（15 個）**，記載：
+- Bounded Context 描述
+- 模組擁有的關切點（表格）
+- 不擁有的關切點（表格）
+- 跨模組依賴（方向 + 原因）
+- 標準 4 層目錄結構
+
+**`account.module` 更新：**
+- `_entity.ts`：加入 `Team` 和 `Membership` 子聚合（僅適用於 AccountType: organization）
+- `_value-objects.ts`：加入 `TeamId`、`TeamName`、`MemberRole`、`MembershipStatus`
+- `_ports.ts`：加入 `ITeamRepository`、`IMembershipRepository`
+- `core/_use-cases.ts`：加入 `CreateTeamUseCase`、`AddTeamMemberUseCase` 等
+- `index.ts`：更新說明，移除對已刪除 `org.module` 的引用
+
+**架構文件更新：**
+- `docs/architecture/README.md`：Domain Modules 表格 13→15，SaaS/Workspace 邊界圖更新
+- `src/modules/README.md`：Domain Modules 表格 13→15，新增 README 說明
+
+---
+
 ## 摘要表 / Summary
 
 | # | 嚴重程度 | 受影響檔案 | 問題類型 | 狀態 |
@@ -517,3 +564,4 @@ src/modules/
 | 15 | 高 | `docs/architecture/README.md`、`src/modules/README.md`、`src/modules/` | `core-logic.mermaid` 中 3 個 Bounded Context（Notification、Social、Achievement）未對應到任何 Domain Module | ✅ Fixed |
 | 16 | 高 | `org.module/`、`achievement.module/`、`docs/architecture/README.md`、`src/modules/README.md` | `Namespace` 被錯誤歸入 `org.module`；`Profile` 被錯誤歸入 `achievement.module`；`Work`、`Fork` 無獨立 Module | ✅ Fixed |
 | 17 | 高 | `src/modules/`、`docs/architecture/README.md`、`src/modules/README.md` | 缺少 `identity.module`（認證邊界）和 `account.module`（統一帳戶模型）；`profile.module` 冗餘 | ✅ Fixed |
+| 18 | 高 | `src/modules/`、`docs/architecture/README.md`、`src/modules/README.md` | 缺少 `collaboration.module`、`search.module`、`audit.module`；`org.module` 冗餘；所有模組缺少 `README.md` | ✅ Fixed |

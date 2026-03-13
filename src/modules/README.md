@@ -136,8 +136,7 @@ UI Action (React component / form)
 | Module | Layer | Bounded Context |
 |--------|-------|----------------|
 | `identity.module/` | SaaS (cross-cutting) | Identity · Authentication · Sessions · Credentials (replaces raw Firebase Auth) |
-| `account.module/` | SaaS | Unified Account entity (AccountType: personal \| organization) · Public profile · Badges |
-| `org.module/` | SaaS | Organization operational concerns: Team · Member governance |
+| `account.module/` | SaaS | Unified Account entity (AccountType: personal \| organization) · Public profile · Team + Membership governance |
 | `namespace.module/` | SaaS | Namespace (shared: org account namespaces + personal account namespaces) |
 | `workspace.module/` | Workspace | Workspace · WBS · Issue · CR · QA · Acceptance · Baseline |
 | `file.module/` | Workspace | File · FileVersion · Document Intelligence (DocParse · ObjExtract) |
@@ -148,6 +147,11 @@ UI Action (React component / form)
 | `notification.module/` | SaaS (cross-cutting) | Notification Engine · Inbox · Email · Mobile Push |
 | `social.module/` | SaaS | Social Graph (Star/Watch/Follow) · Feed · Dashboard · Discovery |
 | `achievement.module/` | SaaS | Achievement Rules · Badge Unlocking (projected to account.module) |
+| `collaboration.module/` | Workspace (cross-cutting) | Comments · Reactions · Presence · Co-editing sessions |
+| `search.module/` | SaaS (cross-cutting) | Full-text + semantic search index · Unified query surface |
+| `audit.module/` | SaaS (cross-cutting) | Audit trail (immutable) · Policy automation (Sec) · Compliance reports |
+
+> Each module folder contains a `README.md` documenting its bounded context, aggregates, and cross-module dependencies.
 
 ---
 

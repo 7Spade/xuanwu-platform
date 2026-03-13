@@ -46,3 +46,27 @@ This index covers all PRs in the xuanwu-platform repository (2026-03-13).
 7. **PR #8** — (Not merged) agent-memory verification
 8. **PR #9** — 🧹 Docs: clean up stale paths from PRs #1–#8
 9. **PR #10** — 🧹 Docs: features→modules rename, design-system tokens, VS Code URL fixes
+
+## stacked PR: create-modules-for-mddd
+`copilot/create-modules-for-mddd` (stacked on `copilot/init-serena-and-index-memory`)
+
+Scaffolded all Domain Modules from `core-logic.mermaid` analysis.
+Final state: **15 modules** (13 - org - profile + collaboration + search + audit).
+
+| PR iteration | Action |
+|---|---|
+| feat: scaffold 8 MDDD modules | org, workspace, file, workforce, settlement, notification, social, achievement |
+| feat: extract namespace + work + fork + profile (8→12) | namespace, work, fork, profile added; profile as cross-cutting BC |
+| feat: add identity.module + account.module, remove profile.module (12→13) | identity (auth), account (unified personal\|org); profile removed |
+| feat: add collaboration/search/audit, delete org.module, add per-module READMEs (13→15) | +collaboration, +search, +audit; org removed; 15×README.md |
+
+**Removed modules:**
+- `org.module` — Team/Membership absorbed into account.module (AccountType: organization sub-aggregates)
+- `profile.module` — public profile is a sub-aggregate of account.module
+
+**New modules:**
+- `identity.module` — auth boundary, replaces raw Firebase Auth SDK usage
+- `account.module` — unified Account (personal|organization) with Team/Membership sub-aggregates
+- `collaboration.module` — comments, reactions, presence, co-editing
+- `search.module` — cross-BC search index and query surface
+- `audit.module` — immutable audit trail + Sec policy automation (previously unowned)
