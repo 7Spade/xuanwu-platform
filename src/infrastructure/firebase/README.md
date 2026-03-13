@@ -180,10 +180,6 @@ Firestore / RealtimeDB
 ```
 
 **presentation 層用到的關鍵 Firebase 模組：**
-              └→ 用戶操作 → commitBatch（回寫 Firestore）
-```
-
-**presentation 層用到的關鍵 Firebase 模組：**
 
 | 模組 | 用途 |
 |------|------|
