@@ -1,6 +1,6 @@
 # xuanwu-platform
 
-A Next.js 15 platform with **parallel routing** and **Domain-Driven Design (DDD)** architecture, fully configured for GitHub Copilot Coding Agent browser-environment development.
+A Next.js 15 platform with **parallel routing** and **Modular Domain-Driven Design (Modular DDD)** architecture, fully configured for GitHub Copilot Coding Agent browser-environment development.
 
 ---
 
@@ -189,7 +189,25 @@ This repository ships a complete set of GitHub Copilot customizations under `.gi
 
 ## 🏗 Architecture Overview
 
-This project follows a **Domain-Driven Design (DDD)** architecture with **Next.js 15 parallel routing**.
+This project follows a **Modular Domain-Driven Design (Modular DDD)** architecture with **Next.js 15 parallel routing**. Each bounded context is a self-contained feature slice under `src/features/`; slices communicate only through their public `index.ts` barrel.
+
+### Design System
+
+```
+src/design-system/
+├── primitives/   ← shadcn/ui components (Button, Input, Dialog, …)
+├── components/   ← project-specific wrappers
+└── patterns/     ← higher-order composites (tables, sidebars, …)
+```
+
+Import from the appropriate tier:
+```ts
+import { Button }      from "@/design-system/primitives";
+import { SearchField } from "@/design-system/components";
+import { LoginForm }   from "@/design-system/patterns";
+```
+
+Drag-and-drop interactions use **`@atlaskit/pragmatic-drag-and-drop`**. Visual Indicators (VIs) — the visible drop-indicator lines and zone highlights rendered during a drag operation — come from `@atlaskit/pragmatic-drag-and-drop-react-drop-indicator` and are always pure Presentation-layer components.
 
 ### DDD Layer Structure
 
@@ -217,7 +235,10 @@ src/
 | Framework | Next.js 15 (App Router, parallel routes) |
 | Language | TypeScript 5 |
 | UI | React 19, Tailwind CSS v4 |
+| Design System | Three-tier (`primitives` → shadcn/ui, `components` → wrappers, `patterns` → composites) |
+| Drag and Drop | `@atlaskit/pragmatic-drag-and-drop` + Visual Indicators (VIs) |
 | Validation | Zod |
+| Backend / DB | Firebase (Firestore, Auth, Storage, App Check) |
 | Testing | (to be configured) |
 
 ---

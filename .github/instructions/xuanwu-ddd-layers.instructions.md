@@ -24,13 +24,13 @@ All code in `src/` MUST respect the layer dependency direction defined below.
                │ depends on
 ┌──────────────┴───────────────┐
 │ Domain Layer                 │  src/**/domain.*/
-│ (Entities / ValueObjects /   │  src/shared-kernel/value-objects/
-│  Domain Services / Rules)    │  src/shared-kernel/data-contracts/
+│ (Entities / ValueObjects /   │  (value objects, ports, and events
+│  Domain Services / Rules)    │   live inside the owning slice)
 └──────────────▲───────────────┘
                │ depends on
 ┌──────────────┴───────────────┐
-│ Infrastructure Layer         │  src/shared-infra/
-│ (DB / API / Queue / Storage) │  src/features/infra.*/
+│ Infrastructure Layer         │  src/features/<slice>/infra.*/
+│ (DB / API / Queue / Storage) │  (Firebase adapters, repo impls)
 └──────────────────────────────┘
 ```
 
@@ -45,7 +45,7 @@ All code in `src/` MUST respect the layer dependency direction defined below.
 ### Application Layer (Use Cases / Application Services)
 - MUST NOT import from Presentation or Infrastructure directly.
 - MUST call Domain objects (entities, value objects, domain services) for business logic.
-- MUST call Infrastructure via **port interfaces** defined in `src/shared-kernel/ports/`.
+- MUST call Infrastructure via **port interfaces** defined within the same feature slice's domain layer.
 - MUST NOT contain business rule logic — delegate to Domain layer.
 - Orchestrates: load aggregate → apply domain logic → persist via port → emit event.
 
@@ -57,16 +57,16 @@ All code in `src/` MUST respect the layer dependency direction defined below.
 - Domain Services handle logic that doesn't belong to a single entity.
 
 ### Infrastructure Layer (Repositories / Adapters / Queue / Storage)
-- MUST implement port interfaces defined in `src/shared-kernel/ports/`.
+- MUST implement port interfaces defined within the owning feature slice's domain layer.
 - MUST NOT contain business logic.
 - MUST NOT be imported by Application or Domain layers directly (use ports).
-- Adapter implementations live in `src/features/infra.*/` or `src/shared-infra/`.
+- Adapter implementations live in `src/features/<slice>/infra.<adapter>/`.
 
 ## Forbidden Imports (violates layer direction)
 
 ```typescript
 // ❌ Application layer calling Infrastructure directly (bypass port)
-import { FirestoreAdapter } from '@/shared-infra/firebase-client'
+import { FirestoreAdapter } from '@/features/org.slice/infra.firestore/_repository'
 
 // ❌ Domain layer importing Application logic
 import { createTaskUseCase } from '@/features/workspace.slice/core/_use-cases'
@@ -80,8 +80,8 @@ import { createTask } from '@/features/workspace.slice'
 // ✅ Correct: Application → Domain (entity/VO)
 import { TaskEntity } from './_entity'
 
-// ✅ Correct: Application → Port interface (not adapter)
-import type { IFirestoreRepo } from '@/shared-kernel'
+// ✅ Correct: Application → Port interface defined in the same slice
+import type { ITaskRepository } from './domain.tasks/_ports'
 ```
 
 ## File Placement Rules per Layer
@@ -110,4 +110,3 @@ UI Action
 - Domain model: `docs/architecture/models/domain-model.md`
 - Application services: `docs/architecture/blueprints/application-service-spec.md`
 - Infrastructure spec: `docs/architecture/guidelines/infrastructure-spec.md`
-- Ports: `src/shared-kernel/ports/`

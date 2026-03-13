@@ -33,19 +33,18 @@ It covers all four layers and the agent/prompt kit that drives the DDD developme
 │ Use Cases, Command Handlers, Query Handlers  │
 └─────────────────────▲────────────────────────┘
                       │ calls (Domain objects)
-                      │ calls (Port interfaces only)
+                      │ calls (Port interfaces in same slice)
 ┌─────────────────────┴────────────────────────┐
 │ Domain Layer                                 │
 │ src/features/{slice}/domain.*/_entity.ts     │
 │ src/features/{slice}/domain.*/_value-objects │
-│ src/shared-kernel/value-objects/             │
+│ src/features/{slice}/domain.*/_ports.ts      │
 │ Entities, VOs, Domain Services, Events       │
 └─────────────────────▲────────────────────────┘
                       │ implements (Port interfaces)
 ┌─────────────────────┴────────────────────────┐
 │ Infrastructure Layer                         │
-│ src/features/infra.*/                        │
-│ src/shared-infra/                            │
+│ src/features/{slice}/infra.{adapter}/        │
 │ src/features/{slice}/infra.outbox/           │
 │ Firestore repos, Event Bus, Outbox, Storage  │
 └──────────────────────────────────────────────┘
@@ -167,7 +166,7 @@ export class FirestoreOrderRepository implements IOrderRepository {
 ## Port Interface Pattern
 
 ```typescript
-// src/shared-kernel/ports/i-order-repository.ts
+// src/features/{slice}/domain.{context}/_ports.ts
 export interface IOrderRepository {
   findById(id: OrderId): Promise<OrderEntity | null>
   save(order: OrderEntity): Promise<void>
@@ -213,6 +212,4 @@ export type { OrderDTO, OrderStatus } from './_contract'
 - Architecture SSOT: `docs/architecture/README.md`
 - Domain model: `docs/architecture/models/domain-model.md`
 - Application service spec: `docs/architecture/blueprints/application-service-spec.md`
-- Port interfaces: `src/shared-kernel/ports/`
-- Infra contracts: `src/shared-kernel/infra-contracts/`
 - Feature slices: `src/features/README.md`
