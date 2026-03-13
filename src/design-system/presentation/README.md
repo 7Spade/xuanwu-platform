@@ -10,7 +10,7 @@
 
 `presentation/` 是 design-system 的第四層，專門存放高階 UI 互動模組：
 
-- **Vis.js** — 網路圖（`VisNetwork`）與時間軸（`VisTimeline`）渲染組件
+- **Vis.js** — 網路圖（`VisNetwork`）與時間軸（`VisTimeline`）渲染組件；以 `vis-data` 的 `DataSet` / `DataView` 做響應式資料管理
 - **Pragmatic Drag-and-Drop (PDnD)** — 以 `@atlaskit/pragmatic-drag-and-drop` 為底層的拖拽看板（`DragDropBoard`）
 
 所有組件均為 `"use client"` 組件，**不含業務邏輯**，不直接存取 Firestore。  
@@ -197,9 +197,24 @@ Callable Functions 統一入口（定義於 `functions/index.ts`）：
 
 #### VisNetwork / VisTimeline
 
-- 綁定 `nodes`、`edges`、`items` props（皆為 serialised Firestore 資料）
-- 對快取資料渲染，**不直接操作 DB**
-- 節點 / 事件變更時，先更新本地 state，再透過 Server Action 批次同步
+- 以 `vis-data` 的 **`DataSet`** 管理 `nodes`、`edges`、`items`，使 vis-network / vis-timeline 能響應式更新
+- 從 Server Action 拿到序列化資料後，填入 `DataSet` → 組件自動重新渲染，**不直接操作 DB**
+- 節點 / 事件變更時，更新 `DataSet` 條目，再透過 Server Action 批次同步到 Firestore
+
+```typescript
+import { DataSet } from "vis-data";
+import type { Node, Edge } from "vis-network";
+
+// 初始化 DataSet（由 Server Action serialised props 填入）
+const nodes = new DataSet<Node>(initialNodes);
+const edges = new DataSet<Edge>(initialEdges);
+
+// 更新節點（自動觸發 VisNetwork 重新渲染）
+nodes.update({ id: nodeId, label: newLabel });
+
+// 完成後批次回寫 Firestore
+await commitBatch(pendingOps);
+```
 
 #### DragDropBoard（PDnD）
 
@@ -237,10 +252,12 @@ Callable Functions 統一入口（定義於 `functions/index.ts`）：
 
 | 組件 | 依賴 | 狀態 |
 |------|------|------|
-| `VisNetwork.tsx` | `vis-network` | 待實現 |
-| `VisTimeline.tsx` | `vis-timeline` | 待實現 |
+| `VisNetwork.tsx` | `vis-network` + `vis-data` | 待實現 |
+| `VisTimeline.tsx` | `vis-timeline` + `vis-data` | 待實現 |
 | `DragDropBoard.tsx` | `@atlaskit/pragmatic-drag-and-drop` | 待實現 |
 | `DropIndicator` (VI) | `@atlaskit/pragmatic-drag-and-drop-react-drop-indicator` | 待實現 |
+
+> `vis-data` 是 `vis-network` 和 `vis-timeline` 共用的資料層依賴，提供 `DataSet` / `DataView` 響應式資料管理。
 
 ---
 
