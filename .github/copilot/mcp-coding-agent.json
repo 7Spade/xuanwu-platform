@@ -1,90 +1,90 @@
 {
-  "inputs": [
-    {
-      "id": "agentMemoryRedisUrl",
-      "type": "promptString",
-      "description": "Redis URL for agent-memory-server (e.g. rediss://default:PASSWORD@host:port)",
-      "password": true
-    },
-    {
-      "id": "agentMemoryOpenaiKey",
-      "type": "promptString",
-      "description": "OpenAI API key for agent-memory-server embeddings and generation",
-      "password": true
-    }
-  ],
-  "servers": {
+  "mcpServers": {
     "agent-memory": {
       "type": "stdio",
       "command": "uvx",
       "args": ["--from", "agent-memory-server", "agent-memory", "mcp"],
       "env": {
-        "REDIS_URL": "${input:agentMemoryRedisUrl}",
-        "OPENAI_API_KEY": "${input:agentMemoryOpenaiKey}",
+        "REDIS_URL": "$COPILOT_MCP_REDIS_URL",
+        "OPENAI_API_KEY": "$COPILOT_MCP_OPENAI_API_KEY",
         "DISABLE_AUTH": "true"
-      }
+      },
+      "tools": ["*"]
     },
     "filesystem": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "${workspaceFolder}"]
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
+      "tools": ["*"]
     },
     "repomix": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "repomix", "--mcp"]
+      "args": ["-y", "repomix", "--mcp"],
+      "tools": ["*"]
     },
     "context7": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp"]
+      "args": ["-y", "@upstash/context7-mcp"],
+      "tools": ["*"]
     },
     "sequential-thinking": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "tools": ["*"]
     },
     "software-planning": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@joshuarileydev/software-planning-tool"]
+      "args": ["-y", "@joshuarileydev/software-planning-tool"],
+      "tools": ["*"]
     },
     "playwright": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest"]
+      "args": ["-y", "@playwright/mcp@latest"],
+      "tools": ["*"]
     },
     "next-devtools": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@next/mcp"]
+      "args": ["-y", "@next/mcp"],
+      "tools": ["*"]
     },
     "shadcn": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "shadcn@latest", "mcp"]
+      "args": ["-y", "shadcn@latest", "mcp"],
+      "tools": ["*"]
     },
     "markitdown": {
       "type": "stdio",
       "command": "uvx",
-      "args": ["markitdown-mcp"]
+      "args": ["markitdown-mcp"],
+      "tools": ["*"]
     },
     "everything": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-everything"]
+      "args": ["-y", "@modelcontextprotocol/server-everything"],
+      "tools": ["*"]
     },
     "serena": {
       "type": "stdio",
       "command": "uvx",
-      "args": ["serena"]
+      "args": ["serena"],
+      "tools": ["*"]
     },
     "firebase-mcp-server": {
       "type": "stdio",
       "command": "npx",
       "args": ["-y", "firebase-mcp-server"],
+      "tools": ["*"],
       "env": {
-        "FIREBASE_PROJECT_ID": "xuanwu-i-00708880-4e2d8"
+        "FIREBASE_PROJECT_ID": "xuanwu-i-00708880-4e2d8",
+        "SERVICE_ACCOUNT_KEY_PATH": "$COPILOT_MCP_FIREBASE_SERVICE_ACCOUNT_KEY_PATH"
       }
     }
   }

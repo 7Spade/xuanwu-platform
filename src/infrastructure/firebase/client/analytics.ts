@@ -15,7 +15,7 @@ import {
   setUserProperties as _setUserProperties,
   type Analytics,
 } from "firebase/analytics";
-import { getFirebaseApp, resolvedFirebaseConfig } from "./app";
+import { getFirebaseApp, resolvedFirebaseConfig } from "../app";
 
 let _analytics: Analytics | null = null;
 

@@ -30,7 +30,7 @@ import {
   type DocumentData,
   type QueryConstraint,
 } from "firebase/firestore";
-import { getFirebaseApp } from "./app";
+import { getFirebaseApp } from "../app";
 
 let _db: Firestore | null = null;
 

@@ -14,7 +14,7 @@
  */
 
 import { getMessaging, type Messaging, getToken, onMessage } from "firebase/messaging";
-import { getFirebaseApp } from "./app";
+import { getFirebaseApp } from "../app";
 
 let _messaging: Messaging | null = null;
 

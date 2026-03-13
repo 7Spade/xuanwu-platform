@@ -25,7 +25,7 @@ features/
 - Presentation MUST NOT import from Domain or Infrastructure directly.
 - Application MUST NOT import from Presentation or Infrastructure (use ports).
 - Domain MUST be pure — no I/O, no framework imports.
-- Infrastructure implements ports from `@/shared-kernel/ports`.
+- Infrastructure implements ports defined within the feature slice's own domain layer.
 - Cross-slice access MUST go through another slice's `index.ts` barrel.
 
 See `docs/architecture/README.md` for the authoritative architecture guide.

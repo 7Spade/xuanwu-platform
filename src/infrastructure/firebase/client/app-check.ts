@@ -20,7 +20,7 @@ import {
   ReCaptchaEnterpriseProvider,
   type AppCheck,
 } from "firebase/app-check";
-import { getFirebaseApp } from "./app";
+import { getFirebaseApp } from "../app";
 
 /** Hardcoded reCAPTCHA Enterprise site key for the Xuanwu dev project. */
 const DEV_RECAPTCHA_ENTERPRISE_KEY = "6LfSHGgsAAAAAAjTO77dmeQ7rZntLtaB6kOv4qPT";
