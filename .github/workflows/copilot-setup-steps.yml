@@ -36,10 +36,10 @@ jobs:
         run: npm ci
 
       # uv is NOT installed on GitHub-hosted ubuntu runners by default.
-      # Serena MCP server is distributed as a Python package and launched via
-      # `uvx serena`, so uv must be present before the agent starts.
+      # Serena, markitdown, and agent-memory MCP servers are distributed as Python
+      # packages and launched via `uvx`, so uv must be present before the agent starts.
       # Reference: https://docs.github.com/en/copilot/using-github-copilot/coding-agent/extending-copilot-coding-agent-with-mcp#validating-your-mcp-configuration
-      - name: Install uv (required by Serena MCP server)
+      - name: Install uv (required by Serena, markitdown, and agent-memory MCP servers)
         uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
