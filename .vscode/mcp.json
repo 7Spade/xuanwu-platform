@@ -58,7 +58,10 @@
     "firebase-mcp-server": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "firebase-mcp-server"]
+      "args": ["-y", "firebase-mcp-server"],
+      "env": {
+        "FIREBASE_PROJECT_ID": "xuanwu-i-00708880-4e2d8"
+      }
     }
   }
 }

@@ -61,11 +61,35 @@ When VS Code Copilot Chat built-in memory is available (`github.copilot.chat.cop
 
 - Prioritize persisting: naming conventions, architectural decisions, recurring patterns, and facts that are unlikely to be obvious from a limited code sample.
 
+## Firebase MCP Usage
+
+This project is built on Firebase (`xuanwu-i-00708880-4e2d8`). The `firebase-mcp-server` MCP is pre-configured with the project ID. Use it to inspect and manage Firebase resources directly from agent tasks rather than writing one-off Admin SDK code.
+
+### When to use firebase-mcp-server
+
+| Scenario | Preferred tool |
+|----------|----------------|
+| Inspect Firestore collections/documents | `firebase-mcp-server/*` |
+| Check or validate Security Rules | `firebase-mcp-server/*` |
+| List Auth users or check custom claims | `firebase-mcp-server/*` |
+| Query Storage bucket paths | `firebase-mcp-server/*` |
+| Trigger or inspect Firebase Hosting deploys | `firebase-mcp-server/*` |
+| Server-side mutations in production code | Admin SDK in Server Actions |
+| Real-time subscriptions in the browser | Web SDK in Client Components |
+
+### Tool selection priority for Firebase work
+
+```
+firebase-mcp-server/* (inspect/admin) > Admin SDK (server mutations) > Web SDK (client real-time)
+```
+
+- For **data inspection**: use `firebase-mcp-server/*` — no code change needed.
+- For **server-side writes**: use the Admin SDK in Server Actions or Route Handlers.
+- For **client real-time**: use the Web SDK in Client Components.
+
 ## Serena MCP Usage
 
 If Serena MCP is configured in `.vscode/mcp.json`, it is the preferred code-intelligence tool. Agents must prefer Serena over raw file search whenever working with TypeScript symbols, references, or project memory.
-
-### Code intelligence (read-only)
 
 Prefer these tools over `grep`, `codebase`, or `search` when exploring TypeScript code:
 

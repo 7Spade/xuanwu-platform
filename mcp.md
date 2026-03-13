@@ -84,6 +84,10 @@
       "type": "local",
       "command": "npx",
       "args": ["-y", "firebase-mcp-server"],
+      "env": {
+        "FIREBASE_PROJECT_ID": "xuanwu-i-00708880-4e2d8",
+        "FIREBASE_SERVICE_ACCOUNT_KEY": "${COPILOT_MCP_FIREBASE_SERVICE_ACCOUNT_KEY}"
+      },
       "tools": ["*"]
     }
   }
@@ -93,7 +97,7 @@
 > **注意事項：**
 > - `filesystem` 伺服器：Coding Agent 使用 `"."` （執行目錄即 repo 根目錄）；VS Code 本機使用 `"${workspaceFolder}"` （VS Code 變數替換）。兩者行為相同，格式不同。
 > - `serena` 需要 `uv` / `uvx` 工具。若 Coding Agent 環境缺少，請在 `.github/workflows/copilot-setup-steps.yml` 加入安裝步驟。
-> - `firebase-mcp-server` 需要 Firebase 認證。請在 Copilot 環境的 `Secrets` 中設定 `COPILOT_MCP_FIREBASE_*` 對應的憑證，並透過 `env:` 欄位注入。
+> - `firebase-mcp-server` 已綁定至 Firebase 專案 `xuanwu-i-00708880-4e2d8`。Admin SDK 功能（Firestore write、Auth 管理等）需要 Service Account：在 GitHub 或 Copilot 環境的 Secrets 設定 `COPILOT_MCP_FIREBASE_SERVICE_ACCOUNT_KEY`（JSON 字串）。唯讀 / 結構查詢只需 `FIREBASE_PROJECT_ID`，本機開發亦可透過 `firebase login` 取得 ADC 憑證。
 
 ---
 
