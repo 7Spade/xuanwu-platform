@@ -3,11 +3,8 @@
  *
  * Lazily initialises the Analytics instance only in browser environments
  * where Analytics is supported. Analytics is optional — all calls gracefully
- * no-op when the measurement ID is missing or the environment doesn't support
- * Analytics (e.g., SSR).
- *
- * Required environment variable:
- *   NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+ * no-op when the environment doesn't support Analytics (e.g., SSR, blocked
+ * by browser).
  */
 
 import {
@@ -18,17 +15,17 @@ import {
   setUserProperties as _setUserProperties,
   type Analytics,
 } from "firebase/analytics";
-import { getFirebaseApp } from "./app";
+import { getFirebaseApp, resolvedFirebaseConfig } from "./app";
 
 let _analytics: Analytics | null = null;
 
 /**
  * Returns the Analytics singleton, or `null` when Analytics is not supported
- * (e.g., SSR, blocked by browser, missing measurement ID).
+ * (e.g., SSR, blocked by browser, measurement ID absent from config).
  */
 export async function getFirebaseAnalytics(): Promise<Analytics | null> {
   if (typeof window === "undefined") return null;
-  if (!process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID) return null;
+  if (!resolvedFirebaseConfig.measurementId) return null;
   if (_analytics) return _analytics;
 
   const supported = await isSupported();

@@ -50,3 +50,4 @@ export {
   setAnalyticsUserProperties,
 } from "./analytics";
 export { initAppCheck } from "./app-check";
+export { getFirebaseDatabase, dbRef, get, set, update, remove, push, onValue, off, rtdbServerTimestamp, type DataSnapshot, type DatabaseReference, type Unsubscribe } from "./database";
