@@ -135,8 +135,10 @@ UI Action (React component / form)
 
 | Module | Layer | Bounded Context |
 |--------|-------|----------------|
-| `org.module/` | SaaS | Organization · Team · Identity (User) |
-| `namespace.module/` | SaaS | Namespace (shared: org namespaces + personal user namespaces) |
+| `identity.module/` | SaaS (cross-cutting) | Identity · Authentication · Sessions · Credentials (replaces raw Firebase Auth) |
+| `account.module/` | SaaS | Unified Account entity (AccountType: personal \| organization) · Public profile · Badges |
+| `org.module/` | SaaS | Organization operational concerns: Team · Member governance |
+| `namespace.module/` | SaaS | Namespace (shared: org account namespaces + personal account namespaces) |
 | `workspace.module/` | Workspace | Workspace · WBS · Issue · CR · QA · Acceptance · Baseline |
 | `file.module/` | Workspace | File · FileVersion · Document Intelligence (DocParse · ObjExtract) |
 | `work.module/` | Workspace | Work Items · Milestones · Dependencies |
@@ -145,8 +147,7 @@ UI Action (React component / form)
 | `settlement.module/` | SaaS | Settlement · AR · AP |
 | `notification.module/` | SaaS (cross-cutting) | Notification Engine · Inbox · Email · Mobile Push |
 | `social.module/` | SaaS | Social Graph (Star/Watch/Follow) · Feed · Dashboard · Discovery |
-| `achievement.module/` | SaaS | Achievement Rules · Badge Unlocking |
-| `profile.module/` | SaaS (cross-cutting) | User Profile (aggregates from social.module + achievement.module) |
+| `achievement.module/` | SaaS | Achievement Rules · Badge Unlocking (projected to account.module) |
 
 ---
 

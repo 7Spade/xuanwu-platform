@@ -73,8 +73,8 @@ The system is divided into two primary layers with a governing boundary between 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                            SaaS Layer                                    │
-│  Organization · Namespace · Team  ·  Settlement  ·  Social  ·           │
-│  Notification  ·  Achievement  ·  Profile                                │
+│  Identity · Account · Organization · Namespace  ·  Settlement  ·        │
+│  Social  ·  Notification  ·  Achievement                                 │
 │              ┌──────────────────────┐                                    │
 │              │  Workforce Scheduling │  ← Bridge                        │
 │              └──────────────────────┘                                    │
@@ -95,8 +95,10 @@ See [Service Boundary](./catalog/service-boundary.md) for crossing protocols and
 
 | Module | Location | Layer | Description |
 |--------|----------|-------|-------------|
-| Organization | `src/modules/org.module/` | SaaS | Organization, Team, Identity |
-| Namespace | `src/modules/namespace.module/` | SaaS | Namespace (shared path-resolution: org namespaces + personal namespaces) |
+| Identity | `src/modules/identity.module/` | SaaS (cross-cutting) | Authentication · Credentials · Sessions · Identity Providers (replaces raw Firebase Auth) |
+| Account | `src/modules/account.module/` | SaaS | Unified Account entity (AccountType: personal \| organization) · Public profile · Badges |
+| Organization | `src/modules/org.module/` | SaaS | Organization operational concerns: Team, member governance (org Account entity is in account.module) |
+| Namespace | `src/modules/namespace.module/` | SaaS | Namespace (shared path-resolution: org account namespaces + personal account namespaces) |
 | Workspace | `src/modules/workspace.module/` | Workspace | Workspace, WBS, Issue, CR, QA, Acceptance, Baseline |
 | File & Intel | `src/modules/file.module/` | Workspace | Files, Document Parsing, Object Extraction, Intelligence Pipeline |
 | Work | `src/modules/work.module/` | Workspace | Work Items, Milestones, Dependencies |
@@ -105,8 +107,7 @@ See [Service Boundary](./catalog/service-boundary.md) for crossing protocols and
 | Settlement | `src/modules/settlement.module/` | SaaS | AR, AP, Settlement records |
 | Notification | `src/modules/notification.module/` | SaaS (cross-cutting) | Notification Engine, Inbox, Email, Mobile Push |
 | Social | `src/modules/social.module/` | SaaS | Social Graph (Star/Watch/Follow), Feed, Dashboard, Discovery |
-| Achievement | `src/modules/achievement.module/` | SaaS | Achievement Rules, Badge Unlocking |
-| Profile | `src/modules/profile.module/` | SaaS (cross-cutting) | User Profile (aggregates from social.module + achievement.module) |
+| Achievement | `src/modules/achievement.module/` | SaaS | Achievement Rules, Badge Unlocking (projected to account.module via IAccountBadgeWritePort) |
 
 > Each module is self-contained — ports, value objects, and infrastructure adapters live inside the module, not in shared global directories.
 > See [`core-logic.mermaid`](./diagrams/core-logic.mermaid) for the full interaction sequence that drove this module decomposition.

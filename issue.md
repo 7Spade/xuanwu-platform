@@ -433,6 +433,69 @@ src/modules/
 
 ---
 
+## Issue 17：缺少 `identity.module` 與 `account.module`；`profile.module` 可合併 ✅ FIXED
+
+**檔案：** `docs/architecture/README.md`（Domain Modules 章節）、`src/modules/README.md`、`src/modules/`
+**嚴重程度：** 高
+
+### 問題描述
+
+現有模組架構沒有明確的 **Authentication（身份識別）** 與 **Account（帳戶）** 邊界：
+
+| 缺失點 | 描述 |
+|--------|------|
+| 無 `identity.module` | Firebase Auth 的登入、登出、Session、Token 等操作分散在各處，沒有統一的 DDD 邊界管理 |
+| 無 `account.module` | User 與 Organization 作為兩個不同的「帳戶類型」，但沒有統一的 Account 實體 |
+| `profile.module` 可被吸收 | User Profile 的公開面向（顯示名稱、頭像、Badge）本質上是 Account 的公開資料，不需要獨立 BC |
+
+### 架構設計決策
+
+**`identity.module`** — 認證關切點（Authentication concern）：
+- 管理身份憑證、Provider（Firebase / Google / GitHub / Email）、Session Token、JWT Claims
+- 替代整個代碼庫中直接調用 Firebase Auth SDK 的方式
+- Identity 是「誰通過了身份驗證」，獨立於帳戶類型
+
+**`account.module`** — 帳戶實體（Account entity, unified）：
+- `AccountType: personal | organization` — 統一的帳戶模型
+- 個人帳戶在 Identity 完成註冊後自動建立
+- 組織帳戶在 Org 擁有者建立組織時建立
+- 公開 Profile 資料（顯示名稱、頭像、簡介、徽章）是 Account 的子聚合
+- 替代了分散的 User entity 和 Org account entity 概念
+
+**`profile.module` 被移除（冗餘）**：
+- Profile 是 Account 的公開面向，屬於 account.module 的 AccountProfile 子聚合
+- Achievement badge 寫入改由 `IAccountBadgeWritePort` 跨模組完成
+- Social 讀取改由 `IAccountSocialReadPort` 提供
+
+### 修正
+
+新增 2 個 Domain Module 骨架，移除 1 個冗餘 Module（12 → 13）：
+
+```
+src/modules/
+├── identity.module/   ← 新增
+│   ├── index.ts
+│   ├── domain.identity/  (_entity, _value-objects, _ports, _events)
+│   ├── core/              (_use-cases, _actions, _queries)
+│   ├── infra.firestore/   (_repository, _mapper)
+│   └── _components/
+├── account.module/    ← 新增
+│   ├── index.ts
+│   ├── domain.account/
+│   ├── core/
+│   ├── infra.firestore/
+│   └── _components/
+└── profile.module/    ← 移除（已被 account.module 吸收）
+```
+
+已更新 `org.module/index.ts`：說明 Identity 移至 `identity.module`，Org entity 移至 `account.module`。
+已更新 `achievement.module/index.ts`：Badge 寫入改指向 `account.module` 的 `IAccountBadgeWritePort`。
+已更新 `achievement.module/domain.achievement/_entity.ts`：更新跨模組 Port 引用。
+已更新 `namespace.module/domain.namespace/_entity.ts`：Namespace 擁有者改為 Account（而非 User/Org）。
+已更新 `docs/architecture/README.md` 和 `src/modules/README.md`：Domain Modules 表格 12→13。
+
+---
+
 ## 摘要表 / Summary
 
 | # | 嚴重程度 | 受影響檔案 | 問題類型 | 狀態 |
@@ -453,3 +516,4 @@ src/modules/
 | 14 | 低至中 | 14 個 prompt/agent/instruction/skill 檔案 | 殘留 "slice" 術語或路徑慣例不符 `<name>.module/` | ✅ Fixed |
 | 15 | 高 | `docs/architecture/README.md`、`src/modules/README.md`、`src/modules/` | `core-logic.mermaid` 中 3 個 Bounded Context（Notification、Social、Achievement）未對應到任何 Domain Module | ✅ Fixed |
 | 16 | 高 | `org.module/`、`achievement.module/`、`docs/architecture/README.md`、`src/modules/README.md` | `Namespace` 被錯誤歸入 `org.module`；`Profile` 被錯誤歸入 `achievement.module`；`Work`、`Fork` 無獨立 Module | ✅ Fixed |
+| 17 | 高 | `src/modules/`、`docs/architecture/README.md`、`src/modules/README.md` | 缺少 `identity.module`（認證邊界）和 `account.module`（統一帳戶模型）；`profile.module` 冗餘 | ✅ Fixed |
