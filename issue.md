@@ -21,17 +21,17 @@
 
 ### 實際狀況
 
-程式碼確認是**四層**：`primitives`、`components`、`patterns`、`presentation`。
+程式碼確認是**四層**：`primitives`、`components`、`patterns`、`tokens`。
 
-- `src/design-system/index.ts`：`export * from "./primitives"; export * from "./components"; export * from "./patterns"; export * from "./presentation";`（四個層級均有匯出）
-- `src/design-system/` 目錄下存在 `primitives/`、`components/`、`patterns/`、`presentation/` 四個子目錄
+- `src/design-system/index.ts`：`export * from "./primitives"; export * from "./components"; export * from "./patterns"; export * from "./tokens";`（四個層級均有匯出）
+- `src/design-system/` 目錄下存在 `primitives/`、`components/`、`patterns/`、`tokens/` 四個子目錄
 
 ### 建議修正
 
 將第 19 行技術概覽表中的描述更新為：
 
 ```
-Four-tier: primitives / components / patterns / presentation (see Design System)
+Four-tier: primitives / components / patterns / tokens (see Design System)
 ```
 
 ---
@@ -179,7 +179,7 @@ src/
 │       ├── core/          # Application layer (use cases, actions, queries)
 │       ├── infra.<adapter>/    # Infrastructure layer (Firestore, etc.)
 │       └── _components/   # Presentation layer (React components)
-├── design-system/         # Four-tier UI system (primitives/components/patterns/presentation)
+├── design-system/         # Four-tier UI system (primitives/components/patterns/tokens)
 ├── infrastructure/        # Shared infrastructure (Firebase client + Admin SDK)
 └── shared/                # Cross-cutting utilities (constants, i18n, interfaces, types, utils)
 ```
@@ -230,29 +230,20 @@ docs/copilot/customization/overview.md
 
 ---
 
-## Issue 7：`src/design-system/presentation/README.md` 和 `src/infrastructure/firebase/README.md` — 文件描述尚未實現的組件為現有功能
+## Issue 7：`src/design-system/tokens/README.md` 和 `src/infrastructure/firebase/README.md` — 文件描述尚未實現的組件為現有功能
 
-**檔案：** `src/design-system/presentation/README.md`、`src/infrastructure/firebase/README.md`  
+**檔案：** `src/design-system/tokens/README.md`（原 `presentation/README.md`）、`src/infrastructure/firebase/README.md`  
 **嚴重程度：** 低
 
 ### 問題描述
 
-`src/design-system/presentation/README.md` 在「組件計劃」章節明確標注以下組件為**「待實現」**：
+`tokens/` 層目前為規劃階段，令牌常數尚未從 `tailwind.config.ts` / `globals.css` 提取。`index.ts` 只有 `export {}`，所有匯出均以注解形式作為**佔位符（placeholder）**，等待後續實現。
 
-| 組件 | 狀態 |
-|------|------|
-| `VisNetwork.tsx` | 待實現 |
-| `VisTimeline.tsx` | 待實現 |
-| `DragDropBoard.tsx` | 待實現 |
-| `DropIndicator` (VI) | 待實現 |
-
-但同一份 README 的開發指南（Section 3）以及 `src/infrastructure/firebase/README.md`（Section 6）均提供這些組件的**使用範例程式碼**，給人這些組件已可使用的印象。
-
-實際的 `src/design-system/presentation/index.ts` 只有 `export {}`，所有組件匯出均以注解形式作為**佔位符（placeholder）**，等待安裝對應依賴後啟用。這表示這些是**尚未實現的規劃功能**，而非「暫時停用」的現有功能。
+Firebase README（Section 6）提供 Vis.js 和 PDnD 組件的**使用範例程式碼**，給人這些組件已可使用的印象，但相關組件（`VisNetwork`、`VisTimeline`、`DragDropBoard`）尚未實現。
 
 ### 建議修正
 
-在 `src/design-system/presentation/README.md` 和 `src/infrastructure/firebase/README.md` 的相關使用範例程式碼旁，加入「尚未實現」的提示說明，例如：
+在 `src/infrastructure/firebase/README.md` 的相關使用範例程式碼旁，加入「尚未實現」的提示說明，例如：
 
 ```markdown
 > ⚠️ 以下範例為**規劃中**的 API，相關組件尚未實現。待安裝依賴並實現組件後，此範例才可使用。
@@ -270,4 +261,4 @@ docs/copilot/customization/overview.md
 | 4 | 高 | `.github/copilot-instructions.md` | i18n 指示引用不存在的 JSON 檔案路徑 |
 | 5 | 高 | `README.md` | DDD 層次結構圖描述的目錄路徑與實際不符 |
 | 6 | 高 | `.github/README.md`、`.github/instructions/` | 引用不存在的 `docs/copilot/` 目錄 |
-| 7 | 低 | `src/design-system/presentation/README.md`、`src/infrastructure/firebase/README.md` | 文件範例描述尚未實現的組件如同現有功能 |
+| 7 | 低 | `src/design-system/tokens/README.md`、`src/infrastructure/firebase/README.md` | 文件範例描述尚未實現的組件如同現有功能 |

@@ -16,7 +16,7 @@
 | Framework | Next.js 15 (App Router, parallel routing) |
 | Language | TypeScript 5 |
 | UI | React 19, Tailwind CSS v4, shadcn/ui |
-| Design System | Three-tier: primitives / components / patterns (see [Design System](#design-system)) |
+| Design System | Four-tier: primitives / components / patterns / tokens (see [Design System](#design-system)) |
 | Drag and Drop | `@atlaskit/pragmatic-drag-and-drop` + Visual Indicators (VIs) |
 | Validation | Zod |
 | Backend / DB | Firebase (Firestore, Auth, Storage, App Check) |
@@ -128,13 +128,13 @@ The design system lives in `src/design-system/` and follows a **four-tier hierar
 | **primitives** | `src/design-system/primitives/` | Raw shadcn/ui components (Button, Input, Dialog, …). Configured via `components.json` with new-york style and Tailwind v4 CSS variables. |
 | **components** | `src/design-system/components/` | Project-specific wrappers that compose or extend primitives with Xuanwu branding and behaviour. |
 | **patterns** | `src/design-system/patterns/` | Higher-order composites built from components (e.g. data tables, sidebars, command palettes). |
-| **presentation** | `src/design-system/presentation/` | Drag-and-drop wrappers and Visual Indicator (VI) components. All `"use client"` — no business logic. |
+| **tokens** | `src/design-system/tokens/` | Design-token constants: colours, spacing, typography, radii, shadows, z-index, and motion values. Mirrors the CSS custom-properties in `globals.css` / `tailwind.config.ts`. |
 
 ```typescript
 import { Button }        from "@/design-system/primitives";
 import { SearchField }   from "@/design-system/components";
 import { LoginForm }     from "@/design-system/patterns";
-import { DraggableItem } from "@/design-system/presentation";
+import { colorBrand }    from "@/design-system/tokens";
 ```
 
 ### Drag and Drop — `@atlaskit/pragmatic-drag-and-drop`
@@ -145,7 +145,7 @@ Drag-and-drop interactions use **`@atlaskit/pragmatic-drag-and-drop`** (Atlassia
 - `@atlaskit/pragmatic-drag-and-drop-hitbox` — edge / center hitbox helpers for tree and list reordering
 - `@atlaskit/pragmatic-drag-and-drop-react-drop-indicator` — **Visual Indicators (VIs)**: rendered drop-indicator lines and boxes that provide visible drag feedback
 
-**Visual Indicators (VIs)** are the visual feedback elements shown during a drag operation (e.g. a blue line between list items, a border highlight on a drop zone). They always live in the **`presentation/`** tier and must not contain business logic.
+**Visual Indicators (VIs)** are the visual feedback elements shown during a drag operation (e.g. a blue line between list items, a border highlight on a drop zone). They live in the module's presentation layer (`src/modules/<module>/presentation/`) and must not contain business logic.
 
 **vis-date + Firebase collaboration:**  
 `VisDateMetadata` (defined in `@/shared/interfaces`) carries the temporal position of a draggable item resolved from Firestore. Server Actions fetch and cache these values via `cacheAside` and pass them as serialised props. The Presentation layer reads these props to render `<DateDropIndicator>` at the correct timeline position — **without making any additional DB calls**.

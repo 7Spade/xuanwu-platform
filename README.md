@@ -202,7 +202,7 @@ src/design-system/
 ├── primitives/    ← shadcn/ui components (Button, Input, Dialog, …)
 ├── components/    ← project-specific wrappers
 ├── patterns/      ← higher-order composites (tables, sidebars, …)
-└── presentation/  ← DnD wrappers + Visual Indicator components
+└── tokens/        ← design-token constants (colours, spacing, typography, …)
 ```
 
 Import from the appropriate tier:
@@ -210,10 +210,10 @@ Import from the appropriate tier:
 import { Button }        from "@/design-system/primitives";
 import { SearchField }   from "@/design-system/components";
 import { LoginForm }     from "@/design-system/patterns";
-import { DragDropBoard } from "@/design-system/presentation";
+import { colorBrand }    from "@/design-system/tokens";
 ```
 
-Drag-and-drop interactions use **`@atlaskit/pragmatic-drag-and-drop`**. Visual Indicators (VIs) — the visible drop-indicator lines and zone highlights rendered during a drag operation — come from `@atlaskit/pragmatic-drag-and-drop-react-drop-indicator` and are always pure Presentation-layer components.
+Drag-and-drop interactions use **`@atlaskit/pragmatic-drag-and-drop`**. Visual Indicators (VIs) — the visible drop-indicator lines and zone highlights rendered during a drag operation — come from `@atlaskit/pragmatic-drag-and-drop-react-drop-indicator` and live in each module's presentation layer.
 
 ### DDD Layer Structure
 
@@ -241,7 +241,7 @@ src/
 | Framework | Next.js 15 (App Router, parallel routes) |
 | Language | TypeScript 5 |
 | UI | React 19, Tailwind CSS v4 |
-| Design System | Four-tier (`primitives` → shadcn/ui, `components` → wrappers, `patterns` → composites, `presentation` → DnD + VIs) |
+| Design System | Four-tier (`primitives` → shadcn/ui, `components` → wrappers, `patterns` → composites, `tokens` → design tokens) |
 | Drag and Drop | `@atlaskit/pragmatic-drag-and-drop` + Visual Indicators (VIs) |
 | Validation | Zod |
 | Backend / DB | Firebase (Firestore, Auth, Storage, App Check) |
