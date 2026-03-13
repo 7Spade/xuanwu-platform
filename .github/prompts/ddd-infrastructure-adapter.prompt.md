@@ -19,8 +19,8 @@ This prompt drives Step 3 of the DDD cycle: implement port interfaces with concr
 
 ## Workflow
 
-1. Identify the port interface to implement from `src/shared-kernel/ports/`.
-2. Check infra contracts needed: `src/shared-kernel/infra-contracts/`.
+1. Identify the port interface to implement from the slice's `domain.*/_ports.ts`.
+2. Check infra contracts needed in the slice's domain layer.
 3. Write the adapter class implementing the port interface.
 4. Use Transactional Outbox [S1] for all `save()` operations.
 5. Add Version Guard [S2] for optimistic locking.
@@ -31,14 +31,13 @@ This prompt drives Step 3 of the DDD cycle: implement port interfaces with concr
 - Adapter class MUST implement a port interface — no standalone concrete class.
 - MUST use transactional outbox pattern [S1] for aggregate saves.
 - NO business logic inside adapters — only data mapping and I/O.
-- Firebase SDK calls MUST stay inside `src/features/infra.*` or `src/shared-infra/`.
+- Firebase SDK calls MUST stay inside `src/features/{slice}/infra.*`.
 - Feature slice `domain.*` and `core/` folders must never import from `firebase`.
 
 ## Output Contract
 
 - Adapter class in `src/features/infra.*/` or `src/features/{slice}/infra.outbox/`.
-- Port interface in `src/shared-kernel/ports/` (if new).
-- Infra contract reference in `src/shared-kernel/infra-contracts/` (if applicable).
+- Port interface in `src/features/{slice}/domain.*/_ports.ts` (if new).
 - Adapter tests using Firestore emulator or mocks.
 
 Bounded context / slice: ${input:context:e.g. workspace.slice}

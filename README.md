@@ -26,12 +26,13 @@ Configure the following MCP servers at **[Settings → Copilot → Coding Agent]
 
 > The full ready-to-paste JSON is in [`mcp.md`](./mcp.md). The equivalent VS Code local config is in [`.vscode/mcp.json`](./.vscode/mcp.json).
 >
-> **Format note:** GitHub Coding Agent requires `"type": "local"` and `"tools"` fields. VS Code `.vscode/mcp.json` uses `"servers"` key with `"type": "stdio"` and no `"tools"` field. Both formats are maintained in this repo.
+> **Format note:** GitHub Coding Agent config (below and in `mcp.md`) uses `"type": "stdio"` with a required `"tools"` field. VS Code `.vscode/mcp.json` uses the `"servers"` root key with `"type": "stdio"` and no `"tools"` field. Both formats resolve to the same MCP servers.
 
 ### ✅ Essential MCP Servers
 
 | Priority | Server Name | npm / install | Why it matters for this project |
 |----------|-------------|---------------|----------------------------------|
+| ⭐⭐⭐ | **Agent Memory** | `uvx --from agent-memory-server agent-memory mcp` | Persistent cross-session memory (Redis-backed semantic search) — agents retain context across separate sessions |
 | ⭐⭐⭐ | **Filesystem** | `npx @modelcontextprotocol/server-filesystem` | Read and write local project files — required for any code-editing agent task |
 | ⭐⭐⭐ | **Repomix** | `npx repomix --mcp` | Pack the full repository into an AI-readable snapshot; enables agents to understand the entire DDD layer structure at once |
 | ⭐⭐⭐ | **Context7** | `npx @upstash/context7-mcp` | Retrieve version-accurate Next.js 15, React 19, and Tailwind v4 documentation on demand |
@@ -55,25 +56,28 @@ Configure the following MCP servers at **[Settings → Copilot → Coding Agent]
 ```json
 {
   "mcpServers": {
-    "filesystem":          { "type": "local", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem", "."], "tools": ["*"] },
-    "repomix":             { "type": "local", "command": "npx", "args": ["-y", "repomix", "--mcp"], "tools": ["*"] },
-    "context7":            { "type": "local", "command": "npx", "args": ["-y", "@upstash/context7-mcp"], "tools": ["*"] },
-    "sequential-thinking": { "type": "local", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"], "tools": ["*"] },
-    "software-planning":   { "type": "local", "command": "npx", "args": ["-y", "@joshuarileydev/software-planning-tool"], "tools": ["*"] },
-    "playwright":          { "type": "local", "command": "npx", "args": ["-y", "@playwright/mcp@latest"], "tools": ["*"] },
-    "next-devtools":       { "type": "local", "command": "npx", "args": ["-y", "@next/mcp"], "tools": ["*"] },
-    "shadcn":              { "type": "local", "command": "npx", "args": ["-y", "shadcn@latest"], "tools": ["*"] },
-    "markitdown":          { "type": "local", "command": "npx", "args": ["-y", "markitdown-mcp"], "tools": ["*"] },
-    "everything":          { "type": "local", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-everything"], "tools": ["*"] },
-    "serena":              { "type": "local", "command": "uvx", "args": ["serena"], "tools": ["*"] },
-    "firebase-mcp-server": { "type": "local", "command": "npx", "args": ["-y", "firebase-mcp-server"], "tools": ["*"] }
+    "agent-memory":        { "type": "stdio", "command": "uvx", "args": ["--from", "agent-memory-server", "agent-memory", "mcp"], "env": { "REDIS_URL": "$COPILOT_MCP_REDIS_URL", "OPENAI_API_KEY": "$COPILOT_MCP_OPENAI_API_KEY", "DISABLE_AUTH": "true" }, "tools": ["*"] },
+    "filesystem":          { "type": "stdio", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem", "."], "tools": ["*"] },
+    "repomix":             { "type": "stdio", "command": "npx", "args": ["-y", "repomix", "--mcp"], "tools": ["*"] },
+    "context7":            { "type": "stdio", "command": "npx", "args": ["-y", "@upstash/context7-mcp"], "tools": ["*"] },
+    "sequential-thinking": { "type": "stdio", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"], "tools": ["*"] },
+    "software-planning":   { "type": "stdio", "command": "npx", "args": ["-y", "@joshuarileydev/software-planning-tool"], "tools": ["*"] },
+    "playwright":          { "type": "stdio", "command": "npx", "args": ["-y", "@playwright/mcp@latest"], "tools": ["*"] },
+    "next-devtools":       { "type": "stdio", "command": "npx", "args": ["-y", "@next/mcp"], "tools": ["*"] },
+    "shadcn":              { "type": "stdio", "command": "npx", "args": ["-y", "shadcn@latest", "mcp"], "tools": ["*"] },
+    "markitdown":          { "type": "stdio", "command": "uvx", "args": ["markitdown-mcp"], "tools": ["*"] },
+    "everything":          { "type": "stdio", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-everything"], "tools": ["*"] },
+    "serena":              { "type": "stdio", "command": "uvx", "args": ["serena"], "tools": ["*"] },
+    "firebase-mcp-server": { "type": "stdio", "command": "npx", "args": ["-y", "firebase-mcp-server"], "env": { "FIREBASE_PROJECT_ID": "xuanwu-i-00708880-4e2d8", "SERVICE_ACCOUNT_KEY_PATH": "$COPILOT_MCP_FIREBASE_SERVICE_ACCOUNT_KEY_PATH" }, "tools": ["*"] }
   }
 }
 ```
 
-> **Why these MCPs?** The GitHub Copilot Coding Agent browser environment operates without a local IDE. MCP servers provide the agent with tools to read/write files, fetch documentation, plan multi-step implementations, and validate changes — all remotely. For a DDD + Next.js parallel routing project, Repomix (codebase snapshot), Context7 (framework docs), Serena (TypeScript symbol intelligence), and Sequential Thinking (layered reasoning) are the highest-leverage additions.
+> **Why these MCPs?** The GitHub Copilot Coding Agent browser environment operates without a local IDE. MCP servers provide the agent with tools to read/write files, fetch documentation, plan multi-step implementations, and validate changes — all remotely. For a DDD + Next.js parallel routing project, Repomix (codebase snapshot), Context7 (framework docs), Serena (TypeScript symbol intelligence), Sequential Thinking (layered reasoning), and Agent Memory (cross-session persistence) are the highest-leverage additions.
 >
 > **`filesystem` path note:** The Coding Agent config above uses `"."` (execution dir = repo root). The VS Code local config in `.vscode/mcp.json` uses `"${workspaceFolder}"` (VS Code variable substitution). Both resolve to the repo root — the format differs by environment.
+>
+> **`agent-memory` secrets:** Add `COPILOT_MCP_REDIS_URL` (format: `rediss://default:PASSWORD@host:port`) and `COPILOT_MCP_OPENAI_API_KEY` to **Settings → Copilot → Coding agent → Secrets** before using this entry.
 
 ---
 
@@ -195,16 +199,18 @@ This project follows a **Modular Domain-Driven Design (Modular DDD)** architectu
 
 ```
 src/design-system/
-├── primitives/   ← shadcn/ui components (Button, Input, Dialog, …)
-├── components/   ← project-specific wrappers
-└── patterns/     ← higher-order composites (tables, sidebars, …)
+├── primitives/    ← shadcn/ui components (Button, Input, Dialog, …)
+├── components/    ← project-specific wrappers
+├── patterns/      ← higher-order composites (tables, sidebars, …)
+└── presentation/  ← DnD wrappers + Visual Indicator components
 ```
 
 Import from the appropriate tier:
 ```ts
-import { Button }      from "@/design-system/primitives";
-import { SearchField } from "@/design-system/components";
-import { LoginForm }   from "@/design-system/patterns";
+import { Button }        from "@/design-system/primitives";
+import { SearchField }   from "@/design-system/components";
+import { LoginForm }     from "@/design-system/patterns";
+import { DragDropBoard } from "@/design-system/presentation";
 ```
 
 Drag-and-drop interactions use **`@atlaskit/pragmatic-drag-and-drop`**. Visual Indicators (VIs) — the visible drop-indicator lines and zone highlights rendered during a drag operation — come from `@atlaskit/pragmatic-drag-and-drop-react-drop-indicator` and are always pure Presentation-layer components.
@@ -235,7 +241,7 @@ src/
 | Framework | Next.js 15 (App Router, parallel routes) |
 | Language | TypeScript 5 |
 | UI | React 19, Tailwind CSS v4 |
-| Design System | Three-tier (`primitives` → shadcn/ui, `components` → wrappers, `patterns` → composites) |
+| Design System | Four-tier (`primitives` → shadcn/ui, `components` → wrappers, `patterns` → composites, `presentation` → DnD + VIs) |
 | Drag and Drop | `@atlaskit/pragmatic-drag-and-drop` + Visual Indicators (VIs) |
 | Validation | Zod |
 | Backend / DB | Firebase (Firestore, Auth, Storage, App Check) |
