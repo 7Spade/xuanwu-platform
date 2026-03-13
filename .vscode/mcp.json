@@ -1,0 +1,64 @@
+{
+  "servers": {
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "${workspaceFolder}"]
+    },
+    "repomix": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "repomix", "--mcp"]
+    },
+    "context7": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"]
+    },
+    "sequential-thinking": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+    },
+    "software-planning": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@joshuarileydev/software-planning-tool"]
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"]
+    },
+    "next-devtools": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@next/mcp"]
+    },
+    "shadcn": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "shadcn@latest"]
+    },
+    "markitdown": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "markitdown-mcp"]
+    },
+    "everything": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-everything"]
+    },
+    "serena": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["serena"]
+    },
+    "firebase-mcp-server": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "firebase-mcp-server"]
+    }
+  }
+}

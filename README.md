@@ -24,7 +24,11 @@ npm run dev
 
 Configure the following MCP servers at **[Settings → Copilot → Coding Agent](https://github.com/7Spade/xuanwu-platform/settings/copilot/coding_agent)** to unlock the full GitHub Copilot Coding Agent browser development experience for this Next.js + DDD project.
 
-### ✅ Essential MCP Servers (Configure First)
+> The full ready-to-paste JSON is in [`mcp.md`](./mcp.md). The equivalent VS Code local config is in [`.vscode/mcp.json`](./.vscode/mcp.json).
+>
+> **Format note:** GitHub Coding Agent requires `"type": "local"` and `"tools"` fields. VS Code `.vscode/mcp.json` uses `"servers"` key with `"type": "stdio"` and no `"tools"` field. Both formats are maintained in this repo.
+
+### ✅ Essential MCP Servers
 
 | Priority | Server Name | npm / install | Why it matters for this project |
 |----------|-------------|---------------|----------------------------------|
@@ -33,8 +37,10 @@ Configure the following MCP servers at **[Settings → Copilot → Coding Agent]
 | ⭐⭐⭐ | **Context7** | `npx @upstash/context7-mcp` | Retrieve version-accurate Next.js 15, React 19, and Tailwind v4 documentation on demand |
 | ⭐⭐⭐ | **Sequential Thinking** | `npx @modelcontextprotocol/server-sequential-thinking` | Multi-step structured reasoning — essential for DDD layer decomposition, domain modeling, and debugging complex route boundaries |
 | ⭐⭐⭐ | **Software Planning** | `npx @joshuarileydev/software-planning-tool` | Implementation plan and todo tracking across DDD slices and parallel route features |
+| ⭐⭐⭐ | **Serena** | `uvx serena` | Deep TypeScript symbol navigation, cross-file rename, and persistent per-project memory across sessions |
+| ⭐⭐⭐ | **Firebase** | `npx firebase-mcp-server` | Firestore, Firebase Auth, and Firebase App Hosting management — core to this project's infrastructure |
 
-### 🔧 Recommended MCP Servers (Add for Enhanced Capability)
+### 🔧 Recommended MCP Servers
 
 | Priority | Server Name | npm / install | Why it matters for this project |
 |----------|-------------|---------------|----------------------------------|
@@ -44,53 +50,28 @@ Configure the following MCP servers at **[Settings → Copilot → Coding Agent]
 | ⭐⭐ | **Markitdown** | `npx markitdown-mcp` | Convert external URLs and design docs to Markdown for AI consumption during research and architecture tasks |
 | ⭐ | **Everything** | `npx @modelcontextprotocol/server-everything` | General-purpose MCP protocol testing and utility tasks |
 
-### 🔗 Optional / Project-Specific MCP Servers
-
-| Server Name | npm / install | When to add |
-|-------------|---------------|-------------|
-| **Serena** | `uvx serena` | When you want deep TypeScript symbol navigation, cross-file rename, and persistent per-project memory across sessions |
-| **Firebase** | `npx firebase-mcp-server` | When the project integrates Firestore, Firebase Auth, or Firebase App Hosting |
-
-### Minimum Recommended Configuration (JSON example)
-
-Add to your GitHub Copilot Coding Agent settings:
+### Full Configuration (JSON — paste into GitHub Coding Agent settings)
 
 ```json
 {
   "mcpServers": {
-    "filesystem": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."]
-    },
-    "repomix": {
-      "command": "npx",
-      "args": ["-y", "repomix", "--mcp"]
-    },
-    "context7": {
-      "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp"]
-    },
-    "sequential-thinking": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
-    },
-    "software-planning": {
-      "command": "npx",
-      "args": ["-y", "@joshuarileydev/software-planning-tool"]
-    },
-    "playwright": {
-      "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest"]
-    },
-    "next-devtools": {
-      "command": "npx",
-      "args": ["-y", "@next/mcp"]
-    }
+    "filesystem":          { "type": "local", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem", "."], "tools": ["*"] },
+    "repomix":             { "type": "local", "command": "npx", "args": ["-y", "repomix", "--mcp"], "tools": ["*"] },
+    "context7":            { "type": "local", "command": "npx", "args": ["-y", "@upstash/context7-mcp"], "tools": ["*"] },
+    "sequential-thinking": { "type": "local", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"], "tools": ["*"] },
+    "software-planning":   { "type": "local", "command": "npx", "args": ["-y", "@joshuarileydev/software-planning-tool"], "tools": ["*"] },
+    "playwright":          { "type": "local", "command": "npx", "args": ["-y", "@playwright/mcp@latest"], "tools": ["*"] },
+    "next-devtools":       { "type": "local", "command": "npx", "args": ["-y", "@next/mcp"], "tools": ["*"] },
+    "shadcn":              { "type": "local", "command": "npx", "args": ["-y", "shadcn@latest"], "tools": ["*"] },
+    "markitdown":          { "type": "local", "command": "npx", "args": ["-y", "markitdown-mcp"], "tools": ["*"] },
+    "everything":          { "type": "local", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-everything"], "tools": ["*"] },
+    "serena":              { "type": "local", "command": "uvx", "args": ["serena"], "tools": ["*"] },
+    "firebase-mcp-server": { "type": "local", "command": "npx", "args": ["-y", "firebase-mcp-server"], "tools": ["*"] }
   }
 }
 ```
 
-> **Why these MCPs?** The GitHub Copilot Coding Agent browser environment operates without a local IDE. MCP servers provide the agent with tools to read/write files, fetch documentation, plan multi-step implementations, and validate changes — all remotely. For a DDD + Next.js parallel routing project, Repomix (codebase snapshot), Context7 (framework docs), and Sequential Thinking (layered reasoning) are the highest-leverage additions.
+> **Why these MCPs?** The GitHub Copilot Coding Agent browser environment operates without a local IDE. MCP servers provide the agent with tools to read/write files, fetch documentation, plan multi-step implementations, and validate changes — all remotely. For a DDD + Next.js parallel routing project, Repomix (codebase snapshot), Context7 (framework docs), Serena (TypeScript symbol intelligence), and Sequential Thinking (layered reasoning) are the highest-leverage additions.
 
 ---
 

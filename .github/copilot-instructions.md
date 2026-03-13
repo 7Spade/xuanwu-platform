@@ -108,7 +108,7 @@ Serena symbol tools > grep/glob > filesystem > raw codebase search
 
 ## Available MCP Tools
 
-The following MCP servers are configured in `.vscode/mcp.json` and available to agents.
+The following MCP servers are configured in `.vscode/mcp.json` (local VS Code chat) and the [GitHub Coding Agent settings](https://github.com/7Spade/xuanwu-platform/settings/copilot/coding_agent) (Coding Agent browser tasks).
 Reference them in agent `tools:` lists using `<server-name>/*`.
 
 | Server | Key | Primary Use |

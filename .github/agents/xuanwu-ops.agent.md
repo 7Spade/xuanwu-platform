@@ -1,7 +1,7 @@
 ---
 name: 'xuanwu-ops'
 description: 'Project-specific Xuanwu operations agent for CI/CD, deployment workflows, runtime infrastructure, and environment-safe operational changes.'
-tools: ['codebase', 'search', 'editFiles', 'runCommands', 'filesystem/*', 'serena/*']
+tools: ['codebase', 'search', 'editFiles', 'runCommands', 'filesystem/*', 'serena/*', 'firebase-mcp-server/*']
 handoffs:
   - label: 'Return to orchestrator'
     agent: xuanwu-orchestrator
