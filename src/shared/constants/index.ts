@@ -7,8 +7,12 @@ export const DEFAULT_LOCALE = "zh-TW";
 /** Supported locales for the platform. */
 export const SUPPORTED_LOCALES = ["zh-TW", "en"] as const;
 
-/** ISO-8601 date-only format string. */
+/**
+ * Reference format tokens (e.g. for dayjs / date-fns).
+ * These are NOT used by the built-in `formatDate`/`formatDateTime` helpers,
+ * which delegate to the native `Intl` API.
+ */
 export const DATE_FORMAT = "YYYY-MM-DD";
 
-/** ISO-8601 date-time format string. */
+/** @see DATE_FORMAT */
 export const DATETIME_FORMAT = "YYYY-MM-DD HH:mm:ss";
