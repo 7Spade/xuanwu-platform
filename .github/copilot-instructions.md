@@ -19,7 +19,7 @@ If a task touches business rules or domain terminology, read the SSOT documents 
 
 ### Architecture and boundaries
 
-- Respect layer direction, slice boundaries, and public APIs.
+- Respect layer direction, module boundaries, and public APIs.
 - Keep side effects in execution or application layers, not pure contract layers.
 - Do not invent domain logic that is not grounded in the SSOT documents.
 
@@ -27,15 +27,14 @@ If a task touches business rules or domain terminology, read the SSOT documents 
 
 - Keep always-on instructions concise; move specialized workflows into prompts, skills, agents, hooks, or scoped instructions according to `.github/README.md`.
 - Reuse existing repository documents with links instead of duplicating long policy text.
-- Use the official VS Code customization taxonomy from `docs/copilot/customization/overview.md` before introducing or renaming customization assets.
+- Use the official VS Code customization taxonomy from https://code.visualstudio.com/docs/copilot/customization before introducing or renaming customization assets.
 - Do not use local folder names or terminology that conflict with official VS Code Copilot concepts.
 
 ### i18n
 
 - Do not hardcode UI text in pages or components.
-- When UI text changes, update both locale files with identical keys:
-  - `public/localized-files/en.json`
-  - `public/localized-files/zh-TW.json`
+- When UI text changes, update the in-code translation dictionary in:
+  - `src/shared/i18n/index.ts` (add keys to both the `en` and `zh-TW` locale entries)
 
 ### Files and encoding
 
@@ -52,8 +51,8 @@ If a task touches business rules or domain terminology, read the SSOT documents 
 
 1. Read `docs/architecture/README.md` when business logic is involved.
 2. Reuse established repository patterns from existing code.
-3. **Validate before implement** — verify architecture correctness, slice boundaries, and existing tests before writing any new code. Prefer the smallest correct diff.
-4. For Copilot customization changes, follow `.github/README.md` first, then the matching spec under `docs/copilot/customization/`, before editing `.github/agents`, `.github/instructions`, `.github/prompts`, or `.github/skills`.
+3. **Validate before implement** — verify architecture correctness, module boundaries, and existing tests before writing any new code. Prefer the smallest correct diff.
+4. For Copilot customization changes, follow `.github/README.md` first, then the matching spec at https://code.visualstudio.com/docs/copilot/customization, before editing `.github/agents`, `.github/instructions`, `.github/prompts`, or `.github/skills`.
 
 ## Knowledge Persistence
 

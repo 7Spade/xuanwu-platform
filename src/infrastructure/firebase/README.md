@@ -167,7 +167,9 @@ export async function getUser(idToken: string) {
 
 ## 6️⃣ 與模組 Presentation 層整合（Vis + PDnD）
 
-Firebase 資料供應給各 Domain Module 的 `presentation/` 層 Vis.js 和 PDnD 組件。
+> ⚠️ **以下內容為規劃中的整合模式。** `VisNetwork`、`VisTimeline`、`DragDropBoard` 組件尚未實現（目前為佔位符）。待相關依賴安裝並實現組件後，以下範例才可使用。
+
+Firebase 資料供應給各 Domain Module 的 `_components/`（Presentation 層）中的 Vis.js 和 PDnD 組件。
 
 **資料流摘要：**
 
@@ -175,11 +177,11 @@ Firebase 資料供應給各 Domain Module 的 `presentation/` 層 Vis.js 和 PDn
 Firestore / RealtimeDB
   └→ Server Action（cacheAside from functions/db/cacheLayer）
       └→ serialised props（networkNodes / timelineItems / VisDateMetadata）
-          └→ VisNetwork / VisTimeline / DragDropBoard（module presentation 層渲染）
+          └→ VisNetwork / VisTimeline / DragDropBoard（module _components/ 渲染）
               └→ 用戶操作 → commitBatch（回寫 Firestore）
 ```
 
-**presentation 層用到的關鍵 Firebase 模組：**
+**`_components/`（Presentation 層）用到的關鍵 Firebase 模組：**
 
 | 模組 | 用途 |
 |------|------|

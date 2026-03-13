@@ -4,15 +4,15 @@ This guide defines how Xuanwu organizes and evolves repository-scoped GitHub Cop
 
 ## Authoritative References
 
-Use the local `docs/copilot/` copies as the repository reference set, and keep them aligned with the corresponding VS Code documentation:
+Use the official VS Code documentation as the authoritative reference for Copilot customization:
 
-- Custom instructions: `docs/copilot/customization/custom-instructions.md`
-- Prompt files: `docs/copilot/customization/prompt-files.md`
-- Custom agents: `docs/copilot/customization/custom-agents.md`
-- Agent Skills: `docs/copilot/customization/agent-skills.md`
-- Hooks: `docs/copilot/customization/hooks.md`
-- Agent plugins: `docs/copilot/customization/agent-plugins.md`
-- Overview and editor workflow: `docs/copilot/customization/overview.md`
+- Custom instructions: https://code.visualstudio.com/docs/copilot/customization/custom-instructions
+- Prompt files: https://code.visualstudio.com/docs/copilot/customization/prompt-files
+- Custom agents: https://code.visualstudio.com/docs/copilot/customization/copilot-agents
+- Agent Skills: https://code.visualstudio.com/docs/copilot/customization/agent-skills
+- Hooks: https://code.visualstudio.com/docs/copilot/customization/hooks
+- Agent plugins: https://code.visualstudio.com/docs/copilot/customization/agent-plugins
+- Overview and editor workflow: https://code.visualstudio.com/docs/copilot/customization
 
 ## Single Sources of Truth
 
@@ -40,14 +40,14 @@ Use the official VS Code customization taxonomy first, then map it to the reposi
 
 Design or refactor Copilot customization assets in this order:
 
-1. Start from `docs/copilot/customization/overview.md` to choose the correct customization type.
-2. Use the corresponding official/local spec before editing files:
-   - instructions → `docs/copilot/customization/custom-instructions.md`
-   - prompts → `docs/copilot/customization/prompt-files.md`
-   - agents → `docs/copilot/customization/custom-agents.md`
-   - skills → `docs/copilot/customization/agent-skills.md`
-   - hooks → `docs/copilot/customization/hooks.md`
-   - plugins → `docs/copilot/customization/agent-plugins.md`
+1. Start from https://code.visualstudio.com/docs/copilot/customization to choose the correct customization type.
+2. Use the corresponding official VS Code documentation before editing files:
+   - instructions → https://code.visualstudio.com/docs/copilot/customization/custom-instructions
+   - prompts → https://code.visualstudio.com/docs/copilot/customization/prompt-files
+   - agents → https://code.visualstudio.com/docs/copilot/customization/copilot-agents
+   - skills → https://code.visualstudio.com/docs/copilot/customization/agent-skills
+   - hooks → https://code.visualstudio.com/docs/copilot/customization/hooks
+   - plugins → https://code.visualstudio.com/docs/copilot/customization/agent-plugins
 3. Update this guide first when folder ownership, terminology, or consolidation rules change.
 4. Keep `.github/copilot-instructions.md` lean and move scoped or workflow-specific content into the correct customization type.
 5. Keep loader settings aligned in `.vscode/settings.json` so discovery matches the documented repository layout.
@@ -83,7 +83,7 @@ Design or refactor Copilot customization assets in this order:
 - `.github/README.md` is the canonical repository maintenance guide for Copilot customization structure, ownership, and consolidation decisions.
 - `.github/copilot-instructions.md` is only for concise always-on rules; it must not become a duplicate catalog of agents, prompts, or hooks.
 - `README.md` is the user-facing quick entry point; keep only the high-level navigation and prompt command catalog there.
-- `docs/copilot/customization/*.md` remains the local reference mirror of the official VS Code customization docs and should be cited rather than paraphrased repeatedly.
+- The official VS Code documentation (https://code.visualstudio.com/docs/copilot/customization) is the authoritative reference and should be cited rather than paraphrased repeatedly.
 - `.vscode/settings.json` is the effective loader configuration; documentation must describe the configuration that is actually enabled there.
 - `.github/skills/` is the canonical project skill location; each skill lives in its own folder with a `SKILL.md` entry point.
 - Keep the customization folders intentionally small and consistent: prefer project-specific `xuanwu-<function>.*.md` files that absorb overlapping personas, rules, and workflows into functional suites.
@@ -109,15 +109,15 @@ Design or refactor Copilot customization assets in this order:
 
 ### `.github/agents/`
 
-- Follow `docs/copilot/customization/custom-agents.md`.
+- Follow https://code.visualstudio.com/docs/copilot/customization/copilot-agents.
 - Use least-privilege `tools`.
 - Use agent-scoped `hooks` only when behavior must run exclusively with that agent.
 - Keep repository agents in `.github/agents/`; do not create `.github/agents/plugins/`.
-- If a bundled plugin is needed, manage it through VS Code plugin settings rather than this folder. For the plugin model, see `docs/copilot/customization/agent-plugins.md` and treat marketplace or `chat.plugins.paths` bundles as plugins; treat `.github/agents/*.agent.md` files as repository agents.
+- If a bundled plugin is needed, manage it through VS Code plugin settings rather than this folder. For the plugin model, see https://code.visualstudio.com/docs/copilot/customization/agent-plugins and treat marketplace or `chat.plugins.paths` bundles as plugins; treat `.github/agents/*.agent.md` files as repository agents.
 
 ### `.github/hooks/`
 
-- Follow `docs/copilot/customization/hooks.md`.
+- Follow https://code.visualstudio.com/docs/copilot/customization/hooks.
 - Store workspace hook config in `.github/hooks/*.json`.
 - Keep helper scripts in `.github/hooks/scripts/` or `scripts/hooks/`.
 - Hook commands must be deterministic, reviewable, and safe to run repeatedly.
@@ -125,21 +125,21 @@ Design or refactor Copilot customization assets in this order:
 
 ### `.github/instructions/`
 
-- Follow `docs/copilot/customization/custom-instructions.md`.
+- Follow https://code.visualstudio.com/docs/copilot/customization/custom-instructions.
 - Every file must include YAML frontmatter with `name`, `description`, and `applyTo`.
 - Scope `applyTo` as narrowly as possible.
 - Keep instructions imperative, testable, and free of duplicated catalog content.
 
 ### `.github/prompts/`
 
-- Follow `docs/copilot/customization/prompt-files.md`.
+- Follow https://code.visualstudio.com/docs/copilot/customization/prompt-files.
 - Every prompt should have a discoverable `name` and `description`.
 - Prefer linking to docs instead of embedding long policy text.
 - `README.md` must stay synchronized with the actual prompt file set and frontmatter names.
 
 ### `.github/skills/`
 
-- Follow `docs/copilot/customization/agent-skills.md`.
+- Follow https://code.visualstudio.com/docs/copilot/customization/agent-skills.
 - Each skill must live in its own folder with a `SKILL.md`.
 - Skill descriptions must clearly say what the skill does and when to use it.
 - Repository skill discovery points to `.github/skills/`; each skill has its own folder with a `SKILL.md` entry point.

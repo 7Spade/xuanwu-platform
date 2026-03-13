@@ -223,15 +223,16 @@ src/
 │   ├── @modal/            # Parallel route: modal slot
 │   ├── @sidebar/          # Parallel route: sidebar slot
 │   └── (features)/        # Feature-grouped route segments
-├── shared/                # Cross-cutting concerns
-│   ├── domain/            # Shared domain types and value objects
-│   ├── ui/                # Shared UI components
-│   └── lib/               # Utility functions
-└── <domain>/              # Domain slices (e.g., user, product)
-    ├── domain/            # Entities, value objects, aggregates, repository interfaces
-    ├── application/       # Use cases, application services, DTOs
-    ├── infrastructure/    # Repository implementations, external adapters
-    └── ui/                # Domain-specific UI components and pages
+├── modules/               # Domain Modules (Bounded Contexts)
+│   └── <name>.module/     # e.g., org.module, workspace.module
+│       ├── index.ts       # Public barrel — only export from here
+│       ├── domain.<aggregate>/  # Domain layer (entities, VOs, ports, events)
+│       ├── core/          # Application layer (use cases, actions, queries)
+│       ├── infra.<adapter>/    # Infrastructure layer (Firestore, etc.)
+│       └── _components/   # Presentation layer (React components)
+├── design-system/         # Four-tier UI system (primitives/components/patterns/tokens)
+├── infrastructure/        # Shared infrastructure (Firebase client + Admin SDK)
+└── shared/                # Cross-cutting utilities (constants, i18n, interfaces, types, utils)
 ```
 
 ### Technology Stack

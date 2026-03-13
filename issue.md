@@ -5,7 +5,7 @@
 
 ---
 
-## Issue 1：`docs/architecture/README.md` — 設計系統層級數量自相矛盾
+## Issue 1：`docs/architecture/README.md` — 設計系統層級數量自相矛盾 ✅ FIXED
 
 **檔案：** `docs/architecture/README.md`  
 **嚴重程度：** 中
@@ -26,17 +26,13 @@
 - `src/design-system/index.ts`：`export * from "./primitives"; export * from "./components"; export * from "./patterns"; export * from "./tokens";`（四個層級均有匯出）
 - `src/design-system/` 目錄下存在 `primitives/`、`components/`、`patterns/`、`tokens/` 四個子目錄
 
-### 建議修正
+### 修正
 
-將第 19 行技術概覽表中的描述更新為：
-
-```
-Four-tier: primitives / components / patterns / tokens (see Design System)
-```
+將第 19 行技術概覽表更新為：`Four-tier: primitives / components / patterns / tokens (see Design System)`
 
 ---
 
-## Issue 2：`docs/architecture/README.md` 與 `docs/architecture/adr/README.md` — ADR 索引不同步
+## Issue 2：`docs/architecture/README.md` 與 `docs/architecture/adr/README.md` — ADR 索引不同步 ✅ FIXED
 
 **檔案：** `docs/architecture/README.md`（第 227–233 行）、`docs/architecture/adr/README.md`  
 **嚴重程度：** 中
@@ -52,213 +48,191 @@ Four-tier: primitives / components / patterns / tokens (see Design System)
 
 ADR-006（Adopt Modular DDD）和 ADR-007（Use `@atlaskit/pragmatic-drag-and-drop`）出現在 `docs/architecture/README.md`，但**未被加入** `docs/architecture/adr/README.md` 的索引中。
 
-### 建議修正
+### 修正
 
-在 `docs/architecture/adr/README.md` 的 ADR 索引表中補上：
-
-```markdown
-| ADR-006 | Adopt Modular DDD — each slice is self-contained, no shared global domain directory | Accepted | — |
-| ADR-007 | Use `@atlaskit/pragmatic-drag-and-drop` for drag-and-drop interactions + VIs | Accepted | — |
-```
+已在 `docs/architecture/adr/README.md` 的 ADR 索引表中補上 ADR-006（"each module is self-contained" — 術語從 "slice" 更新為 "module" 以與 Domain Module 重命名保持一致）和 ADR-007。
 
 ---
 
-## Issue 3：`docs/architecture/README.md` Domain Modules 表格缺少 `workforce.module`
+## Issue 3：`docs/architecture/README.md` Domain Modules 表格缺少 `workforce.module` ✅ FIXED
 
 **檔案：** `docs/architecture/README.md`（Domain Modules 章節）、`src/modules/README.md`  
 **嚴重程度：** 低
 
 ### 問題描述
 
-`src/modules/README.md` 列出了 5 個 Domain Module：
+`src/modules/README.md` 列出了 5 個 Domain Module，但 `docs/architecture/README.md` 的 Domain Modules 表格只列出 4 個，漏掉了 `workforce.module/`（雖然 SaaS ↔ Workspace 邊界圖中提到了 Workforce Scheduling）。
 
-| Module | Layer |
-|--------|-------|
-| `org.module/` | SaaS |
-| `workspace.module/` | Workspace |
-| `file.module/` | Workspace |
-| **`workforce.module/`** | **Bridge** |
-| `settlement.module/` | SaaS |
+### 修正
 
-但 `docs/architecture/README.md` 的 Domain Modules 表格**只列出 4 個**，漏掉了 `workforce.module/`（雖然 SaaS ↔ Workspace 邊界圖中提到了 Workforce Scheduling）。
-
-### 建議修正
-
-在 `docs/architecture/README.md` 的 Domain Modules 表格補上：
-
-```markdown
-| Workforce Scheduling | `src/modules/workforce.module/` | Bridge | Workforce Scheduling (SaaS ↔ Workspace bridge) |
-```
+已在 `docs/architecture/README.md` 的 Domain Modules 表格補上 `workforce.module/`（Layer: Bridge）。
 
 ---
 
-## Issue 4：`.github/copilot-instructions.md` — i18n 指示指向不存在的檔案
+## Issue 4：`.github/copilot-instructions.md` — i18n 指示指向不存在的檔案 ✅ FIXED
 
-**檔案：** `.github/copilot-instructions.md`（第 37–38 行）  
+**檔案：** `.github/copilot-instructions.md`（第 36–38 行）  
 **嚴重程度：** 高
 
 ### 問題描述
 
-`copilot-instructions.md` 的 i18n 規則要求更新以下兩個檔案：
+`copilot-instructions.md` 的 i18n 規則要求更新 `public/localized-files/en.json` 和 `public/localized-files/zh-TW.json`，但這些檔案**不存在**。
 
-```
-public/localized-files/en.json
-public/localized-files/zh-TW.json
-```
-
-但這個目錄和檔案**並不存在**。`public/` 只有 `firebase-messaging-sw.example.js`。
-
-> **為何嚴重程度為「高」：** `.github/copilot-instructions.md` 是專案的 always-on 規則，GitHub Copilot Coding Agent 在每次任務中都會讀取並遵循此文件。若 Agent 依照錯誤指示嘗試更新不存在的 JSON 文件，將導致無效操作或創建多餘檔案。
+> **為何嚴重程度為「高」：** `.github/copilot-instructions.md` 是專案的 always-on 規則，GitHub Copilot Coding Agent 在每次任務中都會讀取並遵循此文件。
 
 ### 實際狀況
 
-專案實際使用的 i18n 方案是**程式碼內嵌字典**，定義在：
+專案實際使用的 i18n 方案是**程式碼內嵌字典**，定義在 `src/shared/i18n/index.ts`。
 
-```
-src/shared/i18n/index.ts
-```
+### 修正
 
-字典為 `Dictionary` 型別，包含 `en` 和 `zh-TW` 兩個 locale，在 build 時編譯，**不需要外部 JSON 檔案**。
-
-### 建議修正
-
-將 `.github/copilot-instructions.md` 的 i18n 章節修改為：
-
-```markdown
-### i18n
-
-- Do not hardcode UI text in pages or components.
-- When UI text changes, update the in-code translation dictionary in:
-  - `src/shared/i18n/index.ts` (add keys to both the `en` and `zh-TW` locale entries)
-```
+已將 `.github/copilot-instructions.md` 的 i18n 章節修改為引用 `src/shared/i18n/index.ts`。
 
 ---
 
-## Issue 5：`README.md` — DDD 層次結構圖描述的目錄不存在
+## Issue 5：`README.md` — DDD 層次結構圖描述的目錄不存在 ✅ FIXED
 
-**檔案：** `README.md`（DDD Layer Structure 章節，約第 218–235 行）  
+**檔案：** `README.md`（DDD Layer Structure 章節）  
 **嚴重程度：** 高
 
 ### 問題描述
 
-`README.md` 的 DDD Layer Structure 區塊顯示如下目錄結構：
+`README.md` 的 DDD Layer Structure 區塊顯示 `src/shared/domain/`、`src/shared/ui/`、`src/<domain>/application/` 等目錄，但這些路徑**完全不存在**。
 
-```
-src/
-├── shared/
-│   ├── domain/        # 不存在
-│   ├── ui/            # 不存在
-│   └── lib/           # 不存在
-└── <domain>/          # Domain slices (e.g., user, product)
-    ├── domain/
-    ├── application/
-    ├── infrastructure/
-    └── ui/
-```
+### 修正
 
-這與實際程式碼結構**完全不符**：
-
-1. `src/shared/` 的實際子目錄為：`constants/`、`directives/`、`errors/`、`i18n/`、`interfaces/`、`pipes/`、`types/`、`utils/`（**不含** `domain/`、`ui/`、`lib/`）
-2. Domain 模組位於 `src/modules/<name>.module/`，**不是** `src/<domain>/`
-3. 模組內部結構為 `domain.<aggregate>/`、`core/`、`infra.<adapter>/`、`_components/`，**不是** `domain/`、`application/`、`infrastructure/`、`ui/`
-
-### 建議修正
-
-將 README.md 的 DDD Layer Structure 區塊更新為與實際架構一致的描述，例如：
-
-```
-src/
-├── app/                   # Next.js App Router (UI + route handlers only)
-│   ├── @modal/            # Parallel route: modal slot
-│   ├── @sidebar/          # Parallel route: sidebar slot
-│   └── (features)/        # Feature-grouped route segments
-├── modules/               # Domain Modules (Bounded Contexts)
-│   └── <name>.module/     # e.g., org.module, workspace.module
-│       ├── index.ts       # Public barrel — only export from here
-│       ├── domain.<aggregate>/  # Domain layer (entities, VOs, ports, events)
-│       ├── core/          # Application layer (use cases, actions, queries)
-│       ├── infra.<adapter>/    # Infrastructure layer (Firestore, etc.)
-│       └── _components/   # Presentation layer (React components)
-├── design-system/         # Four-tier UI system (primitives/components/patterns/tokens)
-├── infrastructure/        # Shared infrastructure (Firebase client + Admin SDK)
-└── shared/                # Cross-cutting utilities (constants, i18n, interfaces, types, utils)
-```
+已更新 `README.md` 的 DDD Layer Structure 為與實際架構一致的描述，使用 `src/modules/<name>.module/` 結構。
 
 ---
 
-## Issue 6：`.github/README.md` 和 `.github/instructions/` — 引用不存在的 `docs/copilot/` 目錄
+## Issue 6：`.github/README.md` 和 `.github/instructions/` — 引用不存在的 `docs/copilot/` 目錄 ✅ FIXED
 
-**檔案：** `.github/README.md`、`.github/instructions/xuanwu-customization-authoring.instructions.md`、`.github/instructions/xuanwu-test-expert.instructions.md`  
+**檔案：** `.github/README.md`、`.github/instructions/xuanwu-customization-authoring.instructions.md`、`.github/instructions/xuanwu-test-expert.instructions.md`、`.github/copilot-instructions.md`、`.github/skills/xuanwu-test-expert/SKILL.md`  
 **嚴重程度：** 高
 
 ### 問題描述
 
-多個文件頻繁引用 `docs/copilot/customization/` 路徑下的多個 Markdown 文件，例如：
+多個文件頻繁引用 `docs/copilot/customization/` 路徑下的多個 Markdown 文件，但 **`docs/copilot/` 目錄不存在**。`docs/` 目錄下只有 `architecture/`。
 
-```
-docs/copilot/customization/custom-instructions.md
-docs/copilot/customization/prompt-files.md
-docs/copilot/customization/custom-agents.md
-docs/copilot/customization/agent-skills.md
-docs/copilot/customization/hooks.md
-docs/copilot/customization/agent-plugins.md
-docs/copilot/customization/overview.md
-```
+### 修正
 
-然而 **`docs/copilot/` 目錄不存在**。`docs/` 目錄下只有 `architecture/`。
+已將所有 `docs/copilot/customization/*.md` 的引用替換為對應的官方 VS Code 線上文件 URL：
 
-### 受影響的引用位置
-
-| 檔案 | 行數 |
-|------|------|
-| `.github/README.md` | 7–15, 43–50, 86, 112, 116, 120, 128, 135, 142 |
-| `.github/instructions/xuanwu-customization-authoring.instructions.md` | 11 |
-| `.github/instructions/xuanwu-test-expert.instructions.md` | 48–50 |
-| `.github/copilot-instructions.md` | 30, 56 |
-
-### 建議修正
-
-**建議採用選項 B（更新引用為官方線上文件 URL）**，因為 `docs/` 目錄目前僅維護與本專案業務架構相關的文件（`docs/architecture/`），與 Copilot 工具的一般說明文件分屬不同關注點。建立一套 `docs/copilot/` 鏡像可能造成版本維護負擔。
-
-**選項 B（推薦）：** 將所有 `docs/copilot/customization/*.md` 的引用替換為對應的官方 VS Code 線上文件 URL，例如：
-- `https://code.visualstudio.com/docs/copilot/customization/custom-instructions`
-- `https://code.visualstudio.com/docs/copilot/customization/prompt-files`
-- `https://code.visualstudio.com/docs/copilot/customization/copilot-agents`
-- `https://code.visualstudio.com/docs/copilot/customization/agent-skills`
-
-**選項 A（備選）：** 在 `docs/copilot/customization/` 下建立對應的 Markdown 參考文件，並持續與官方文件同步更新。
+- `docs/copilot/customization/custom-instructions.md` → `https://code.visualstudio.com/docs/copilot/customization/custom-instructions`
+- `docs/copilot/customization/prompt-files.md` → `https://code.visualstudio.com/docs/copilot/customization/prompt-files`
+- `docs/copilot/customization/custom-agents.md` → `https://code.visualstudio.com/docs/copilot/customization/copilot-agents`
+- `docs/copilot/customization/agent-skills.md` → `https://code.visualstudio.com/docs/copilot/customization/agent-skills`
+- `docs/copilot/customization/hooks.md` → `https://code.visualstudio.com/docs/copilot/customization/hooks`
+- `docs/copilot/customization/agent-plugins.md` → `https://code.visualstudio.com/docs/copilot/customization/agent-plugins`
+- `docs/copilot/customization/overview.md` → `https://code.visualstudio.com/docs/copilot/customization`
 
 ---
 
-## Issue 7：`src/design-system/tokens/README.md` 和 `src/infrastructure/firebase/README.md` — 文件描述尚未實現的組件為現有功能
+## Issue 7：`src/design-system/tokens/README.md` 和 `src/infrastructure/firebase/README.md` — 文件描述尚未實現的組件為現有功能 ✅ FIXED
 
 **檔案：** `src/design-system/tokens/README.md`（原 `presentation/README.md`）、`src/infrastructure/firebase/README.md`  
 **嚴重程度：** 低
 
 ### 問題描述
 
-`tokens/` 層目前為規劃階段，令牌常數尚未從 `tailwind.config.ts` / `globals.css` 提取。`index.ts` 只有 `export {}`，所有匯出均以注解形式作為**佔位符（placeholder）**，等待後續實現。
+`tokens/` 層目前為規劃階段，`index.ts` 只有 `export {}`。Firebase README（Section 6）提供 Vis.js 和 PDnD 組件的使用範例程式碼，給人這些組件已可使用的印象，但 `VisNetwork`、`VisTimeline`、`DragDropBoard` 尚未實現。
 
-Firebase README（Section 6）提供 Vis.js 和 PDnD 組件的**使用範例程式碼**，給人這些組件已可使用的印象，但相關組件（`VisNetwork`、`VisTimeline`、`DragDropBoard`）尚未實現。
+另外，Firebase README Section 6 原本寫 `presentation/` 層，但正確路徑是各 Module 的 `_components/` 目錄。
+
+### 修正
+
+- 已在 `src/infrastructure/firebase/README.md` Section 6 開頭加入「尚未實現」警告說明。
+- 已將 Section 6 中的 `presentation/` 引用修正為 `_components/`。
+
+---
+
+## Issue 8：`docs/architecture/README.md` — Visual Indicators 路徑錯誤 ✅ FIXED
+
+**檔案：** `docs/architecture/README.md`（第 148 行）  
+**嚴重程度：** 中
+
+### 問題描述
+
+文件描述 Visual Indicators (VIs) 位置時使用了錯誤的路徑：
+
+```
+They live in the module's presentation layer (`src/modules/<module>/presentation/`)
+```
+
+但 Domain Module 的 Presentation Layer 實際路徑是 `_components/`，不是 `presentation/`。
+
+### 修正
+
+已將第 148 行更新為：`src/modules/<module>/_components/`。
+
+---
+
+## Issue 9：`.github/agents/xuanwu-ui.agent.md` — i18n 指示指向不存在的 JSON 檔案 ✅ FIXED
+
+**檔案：** `.github/agents/xuanwu-ui.agent.md`（第 68 行、第 77 行）  
+**嚴重程度：** 高
+
+### 問題描述
+
+`xuanwu-ui.agent.md` 的 i18n 規則與 Issue 4 相同問題 — 要求更新 `public/localized-files/en.json` 和 `public/localized-files/zh-TW.json`，但這些檔案不存在。Issue 4 修正了 `copilot-instructions.md`，但遺漏了此 Agent 定義檔案。
+
+### 修正
+
+已將 `xuanwu-ui.agent.md` 的 i18n 章節更新為引用 `src/shared/i18n/index.ts`。
+
+---
+
+## Issue 10：`.github/instructions/xuanwu-application-architecture.instructions.md` — 仍使用 Feature Slice 術語
+
+**檔案：** `.github/instructions/xuanwu-application-architecture.instructions.md`  
+**嚴重程度：** 中
+
+### 問題描述
+
+此指令檔案標題仍使用 "feature-slice boundaries" 和 "Feature Slice Architecture"，與 PR #10 將術語從 `features/slice` 改為 `modules/module` 的決策不一致：
+
+| 位置 | 舊術語 | 正確術語 |
+|------|--------|---------|
+| 第 3 行（description） | `"feature-slice boundaries"` | `"Domain Module boundaries"` |
+| 第 9 行（章節標題） | `## Feature Slice Architecture` | `## Domain Module Architecture` |
+| 第 11–14 行（規則） | `feature queries.ts / feature adapters / cross-feature imports / feature READMEs` | `module queries.ts / module adapters / cross-module imports / module READMEs` |
 
 ### 建議修正
 
-在 `src/infrastructure/firebase/README.md` 的相關使用範例程式碼旁，加入「尚未實現」的提示說明，例如：
+更新 `xuanwu-application-architecture.instructions.md` 中的所有 "feature" / "slice" 術語為 "module" / "Domain Module"。
 
-```markdown
-> ⚠️ 以下範例為**規劃中**的 API，相關組件尚未實現。待安裝依賴並實現組件後，此範例才可使用。
-```
+---
+
+## Issue 11：`.github/copilot-instructions.md` — 仍使用 "slice boundaries" 術語 ✅ FIXED
+
+**檔案：** `.github/copilot-instructions.md`（第 22 行、第 54 行）  
+**嚴重程度：** 低
+
+### 問題描述
+
+`copilot-instructions.md` 在兩個地方仍使用 "slice boundaries" 術語，與 Domain Module 重命名不一致：
+
+- 第 22 行：`"Respect layer direction, slice boundaries, and public APIs."`
+- 第 54 行：`"verify architecture correctness, slice boundaries, and existing tests"`
+
+### 修正
+
+已將兩處 "slice boundaries" 更新為 "module boundaries"。
 
 ---
 
 ## 摘要表 / Summary
 
-| # | 嚴重程度 | 受影響檔案 | 問題類型 |
-|---|---------|-----------|---------|
-| 1 | 中 | `docs/architecture/README.md` | 設計系統層數描述自相矛盾（3層 vs 4層） |
-| 2 | 中 | `docs/architecture/README.md`、`docs/architecture/adr/README.md` | ADR 索引不同步（5筆 vs 7筆） |
-| 3 | 低 | `docs/architecture/README.md`、`src/modules/README.md` | Domain Modules 表格缺少 `workforce.module/` |
-| 4 | 高 | `.github/copilot-instructions.md` | i18n 指示引用不存在的 JSON 檔案路徑 |
-| 5 | 高 | `README.md` | DDD 層次結構圖描述的目錄路徑與實際不符 |
-| 6 | 高 | `.github/README.md`、`.github/instructions/` | 引用不存在的 `docs/copilot/` 目錄 |
-| 7 | 低 | `src/design-system/tokens/README.md`、`src/infrastructure/firebase/README.md` | 文件範例描述尚未實現的組件如同現有功能 |
+| # | 嚴重程度 | 受影響檔案 | 問題類型 | 狀態 |
+|---|---------|-----------|---------|------|
+| 1 | 中 | `docs/architecture/README.md` | 設計系統層數描述自相矛盾（3層 vs 4層） | ✅ Fixed |
+| 2 | 中 | `docs/architecture/README.md`、`docs/architecture/adr/README.md` | ADR 索引不同步（5筆 vs 7筆） | ✅ Fixed |
+| 3 | 低 | `docs/architecture/README.md`、`src/modules/README.md` | Domain Modules 表格缺少 `workforce.module/` | ✅ Fixed |
+| 4 | 高 | `.github/copilot-instructions.md` | i18n 指示引用不存在的 JSON 檔案路徑 | ✅ Fixed |
+| 5 | 高 | `README.md` | DDD 層次結構圖描述的目錄路徑與實際不符 | ✅ Fixed |
+| 6 | 高 | `.github/README.md`、`.github/instructions/`、`.github/skills/` | 引用不存在的 `docs/copilot/` 目錄 | ✅ Fixed |
+| 7 | 低 | `src/design-system/tokens/README.md`、`src/infrastructure/firebase/README.md` | 文件範例描述尚未實現的組件如同現有功能 | ✅ Fixed |
+| 8 | 中 | `docs/architecture/README.md` | VIs 路徑錯誤（`presentation/` → `_components/`） | ✅ Fixed |
+| 9 | 高 | `.github/agents/xuanwu-ui.agent.md` | i18n 指示引用不存在的 JSON 檔案路徑 | ✅ Fixed |
+| 10 | 中 | `.github/instructions/xuanwu-application-architecture.instructions.md` | 仍使用 Feature Slice 術語而非 Domain Module | ⚠️ Open |
+| 11 | 低 | `.github/copilot-instructions.md` | 仍使用 "slice boundaries" 術語 | ✅ Fixed |

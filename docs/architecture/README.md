@@ -96,6 +96,7 @@ See [Service Boundary](./catalog/service-boundary.md) for crossing protocols and
 | Organization | `src/modules/org.module/` | SaaS | Org, Namespace, Team |
 | Workspace | `src/modules/workspace.module/` | Workspace | Workspace, WBS, Issues, CR |
 | File & Intel | `src/modules/file.module/` | Workspace | Files, Document Parsing, Object Extraction |
+| Workforce Scheduling | `src/modules/workforce.module/` | Bridge | Workforce Scheduling (SaaS ↔ Workspace bridge) |
 | Settlement | `src/modules/settlement.module/` | SaaS | AR, AP, Settlement records |
 
 > Expand this table as modules are implemented. Each module is self-contained — ports, value objects, and infrastructure adapters live inside the module, not in shared global directories.
@@ -145,7 +146,7 @@ Drag-and-drop interactions use **`@atlaskit/pragmatic-drag-and-drop`** (Atlassia
 - `@atlaskit/pragmatic-drag-and-drop-hitbox` — edge / center hitbox helpers for tree and list reordering
 - `@atlaskit/pragmatic-drag-and-drop-react-drop-indicator` — **Visual Indicators (VIs)**: rendered drop-indicator lines and boxes that provide visible drag feedback
 
-**Visual Indicators (VIs)** are the visual feedback elements shown during a drag operation (e.g. a blue line between list items, a border highlight on a drop zone). They live in the module's presentation layer (`src/modules/<module>/presentation/`) and must not contain business logic.
+**Visual Indicators (VIs)** are the visual feedback elements shown during a drag operation (e.g. a blue line between list items, a border highlight on a drop zone). They live in the module's Presentation layer (`src/modules/<module>/_components/`) and must not contain business logic.
 
 **vis-date + Firebase collaboration:**  
 `VisDateMetadata` (defined in `@/shared/interfaces`) carries the temporal position of a draggable item resolved from Firestore. Server Actions fetch and cache these values via `cacheAside` and pass them as serialised props. The Presentation layer reads these props to render `<DateDropIndicator>` at the correct timeline position — **without making any additional DB calls**.
