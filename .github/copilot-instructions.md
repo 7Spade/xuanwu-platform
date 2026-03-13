@@ -11,7 +11,7 @@ Project-wide always-on instructions for GitHub Copilot Chat in this repository.
 ## Single Sources of Truth
 
 - Business logic: `docs/architecture/README.md`
-- Codebase reference baseline: `.github/skills/xuanwu-skill/SKILL.md` (if present)
+- Codebase reference baseline: `docs/architecture/README.md` and established code patterns
 
 If a task touches business rules or domain terminology, read the SSOT documents before changing code or documentation.
 
