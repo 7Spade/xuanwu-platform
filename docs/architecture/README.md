@@ -71,18 +71,20 @@ Infrastructure implements → Domain interfaces
 The system is divided into two primary layers with a governing boundary between them:
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                     SaaS Layer                          │
-│  Organization · Namespace · Team · Settlement · Social  │
-│              ┌──────────────────────┐                   │
-│              │  Workforce Scheduling │  ← Bridge        │
-│              └──────────────────────┘                   │
-└──────────────────────┬──────────────────────────────────┘
-                       │  Crossed via: Event Bus + typed contracts
-┌──────────────────────▼──────────────────────────────────┐
-│                  Workspace Layer                         │
-│  Workspace · WBS · Issue · CR · Files · Intelligence    │
-└─────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│                          SaaS Layer                                    │
+│  Organization · Namespace · Team  ·  Settlement  ·  Social  ·         │
+│  Notification  ·  Achievement                                          │
+│              ┌──────────────────────┐                                  │
+│              │  Workforce Scheduling │  ← Bridge                      │
+│              └──────────────────────┘                                  │
+└─────────────────────────────┬──────────────────────────────────────────┘
+                              │  Crossed via: Event Bus + typed contracts
+┌─────────────────────────────▼──────────────────────────────────────────┐
+│                       Workspace Layer                                  │
+│  Workspace · WBS · Issue · CR · QA · Acceptance · Baseline ·          │
+│  Files · Intelligence Pipeline                                         │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
 See [Service Boundary](./catalog/service-boundary.md) for crossing protocols and ownership rules.
@@ -93,13 +95,17 @@ See [Service Boundary](./catalog/service-boundary.md) for crossing protocols and
 
 | Module | Location | Layer | Description |
 |--------|----------|-------|-------------|
-| Organization | `src/modules/org.module/` | SaaS | Org, Namespace, Team |
-| Workspace | `src/modules/workspace.module/` | Workspace | Workspace, WBS, Issues, CR |
-| File & Intel | `src/modules/file.module/` | Workspace | Files, Document Parsing, Object Extraction |
+| Organization | `src/modules/org.module/` | SaaS | Org, Namespace, Team, Identity |
+| Workspace | `src/modules/workspace.module/` | Workspace | Workspace, WBS, Issue, CR, QA, Acceptance, Baseline |
+| File & Intel | `src/modules/file.module/` | Workspace | Files, Document Parsing, Object Extraction, Intelligence Pipeline |
 | Workforce Scheduling | `src/modules/workforce.module/` | Bridge | Workforce Scheduling (SaaS ↔ Workspace bridge) |
 | Settlement | `src/modules/settlement.module/` | SaaS | AR, AP, Settlement records |
+| Notification | `src/modules/notification.module/` | SaaS (cross-cutting) | Notification Engine, Inbox, Email, Mobile Push |
+| Social | `src/modules/social.module/` | SaaS | Social Graph (Star/Watch/Follow), Feed, Dashboard, Discovery |
+| Achievement | `src/modules/achievement.module/` | SaaS | Achievement Rules, Badge Unlocking, User Profile achievements |
 
-> Expand this table as modules are implemented. Each module is self-contained — ports, value objects, and infrastructure adapters live inside the module, not in shared global directories.
+> Each module is self-contained — ports, value objects, and infrastructure adapters live inside the module, not in shared global directories.
+> See [`core-logic.mermaid`](./diagrams/core-logic.mermaid) for the full interaction sequence that drove this module decomposition.
 
 ---
 
