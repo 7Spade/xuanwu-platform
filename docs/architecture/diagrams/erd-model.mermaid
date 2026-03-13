@@ -1,0 +1,327 @@
+```mermaid
+---
+title: Firestore Entity Relationship Model / Firestore 實體關係模型
+---
+erDiagram
+
+    %% ── SaaS Layer ──────────────────────────────────────────────
+
+    USER {
+        string uid PK
+        string email
+        string displayName
+        string avatarUrl
+        string personalNamespace FK
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    ORGANIZATION {
+        string orgId PK
+        string namespace FK
+        string displayName
+        string ownerId FK
+        string billingStatus
+        timestamp createdAt
+    }
+
+    NAMESPACE {
+        string namespaceId PK
+        string slug
+        string type "org | personal"
+        string ownerId FK
+    }
+
+    TEAM {
+        string teamId PK
+        string orgId FK
+        string name
+        string slug
+        timestamp createdAt
+    }
+
+    TEAM_MEMBER {
+        string teamMemberId PK
+        string teamId FK
+        string userId FK
+        string role "member | lead"
+        timestamp joinedAt
+    }
+
+    %% ── Workspace Layer ─────────────────────────────────────────
+
+    WORKSPACE {
+        string workspaceId PK
+        string namespaceId FK
+        string orgId FK "null if personal"
+        string displayName
+        string slug
+        string ownerId FK
+        string baselineRef
+        string visibility "public | private"
+        timestamp createdAt
+    }
+
+    WORKSPACE_MEMBER {
+        string memberId PK
+        string workspaceId FK
+        string userId FK
+        string role "maintainer | collaborator"
+        timestamp grantedAt
+    }
+
+    WBS_TASK {
+        string taskId PK
+        string workspaceId FK
+        string parentTaskId FK "null if root"
+        string epicId FK "null if standalone"
+        string title
+        string description
+        string assigneeId FK
+        string state "pending | in_progress | blocked | done | qa_in_review | acceptance_review | accepted"
+        string scheduledStart
+        string scheduledEnd
+        number effortEstimate
+        string skillRequirement
+        timestamp createdAt
+        timestamp updatedAt
+        timestamp acceptedAt "null until accepted"
+    }
+
+    EPIC {
+        string epicId PK
+        string workspaceId FK
+        string title
+        string description
+        string status "active | completed | archived"
+        timestamp createdAt
+    }
+
+    MILESTONE {
+        string milestoneId PK
+        string workspaceId FK
+        string title
+        string dueDate
+        string status "open | closed"
+        timestamp createdAt
+    }
+
+    MILESTONE_TASK {
+        string id PK
+        string milestoneId FK
+        string taskId FK
+    }
+
+    TASK_DEPENDENCY {
+        string dependencyId PK
+        string upstreamTaskId FK
+        string downstreamTaskId FK
+        string type "finish_to_start | start_to_start"
+    }
+
+    ISSUE {
+        string issueId PK
+        string workspaceId FK
+        string linkedTaskId FK
+        string sequentialNumber
+        string title
+        string description
+        string state "open | resolved"
+        string openedById FK
+        string resolvedById FK
+        timestamp openedAt
+        timestamp resolvedAt
+    }
+
+    CHANGE_REQUEST {
+        string crId PK
+        string workspaceId FK
+        string taskId FK
+        string snapshotRef
+        string state "open | changes_requested | approved | merged | closed"
+        string authorId FK
+        string mergeQueueId FK "null if direct merge"
+        timestamp createdAt
+        timestamp mergedAt
+    }
+
+    CR_REVIEW {
+        string reviewId PK
+        string crId FK
+        string reviewerId FK
+        string decision "approved | changes_requested"
+        string comment
+        timestamp reviewedAt
+    }
+
+    MERGE_QUEUE {
+        string queueId PK
+        string workspaceId FK
+        string state "pending | validating | merged | failed"
+        timestamp createdAt
+    }
+
+    BASELINE_HISTORY {
+        string historyId PK
+        string workspaceId FK
+        string crId FK
+        string mergedById FK
+        string snapshotRef
+        timestamp mergedAt
+    }
+
+    %% ── File and Intelligence Layer ─────────────────────────────
+
+    FILE {
+        string fileId PK
+        string workspaceId FK
+        string uploadedById FK
+        string name
+        string mimeType
+        string storageUri
+        number sizeBytes
+        string currentVersionId FK
+        timestamp uploadedAt
+    }
+
+    FILE_VERSION {
+        string versionId PK
+        string fileId FK
+        string storageUri
+        number sizeBytes
+        string uploadedById FK
+        timestamp createdAt
+    }
+
+    PARSED_DOCUMENT {
+        string parseId PK
+        string fileId FK
+        string fileVersionId FK
+        string rawText
+        string structureJson
+        string state "pending | completed | failed"
+        timestamp parsedAt
+    }
+
+    EXTRACTED_OBJECT {
+        string objectId PK
+        string parseId FK
+        string type "date | amount | party | deliverable | obligation"
+        string value
+        string confidence
+        string linkedTaskId FK "null if unlinked"
+        string linkedWorkItemId FK "null if unlinked"
+        timestamp extractedAt
+    }
+
+    %% ── Workforce and Settlement Layer ──────────────────────────
+
+    WORKFORCE_REQUEST {
+        string requestId PK
+        string workspaceId FK
+        string taskId FK
+        string skillRequirement
+        string preferredStart
+        string preferredEnd
+        number effortHours
+        string state "pending | scheduled | approved"
+        timestamp requestedAt
+    }
+
+    ASSIGNMENT_SCHEDULE {
+        string scheduleId PK
+        string requestId FK
+        string taskId FK
+        string assigneeId FK
+        string scheduledStart
+        string scheduledEnd
+        string approvedById FK
+        timestamp approvedAt
+    }
+
+    SETTLEMENT_RECORD {
+        string settlementId PK
+        string taskId FK
+        string workspaceId FK
+        string orgId FK
+        string triggerEvent "task_accepted"
+        timestamp triggeredAt
+    }
+
+    AR_RECORD {
+        string arId PK
+        string settlementId FK
+        string orgId FK
+        string clientId FK
+        string invoiceRef
+        number amount
+        string currency
+        string state "pending | issued | paid"
+        timestamp issuedAt
+        timestamp paidAt
+    }
+
+    AP_RECORD {
+        string apId PK
+        string settlementId FK
+        string assigneeId FK
+        number amount
+        string currency
+        string state "pending | scheduled | paid"
+        timestamp scheduledAt
+        timestamp paidAt
+    }
+
+    %% ── Relationships ────────────────────────────────────────────
+
+    USER ||--o{ ORGANIZATION : "owns"
+    USER ||--o| NAMESPACE : "has personal"
+    ORGANIZATION ||--|| NAMESPACE : "registered under"
+    ORGANIZATION ||--o{ TEAM : "has"
+    ORGANIZATION ||--o{ WORKSPACE : "owns"
+    TEAM ||--o{ TEAM_MEMBER : "has"
+    USER ||--o{ TEAM_MEMBER : "belongs to"
+
+    NAMESPACE ||--o{ WORKSPACE : "scopes"
+    WORKSPACE ||--o{ WORKSPACE_MEMBER : "has"
+    USER ||--o{ WORKSPACE_MEMBER : "is"
+    WORKSPACE ||--o{ WBS_TASK : "contains"
+    WORKSPACE ||--o{ EPIC : "contains"
+    WORKSPACE ||--o{ MILESTONE : "contains"
+    WORKSPACE ||--o{ ISSUE : "contains"
+    WORKSPACE ||--o{ CHANGE_REQUEST : "contains"
+    WORKSPACE ||--o{ FILE : "stores"
+    WORKSPACE ||--o{ MERGE_QUEUE : "has"
+    WORKSPACE ||--o{ BASELINE_HISTORY : "tracks"
+
+    EPIC ||--o{ WBS_TASK : "groups"
+    MILESTONE ||--o{ MILESTONE_TASK : "has"
+    WBS_TASK ||--o{ MILESTONE_TASK : "linked to"
+    WBS_TASK ||--o{ TASK_DEPENDENCY : "upstream of"
+    WBS_TASK ||--o{ TASK_DEPENDENCY : "downstream of"
+    WBS_TASK ||--o{ ISSUE : "has"
+    WBS_TASK ||--o{ CHANGE_REQUEST : "produces"
+    WBS_TASK ||--o{ EXTRACTED_OBJECT : "receives"
+    USER ||--o{ WBS_TASK : "assigned to"
+
+    CHANGE_REQUEST ||--o{ CR_REVIEW : "receives"
+    CHANGE_REQUEST }o--o| MERGE_QUEUE : "enqueued in"
+    CHANGE_REQUEST ||--o| BASELINE_HISTORY : "produces"
+    USER ||--o{ CR_REVIEW : "submits"
+
+    FILE ||--o{ FILE_VERSION : "has"
+    FILE ||--o| PARSED_DOCUMENT : "parsed into"
+    FILE_VERSION ||--o| PARSED_DOCUMENT : "version parsed"
+    PARSED_DOCUMENT ||--o{ EXTRACTED_OBJECT : "yields"
+
+    WORKFORCE_REQUEST ||--o| ASSIGNMENT_SCHEDULE : "resolved by"
+    WBS_TASK ||--o| WORKFORCE_REQUEST : "triggers"
+    WBS_TASK ||--o| ASSIGNMENT_SCHEDULE : "scheduled by"
+    USER ||--o{ ASSIGNMENT_SCHEDULE : "assigned as"
+
+    WBS_TASK ||--o| SETTLEMENT_RECORD : "triggers on accept"
+    SETTLEMENT_RECORD ||--o| AR_RECORD : "produces"
+    SETTLEMENT_RECORD ||--o| AP_RECORD : "produces"
+    ORGANIZATION ||--o{ AR_RECORD : "receives"
+    USER ||--o{ AP_RECORD : "paid via"
+```
