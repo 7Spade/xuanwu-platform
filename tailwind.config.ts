@@ -8,5 +8,6 @@ export default {
     "./src/shared/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/design-system/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/features/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/infrastructure/**/*.{js,ts,jsx,tsx,mdx}",
   ],
 } satisfies Config;

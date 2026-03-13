@@ -13,7 +13,7 @@ import {
   GithubAuthProvider,
   EmailAuthProvider,
 } from "firebase/auth";
-import { getFirebaseApp } from "./app";
+import { getFirebaseApp } from "../app";
 
 let _auth: Auth | null = null;
 

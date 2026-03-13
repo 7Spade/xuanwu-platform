@@ -22,7 +22,7 @@ import {
   type DatabaseReference,
   type Unsubscribe,
 } from "firebase/database";
-import { getFirebaseApp } from "./app";
+import { getFirebaseApp } from "../app";
 
 let _database: Database | null = null;
 

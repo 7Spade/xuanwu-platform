@@ -18,7 +18,7 @@ import {
   type UploadTask,
   type UploadMetadata,
 } from "firebase/storage";
-import { getFirebaseApp } from "./app";
+import { getFirebaseApp } from "../app";
 
 let _storage: FirebaseStorage | null = null;
 

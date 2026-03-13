@@ -121,18 +121,20 @@ Parallel routes allow multiple pages to render simultaneously in the same layout
 
 ## Design System
 
-The design system lives in `src/design-system/` and follows a three-tier hierarchy:
+The design system lives in `src/design-system/` and follows a **four-tier hierarchy**:
 
 | Tier | Location | Contents |
 |------|----------|----------|
 | **primitives** | `src/design-system/primitives/` | Raw shadcn/ui components (Button, Input, Dialog, …). Configured via `components.json` with new-york style and Tailwind v4 CSS variables. |
 | **components** | `src/design-system/components/` | Project-specific wrappers that compose or extend primitives with Xuanwu branding and behaviour. |
 | **patterns** | `src/design-system/patterns/` | Higher-order composites built from components (e.g. data tables, sidebars, command palettes). |
+| **presentation** | `src/design-system/presentation/` | Drag-and-drop wrappers and Visual Indicator (VI) components. All `"use client"` — no business logic. |
 
-```
-import { Button }      from "@/design-system/primitives";
-import { SearchField } from "@/design-system/components";
-import { LoginForm }   from "@/design-system/patterns";
+```typescript
+import { Button }        from "@/design-system/primitives";
+import { SearchField }   from "@/design-system/components";
+import { LoginForm }     from "@/design-system/patterns";
+import { DraggableItem } from "@/design-system/presentation";
 ```
 
 ### Drag and Drop — `@atlaskit/pragmatic-drag-and-drop`
@@ -143,12 +145,22 @@ Drag-and-drop interactions use **`@atlaskit/pragmatic-drag-and-drop`** (Atlassia
 - `@atlaskit/pragmatic-drag-and-drop-hitbox` — edge / center hitbox helpers for tree and list reordering
 - `@atlaskit/pragmatic-drag-and-drop-react-drop-indicator` — **Visual Indicators (VIs)**: rendered drop-indicator lines and boxes that provide visible drag feedback
 
-**Visual Indicators (VIs)** are the visual feedback elements shown during a drag operation (e.g. a blue line between list items, a border highlight on a drop zone). They are always rendered by the Presentation layer and must not contain business logic.
+**Visual Indicators (VIs)** are the visual feedback elements shown during a drag operation (e.g. a blue line between list items, a border highlight on a drop zone). They always live in the **`presentation/`** tier and must not contain business logic.
+
+**vis-date + Firebase collaboration:**  
+`VisDateMetadata` (defined in `@/shared/interfaces`) carries the temporal position of a draggable item resolved from Firestore. Server Actions fetch and cache these values via `cacheAside` and pass them as serialised props. The Presentation layer reads these props to render `<DateDropIndicator>` at the correct timeline position — **without making any additional DB calls**.
+
+```
+Firestore (source of truth)
+  └→ Server Action (cacheAside read from @/infrastructure/firebase/functions/db/cacheLayer)
+      └→ serialised VisDateMetadata props
+          └→ Presentation layer renders <DateDropIndicator> at correct date position
+```
 
 Usage pattern:
 ```typescript
 // Presentation layer — drag source
-draggable({ element: ref.current, getInitialData: () => ({ id }) });
+draggable({ element: ref.current, getInitialData: () => ({ id, visDate }) });
 
 // Presentation layer — drop target with VI
 dropTargetForElements({
@@ -174,10 +186,38 @@ Firebase (`xuanwu-i-00708880-4e2d8`) is the primary backend infrastructure. Serv
 | Firebase App Check | Request attestation (ReCaptcha Enterprise) |
 | Firebase Messaging | Push notifications |
 | Firebase Analytics | Event tracking |
+| Remote Config | Dynamic feature flags and configuration |
 
-**Firebase code lives inside feature slice infrastructure adapters** (`src/features/<slice>/infra.<adapter>/`), not in a global shared directory. Each adapter implements the port interface defined in the same slice's domain layer.
+### Infrastructure Location
 
-For server-side operations use the **Firebase Admin SDK** in Server Actions or Route Handlers. For client-side real-time subscriptions use the **Firebase Web SDK** in Client Components.
+Firebase adapters live in **`src/infrastructure/firebase/`**, split into two sub-surfaces:
+
+| Sub-path | SDK | Runtime | Use in |
+|----------|-----|---------|--------|
+| `src/infrastructure/firebase/client/` | Firebase Web SDK | Browser | Client Components |
+| `src/infrastructure/firebase/functions/` | Firebase Admin SDK | Node.js | Server Actions, Route Handlers |
+
+```typescript
+// Client Component — Web SDK
+import { getFirebaseAuth } from "@/infrastructure/firebase/client";
+
+// Server Action — Admin SDK
+import { verifyIdToken }   from "@/infrastructure/firebase/functions/auth";
+import { cacheAside }      from "@/infrastructure/firebase/functions/db/cacheLayer";
+import { commitBatch }     from "@/infrastructure/firebase/functions/db/batchWrite";
+```
+
+### Cost Control Strategy
+
+| Strategy | Implementation |
+|----------|---------------|
+| Reduce Firestore write count | Batch writes via `commitBatch()` — auto-chunks at 490 ops |
+| Reduce read latency & cost | Cache-aside reads via `cacheAside()` — default TTL 5 min |
+| Reduce frontend subscriptions | Prefer one-time fetches + cache over `onSnapshot` |
+| Optimize Storage uploads | Use resumable upload for large files |
+| Dynamic config | Remote Config with 12 h fetch interval |
+
+See [`src/infrastructure/firebase/README.md`](../../src/infrastructure/firebase/README.md) for the full design guide.
 
 ---
 
