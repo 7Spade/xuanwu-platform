@@ -1,4 +1,4 @@
-import { z } from "zod";
+import type { z } from "zod";
 import { ValidationError } from "@/shared/errors";
 import type { Result } from "@/shared/types";
 import { ok, fail } from "@/shared/types";
