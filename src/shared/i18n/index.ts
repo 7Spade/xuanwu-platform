@@ -127,6 +127,7 @@ const dictionary: Dictionary = {
     "organizations.createOrg": "建立組織",
     "organizations.noOrgs": "尚未加入任何組織",
     "organizations.noOrgsHint": "建立或加入一個組織來開始協作",
+    "organizations.workspaces": "個工作區",
     // --- settings ---
     "settings.general.title": "一般設定",
     "settings.general.orgName": "組織名稱",
@@ -290,6 +291,7 @@ const dictionary: Dictionary = {
     "organizations.createOrg": "Create Organization",
     "organizations.noOrgs": "No organizations yet",
     "organizations.noOrgsHint": "Create or join an organization to start collaborating",
+    "organizations.workspaces": "workspaces",
     // --- settings ---
     "settings.general.title": "General Settings",
     "settings.general.orgName": "Organization Name",
