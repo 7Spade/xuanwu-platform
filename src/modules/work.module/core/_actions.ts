@@ -1,3 +1,3 @@
 'use server';
-export type { WorkItemDTO } from "./_use-cases";
-export { createWorkItem, updateWorkItemStatus } from "./_use-cases";
+export type { WorkItemDTO, UpdateWorkItemInput } from "./_use-cases";
+export { createWorkItem, updateWorkItemStatus, updateWorkItem } from "./_use-cases";

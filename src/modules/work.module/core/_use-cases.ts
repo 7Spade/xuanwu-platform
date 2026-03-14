@@ -9,6 +9,7 @@ export interface WorkItemDTO {
   readonly id: string;
   readonly workspaceId: string;
   readonly title: string;
+  readonly description?: string;
   readonly status: WorkItemStatus;
   readonly priority: WorkItemPriority;
   readonly assigneeId?: string;
@@ -19,9 +20,50 @@ export interface WorkItemDTO {
 function entityToDTO(w: WorkItemEntity): WorkItemDTO {
   return {
     id: w.id, workspaceId: w.workspaceId, title: w.title,
+    description: w.description,
     status: w.status, priority: w.priority,
     assigneeId: w.assigneeId, dueDate: w.dueDate, createdAt: w.createdAt,
   };
+}
+
+export interface UpdateWorkItemInput {
+  title?: string;
+  description?: string;
+  status?: WorkItemStatus;
+  priority?: WorkItemPriority;
+  assigneeId?: string | null;
+  dueDate?: string | null;
+}
+
+export async function updateWorkItem(
+  repo: IWorkItemRepository,
+  id: string,
+  input: UpdateWorkItemInput,
+): Promise<Result<WorkItemDTO>> {
+  try {
+    const existing = await repo.findById(id as WorkItemId);
+    if (!existing) return fail(new Error(`WorkItem not found: ${id}`));
+    const updated: WorkItemEntity = {
+      ...existing,
+      ...(input.title !== undefined ? { title: input.title } : {}),
+      ...(input.description !== undefined
+        ? input.description === "" ? { description: undefined } : { description: input.description }
+        : {}),
+      ...(input.status !== undefined ? { status: input.status } : {}),
+      ...(input.priority !== undefined ? { priority: input.priority } : {}),
+      ...(input.assigneeId !== undefined
+        ? input.assigneeId === null ? { assigneeId: undefined } : { assigneeId: input.assigneeId }
+        : {}),
+      ...(input.dueDate !== undefined
+        ? input.dueDate === null ? { dueDate: undefined } : { dueDate: input.dueDate }
+        : {}),
+      updatedAt: new Date().toISOString(),
+    };
+    await repo.save(updated);
+    return ok(entityToDTO(updated));
+  } catch (err) {
+    return fail(err instanceof Error ? err : new Error(String(err)));
+  }
 }
 
 export async function createWorkItem(

@@ -3,14 +3,14 @@
  * WorkspaceSettingsDialog — Workspace Sovereignty Settings dialog.
  *
  * Source equivalent: workspace.slice/core/_components/workspace-settings.tsx
- * Adapted: no avatar upload (Storage not in scope), uses design-system components,
+ * Adapted: photo URL field (direct URL input), uses design-system components,
  * calls updateWorkspaceSettings Server Action via FirestoreWorkspaceRepository.
  *
  * Fields: name · lifecycleState · visibility · address · personnel (manager/supervisor/safety)
  */
 
 import { useState, useEffect } from "react";
-import { HardHat, Loader2, Settings, ShieldCheck, Trash2, User2 } from "lucide-react";
+import { HardHat, ImageIcon, Loader2, Settings, ShieldCheck, Trash2, User2 } from "lucide-react";
 
 import { Button } from "@/design-system/primitives/ui/button";
 import {
@@ -103,6 +103,7 @@ export function WorkspaceSettingsDialog({
   const [personnel, setPersonnel] = useState<WorkspacePersonnel>(
     workspace.personnel ?? {},
   );
+  const [photoURL, setPhotoURL] = useState(workspace.photoURL ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -115,8 +116,9 @@ export function WorkspaceSettingsDialog({
     setLifecycleState(workspace.lifecycleState);
     setAddress(workspace.address ?? EMPTY_ADDRESS);
     setPersonnel(workspace.personnel ?? {});
+    setPhotoURL(workspace.photoURL ?? "");
     setError(null);
-  }, [workspace.id, workspace.lifecycleState, workspace.name, workspace.visibility, workspace.address, workspace.personnel]);
+  }, [workspace.id, workspace.lifecycleState, workspace.name, workspace.visibility, workspace.address, workspace.personnel, workspace.photoURL]);
 
   const handleAddressChange = (field: keyof WorkspaceAddress, value: string) => {
     setAddress((prev) => ({ ...prev, [field]: value }));
@@ -139,6 +141,7 @@ export function WorkspaceSettingsDialog({
         lifecycleState,
         address,
         personnel,
+        photoURL: photoURL.trim() || undefined,
       });
       if (!result.ok) {
         setError(result.error.message);
@@ -180,6 +183,34 @@ export function WorkspaceSettingsDialog({
         </DialogHeader>
 
         <div className="max-h-[70vh] space-y-6 overflow-y-auto py-4 pr-2">
+          {/* Photo URL */}
+          <div className="space-y-2">
+            <Label className="text-xs font-bold uppercase tracking-widest opacity-60">
+              <span className="flex items-center gap-1.5">
+                <ImageIcon className="size-3.5" />
+                {t("workspace.settings.photoURLLabel")}
+              </span>
+            </Label>
+            {photoURL && (
+              <div className="relative h-24 w-full overflow-hidden rounded-xl border border-border/40">
+                <img
+                  src={photoURL}
+                  alt=""
+                  className="h-full w-full object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                />
+              </div>
+            )}
+            <Input
+              value={photoURL}
+              onChange={(e) => setPhotoURL(e.target.value)}
+              placeholder={t("workspace.settings.photoURLPlaceholder")}
+              className="h-11 rounded-xl"
+              disabled={loading}
+              type="url"
+            />
+          </div>
+
           {/* Name */}
           <div className="space-y-2">
             <Label className="text-xs font-bold uppercase tracking-widest opacity-60">
