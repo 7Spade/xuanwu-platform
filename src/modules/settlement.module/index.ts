@@ -1,7 +1,11 @@
 // settlement.module — Public API barrel
-// Bounded Context: Settlement Layer · Accounts Receivable (AR) · Accounts Payable (AP)
-// Layer: SaaS
-//
-// Re-export DTOs, actions, and queries as they are implemented.
-// NEVER export entities, value objects, repositories, or domain events.
-export {};
+// Bounded Context: Settlement · AR · AP / 結算管理
+export type { SettlementDTO } from "./core/_use-cases";
+export {
+  createSettlementRecord,
+  submitClaim,
+  approveClaim,
+  recordPayment,
+  getSettlementsByWorkspace,
+} from "./core/_use-cases";
+export type { ISettlementRepository } from "./domain.settlement/_ports";
