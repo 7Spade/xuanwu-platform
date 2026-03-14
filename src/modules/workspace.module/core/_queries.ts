@@ -1,3 +1,3 @@
-// Workspace queries — server-side reads and DTO type definitions
-// e.g. getWorkspaceByIdQuery, getWBSTasksQuery, getCRsByWorkspaceQuery
-// DTOs: WorkspaceDTO, WBSTaskDTO, IssueDTO, CRDTO
+// Workspace queries — re-exported from _use-cases.ts
+export type { WorkspaceDTO, WorkspaceGrantDTO } from "./_use-cases";
+export { getWorkspaceById, getWorkspacesByDimension, filterVisibleWorkspaces } from "./_use-cases";

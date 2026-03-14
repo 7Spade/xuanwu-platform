@@ -1,3 +1,9 @@
 'use server';
-// Workspace server actions — Next.js Server Actions ('use server' mutations)
-// e.g. createWorkspaceAction, startTaskAction, submitCRAction, mergeToBaselineAction
+// Workspace server actions — thin re-exports of application use cases.
+export type { WorkspaceDTO } from "./_use-cases";
+export {
+  createWorkspace,
+  getWorkspaceById,
+  getWorkspacesByDimension,
+  advanceWorkspaceLifecycle,
+} from "./_use-cases";
