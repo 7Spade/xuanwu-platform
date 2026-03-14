@@ -1,12 +1,13 @@
 "use client";
 /**
- * BillingView — current plan + upgrade CTA shell.
+ * BillingView — current plan + upgrade CTA.
  *
  * Source: finance.slice/_components/
- * Adapted: shows free plan card; upgrade flow wired in future wave.
+ * Wave 27: wired to real namespace data via useNamespaceBySlug(slug).
+ * Shows real workspace usage (workspaceCount / 5 free tier).
  */
 
-import { CreditCard, Zap } from "lucide-react";
+import { CreditCard, Zap, Loader2 } from "lucide-react";
 import { Button } from "@/design-system/primitives/ui/button";
 import {
   Card,
@@ -17,6 +18,9 @@ import {
 } from "@/design-system/primitives/ui/card";
 import { Badge } from "@/design-system/primitives/ui/badge";
 import { useTranslation } from "@/shared/i18n";
+import { useNamespaceBySlug } from "@/modules/namespace.module/_components/use-namespace-by-slug";
+
+const FREE_TIER_LIMIT = 5;
 
 interface BillingViewProps {
   slug: string;
@@ -24,6 +28,10 @@ interface BillingViewProps {
 
 export function BillingView({ slug }: BillingViewProps) {
   const t = useTranslation("zh-TW");
+  const { namespace, loading } = useNamespaceBySlug(slug);
+
+  const used = namespace?.workspaceCount ?? 0;
+  const usagePct = FREE_TIER_LIMIT > 0 ? Math.min(Math.round((used / FREE_TIER_LIMIT) * 100), 100) : 0;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 duration-500 animate-in fade-in">
@@ -47,16 +55,26 @@ export function BillingView({ slug }: BillingViewProps) {
           <CardDescription className="text-xs">{t("settings.billing.usage")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Usage bar placeholder */}
-          <div className="space-y-1.5">
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>0 / 5 workspaces</span>
-              <span>0%</span>
+          {loading ? (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="size-5 animate-spin text-muted-foreground" />
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-muted">
-              <div className="h-full w-0 rounded-full bg-primary" />
+          ) : (
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>
+                  {used} / {FREE_TIER_LIMIT} {t("organizations.workspaces").toLowerCase()}
+                </span>
+                <span>{usagePct}%</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-700"
+                  style={{ width: `${usagePct}%` }}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="flex justify-end border-t border-border/40 pt-4">
             <Button
