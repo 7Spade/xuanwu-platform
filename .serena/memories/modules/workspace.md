@@ -203,3 +203,62 @@
 ## `_components/use-workspaces.ts` *(Wave 22)*
 **描述**: Client-side React hook。透過 `FirestoreWorkspaceRepository.findByDimensionId(dimensionId)` 取得工作空間清單。回傳 `{ workspaces, loading, error, refresh }`。
 **Export**: `useWorkspaces(dimensionId: string | null | undefined)`
+
+---
+## Waves 30–42 新增元件（workspace contextual shell + write-path + locations）
+
+## `_components/use-workspace.ts` *(Wave 31)*
+**描述**: Client-side React hook。依 `workspaceId` 取得 Workspace 資料並追蹤本地 DTO 狀態。回傳 `{ workspace, dto, loading, error, refresh }`，含穩定的 `refresh()` callback（Wave 34 新增）。
+**Export**: `useWorkspace(workspaceId: string | null | undefined)`
+
+## `_components/workspace-shell.tsx` *(Wave 31, updated Wave 34)*
+**描述**: 工作空間情境 shell — 顯示名稱、lifecycle Badge、nav tabs。Wave 34 起包含 ⚙ 設定按鈕，開啟 `WorkspaceSettingsDialog`。
+**Export**: `WorkspaceShell({ workspaceId, slug, children })`
+
+## `_components/workspace-nav-tabs.tsx` *(Wave 31, updated Waves 33/42)*
+**描述**: 水平 capability tab 導航。Core (capabilities) + Governance (members, locations) + Business (動態來自 capabilities) + Projection (audit) 四層。Wave 42 新增永久 `locations` tab。
+**Export**: `WorkspaceNavTabs({ workspaceId, slug, capabilities })`
+
+## `_components/workspace-status-bar.tsx` *(Wave 33)*
+**描述**: 工作空間狀態列 — 顯示 ID、掛載/隔離狀態、Flowing/Blocked（來自 work items）。
+**Export**: `WorkspaceStatusBar({ workspace, workItems })`
+
+## `_components/workspace-grants-view.tsx` *(Waves 33/35)*
+**描述**: 工作空間成員授權管理。Wave 35 升級為互動式：邀請 dialog（`grantWorkspaceAccess`）、per-row role `<Select>`（`updateWorkspaceRole`）、撤銷 `AlertDialog`（`revokeWorkspaceAccess`）。
+**Export**: `WorkspaceGrantsView({ workspaceId })`
+
+## `_components/workspace-capabilities-view.tsx` *(Waves 32/34)*
+**描述**: 工作空間 capabilities 管理。Wave 34 升級為互動式：「+ Mount New Capability」checkbox picker、trash button → AlertDialog 卸載。
+**Export**: `WorkspaceCapabilitiesView({ workspaceId })`
+
+## `_components/workspace-settings-dialog.tsx` *(Waves 34/36/40)*
+**描述**: 工作空間完整設定對話框 — 名稱、lifecycle、visibility、address、personnel、photoURL 預覽（Wave 40）、Danger Zone 刪除工作空間 AlertDialog（Wave 36）。Props 含 `onDeleted?` callback。
+**Export**: `WorkspaceSettingsDialog({ open, onOpenChange, workspaceId, onSaved?, onDeleted? })`
+
+## `_components/workspace-card.tsx` *(Wave 19, updated Waves 37)*
+**描述**: 工作空間卡片。Wave 37 hover-reveal 升級：lifecycle advance 按鈕（preparatory→active→stopped，AlertDialog 確認）、⚙ 設定圖示開啟 `WorkspaceSettingsDialog`。本地 DTO 樂觀更新。
+**Export**: `WorkspaceCard({ workspace, onDeleted? })`
+
+## `_components/workspace-locations-view.tsx` *(Wave 42)*
+**描述**: 工作空間地點管理 — buildings → floors → rooms 層次，per-type "+ Add" dialog（`addWorkspaceLocation`），per-item delete AlertDialog（`removeWorkspaceLocation`）。
+**Export**: `WorkspaceLocationsView({ workspaceId })`
+
+## `_components/dashboard-view.tsx` *(Wave 30)*
+**描述**: 組織首頁 dashboard — 工作空間統計 + 審計面板（`WorkspaceAuditView`）。
+**Export**: `DashboardView({ slug })`
+
+## `_components/wbs-view.tsx` *(Wave 25, updated Waves 38/39/41)*
+**描述**: WBS 任務清單（flat list）。Wave 38 新增 "+ Add Task" header/empty-state button → `CreateWorkItemDialog`。Wave 39/41 props 增加 `onUpdated` / `onDeleted` 傳遞給 `WorkItemRow`。
+**Export**: `WbsView` — 用於 `app/(main)/[slug]/[workspaceId]/(workspace)/wbs/page.tsx`
+
+## `_components/create-work-item-dialog.tsx` *(Wave 38)*
+**描述**: 建立工作項目對話框 — title + priority select → `createWorkItem` use case。
+**Export**: `CreateWorkItemDialog({ workspaceId, open, onOpenChange, onCreated })`
+
+## `_components/work-item-edit-dialog.tsx` *(Wave 39)*
+**描述**: 工作項目編輯對話框 — 6 欄位（title, description, status, priority, assigneeId, dueDate）→ `updateWorkItem` use case。
+**Export**: `WorkItemEditDialog({ item, open, onOpenChange, onUpdated })`
+
+## `_components/work-item-row.tsx` *(Wave 25, updated Waves 39/41)*
+**描述**: 工作項目列。Wave 39 hover-reveal Pencil 按鈕 → `WorkItemEditDialog`。Wave 41 hover-reveal Trash2 按鈕 → AlertDialog → `deleteWorkItem`；description 顯示為截斷第二行。
+**Export**: `WorkItemRow({ item, onUpdated?, onDeleted? })`

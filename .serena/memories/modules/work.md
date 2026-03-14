@@ -4,14 +4,19 @@
 **職責**: 工作項目（issue/task）的 CRUD、狀態流轉、優先級管理、里程碑、依賴關係。
 **不包含**: 排班/指派（workforce.module）、檔案附件（file.module）、WBS 規劃（workspace.module）。
 
+> **最後更新**: Waves 38–41 (createWorkItem dialog, updateWorkItem inline edit, deleteWorkItem)
+
 ---
 
 ## `index.ts`
 **描述**: 公開 API barrel — 匯出 DTOs、用例函數及 Port 介面。
 **函數清單**:
-- `export type WorkItemDTO` — 工作項目公開 DTO
+- `export type WorkItemDTO` — 工作項目公開 DTO（含 `description?`）
+- `export type UpdateWorkItemInput` — 更新輸入型別
 - `export createWorkItem` — 建立工作項目
+- `export updateWorkItem` — 更新工作項目（Wave 39 新增）
 - `export updateWorkItemStatus` — 更新工作項目狀態
+- `export deleteWorkItem` — 刪除工作項目（Wave 41 新增）
 - `export getWorkItemsByWorkspace` — 依工作空間查詢工作項目
 - `export type IWorkItemRepository` — 工作項目 Repository Port 介面
 - `export type IMilestoneRepository` — 里程碑 Repository Port 介面
@@ -19,20 +24,23 @@
 ---
 
 ## `core/_use-cases.ts`
-**描述**: 工作項目生命週期管理用例（open→in-progress→blocked→closed）。
+**描述**: 工作項目生命週期管理用例（open→in-progress→blocked→closed）。Wave 38-41 擴充 CRUD 完整性。
 **函數清單**:
-- `interface WorkItemDTO` — 工作項目公開 DTO（id, workspaceId, title, status, priority, assigneeId, milestoneId, dependencies, createdAt）
-- `createWorkItem(repo, params): Promise<Result<WorkItemDTO>>` — 建立工作項目
-- `updateWorkItemStatus(repo, id, status): Promise<Result<WorkItemDTO>>` — 狀態流轉（含依賴關係驗證）
-- `getWorkItemsByWorkspace(repo, workspaceId, filters): Promise<Result<WorkItemDTO[]>>` — 查詢清單（支援狀態/優先級過濾）
+- `interface WorkItemDTO` — 工作項目公開 DTO（id, workspaceId, title, **description?**, status, priority, assigneeId, dueDate?, createdAt）
+- `interface UpdateWorkItemInput` — 更新輸入（title?, description?, status?, priority?, assigneeId?|null, dueDate?|null）
+- `updateWorkItem(repo, id, input): Promise<Result<WorkItemDTO>>` — 部分更新工作項目（Wave 39）
+- `createWorkItem(repo, id, workspaceId, title, priority): Promise<Result<WorkItemDTO>>` — 建立工作項目（Wave 38 – 已有）
+- `updateWorkItemStatus(repo, id, status): Promise<Result<WorkItemDTO>>` — 狀態流轉
+- `getWorkItemsByWorkspace(repo, workspaceId): Promise<Result<WorkItemDTO[]>>` — 查詢清單
+- `deleteWorkItem(repo, workspaceId, workItemId): Promise<Result<void>>` — 刪除（含所有權驗證）（Wave 41）
 
 ---
 
 ## `core/_actions.ts`
 **描述**: `'use server'` 薄包裝層，重新匯出寫入型用例。
 **函數清單**:
-- 重新匯出 `WorkItemDTO`（型別）
-- 重新匯出 `createWorkItem`、`updateWorkItemStatus`
+- 重新匯出 `WorkItemDTO`, `UpdateWorkItemInput`（型別）
+- 重新匯出 `createWorkItem`、`updateWorkItem`、`updateWorkItemStatus`、`deleteWorkItem`
 
 ---
 

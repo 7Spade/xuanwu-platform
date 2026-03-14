@@ -50,7 +50,8 @@ Xuanwu Platform 所有 Serena 記憶檔案的主索引。
 | `src/modules/` (×16) | ✅ 253 檔 | 253 |
 | **總計** | **✅ 384 檔** | **384** |
 
-> *Last updated: Waves 30–42 (audit presentation, workspace shell+tabs, capabilities, StatusBar, settings write-path, access-control write-path, delete workspace, WorkspaceCard lifecycle, WBS create/edit/delete work items, workspace photo URL, sub-locations panel). Modules gained 80+ new `_components/*.tsx` + hook files + use-cases across workspace, work, audit modules.*
+> *Last updated: Waves 30–42 complete. Next: Wave 43 (Advanced WBS task tree engine), Wave 44 (Create Workspace dialog), Wave 45 (Daily Log View), Wave 46 (Issues View).*
+> *Workspace module gained 15+ new `_components/*.tsx` + hook files. Work module gained updateWorkItem + deleteWorkItem use cases.*
 
 ---
 
