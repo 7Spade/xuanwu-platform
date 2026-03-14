@@ -1,7 +1,7 @@
 # Pull Request History Index
 
 ## Overview
-This index covers all PRs in the xuanwu-platform repository (2026-03-13).
+This index covers all PRs in the xuanwu-platform repository (updated 2026-03-14).
 
 ## PR Status Summary
 
@@ -16,7 +16,9 @@ This index covers all PRs in the xuanwu-platform repository (2026-03-13).
 | #7 | feat: add agent-memory MCP + port PR #8 | ✅ Merged | MCP / agent-memory |
 | #8 | feat: add redis/agent-memory-server MCP (verification) | ❌ Closed (not merged — ported into #7) | MCP / agent-memory |
 | #9 | docs: resolve .github/* documentation conflicts after PRs #1–#8 | ✅ Merged | Docs / Cleanup |
-| #10 | docs: slice→module migration, phantom paths, VS Code URLs, agent-memory wiring | 🔄 Open | Docs / Architecture |
+| #10 | docs: slice→module migration, phantom paths, VS Code URLs, agent-memory wiring | ✅ Merged | Docs / Architecture |
+| #11 | feat: scaffold all 17 MDDD modules + domain-lookup decision framework + overlap analysis | ✅ Merged | Architecture / Domain Modules |
+| #12 | docs: maintain documentation consistency after PRs #1–#11 (Occam's Razor pass) | 🔄 Open | Docs / Maintenance |
 
 ## Memory File Index
 
@@ -52,7 +54,7 @@ This index covers all PRs in the xuanwu-platform repository (2026-03-13).
 - `pr-history/pr-08-agent-memory-verification` — agent-memory compatibility verification (not merged)
 - `pr-history/pr-09-docs-conflict-resolution` — Occam's Razor docs cleanup
 - `pr-history/pr-10-docs-module-migration` — module terminology, design-system tokens, VS Code URL fixes
-- `pr-history/pr-create-modules-for-mddd` — **Stacked PR**: scaffold all 17 Domain Modules + domain-lookup decision framework + overlap analysis
+- `pr-history/pr-11-scaffold-17-modules` — **PR #11**: scaffold all 17 Domain Modules + domain-lookup decision framework + overlap analysis (full iteration log in `pr-create-modules-for-mddd.md`)
 
 ## Architectural Evolution Timeline
 1. **PR #1** — App Router structure: parallel routes, named slots
@@ -63,32 +65,6 @@ This index covers all PRs in the xuanwu-platform repository (2026-03-13).
 6. **PR #7** — DevTools: agent-memory MCP
 7. **PR #8** — (Not merged) agent-memory verification
 8. **PR #9** — 🧹 Docs: clean up stale paths from PRs #1–#8
-9. **PR #10** — 🧹 Docs: features→modules rename, design-system tokens, VS Code URL fixes
-
-## stacked PR: create-modules-for-mddd
-`copilot/create-modules-for-mddd` (stacked on `copilot/init-serena-and-index-memory`)
-
-Scaffolded all Domain Modules from `core-logic.mermaid` analysis.  
-Final state: **17 modules** (15 core BC + feature.module + causal-graph.module).  
-Full history: `pr-history/pr-create-modules-for-mddd.md`
-
-| PR iteration | Action |
-|---|---|
-| feat: scaffold 8 MDDD modules | org, workspace, file, workforce, settlement, notification, social, achievement |
-| feat: extract namespace + work + fork + profile (8→12) | namespace independent (serves personal + org); work/fork/profile added |
-| feat: add identity.module + account.module, remove profile.module (12→13) | identity replaces Firebase Auth; account unifies User/Org |
-| feat: add collaboration/search/audit, delete org.module, add per-module READMEs (13→15) | +collaboration, +search, +audit; org removed; 15×README.md |
-| feat: create domain-lookup.md routing table | 15 domains × 核心問題 × 主要概念 |
-| feat: expand domain-lookup.md with 20 Architectural Questions + merge/split rules + 6-step flowchart | Decision framework complete |
-| feat: scaffold feature.module + causal-graph.module, flag 4 overlapping proposals (15→17) | +feature (功能開關), +causal-graph (因果圖核心); event/activity/entitlement/timeline rejected |
-| chore: pre-merge memory extraction | domain-lookup.md routing entries added for feature/causal-graph; INDEX.md updated |
-
-**Removed modules:**
-- `org.module` — Team/Membership absorbed into account.module (AccountType: organization sub-aggregates)
-- `profile.module` — public profile is a sub-aggregate of account.module
-
-**Rejected proposals (documented in domain-lookup.md section ⑦):**
-- `event.module` → `audit.module` + `src/infrastructure/`
-- `activity.module` → `social.module` (Feed IS an activity stream)
-- `entitlement.module` → `account.module` (Plan/Subscription)
-- `timeline.module` → not a BC; each domain provides `_queries.ts` CQRS projections
+9. **PR #10** — 🧹 Docs: features→modules rename, design-system tokens, VS Code URL fixes; Serena initialization
+10. **PR #11** — 🏗 Major: scaffold all 17 Domain Modules; domain-lookup decision framework (20 Qs + merge/split rules + 6-step flowchart + overlap analysis)
+11. **PR #12** — 🧹 Docs: Occam's Razor maintenance pass after PRs #1–#11; mcp.md firebase env var fix; memory index update

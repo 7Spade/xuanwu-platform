@@ -1,8 +1,8 @@
-# PR: create-modules-for-mddd
+# PR #11 — feat: scaffold all 17 MDDD modules from core-logic.mermaid + document conflicts + architectural decision framework
 
 Branch: `copilot/create-modules-for-mddd`  
 Base: `copilot/init-serena-and-index-memory`  
-Status: 🔄 Open (stacked PR, pre-merge)
+Status: ✅ Merged (PR #11)
 
 ## Summary
 
