@@ -104,19 +104,39 @@
 ---
 
 ## `domain.workspace/_service.ts`
-**描述**: Workspace Domain Service 規格說明。
+**描述**: Workspace Domain Services — 純函數，跨多個 Workspace aggregate 的業務規則。Wave 10 實作。
 **函數清單**:
-- `WorkspaceAccessService`（描述）— 批量存取控制規則評估
-- `WorkspaceArchiveService`（描述）— 工作空間歸檔（stopped 狀態後的清理邏輯）
+- `isWorkspaceVisibleToUser(workspace, userId, userTeamIds): boolean` — 依 visibility 設定與存取授權決定工作空間是否可見
+- `filterVisibleWorkspaces(workspaces, userId, dimensionId, isOwnerOfDimension, accountType, userTeamIds): WorkspaceEntity[]` — 批量過濾：個人帳號全見；組織帳號依 owner 角色與 visibility 過濾
+- `interface TaskWithChildren` — 擴展 WorkspaceTask，含 `children`, `descendantSum`, `wbsNo`, `progress`
+- `buildTaskTree(tasks: WorkspaceTask[]): TaskWithChildren[]` — WBS 樹狀建構（循環偵測、WBS 編號、加權進度計算）
 
 ---
 
 ## `infra.firestore/_repository.ts`
-**描述**: `IWorkspaceRepository` 及 `IWorkspaceGrantRepository` 的 Firestore 實作骨架。
-**函數清單**: *(待實作，目前為佔位註解)*
+**描述**: `IWorkspaceRepository` 及 `IWorkspaceGrantRepository` 的 Firestore 實作。Wave 10 實作。
+**函數清單**:
+- `class FirestoreWorkspaceRepository` — implements `IWorkspaceRepository`
+  - `findById(id): Promise<WorkspaceEntity | null>`
+  - `findByDimensionId(dimensionId): Promise<WorkspaceEntity[]>`
+  - `save(workspace): Promise<void>`
+  - `deleteById(id): Promise<void>`
+- `class FirestoreWorkspaceGrantRepository` — implements `IWorkspaceGrantRepository`
+  - `findByWorkspaceId(workspaceId): Promise<WorkspaceGrant[]>`
+  - `addGrant(workspaceId, grant): Promise<void>`
+  - `revokeGrant(workspaceId, grantId, now): Promise<void>`
+  - `updateRole(workspaceId, grantId, newRole): Promise<void>`
 
 ---
 
 ## `infra.firestore/_mapper.ts`
-**描述**: Firestore 文件 ↔ WorkspaceEntity 的雙向轉換。
-**函數清單**: *(待實作，目前為佔位註解)*
+**描述**: Firestore 文件 ↔ WorkspaceEntity 的雙向轉換，含所有子文件型別。Wave 10 實作。
+**函數清單**:
+- `interface WorkspaceDoc` — 原始 Firestore 文件結構
+- `interface WorkspaceGrantDoc` — 授權子文件
+- `interface WorkspaceLocationDoc` — 地點子文件
+- `interface WorkspacePersonnelDoc` — 人員角色子文件
+- `interface WorkspaceAddressDoc` — 地址子文件
+- `interface WorkspaceTaskDoc` — WBS 任務子文件
+- `workspaceDocToEntity(doc): WorkspaceEntity` — Firestore → domain
+- `workspaceEntityToDoc(entity): WorkspaceDoc` — domain → Firestore

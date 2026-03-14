@@ -56,7 +56,7 @@
 - `ScheduleOriginTypeSchema` / `type ScheduleOriginType` — enum: `"MANUAL"|"TASK_AUTOMATION"`
 - `EffortUnitSchema` / `type EffortUnit` — enum: `"hours"|"days"|"units"`
 - `AssignmentStatusSchema` / `type AssignmentStatus` — 指派狀態 enum
-- `interface SkillRequirement` — 技能要求結構（skillCode, level, required）
+- `interface SkillRequirement` — 技能要求結構（skillSlug, minTier, quantity?）
 
 ---
 
@@ -92,19 +92,41 @@
 ---
 
 ## `domain.workforce/_service.ts`
-**描述**: Workforce Domain Service 規格說明。
+**描述**: Workforce Domain Services — 純函數，跨多個排班 aggregate 的業務規則。Wave 10 實作。
 **函數清單**:
-- `CapacityPlanningService`（描述）— 跨多個排班的容量衝突偵測
-- `AutoScheduleService`（描述）— 基於任務自動化觸發排班提案
+- `interface EligibleMemberSkill` — 成員技能快照（skillSlug, tier）
+- `interface EligibleMemberSnapshot` — 可指派成員快照（accountId, eligible, skills[]）
+- `interface CandidateAssignment` — 單一指派決策（candidate, requirement）
+- `const SAGA_TIER_ORDER` — 技能等級有序陣列（apprentice→titan）
+- `sagaTierIndex(tier): number` — 取得技能等級的序數（未知等級預設 0）
+- `findEligibleCandidate(members, requirements): EligibleMemberSnapshot | undefined` — 找到第一個滿足所有技能需求的成員
+- `findEligibleCandidatesForRequirements(members, requirements): CandidateAssignment[] | undefined` — 多槽位指派：為每個技能需求找到足夠數量的成員
+- `isCapacitySufficient(schedules, memberCount, startDate, endDate): boolean` — 容量充足性檢查
+- `interface ScheduleConflict` — 時間衝突報告（assigneeId, scheduleAId, scheduleBId, overlapStart, overlapEnd）
+- `detectScheduleConflicts(schedules): ScheduleConflict[]` — 偵測 OFFICIAL 排班的時間重疊
+- `const VALID_STATUS_TRANSITIONS` — 排班狀態機有效轉換表
+- `canTransitionScheduleStatus(from, to): boolean` — 驗證狀態轉換合法性
 
 ---
 
 ## `infra.firestore/_repository.ts`
-**描述**: `IScheduleRepository` 的 Firestore 實作骨架。
-**函數清單**: *(待實作，目前為佔位註解)*
+**描述**: `IScheduleRepository` 的 Firestore 實作。Wave 10 實作。
+**函數清單**:
+- `class FirestoreScheduleRepository` — implements `IScheduleRepository`
+  - `findById(id): Promise<ScheduleAssignment | null>`
+  - `findByWorkspaceId(workspaceId): Promise<ScheduleAssignment[]>`
+  - `findByAccountId(accountId): Promise<ScheduleAssignment[]>`
+  - `findByAssigneeId(assigneeId): Promise<ScheduleAssignment[]>`（uses `array-contains` query）
+  - `save(schedule): Promise<void>`
+  - `deleteById(id): Promise<void>`
 
 ---
 
 ## `infra.firestore/_mapper.ts`
-**描述**: Firestore 文件 ↔ ScheduleAssignment 的雙向轉換。
-**函數清單**: *(待實作，目前為佔位註解)*
+**描述**: Firestore 文件 ↔ ScheduleAssignment 的雙向轉換，含技能要求與地點子文件。Wave 10 實作。
+**函數清單**:
+- `interface ScheduleDoc` — 原始 Firestore 文件結構
+- `interface ScheduleLocationDoc` — 地點子文件
+- `interface SkillRequirementDoc` — 技能要求子文件
+- `scheduleDocToEntity(doc): ScheduleAssignment` — Firestore → domain
+- `scheduleEntityToDoc(entity): ScheduleDoc` — domain → Firestore

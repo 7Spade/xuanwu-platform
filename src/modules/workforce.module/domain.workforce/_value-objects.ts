@@ -53,4 +53,6 @@ export type AssignmentStatus = z.infer<typeof AssignmentStatusSchema>;
 export interface SkillRequirement {
   readonly skillSlug: string;
   readonly minTier: string;
+  /** Number of members required with this skill. Defaults to 1. */
+  readonly quantity?: number;
 }
