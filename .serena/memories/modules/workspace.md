@@ -140,3 +140,22 @@
 - `interface WorkspaceTaskDoc` — WBS 任務子文件
 - `workspaceDocToEntity(doc): WorkspaceEntity` — Firestore → domain
 - `workspaceEntityToDoc(entity): WorkspaceDoc` — domain → Firestore
+
+---
+
+## `_components/shell/nav-main.tsx` *(Wave 18 — 新增)*
+**描述**: 主導航選單 — 首頁與工作空間連結。使用 `usePathname` 高亮目前路由。
+**Export**: `NavMain` (no props — reads pathname internally)
+
+## `_components/shell/nav-user.tsx` *(Wave 18 — 新增)*
+**描述**: 認證用戶選單（側邊欄底部）。顯示用戶頭像、名稱、登出選項。
+**架構注意**: 直接使用 Firebase Auth `onAuthStateChanged` — 預期未來由 AuthProvider context 替換。
+**Export**: `NavUser` (no props)
+
+## `_components/shell/dashboard-sidebar.tsx` *(Wave 18 — 新增)*
+**描述**: 主側邊欄組合元件。使用 design system Sidebar 元件組裝 NavMain + NavUser。
+**Export**: `DashboardSidebar` (no props)
+
+## `_components/shell/shell-header.tsx` *(Wave 18 — 新增)*
+**描述**: 認證頁面頂部導覽列。包含 SidebarTrigger、麵包屑導航（支援 i18n）。
+**Export**: `ShellHeader` (no props)
