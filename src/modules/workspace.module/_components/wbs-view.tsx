@@ -4,14 +4,17 @@
  *
  * Source: workspace.slice/domain.tasks/_components/
  * Wave 25: wired to Firestore via useWorkItems(workspaceId).
+ * Wave 38: "+ Add Task" button opens CreateWorkItemDialog.
  * Shows loading spinner → task list → empty state.
  */
 
+import { useState } from "react";
 import { GitBranch, Loader2, Plus } from "lucide-react";
 import { Button } from "@/design-system/primitives/ui/button";
 import { useTranslation } from "@/shared/i18n";
 import { useWorkItems } from "./use-work-items";
 import { WorkItemRow } from "./work-item-row";
+import { CreateWorkItemDialog } from "./create-work-item-dialog";
 
 interface WbsViewProps {
   slug: string;
@@ -20,7 +23,8 @@ interface WbsViewProps {
 
 export function WbsView({ slug: _slug, workspaceId }: WbsViewProps) {
   const t = useTranslation("zh-TW");
-  const { items, loading } = useWorkItems(workspaceId);
+  const { items, loading, refresh } = useWorkItems(workspaceId);
+  const [createOpen, setCreateOpen] = useState(false);
 
   return (
     <div className="flex h-full flex-col space-y-4 duration-500 animate-in fade-in">
@@ -33,7 +37,7 @@ export function WbsView({ slug: _slug, workspaceId }: WbsViewProps) {
         <Button
           size="sm"
           className="gap-2 text-xs font-bold uppercase tracking-widest"
-          disabled
+          onClick={() => setCreateOpen(true)}
         >
           <Plus className="size-4" />
           {t("wbs.addTask")}
@@ -61,12 +65,19 @@ export function WbsView({ slug: _slug, workspaceId }: WbsViewProps) {
           <Button
             size="lg"
             className="mt-8 rounded-full px-8 text-xs font-bold uppercase tracking-widest shadow-lg"
-            disabled
+            onClick={() => setCreateOpen(true)}
           >
             {t("wbs.addTask")}
           </Button>
         </div>
       )}
+
+      <CreateWorkItemDialog
+        workspaceId={workspaceId}
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreated={refresh}
+      />
     </div>
   );
 }
