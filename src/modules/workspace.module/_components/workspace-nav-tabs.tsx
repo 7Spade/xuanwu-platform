@@ -27,6 +27,7 @@ const CAPABILITY_LABEL_KEY: Record<string, string> = {
   capabilities:        "workspace.nav.capabilities",
   // Governance
   members:             "workspace.nav.members",
+  locations:           "workspace.nav.locations",
   // Business
   wbs:                 "workspace.nav.wbs",
   tasks:               "workspace.nav.wbs",
@@ -44,7 +45,7 @@ const CAPABILITY_LABEL_KEY: Record<string, string> = {
 };
 
 // IDs that are permanently shown (never in the dynamic business layer)
-const PERMANENT_IDS = new Set(["capabilities", "members", "audit"]);
+const PERMANENT_IDS = new Set(["capabilities", "members", "locations", "audit"]);
 
 interface Tab {
   id: string;
@@ -63,7 +64,10 @@ function buildTabs(
   const core: Tab[] = [{ id: "capabilities", label: t("workspace.nav.capabilities") }];
 
   // Layer 2 — Governance (always shown — all workspaces in [slug] are org workspaces)
-  const governance: Tab[] = [{ id: "members", label: t("workspace.nav.members") }];
+  const governance: Tab[] = [
+    { id: "members", label: t("workspace.nav.members") },
+    { id: "locations", label: t("workspace.nav.locations") },
+  ];
 
   // Layer 3 — Business (from mounted capabilities, excluding permanent layers)
   const business: Tab[] = (capabilities ?? [])

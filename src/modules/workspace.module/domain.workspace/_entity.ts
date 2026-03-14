@@ -32,6 +32,8 @@ export interface WorkspaceGrant {
 export interface WorkspaceLocation {
   readonly locationId: string;
   readonly label: string;
+  readonly type?: "building" | "floor" | "room";
+  readonly parentId?: string;
   readonly description?: string;
   readonly capacity?: number;
 }

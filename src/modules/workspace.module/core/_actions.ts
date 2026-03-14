@@ -13,4 +13,6 @@ export {
   revokeWorkspaceAccess,
   updateWorkspaceRole,
   deleteWorkspace,
+  addWorkspaceLocation,
+  removeWorkspaceLocation,
 } from "./_use-cases";

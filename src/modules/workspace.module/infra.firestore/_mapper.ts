@@ -68,6 +68,8 @@ export interface WorkspaceGrantDoc {
 export interface WorkspaceLocationDoc {
   locationId: string;
   label: string;
+  type: string | null;
+  parentId: string | null;
   description: string | null;
   capacity: number | null;
 }
@@ -136,6 +138,8 @@ function locationDocToLocation(d: WorkspaceLocationDoc): WorkspaceLocation {
   return {
     locationId: d.locationId,
     label: d.label,
+    ...(d.type != null ? { type: d.type as WorkspaceLocation["type"] } : {}),
+    ...(d.parentId != null ? { parentId: d.parentId } : {}),
     ...(d.description != null ? { description: d.description } : {}),
     ...(d.capacity != null ? { capacity: d.capacity } : {}),
   };
@@ -262,6 +266,8 @@ function locationToLocationDoc(l: WorkspaceLocation): WorkspaceLocationDoc {
   return {
     locationId: l.locationId,
     label: l.label,
+    type: l.type ?? null,
+    parentId: l.parentId ?? null,
     description: l.description ?? null,
     capacity: l.capacity ?? null,
   };

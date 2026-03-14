@@ -112,3 +112,19 @@ export async function getWorkItemsByWorkspace(
     return fail(err instanceof Error ? err : new Error(String(err)));
   }
 }
+
+export async function deleteWorkItem(
+  repo: IWorkItemRepository,
+  workspaceId: string,
+  workItemId: string,
+): Promise<Result<void>> {
+  try {
+    const existing = await repo.findById(workItemId as WorkItemId);
+    if (!existing) return fail(new Error(`WorkItem not found: ${workItemId}`));
+    if (existing.workspaceId !== workspaceId) return fail(new Error("Forbidden"));
+    await repo.deleteById(workItemId as WorkItemId);
+    return ok(undefined);
+  } catch (err) {
+    return fail(err instanceof Error ? err : new Error(String(err)));
+  }
+}

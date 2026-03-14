@@ -51,7 +51,7 @@ export function WbsView({ slug: _slug, workspaceId }: WbsViewProps) {
       ) : items.length > 0 ? (
         <div className="space-y-2">
           {items.map((item) => (
-            <WorkItemRow key={item.id} item={item} onUpdated={refresh} />
+            <WorkItemRow key={item.id} item={item} onUpdated={refresh} onDeleted={refresh} />
           ))}
         </div>
       ) : (

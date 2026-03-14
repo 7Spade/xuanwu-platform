@@ -420,3 +420,77 @@ export async function deleteWorkspace(
     return fail(err instanceof Error ? err : new Error(String(err)));
   }
 }
+
+// ---------------------------------------------------------------------------
+// AddWorkspaceLocation
+// ---------------------------------------------------------------------------
+
+/**
+ * Adds a new sub-location to a workspace.
+ * Generates a unique locationId for the new location.
+ */
+export async function addWorkspaceLocation(
+  repo: IWorkspaceRepository,
+  workspaceId: string,
+  location: {
+    id: string;
+    label: string;
+    type: "building" | "floor" | "room";
+    parentId?: string;
+  },
+): Promise<Result<WorkspaceDTO>> {
+  try {
+    const existing = await repo.findById(workspaceId as WorkspaceId);
+    if (!existing) return fail(new Error(`Workspace not found: ${workspaceId}`));
+
+    const newLocation: WorkspaceLocation = {
+      locationId: location.id,
+      label: location.label,
+      type: location.type,
+      ...(location.parentId ? { parentId: location.parentId } : {}),
+    };
+
+    const now = new Date().toISOString();
+    const updated: WorkspaceEntity = {
+      ...existing,
+      locations: [...(existing.locations ?? []), newLocation],
+      updatedAt: now,
+    };
+    await repo.save(updated);
+    return ok(entityToDTO(updated));
+  } catch (err) {
+    return fail(err instanceof Error ? err : new Error(String(err)));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// RemoveWorkspaceLocation
+// ---------------------------------------------------------------------------
+
+/**
+ * Removes a sub-location from a workspace by its locationId.
+ * Also removes any child locations that reference this location as parentId.
+ */
+export async function removeWorkspaceLocation(
+  repo: IWorkspaceRepository,
+  workspaceId: string,
+  locationId: string,
+): Promise<Result<WorkspaceDTO>> {
+  try {
+    const existing = await repo.findById(workspaceId as WorkspaceId);
+    if (!existing) return fail(new Error(`Workspace not found: ${workspaceId}`));
+
+    const now = new Date().toISOString();
+    const updated: WorkspaceEntity = {
+      ...existing,
+      locations: (existing.locations ?? []).filter(
+        (l) => l.locationId !== locationId && l.parentId !== locationId,
+      ),
+      updatedAt: now,
+    };
+    await repo.save(updated);
+    return ok(entityToDTO(updated));
+  } catch (err) {
+    return fail(err instanceof Error ? err : new Error(String(err)));
+  }
+}
