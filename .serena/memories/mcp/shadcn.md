@@ -78,11 +78,24 @@ shadcn-get_item_examples_from_registries(
 shadcn/ui 元件是設計系統的 **primitives** 層（第一層）：
 ```
 src/design-system/
-├── primitives/    ← shadcn/ui 原始元件
+├── primitives/    ← shadcn/ui 原始元件（57 個，已全部安裝）
+│   ├── ui/        ← accordion, alert, alert-dialog, aspect-ratio, avatar, badge,
+│   │               breadcrumb, button, button-group, calendar, card, carousel,
+│   │               chart, checkbox, collapsible, combobox, command, context-menu,
+│   │               dialog, direction, drawer, dropdown-menu, empty, field, form,
+│   │               hover-card, input, input-group, input-otp, item, kbd, label,
+│   │               menubar, native-select, navigation-menu, pagination, popover,
+│   │               progress, radio-group, resizable, scroll-area, select, separator,
+│   │               sheet, sidebar, skeleton, slider, sonner, spinner, switch, table,
+│   │               tabs, textarea, toggle, toggle-group, tooltip
+│   ├── hooks/     ← use-mobile.ts
+│   └── lib/       ← utils.ts (cn helper)
 ├── components/    ← 業務包裝層
 ├── patterns/      ← 複合模式
 └── tokens/        ← 設計常數
 ```
+
+**全部 57 個元件已安裝完畢**（`npx shadcn@latest add --all` 執行於 PR #11）。
 
 ## Registry 格式
 
