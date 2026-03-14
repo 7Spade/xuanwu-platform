@@ -216,6 +216,34 @@ After Wave 16 all 16 modules will have complete domain service + infra (mapper +
 
 ---
 
+## Wave 39 — Work Item Edit Dialog ✅
+
+### work.module
+- Added `description?: string` to `WorkItemDTO`
+- Added `updateWorkItem(repo, id, UpdateWorkItemInput)` use case
+- `UpdateWorkItemInput`: `{ title?, description?, status?, priority?, assigneeId?: string|null, dueDate?: string|null }`
+- Exported `updateWorkItem` + `UpdateWorkItemInput` from `core/_actions.ts`
+
+### workspace.module _components
+- `work-item-edit-dialog.tsx` (NEW): dialog with 6 fields (title, description, status, priority, assignee, due date)
+- `work-item-row.tsx`: hover-reveal Pencil edit button, opens `WorkItemEditDialog`
+- `wbs-view.tsx`: passes `onUpdated={refresh}` to each `WorkItemRow`
+
+### i18n
+- Added `wbs.editDialog.*` (8 keys) + `wbs.priority.*` (4 keys) — zh-TW + en-US
+
+---
+
+## Wave 40 — Workspace Photo URL ✅
+
+### workspace.module _components
+- `workspace-settings-dialog.tsx`: added `photoURL` URL input field with live preview image, passes `photoURL` to `updateWorkspaceSettings`
+
+### i18n
+- Added `workspace.settings.photoURLLabel` + `workspace.settings.photoURLPlaceholder`
+
+---
+
 ## Phase 2 — Presentation Layer (所有 Waves 完成後的下一階段)
 
 > Status: ✅ **All pages completed** — Waves 17–22 delivered full Presentation Layer parity with 7Spade/xuanwu.
