@@ -163,6 +163,61 @@ Working Memory                      → Session 內暫時記憶（短效）
 
 ---
 
+## 全域感知初始化（Context7 + Repomix）
+
+在處理跨模組、架構層級或版本敏感的框架 API 任務時，代理系統透過以下**雙支柱全域感知**工作流擴展標準 Serena 啟動序列：
+
+### 雙支柱架構
+
+| 支柱 | 工具 | 提供內容 |
+|------|------|---------|
+| **代碼庫感知** | `repomix/*` | 專案結構全景、模組邊界、現有程式碼模式 |
+| **框架文件感知** | `context7/*` | Next.js 15 / React 19 / Firebase / Tailwind v4 / TypeScript 5.x / shadcn/ui 最新 API 文件 |
+
+### 擴展啟動序列
+
+```
+標準 Serena 啟動（所有代理，必須）：
+  1. serena-check_onboarding_performed
+  2. serena-list_memories
+  3. serena-read_memory(project/architecture)
+  4. serena-read_memory(project/conventions)
+
+全域感知擴展（跨模組或框架版本敏感任務時）：
+  5. repomix-pack_codebase（compress=true，針對性 includePatterns）
+  6. context7-resolve-library-id + context7-query-docs（版本敏感 API 才呼叫）
+  7. 交叉比對：代碼庫現有模式 vs. 框架最新 API 約束
+```
+
+### 本專案 Repomix 常用 Scope
+
+| 任務範圍 | `includePatterns` |
+|---------|-------------------|
+| 全模組總覽 | `src/modules/**,docs/architecture/**` |
+| 單一模組深探 | `src/modules/<name>.module/**` |
+| 領域層 | `src/modules/*/domain.*/**` |
+| 基礎設施與適配器 | `src/modules/*/infra.*/**,src/infrastructure/**` |
+| 設計系統 | `src/design-system/**,src/shared/**` |
+| Copilot 客製化 | `.github/**` |
+
+### 本專案 Context7 預解析函式庫 ID
+
+| 函式庫 | Library ID | 常見查詢主題 |
+|--------|-----------|-------------|
+| Next.js 15 | `/vercel/next.js` | App Router、async params/searchParams、Server Components、Route Handlers |
+| React 19 | `/facebook/react` | Server Actions、useActionState、Suspense、use() hook |
+| TypeScript 5.x | `/microsoft/typescript` | satisfies、const 型別參數、裝飾器 |
+| Tailwind CSS v4 | `/tailwindlabs/tailwindcss` | v4 config 遷移、CSS 變數、@theme、dark mode |
+| Firebase JS SDK | `/firebase/firebase-js-sdk` | Firestore v9 模組化查詢、Auth、Security Rules |
+| shadcn/ui | `/shadcn-ui/ui` | 元件 API、new-york style、主題化 |
+
+> **限制：** 每個問題最多 3 次 `context7-*` 呼叫（1 次 resolve + 2 次 query），此為 token 預算建議而非 API 硬性限制。
+> 單一檔案編輯或已知模式時，無需執行全域感知擴展的步驟 5–7，直接使用 Serena 符號工具即可。
+
+技能：`.github/skills/context7-repomix-global-awareness/SKILL.md`
+
+---
+
 ## MCP 工具指派矩陣
 
 完整的代理-工具指派規則請參考 `.github/README.md`。

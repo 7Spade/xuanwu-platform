@@ -184,6 +184,7 @@ The repository now follows these consolidation rules:
 16. `ddd-progressive-layering` is the DDD migration skill for moving existing slices toward the 4-layer model with compatibility seams, ordered extraction steps, and low-risk refactor guidance.
 17. `xuanwu-intent-pipeline` is the six-step intelligent understanding pipeline skill (① Raw Input → ② Intent Detection → ③ Context Extraction → ④ Entity Extraction → ⑤ Dependency Analysis → ⑥ Task Instruction) embedded in `xuanwu-commander` and available to all entry-point agents.
 18. Serena lifecycle enforcement is split across `.github/copilot-instructions.md`, `.github/hooks/serena-session-lifecycle.json`, and the repository entry agents/prompts. Agents that can originate repository work must expose `serena/*`.
+19. `context7-repomix-global-awareness` is the canonical two-pillar global awareness skill that combines Repomix (codebase snapshot) and Context7 (version-accurate framework docs) to give agents comprehensive project context. It extends the standard Serena startup sequence for cross-module, architectural, or framework-version-sensitive sessions. Primary users: `xuanwu-research`, `xuanwu-architect`, `xuanwu-orchestrator`.
 
 ## Required Reference Documents for Customizations
 
