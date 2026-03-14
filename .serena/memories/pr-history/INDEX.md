@@ -24,7 +24,23 @@ This index covers all PRs in the xuanwu-platform repository (2026-03-13).
 - `project/overview` — Purpose, tech stack, key architectural decisions
 - `project/commands` — Development, lint, type-check commands; task completion workflow
 - `project/architecture` — Domain modules, DDD layers, design system, Firebase structure, App Router layout
-- `project/domain-lookup` — **Domain Routing Table**: 17 domains × 核心問題 × 主要概念 + 20 Architectural Questions + merge/split rules + 6-step routing flowchart + routing entries for all 17 domains + section ⑦ overlap analysis (4 rejected proposals). Use when deciding which module to implement a new feature in.
+- `project/conventions` — Naming conventions, layer rules, MCP tool assignment, agent authoring rules
+
+### MCP server knowledge base
+- `mcp/INDEX` — All 13 MCP servers with category, agent assignment, and infrastructure notes
+- `mcp/serena` — Code intelligence: symbols, edit, project memory, --context ide
+- `mcp/firebase-mcp-server` — Firebase inspection: Firestore, Auth, Security Rules, Hosting
+- `mcp/agent-memory` — Redis cross-session semantic recall: semantic vs episodic memory types
+- `mcp/context7` — Version-accurate framework docs: Next.js 15, React 19, Tailwind v4
+- `mcp/repomix` — Codebase packing: local/remote repo, Tree-sitter compression
+- `mcp/playwright` — Browser automation: E2E, screenshots, console errors, hydration check
+- `mcp/next-devtools` — Next.js dev server diagnostics: errors, routes, build status
+- `mcp/shadcn` — shadcn/ui registry: search, view, install, examples
+- `mcp/filesystem` — File I/O: read/write/edit/tree within allowed directories
+- `mcp/markitdown` — URL/file → Markdown conversion
+- `mcp/sequential-thinking` — Step-by-step structured reasoning with branches and revision
+- `mcp/software-planning` — Implementation plan and todo tracking with complexity scores
+- `mcp/everything` — MCP protocol testing and environment variable debugging
 
 ### PR history memories
 - `pr-history/pr-01-parallel-routes` — Next.js @sidebar parallel routes

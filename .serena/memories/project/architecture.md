@@ -47,11 +47,24 @@ src/modules/<name>.module/
 ## Design System (`src/design-system/`)
 ```
 design-system/
-├── primitives/   ← shadcn/ui components
+├── primitives/   ← shadcn/ui components (57 total — see full list below)
+│   ├── ui/       ← 56 component files (accordion → tooltip)
+│   ├── hooks/    ← use-mobile.ts
+│   └── lib/      ← utils.ts (cn helper)
 ├── components/   ← wrappers/enhanced primitives
 ├── patterns/     ← composite UI patterns
 └── tokens/       ← design constants (color, spacing, typography)
 ```
+
+### `primitives/ui/` — Full Component List (shadcn/ui new-york style)
+accordion, alert, alert-dialog, aspect-ratio, avatar, badge, breadcrumb, button, button-group,
+calendar, card, carousel, chart, checkbox, collapsible, combobox, command, context-menu,
+dialog, direction, drawer, dropdown-menu, empty, field, form, hover-card, input, input-group,
+input-otp, item, kbd, label, menubar, native-select, navigation-menu, pagination, popover,
+progress, radio-group, resizable, scroll-area, select, separator, sheet, sidebar, skeleton,
+slider, sonner, spinner, switch, table, tabs, textarea, toggle, toggle-group, tooltip
+
+Import pattern: `import { Button } from "@/design-system/primitives"`
 
 ## Firebase Infrastructure (`src/infrastructure/firebase/`)
 - `client/` — Web SDK (browser)
