@@ -26,10 +26,10 @@
 | `workspace.slice` (comments/reactions) | `collaboration.module` | ✅ Wave 15 |
 | `global-search.slice` + `semantic-graph.slice` | `search.module` | ✅ Wave 16 |
 | `semantic-graph.slice` (BFS/DFS causal) | `causal-graph.module` | ✅ Wave 16 |
-| `workspace.slice/domain.tasks` (advanced tree WBS) | `work.module` + `workspace.module` | ⬜ Wave 43 |
-| `workspace.slice/core` (create-workspace-dialog) | `workspace.module` | ⬜ Wave 44 |
-| `workspace.slice/domain.daily` | `workspace.module` | ⬜ Wave 45 |
-| `workspace.slice/domain.issues` | `workspace.module` | ⬜ Wave 46 |
+| `workspace.slice/domain.tasks` (advanced tree WBS) | `work.module` + `workspace.module` | ✅ Wave 43 |
+| `workspace.slice/core` (create-workspace-dialog) | `workspace.module` | ✅ Wave 44 |
+| `workspace.slice/domain.daily` | `workspace.module` | ✅ Wave 45 |
+| `workspace.slice/domain.issues` | `workspace.module` | ✅ Wave 46 |
 
 ### Parity Status (Waves 30–42 complete)
 
@@ -275,7 +275,7 @@ After Wave 16 all 16 modules will have complete domain service + infra (mapper +
 
 ---
 
-## Wave 43 — Advanced WBS Task Tree Engine ⬜ (NEXT)
+## Wave 43 — Advanced WBS Task Tree Engine ✅
 
 **Source:** `workspace.slice/domain.tasks/_components/tasks-view.tsx`, `task-tree-node.tsx`, `task-editor-dialog.tsx`, `attachments-dialog.tsx`, `attachments-action.tsx`, `location-dialog.tsx`, `location-action.tsx`, `progress-report-dialog.tsx`
 
@@ -305,7 +305,7 @@ After Wave 16 all 16 modules will have complete domain service + infra (mapper +
 
 ---
 
-## Wave 44 — Create Workspace Dialog ⬜
+## Wave 44 — Create Workspace Dialog ✅
 
 **Source:** `workspace.slice/core/_components/create-workspace-dialog.tsx`
 
@@ -319,7 +319,7 @@ After Wave 16 all 16 modules will have complete domain service + infra (mapper +
 
 ---
 
-## Wave 45 — Daily Log View ⬜ (capability-gated: "daily")
+## Wave 45 — Daily Log View ✅ (capability-gated: "daily")
 
 **Source:** `workspace.slice/domain.daily/_components/`
 
@@ -337,7 +337,7 @@ After Wave 16 all 16 modules will have complete domain service + infra (mapper +
 
 ---
 
-## Wave 46 — Issues View ⬜ (capability-gated: "issues")
+## Wave 46 — Issues View ✅ (capability-gated: "issues")
 
 **Source:** `workspace.slice/domain.issues/_components/issues-view.tsx`
 

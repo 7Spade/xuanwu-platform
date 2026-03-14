@@ -236,3 +236,12 @@ For Wave 19, simpler patterns (direct Firebase auth, server queries) are suffici
 | 44 | Create Workspace Dialog — create-workspace-dialog.tsx wired to WorkspacesView | ⬜ |
 | 45 | Daily Log View — daily-log-card, daily-log-dialog, daily-workspace-view, /daily route | ⬜ |
 | 46 | Issues View — issues-view.tsx, /issues route | ⬜ |
+
+## Waves 43–46 Completed (Advanced WBS + Create Workspace + Daily Log + Issues — PR #15 / current PR)
+
+| Wave | Scope | Key Components Added | Status |
+|------|-------|---------------------|--------|
+| 43 | Advanced WBS Task Tree Engine | TaskTreeNode (recursive), TaskEditorDialog, ProgressReportDialog, LocationDialog, AttachmentsDialog, buildTaskTree utility, createChildWorkItem/reportProgress use cases | ✅ |
+| 44 | Create Workspace Dialog | CreateWorkspaceDialog + WorkspacesView "+ Create" wired to dialog | ✅ |
+| 45 | Daily Log View | DailyLogEntity, IDailyLogRepository, FirestoreDailyLogRepository, getDailyLogs/createDailyLog/updateDailyLog/deleteDailyLog, DailyWorkspaceView, DailyLogCard, DailyLogDialog, /daily route | ✅ |
+| 46 | Issues View | IssueEntity, IIssueRepository, FirestoreIssueRepository, getIssues/createIssue/updateIssue/deleteIssue, IssuesView (full CRUD), /issues route | ✅ |

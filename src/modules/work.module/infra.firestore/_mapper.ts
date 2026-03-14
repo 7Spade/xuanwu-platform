@@ -5,7 +5,7 @@
  * so the domain layer never has to know about Firestore's wire format.
  */
 
-import type { WorkItemEntity, MilestoneEntity, WorkDependency } from "../domain.work/_entity";
+import type { WorkItemEntity, MilestoneEntity, WorkDependency, TaskLocation } from "../domain.work/_entity";
 import type {
   WorkItemId,
   MilestoneId,
@@ -38,6 +38,17 @@ export interface WorkItemDoc {
   dependencies: WorkDependencyDoc[];
   createdAt: string;
   updatedAt: string;
+  // Wave 43 extensions
+  parentId?: string | null;
+  type?: string | null;
+  quantity?: number | null;
+  unitPrice?: number | null;
+  discount?: number | null;
+  subtotal?: number | null;
+  completedQuantity?: number | null;
+  location?: { building?: string | null; floor?: string | null; room?: string | null; description?: string | null } | null;
+  photoURLs?: string[] | null;
+  sourceIntentIndex?: number | null;
 }
 
 /** Raw Firestore document shape for a Milestone. */
@@ -67,6 +78,7 @@ function dependencyDocToDependency(d: WorkDependencyDoc): WorkDependency {
  * Throws if required fields are missing.
  */
 export function workItemDocToEntity(d: WorkItemDoc): WorkItemEntity {
+  const loc = d.location;
   return {
     id: d.id as WorkItemId,
     workspaceId: d.workspaceId,
@@ -80,6 +92,24 @@ export function workItemDocToEntity(d: WorkItemDoc): WorkItemEntity {
     dependencies: (d.dependencies ?? []).map(dependencyDocToDependency),
     createdAt: d.createdAt,
     updatedAt: d.updatedAt,
+    // Wave 43 extensions
+    ...(d.parentId != null ? { parentId: d.parentId as WorkItemId } : {}),
+    ...(d.type != null ? { type: d.type } : {}),
+    ...(d.quantity != null ? { quantity: d.quantity } : {}),
+    ...(d.unitPrice != null ? { unitPrice: d.unitPrice } : {}),
+    ...(d.discount != null ? { discount: d.discount } : {}),
+    ...(d.subtotal != null ? { subtotal: d.subtotal } : {}),
+    ...(d.completedQuantity != null ? { completedQuantity: d.completedQuantity } : {}),
+    ...(loc != null ? {
+      location: {
+        ...(loc.building != null ? { building: loc.building } : {}),
+        ...(loc.floor != null ? { floor: loc.floor } : {}),
+        ...(loc.room != null ? { room: loc.room } : {}),
+        ...(loc.description != null ? { description: loc.description } : {}),
+      } as TaskLocation,
+    } : {}),
+    ...(d.photoURLs != null && d.photoURLs.length > 0 ? { photoURLs: d.photoURLs } : {}),
+    ...(d.sourceIntentIndex != null ? { sourceIntentIndex: d.sourceIntentIndex } : {}),
   };
 }
 
@@ -127,6 +157,22 @@ export function workItemEntityToDoc(e: WorkItemEntity): WorkItemDoc {
     dependencies: e.dependencies.map(dependencyToDependencyDoc),
     createdAt: e.createdAt,
     updatedAt: e.updatedAt,
+    // Wave 43 extensions
+    parentId: e.parentId ?? null,
+    type: e.type ?? null,
+    quantity: e.quantity ?? null,
+    unitPrice: e.unitPrice ?? null,
+    discount: e.discount ?? null,
+    subtotal: e.subtotal ?? null,
+    completedQuantity: e.completedQuantity ?? null,
+    location: e.location ? {
+      building: e.location.building ?? null,
+      floor: e.location.floor ?? null,
+      room: e.location.room ?? null,
+      description: e.location.description ?? null,
+    } : null,
+    photoURLs: e.photoURLs ? [...e.photoURLs] : null,
+    sourceIntentIndex: e.sourceIntentIndex ?? null,
   };
 }
 

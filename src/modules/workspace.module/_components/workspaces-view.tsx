@@ -20,6 +20,7 @@ import type { WorkspaceDTO } from "@/modules/workspace.module";
 
 import { useWorkspaces } from "./use-workspaces";
 import { WorkspaceCard } from "./workspace-card";
+import { CreateWorkspaceDialog } from "./create-workspace-dialog";
 
 interface WorkspacesViewProps {
   /** The namespace slug, e.g. "my-org". Used to build workspace hrefs. */
@@ -39,9 +40,10 @@ function filterWorkspaces(workspaces: WorkspaceDTO[], query: string): WorkspaceD
 export function WorkspacesView({ slug }: WorkspacesViewProps) {
   const t = useTranslation("zh-TW");
   const { account } = useCurrentAccount();
-  const { workspaces, loading, error } = useWorkspaces(account?.id ?? null);
+  const { workspaces, loading, error, refresh } = useWorkspaces(account?.id ?? null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
 
   const filtered = filterWorkspaces(workspaces, searchQuery);
 
@@ -65,13 +67,11 @@ export function WorkspacesView({ slug }: WorkspacesViewProps) {
           </p>
         </div>
         <Button
-          asChild
           className="h-10 gap-2 px-4 text-[11px] font-bold uppercase tracking-widest shadow-sm"
+          onClick={() => setCreateOpen(true)}
         >
-          <Link href={`/${slug}/workspaces/new`}>
-            <Plus className="size-4" />
-            <span className="hidden sm:inline">{t("workspaces.createSpace")}</span>
-          </Link>
+          <Plus className="size-4" />
+          <span className="hidden sm:inline">{t("workspaces.createSpace")}</span>
         </Button>
       </div>
 
@@ -124,11 +124,11 @@ export function WorkspacesView({ slug }: WorkspacesViewProps) {
             {t("workspaces.noSpacesFound")}
           </p>
           <Button
-            asChild
             size="lg"
             className="rounded-full px-8 text-xs font-bold uppercase tracking-widest shadow-lg"
+            onClick={() => setCreateOpen(true)}
           >
-            <Link href={`/${slug}/workspaces/new`}>{t("workspaces.createInitialSpace")}</Link>
+            {t("workspaces.createInitialSpace")}
           </Button>
         </div>
       ) : !loading && viewMode === "grid" ? (
@@ -159,6 +159,15 @@ export function WorkspacesView({ slug }: WorkspacesViewProps) {
           ))}
         </div>
       ) : null}
+
+      {account && (
+        <CreateWorkspaceDialog
+          dimensionId={account.id}
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          onCreated={() => { refresh(); }}
+        />
+      )}
     </div>
   );
 }

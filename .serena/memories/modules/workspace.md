@@ -262,3 +262,54 @@
 ## `_components/work-item-row.tsx` *(Wave 25, updated Waves 39/41)*
 **描述**: 工作項目列。Wave 39 hover-reveal Pencil 按鈕 → `WorkItemEditDialog`。Wave 41 hover-reveal Trash2 按鈕 → AlertDialog → `deleteWorkItem`；description 顯示為截斷第二行。
 **Export**: `WorkItemRow({ item, onUpdated?, onDeleted? })`
+
+---
+
+## Waves 43–46 additions
+
+## `domain.daily/` *(Wave 45)*
+- `_entity.ts` — `DailyLogEntity` + `buildDailyLog`
+- `_ports.ts` — `IDailyLogRepository`
+
+## `domain.issues/` *(Wave 46)*
+- `_entity.ts` — `IssueEntity` + `buildIssue`, `IssueStatus`, `IssueSeverity` enums
+- `_ports.ts` — `IIssueRepository`
+
+## `infra.firestore/_daily-log-repository.ts` *(Wave 45)*
+**描述**: Firestore `dailyLogs` 集合 repository。
+
+## `infra.firestore/_issue-repository.ts` *(Wave 46)*
+**描述**: Firestore `workspaceIssues` 集合 repository。
+
+## `core/_daily-log-use-cases.ts` *(Wave 45)*
+- `getDailyLogs`, `createDailyLog`, `updateDailyLog`, `deleteDailyLog`
+- `DailyLogDTO`
+
+## `core/_issue-use-cases.ts` *(Wave 46)*
+- `getIssues`, `createIssue`, `updateIssue`, `deleteIssue`
+- `IssueDTO`
+
+## `_components/daily-workspace-view.tsx` *(Wave 45)*
+**描述**: 每日日誌 feed view — loading→cards→empty-state。capability-gated (requires "daily").
+**Route**: `/[slug]/[workspaceId]/daily`
+
+## `_components/daily-log-card.tsx` *(Wave 45)*
+**描述**: 單一日誌卡片 — hover reveal pencil/trash + AlertDialog confirm delete。
+
+## `_components/daily-log-dialog.tsx` *(Wave 45)*
+**描述**: 日誌建立/編輯對話框 — date, content, photoURLs (URL input + preview).
+
+## `_components/issues-view.tsx` *(Wave 46)*
+**描述**: 問題追蹤 CRUD — list with status icon + severity badge + inline edit/delete. capability-gated (requires "issues").
+**Route**: `/[slug]/[workspaceId]/issues`
+
+## `_components/create-workspace-dialog.tsx` *(Wave 44)*
+**描述**: 建立工作空間對話框 — name input → `createWorkspace` use case。
+**Export**: `CreateWorkspaceDialog({ dimensionId, open, onOpenChange, onCreated })`
+
+## `_components/wbs-view.tsx` *(Wave 25, updated Waves 38/43)*
+**描述**: Wave 43 升級為樹狀引擎：`buildTaskTree` + `TaskTreeNode` recursive rendering，取代 flat list。
+
+## `work.module/domain.work/_task-tree.ts` *(Wave 43)*
+- `buildTaskTree(items: WorkItemDTO[]): TaskWithChildren[]` — flat→tree with wbsNo + budget roll-up
+- `TaskWithChildren` type (WorkItemDTO + children + wbsNo)
