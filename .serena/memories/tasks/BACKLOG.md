@@ -234,6 +234,34 @@ After Wave 16 all 16 modules will have complete domain service + infra (mapper +
 
 ---
 
+## Wave 42 — Workspace Sub-Locations Panel ✅
+
+### workspace.module
+- Extended `WorkspaceLocation` in `_entity.ts` with `type?: "building"|"floor"|"room"` and `parentId?: string`
+- Updated `infra.firestore/_mapper.ts` to round-trip `type` and `parentId`
+- Added `addWorkspaceLocation(repo, workspaceId, {id, label, type, parentId?})` use case
+- Added `removeWorkspaceLocation(repo, workspaceId, locationId)` use case (cascades children)
+- Exported both from `core/_actions.ts`
+- New `workspace-locations-view.tsx`: buildings → floors → rooms hierarchy, add/delete per type with AlertDialog
+- New route: `app/(main)/[slug]/[workspaceId]/(workspace)/locations/page.tsx`
+- `workspace-nav-tabs.tsx`: permanent `locations` tab between members and business caps
+- i18n: `workspace.nav.locations` + all `workspace.locations.*` keys (zh-TW + en)
+
+---
+
+## Wave 41 — Work Item Delete + Description Display ✅
+
+### work.module
+- Added `deleteWorkItem(repo, workspaceId, workItemId)` use case
+- Exported from `core/_actions.ts`
+
+### workspace.module _components
+- `work-item-row.tsx`: Trash2 delete button (group-hover reveal) → AlertDialog → deleteWorkItem; description second line (truncated)
+- `wbs-view.tsx`: passes `onDeleted={refresh}` to WorkItemRow
+- i18n: `wbs.deleteDialog.{title,description,confirm,cancel}` (zh-TW + en)
+
+---
+
 ## Wave 40 — Workspace Photo URL ✅
 
 ### workspace.module _components
