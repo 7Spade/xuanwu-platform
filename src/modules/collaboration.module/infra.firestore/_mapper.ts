@@ -86,6 +86,6 @@ export function reactionVOToDoc(reaction: Reaction): ReactionDoc {
     commentId: reaction.commentId,
     accountId: reaction.accountId,
     type: reaction.type,
-    createdAt: reaction.createdAt,
+    createdAt: reaction.createdAt ?? new Date().toISOString(),
   };
 }

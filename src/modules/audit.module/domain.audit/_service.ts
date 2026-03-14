@@ -6,8 +6,8 @@
  * AuditEntry is enforced by the infrastructure layer (no update/delete).
  */
 
-import type { AuditEntry, ActorRef, ResourceRef } from "./_entity";
-import type { AuditAction, PolicyOutcome } from "./_value-objects";
+import type { AuditEntry } from "./_entity";
+import type { AuditAction } from "./_value-objects";
 
 // ---------------------------------------------------------------------------
 // Auditable actions

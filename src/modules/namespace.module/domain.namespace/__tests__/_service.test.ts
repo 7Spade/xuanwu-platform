@@ -16,7 +16,7 @@ function makeNamespace(workspaces: Array<{ workspaceId: string; workspaceSlug: s
   return {
     id: "ns-1",
     slug: "my-org" as NamespaceSlug,
-    ownerType: "org",
+    ownerType: "organization",
     ownerId: "acc-1",
     workspaces: workspaces.map((w) => ({ ...w, boundAt: "2024-01-01T00:00:00Z" })),
     createdAt: "2024-01-01T00:00:00Z",

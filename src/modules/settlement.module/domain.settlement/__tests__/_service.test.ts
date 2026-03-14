@@ -19,7 +19,7 @@ function makeRecord(
     id: "sr-1",
     workspaceId: "ws-1",
     dimensionId: "dim-1",
-    role: "payable",
+    role: "accounts-payable",
     stage,
     cycleIndex: 0,
     contractAmount,

@@ -1,6 +1,5 @@
 import { ok, fail } from "@/shared";
 import type { Result } from "@/shared";
-import type { SearchResult } from "../domain.search/_entity";
 import { buildSearchIndexEntry } from "../domain.search/_entity";
 import type { SearchIndexId, SearchScope, IndexEntryVisibility } from "../domain.search/_value-objects";
 import type { ISearchIndexRepository, ISearchQueryPort } from "../domain.search/_ports";

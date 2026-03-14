@@ -57,7 +57,7 @@ export function claimedAccountId(identity: IdentityRecord): IdentityId | null {
  * must call `getIdToken(true)` to pick up the updated claims.
  */
 export function isTokenStale(identity: IdentityRecord, expectedVersion: number): boolean {
-  const claimsVersion = (identity.claims as Record<string, unknown> | null)?.claimsVersion as number | undefined;
+  const claimsVersion = identity.claims?.claimsVersion;
   if (claimsVersion === undefined) return expectedVersion > 0;
   return claimsVersion < expectedVersion;
 }

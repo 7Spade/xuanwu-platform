@@ -1,6 +1,6 @@
 import { ok, fail } from "@/shared";
 import type { Result } from "@/shared";
-import type { WorkspaceEntity, WorkspaceGrant } from "../domain.workspace/_entity";
+import type { WorkspaceEntity } from "../domain.workspace/_entity";
 import { buildWorkspace, hasWorkspaceAccess } from "../domain.workspace/_entity";
 import type { WorkspaceId, WorkspaceLifecycleState, WorkspaceVisibility, WorkspaceRole } from "../domain.workspace/_value-objects";
 import type { IWorkspaceRepository } from "../domain.workspace/_ports";

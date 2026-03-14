@@ -1,6 +1,5 @@
 import { ok, fail } from "@/shared";
 import type { Result } from "@/shared";
-import type { SocialRelation } from "../domain.social/_entity";
 import { buildSocialRelation } from "../domain.social/_entity";
 import type { SocialRelationType } from "../domain.social/_value-objects";
 import type { ISocialGraphRepository } from "../domain.social/_ports";

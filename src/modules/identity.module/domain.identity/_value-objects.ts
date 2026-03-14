@@ -45,6 +45,8 @@ export interface AuthClaims {
   readonly accountId: string;
   readonly accountType: "personal" | "organization";
   readonly role: string;
+  /** Monotonically increasing version counter used to detect stale tokens. */
+  readonly claimsVersion?: number;
 }
 
 // ---------------------------------------------------------------------------

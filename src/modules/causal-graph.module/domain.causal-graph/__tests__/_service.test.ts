@@ -12,7 +12,7 @@ import type { CausalNode, CausalEdge, CausalNodeId } from "../_entity";
 const NOW = "2024-01-01T00:00:00Z";
 
 function node(id: string): CausalNode {
-  return buildCausalNode(id as CausalNodeId, "event", `ref-${id}`, `Node ${id}`, NOW);
+  return buildCausalNode(id as CausalNodeId, "domain-event", `ref-${id}`, `Node ${id}`, NOW);
 }
 
 function edge(id: string, from: string, to: string, confidence = 1): CausalEdge {
@@ -25,9 +25,9 @@ function edge(id: string, from: string, to: string, confidence = 1): CausalEdge 
 
 describe("buildCausalNode", () => {
   it("creates a CausalNode with provided fields", () => {
-    const n = buildCausalNode("n1" as CausalNodeId, "event", "ref-1", "Node 1", NOW);
+    const n = buildCausalNode("n1" as CausalNodeId, "domain-event", "ref-1", "Node 1", NOW);
     expect(n.id).toBe("n1");
-    expect(n.kind).toBe("event");
+    expect(n.kind).toBe("domain-event");
     expect(n.label).toBe("Node 1");
   });
 });

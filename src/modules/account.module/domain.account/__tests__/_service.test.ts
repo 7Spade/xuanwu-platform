@@ -10,7 +10,7 @@ import {
   isValidHandle,
 } from "../_service";
 import type { AccountEntity, MembershipRecord } from "../_entity";
-import type { AccountId } from "../_value-objects";
+import type { AccountId, TeamId } from "../_value-objects";
 
 const OWNER_ID = "acc-owner" as AccountId;
 const MEMBER_ID = "acc-member" as AccountId;
@@ -154,7 +154,7 @@ describe("getUserTeamIds", () => {
     const account: AccountEntity = {
       ...makeOrgAccount([makeMembership(MEMBER_ID)]),
       teams: [
-        { id: "team-1" as any, name: "T1", description: "", type: "internal", memberIds: [MEMBER_ID], createdAt: "2024-01-01T00:00:00Z" },
+        { id: "team-1" as TeamId, name: "T1", description: "", type: "internal", memberIds: [MEMBER_ID], createdAt: "2024-01-01T00:00:00Z" },
       ],
     };
     const ids = getUserTeamIds(account, MEMBER_ID);

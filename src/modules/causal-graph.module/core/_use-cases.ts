@@ -1,7 +1,7 @@
 import { ok, fail } from "@/shared";
 import type { Result } from "@/shared";
-import type { CausalNode, CausalEdge, CausalPath, CausalNodeId } from "../domain.causal-graph/_entity";
-import type { CausalDirection, ImpactScope } from "../domain.causal-graph/_value-objects";
+import type { CausalNode, CausalEdge, CausalNodeId } from "../domain.causal-graph/_entity";
+import type { CausalDirection } from "../domain.causal-graph/_value-objects";
 import type { ICausalNodeRepository, ICausalEdgeRepository, ICausalPathQuery } from "../domain.causal-graph/_ports";
 
 export interface CausalNodeDTO {
