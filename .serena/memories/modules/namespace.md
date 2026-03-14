@@ -89,19 +89,35 @@
 ---
 
 ## `domain.namespace/_service.ts`
-**描述**: Namespace Domain Service 規格說明。
+**描述**: Namespace Domain Service — 純函數，無 I/O。NamespacePathResolutionService（路徑解析）+ NamespaceConflictDetectionService（slug 衝突偵測）。
 **函數清單**:
-- `SlugReservationService`（描述）— 保留特殊 slug（系統保留字）
-- `PathResolutionService`（描述）— 批量路徑解析快取策略
-
----
-
-## `infra.firestore/_repository.ts`
-**描述**: `INamespaceRepository` 的 Firestore 實作骨架。Slug 唯一性使用 collectionGroup 查詢。
-**函數清單**: *(待實作，目前為佔位註解)*
+- `RESERVED_NAMESPACE_SLUGS: ReadonlySet<string>` — 平台保留 slug 集合（api, admin, settings…）
+- `parseWorkspacePath(path): { namespaceSlug, workspaceSlug } | null` — 拆解 "ns-slug/ws-slug" 字串
+- `resolveWorkspaceIdFromPath(namespace, workspaceSlug): string | null` — 從已載入的 NamespaceEntity 解析 workspaceId
+- `isSlugReserved(slug, reservedSlugs?): boolean` — 判斷 slug 是否為保留字
+- `hasWorkspaceSlug(namespace, workspaceSlug): boolean` — 判斷 slug 是否已存在於命名空間
+- `buildWorkspaceBinding(workspaceId, workspaceSlug, now): WorkspaceBinding` — 建立綁定值物件
+- `addWorkspaceBinding(namespace, binding, now): NamespaceEntity` — 新增綁定（重複 slug 拋錯）
+- `removeWorkspaceBinding(namespace, workspaceId, now): NamespaceEntity` — 移除指定 workspaceId 的綁定
 
 ---
 
 ## `infra.firestore/_mapper.ts`
-**描述**: Firestore 文件 ↔ NamespaceEntity 的雙向轉換。
-**函數清單**: *(待實作，目前為佔位註解)*
+**描述**: Firestore 文件 ↔ NamespaceEntity 雙向轉換；含子文件 WorkspaceBindingDoc。
+**函數清單**:
+- `interface WorkspaceBindingDoc` — Firestore 工作空間綁定子文件結構
+- `interface NamespaceDoc` — Firestore 命名空間文件結構
+- `namespaceDocToEntity(d): NamespaceEntity` — Firestore → Domain
+- `namespaceEntityToDoc(e): NamespaceDoc` — Domain → Firestore
+
+---
+
+## `infra.firestore/_repository.ts`
+**描述**: `INamespaceRepository` 的 Firestore 實作；save() 使用 runTransaction 保證 slug 唯一性。
+**函數清單**:
+- `class FirestoreNamespaceRepository implements INamespaceRepository`
+  - `findById(id): Promise<NamespaceEntity | null>`
+  - `findBySlug(slug): Promise<NamespaceEntity | null>` — limit(1) query
+  - `findByOwnerId(ownerId): Promise<NamespaceEntity | null>` — limit(1) query
+  - `save(namespace): Promise<void>` — 首次寫入以 transaction + `namespace-slugs/{slug}` 保留文件確保 slug 唯一性（無 TOCTOU race condition）
+  - `deleteById(id): Promise<void>`

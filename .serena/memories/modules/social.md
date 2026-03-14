@@ -75,19 +75,34 @@
 ---
 
 ## `domain.social/_service.ts`
-**描述**: Social Domain Service 規格說明。
+**描述**: Social Domain Service — 純函數，無 I/O。SocialGraphQueryService（關係查詢）+ DiscoveryRankingService（探索排名）。
 **函數清單**:
-- `SocialFeedService`（描述）— 根據關注關係聚合 Feed 內容
-- `PopularityRankingService`（描述）— 基於 star/watch 數計算熱門度排名
-
----
-
-## `infra.firestore/_repository.ts`
-**描述**: `ISocialGraphRepository` 的 Firestore 實作骨架。使用雙向索引（subjectId + objectId）以支援高效雙向查詢。
-**函數清單**: *(待實作，目前為佔位註解)*
+- `hasRelation(relations, subjectAccountId, targetId, relationType): boolean` — 判斷關係是否存在
+- `getRelationsByType(relations, relationType): SocialRelation[]` — 依類型篩選關係清單
+- `getFollowerIds(relations, targetId): string[]` — 取得目標的追蹤者 ID 列表
+- `getFollowingIds(relations, subjectAccountId): string[]` — 取得主體追蹤的目標 ID 列表
+- `interface DiscoveryCandidate` — 探索候選人資料（targetId, followerCount, lastActivityAt）
+- `interface ScoredCandidate` — 評分後候選人（targetId, score）
+- `scoreDiscoveryCandidate(candidate, now): number` — 依追蹤人數 + 時效衰減計算分數
+- `rankDiscoveryCandidates(candidates, now, limit?): ScoredCandidate[]` — 批量排名並取 top-N
 
 ---
 
 ## `infra.firestore/_mapper.ts`
-**描述**: Firestore 文件 ↔ SocialRelation 的雙向轉換。
-**函數清單**: *(待實作，目前為佔位註解)*
+**描述**: Firestore 文件 ↔ SocialRelation 雙向轉換。
+**函數清單**:
+- `interface SocialRelationDoc` — Firestore 社交關係文件結構
+- `socialRelationDocToEntity(d): SocialRelation` — Firestore → Domain
+- `socialRelationEntityToDoc(e): SocialRelationDoc` — Domain → Firestore
+
+---
+
+## `infra.firestore/_repository.ts`
+**描述**: `ISocialGraphRepository` 的 Firestore 實作；使用複合索引（subjectAccountId + targetId）支援雙向查詢。
+**函數清單**:
+- `class FirestoreSocialGraphRepository implements ISocialGraphRepository`
+  - `findBySubject(subjectAccountId): Promise<SocialRelation[]>`
+  - `findByTarget(targetId): Promise<SocialRelation[]>`
+  - `findBySubjectAndTarget(subjectAccountId, targetId): Promise<SocialRelation | null>`
+  - `save(relation): Promise<void>`
+  - `deleteById(id): Promise<void>`
