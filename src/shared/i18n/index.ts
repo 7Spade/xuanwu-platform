@@ -201,6 +201,11 @@ const dictionary: Dictionary = {
     "audit.noEntries": "尚無稽核事件",
     "audit.notAvailable": "稽核記錄不可用",
     "audit.notAvailableDescription": "個人帳號不提供跨維度稽核記錄",
+    // --- workspace navigation tabs ---
+    "workspace.nav.ariaLabel": "工作空間導覽分頁",
+    "workspace.nav.wbs": "任務",
+    "workspace.nav.editor": "文件",
+    "workspace.nav.audit": "稽核",
     // --- dashboard ---
     "dashboard.orgDescription": "您的組織工作空間概覽",
     "dashboard.personalDescription": "您的個人工作空間",
@@ -398,6 +403,11 @@ const dictionary: Dictionary = {
     "audit.noEntries": "No audit events yet",
     "audit.notAvailable": "Audit log not available",
     "audit.notAvailableDescription": "Personal accounts do not include cross-dimension audit logs",
+    // --- workspace navigation tabs ---
+    "workspace.nav.ariaLabel": "Workspace capability navigation",
+    "workspace.nav.wbs": "Tasks",
+    "workspace.nav.editor": "Editor",
+    "workspace.nav.audit": "Audit",
     // --- dashboard ---
     "dashboard.orgDescription": "Overview of your organisation workspaces",
     "dashboard.personalDescription": "Your personal workspace",

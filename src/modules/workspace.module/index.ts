@@ -22,3 +22,8 @@ export type {
 // Entity types for cross-module use (e.g. domain service filter operations)
 export type { WorkspaceEntity } from "./domain.workspace/_entity";
 export { hasWorkspaceAccess } from "./domain.workspace/_entity";
+
+// Presentation components (client-only)
+export { useWorkspace } from "./_components/use-workspace";
+export { WorkspaceNavTabs } from "./_components/workspace-nav-tabs";
+export { WorkspaceShell } from "./_components/workspace-shell";
