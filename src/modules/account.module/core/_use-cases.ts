@@ -2,7 +2,7 @@ import { ok, fail } from "@/shared";
 import type { Result } from "@/shared";
 import type { AccountEntity, AccountProfile } from "../domain.account/_entity";
 import { buildPersonalAccount, buildOrganizationAccount } from "../domain.account/_entity";
-import type { AccountId, AccountType } from "../domain.account/_value-objects";
+import type { AccountId, AccountType, MemberRole, MembershipStatus, AccountHandle } from "../domain.account/_value-objects";
 import type { IAccountRepository } from "../domain.account/_ports";
 
 // ---------------------------------------------------------------------------
@@ -30,6 +30,16 @@ export interface PublicProfileDTO {
   readonly avatarUrl: string | null;
   readonly bio: string | null;
   readonly badgeSlugs: readonly string[];
+}
+
+/** Membership record projection — used by the members settings view. */
+export interface MemberDTO {
+  readonly id: string;
+  readonly accountId: string;
+  readonly role: MemberRole;
+  readonly status: MembershipStatus;
+  readonly invitedAt: string;
+  readonly acceptedAt: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -163,6 +173,32 @@ export async function getPublicProfile(
       badgeSlugs: account.profile.badgeSlugs,
     };
     return ok(dto);
+  } catch (err) {
+    return fail(err instanceof Error ? err : new Error(String(err)));
+  }
+}
+
+/**
+ * GetOrgMembersByHandleUseCase
+ * Loads the org account by its handle (slug) and returns its members array.
+ * Returns an empty array for personal accounts or when the org is not found.
+ */
+export async function getOrgMembersByHandle(
+  repo: IAccountRepository,
+  handle: string,
+): Promise<Result<MemberDTO[]>> {
+  try {
+    const account = await repo.findByHandle(handle as AccountHandle);
+    if (!account || account.accountType !== "organization") return ok([]);
+    const members = (account.members ?? []).map((m) => ({
+      id: m.id,
+      accountId: m.accountId,
+      role: m.role,
+      status: m.status,
+      invitedAt: m.invitedAt,
+      acceptedAt: m.acceptedAt,
+    }));
+    return ok(members);
   } catch (err) {
     return fail(err instanceof Error ? err : new Error(String(err)));
   }

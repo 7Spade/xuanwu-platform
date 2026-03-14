@@ -240,7 +240,7 @@ After Wave 16 all 16 modules will have complete domain service + infra (mapper +
 | Notifications | `src/app/(main)/(account)/notifications/page.tsx` | ✅ Wave 20 (data Wave 24) |
 | Organizations | `src/app/(main)/(account)/organizations/page.tsx` | ✅ Wave 20 (data Wave 23) |
 | Org general settings | `src/app/(main)/[slug]/settings/general/page.tsx` | ✅ Wave 20 (data Wave 23) |
-| Org members | `src/app/(main)/[slug]/settings/members/page.tsx` | ✅ Wave 20 (data Wave 26) |
+| Org members | `src/app/(main)/[slug]/settings/members/page.tsx` | ✅ Wave 20 (data ✅ Wave 26) |
 | Org billing | `src/app/(main)/[slug]/settings/billing/page.tsx` | ✅ Wave 20 (data Wave 23) |
 | Org API keys | `src/app/(main)/[slug]/settings/api-keys/page.tsx` | ✅ Wave 20 (data Wave 23) |
 | Admin | `src/app/(admin)/admin/page.tsx` | ✅ Wave 21 |
@@ -267,7 +267,7 @@ After Wave 16 all 16 modules will have complete domain service + infra (mapper +
 | 23 | Organization data (OrganizationsView + org settings real data) | `namespace.module`, `account.module` | ✅ Done |
 | 24 | Real-time notifications (NotificationsView real data) | `notification.module` | ✅ Done |
 | 25 | WBS task tree real data | `work.module`, `workspace.module` | ✅ Done |
-| 26 | Members settings real data | `account.module` (IMembershipRepository) |
+| 26 | Members settings real data | `account.module` (IMembershipRepository) | ✅ Done |
 
 ### Acceptance Criteria for Presentation Waves
 

@@ -172,9 +172,17 @@
 **描述**: 組織通用設定頁（`/[slug]/settings/general`）— 工作空間名稱/描述 form shell。
 **Export**: `WorkspaceSettingsView` — 用於 `app/(main)/[slug]/settings/general/page.tsx`
 
-## `_components/members-settings-view.tsx` *(Wave 20)*
-**描述**: 成員管理設定頁（`/[slug]/settings/members`）— 成員列表 + 邀請 CTA shell。
+## `_components/members-settings-view.tsx` *(Wave 26)*
+**描述**: 成員管理設定頁，自行取得 Firestore 資料 via `useMembers(slug)`。載入中 → 成員列表（`MemberRow`）→ 空狀態。
 **Export**: `MembersSettingsView` — 用於 `app/(main)/[slug]/settings/members/page.tsx`
+
+## `_components/use-members.ts` *(Wave 26)*
+**描述**: Client-side React hook。透過 `FirestoreAccountRepository.findByHandle(slug)` 取得 org 成員清單（`AccountEntity.members[]`）。回傳 `{ members, loading, error, refresh }`。
+**Export**: `useMembers(slug: string | null | undefined)`
+
+## `_components/member-row.tsx` *(Wave 26)*
+**描述**: 單一成員列，顯示 accountId（前12碼）、role Badge、status Badge、邀請日期。role/status i18n keys (`settings.members.role.*` / `settings.members.status.*`)。
+**Export**: `MemberRow` — 用於 `MembersSettingsView`
 
 ## `_components/wbs-view.tsx` *(Wave 25)*
 **描述**: WBS 任務清單，自行取得 Firestore 資料 via `useWorkItems(workspaceId)`。載入中 → 任務列表（`WorkItemRow`）→ 空狀態。

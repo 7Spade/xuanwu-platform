@@ -1,12 +1,13 @@
 "use client";
 /**
- * MembersSettingsView — member list table with invite CTA.
+ * MembersSettingsView — member list with real data.
  *
  * Source: workspace.slice/gov.members/_components/
- * Adapted: empty state shell; invite flow wired in future wave.
+ * Wave 26: wired to Firestore via useMembers(slug).
+ * Shows loading spinner → member list (MemberRow) → empty state.
  */
 
-import { Users, UserPlus } from "lucide-react";
+import { Users, UserPlus, Loader2 } from "lucide-react";
 import { Button } from "@/design-system/primitives/ui/button";
 import {
   Card,
@@ -15,6 +16,8 @@ import {
   CardTitle,
 } from "@/design-system/primitives/ui/card";
 import { useTranslation } from "@/shared/i18n";
+import { useMembers } from "./use-members";
+import { MemberRow } from "./member-row";
 
 interface MembersSettingsViewProps {
   slug: string;
@@ -22,6 +25,7 @@ interface MembersSettingsViewProps {
 
 export function MembersSettingsView({ slug }: MembersSettingsViewProps) {
   const t = useTranslation("zh-TW");
+  const { members, loading } = useMembers(slug);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 duration-500 animate-in fade-in">
@@ -50,20 +54,32 @@ export function MembersSettingsView({ slug }: MembersSettingsViewProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Empty state */}
-          <div className="flex flex-col items-center rounded-2xl border-2 border-dashed border-border/40 bg-muted/5 px-6 py-12 text-center">
-            <Users className="mb-3 size-10 text-muted-foreground opacity-10" />
-            <p className="font-bold">{t("settings.members.noMembers")}</p>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="mt-4 gap-2 text-xs font-bold uppercase tracking-wider"
-              disabled
-            >
-              <UserPlus className="size-3.5" />
-              {t("settings.members.inviteMember")}
-            </Button>
-          </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-10">
+              <Loader2 className="size-7 animate-spin text-muted-foreground" />
+            </div>
+          ) : members.length > 0 ? (
+            <div className="space-y-2">
+              {members.map((m) => (
+                <MemberRow key={m.id} member={m} />
+              ))}
+            </div>
+          ) : (
+            /* Empty state */
+            <div className="flex flex-col items-center rounded-2xl border-2 border-dashed border-border/40 bg-muted/5 px-6 py-12 text-center">
+              <Users className="mb-3 size-10 text-muted-foreground opacity-10" />
+              <p className="font-bold">{t("settings.members.noMembers")}</p>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="mt-4 gap-2 text-xs font-bold uppercase tracking-wider"
+                disabled
+              >
+                <UserPlus className="size-3.5" />
+                {t("settings.members.inviteMember")}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
