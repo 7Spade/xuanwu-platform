@@ -185,3 +185,25 @@ The target must create equivalent providers in `src/infrastructure/providers/`:
 
 **This is needed for Waves 20–21** (organization context pages require `useApp()`).
 For Wave 19, simpler patterns (direct Firebase auth, server queries) are sufficient.
+| 22 ✅ | AccountProvider + real data connectivity | All (main) routes now have live Firestore data |
+
+---
+
+## Wave 22 Completed Components
+
+| Source (7Spade/xuanwu) | Target (xuanwu-platform) | Status |
+|---|---|---|
+| `app-runtime/providers/auth-provider.tsx` + `app-provider.tsx` | `account.module/_components/account-provider.tsx` | ✅ Wave 22 |
+| `workspace.slice/core/_hooks/use-workspaces.ts` | `workspace.module/_components/use-workspaces.ts` | ✅ Wave 22 |
+| WorkspacesView (server props) | WorkspacesView (self-fetches via useWorkspaces) | ✅ Wave 22 |
+| NavUser (own onAuthStateChanged) | NavUser (useCurrentAccount) | ✅ Wave 22 |
+| ProfileCard (own onAuthStateChanged) | ProfileCard (useCurrentAccount) | ✅ Wave 22 |
+
+## Remaining Waves
+
+| Wave | Scope | Target modules |
+|---|---|---|
+| 23 | Organization data (OrganizationsView + settings) | namespace.module, account.module |
+| 24 | Real-time notifications | notification.module |
+| 25 | WBS task tree real data | work.module |
+| 26 | Members settings real data | account.module (IMembershipRepository) |

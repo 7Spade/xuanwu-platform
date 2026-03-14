@@ -1,38 +1,40 @@
 "use client";
 /**
- * ProfileCard — displays and edits the user's display name + bio.
+ * ProfileCard — displays and edits the user's display name.
  *
  * Source: account.slice/domain.profile/_components/profile-card.tsx
- * Adapted: uses Firebase Auth directly for now (no AccountProvider yet).
+ * Adapted: uses AccountProvider (useCurrentAccount) for shared auth/account state.
  */
 
 import { User, Save } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getAuth, onAuthStateChanged, updateProfile, type User as FirebaseUser } from "firebase/auth";
+import { updateProfile } from "firebase/auth";
 
-import { getFirebaseApp } from "@/infrastructure/firebase/app";
+import { useCurrentAccount } from "./account-provider";
 import { useTranslation } from "@/shared/i18n";
 import { Avatar, AvatarFallback, AvatarImage } from "@/design-system/primitives/ui/avatar";
 import { Button } from "@/design-system/primitives/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/design-system/primitives/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/design-system/primitives/ui/card";
 import { Input } from "@/design-system/primitives/ui/input";
 import { Label } from "@/design-system/primitives/ui/label";
-import { Textarea } from "@/design-system/primitives/ui/textarea";
 
 export function ProfileCard() {
   const t = useTranslation("zh-TW");
-  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const { user, account } = useCurrentAccount();
   const [displayName, setDisplayName] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  // Sync displayName from account (preferred) or Firebase Auth
   useEffect(() => {
-    const auth = getAuth(getFirebaseApp());
-    return onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setDisplayName(u?.displayName ?? "");
-    });
-  }, []);
+    setDisplayName(account?.displayName ?? user?.displayName ?? "");
+  }, [account?.displayName, user?.displayName]);
 
   const handleSave = async () => {
     if (!user) return;
@@ -46,7 +48,8 @@ export function ProfileCard() {
     }
   };
 
-  const initial = (user?.displayName ?? user?.email ?? "?")[0].toUpperCase();
+  const photoURL = account?.avatarUrl ?? user?.photoURL ?? null;
+  const initial = (displayName || user?.email || "?")[0].toUpperCase();
 
   return (
     <Card className="border-border/60 bg-card/80 shadow-sm">
@@ -63,7 +66,7 @@ export function ProfileCard() {
         {/* Avatar row */}
         <div className="flex items-center gap-4">
           <Avatar className="size-16 rounded-2xl">
-            {user?.photoURL ? <AvatarImage src={user.photoURL} alt={displayName} /> : null}
+            {photoURL ? <AvatarImage src={photoURL} alt={displayName} /> : null}
             <AvatarFallback className="rounded-2xl bg-primary/10 text-xl font-bold text-primary">
               {initial}
             </AvatarFallback>
@@ -76,7 +79,10 @@ export function ProfileCard() {
 
         {/* Display name */}
         <div className="space-y-1.5">
-          <Label htmlFor="displayName" className="text-xs font-bold uppercase tracking-wider opacity-60">
+          <Label
+            htmlFor="displayName"
+            className="text-xs font-bold uppercase tracking-wider opacity-60"
+          >
             {t("profile.displayName")}
           </Label>
           <Input
@@ -104,7 +110,9 @@ export function ProfileCard() {
         {/* Save */}
         <div className="flex items-center justify-end gap-3 border-t border-border/40 pt-4">
           {saved && (
-            <span className="text-xs font-medium text-green-600">{t("profile.saved")}</span>
+            <span className="text-xs font-medium text-green-600">
+              {t("profile.saved")}
+            </span>
           )}
           <Button
             onClick={handleSave}

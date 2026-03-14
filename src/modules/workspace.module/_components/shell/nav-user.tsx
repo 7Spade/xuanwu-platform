@@ -3,20 +3,15 @@
  * NavUser — Authenticated user menu in the sidebar footer.
  * Shows user avatar, name, and logout option.
  *
- * NOTE: This component uses Firebase Auth directly via onAuthStateChanged.
- * This is intentional for the initial shell bootstrap — a future AuthProvider
- * context (Application layer) should replace the direct infrastructure call once
- * the auth state management pattern is established across the platform.
+ * Uses AccountProvider (via useCurrentAccount) so auth + profile data is
+ * shared from the single subscription in the layout root.
  */
 
 import { UserCircle, LogOut, ChevronsUpDown } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 
-import { getAuth, onAuthStateChanged, type User } from "firebase/auth";
-import { getFirebaseApp } from "@/infrastructure/firebase/app";
-
+import { useCurrentAccount } from "@/modules/account.module/_components/account-provider";
 import { useTranslation } from "@/shared/i18n";
 import { Avatar, AvatarFallback, AvatarImage } from "@/design-system/primitives/ui/avatar";
 import {
@@ -35,29 +30,21 @@ import {
 } from "@/design-system/primitives/ui/sidebar";
 import { clientSignOut } from "@/modules/identity.module/_client-actions";
 
-function useCurrentUser() {
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    const auth = getAuth(getFirebaseApp());
-    return onAuthStateChanged(auth, setUser);
-  }, []);
-
-  return user;
-}
-
 export function NavUser() {
   const { isMobile } = useSidebar();
   const router = useRouter();
   const t = useTranslation("zh-TW");
-  const user = useCurrentUser();
+  const { user, account } = useCurrentAccount();
 
   const handleLogout = async () => {
     await clientSignOut();
     router.push("/login");
   };
 
-  const initial = user?.displayName?.[0] ?? user?.email?.[0] ?? "?";
+  const displayName = account?.displayName ?? user?.displayName ?? user?.email ?? "";
+  const email = user?.email ?? "";
+  const photoURL = account?.avatarUrl ?? user?.photoURL ?? null;
+  const initial = (displayName || email || "?")[0].toUpperCase();
 
   return (
     <SidebarMenu>
@@ -69,22 +56,19 @@ export function NavUser() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="size-8 rounded-lg">
-                {user?.photoURL ? (
-                  <AvatarImage
-                    src={user.photoURL}
-                    alt={user.displayName ?? ""}
-                  />
+                {photoURL ? (
+                  <AvatarImage src={photoURL} alt={displayName} />
                 ) : null}
                 <AvatarFallback className="rounded-lg bg-primary/10 font-bold text-primary">
-                  {initial.toUpperCase()}
+                  {initial}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">
-                  {user?.displayName ?? user?.email ?? t("common.loading")}
+                  {displayName || t("common.loading")}
                 </span>
                 <span className="truncate text-xs text-muted-foreground">
-                  {user?.email ?? ""}
+                  {email}
                 </span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />

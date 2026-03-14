@@ -3,25 +3,27 @@
  * WorkspacesView — grid view of all workspaces for a given namespace/slug.
  *
  * Source: workspace.slice/core/_components/workspaces-view.tsx
- * Adapted: server-side data passed as props; client manages search+viewMode state.
+ * Adapted: fetches real workspace data using useWorkspaces + useCurrentAccount
+ * instead of relying on server-side props. This follows the source pattern
+ * (client-side subscription) and avoids needing Admin SDK for SSR auth.
  */
 
-import { Terminal, LayoutGrid, List, Search, Plus } from "lucide-react";
+import { Terminal, LayoutGrid, List, Search, Plus, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
 import { useTranslation } from "@/shared/i18n";
 import { Button } from "@/design-system/primitives/ui/button";
 import { Input } from "@/design-system/primitives/ui/input";
+import { useCurrentAccount } from "@/modules/account.module/_components/account-provider";
 import type { WorkspaceDTO } from "@/modules/workspace.module";
 
+import { useWorkspaces } from "./use-workspaces";
 import { WorkspaceCard } from "./workspace-card";
 
 interface WorkspacesViewProps {
   /** The namespace slug, e.g. "my-org". Used to build workspace hrefs. */
   slug: string;
-  /** All workspaces visible to the current user. Pre-fetched by RSC page. */
-  workspaces: WorkspaceDTO[];
 }
 
 function filterWorkspaces(workspaces: WorkspaceDTO[], query: string): WorkspaceDTO[] {
@@ -34,12 +36,23 @@ function filterWorkspaces(workspaces: WorkspaceDTO[], query: string): WorkspaceD
   );
 }
 
-export function WorkspacesView({ slug, workspaces }: WorkspacesViewProps) {
+export function WorkspacesView({ slug }: WorkspacesViewProps) {
   const t = useTranslation("zh-TW");
+  const { account } = useCurrentAccount();
+  const { workspaces, loading, error } = useWorkspaces(account?.id ?? null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
 
   const filtered = filterWorkspaces(workspaces, searchQuery);
+
+  // Error banner
+  if (error) {
+    return (
+      <div className="mx-auto max-w-7xl rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-center">
+        <p className="text-sm font-medium text-destructive">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 duration-500 animate-in fade-in">
@@ -95,8 +108,15 @@ export function WorkspacesView({ slug, workspaces }: WorkspacesViewProps) {
         </div>
       </div>
 
+      {/* Loading skeleton */}
+      {loading && (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        </div>
+      )}
+
       {/* Grid or empty state */}
-      {filtered.length === 0 ? (
+      {!loading && filtered.length === 0 ? (
         <div className="rounded-3xl border-2 border-dashed border-border/40 bg-muted/5 px-6 py-16 text-center sm:p-24">
           <Terminal className="mx-auto mb-6 size-12 text-muted-foreground opacity-10 sm:size-16" />
           <h3 className="mb-2 text-2xl font-bold">{t("workspaces.spaceVoid")}</h3>
@@ -111,13 +131,13 @@ export function WorkspacesView({ slug, workspaces }: WorkspacesViewProps) {
             <Link href={`/${slug}/workspaces/new`}>{t("workspaces.createInitialSpace")}</Link>
           </Button>
         </div>
-      ) : viewMode === "grid" ? (
+      ) : !loading && viewMode === "grid" ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((workspace) => (
             <WorkspaceCard key={workspace.id} workspace={workspace} slug={slug} />
           ))}
         </div>
-      ) : (
+      ) : !loading ? (
         <div className="divide-y divide-border/40 rounded-2xl border border-border/60 bg-card/50 shadow-sm">
           {filtered.map((workspace) => (
             <div
@@ -138,7 +158,7 @@ export function WorkspacesView({ slug, workspaces }: WorkspacesViewProps) {
             </div>
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
