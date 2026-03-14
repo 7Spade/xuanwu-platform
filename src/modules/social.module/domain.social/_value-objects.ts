@@ -1,2 +1,3 @@
-// Social value objects — immutable and self-validating
-// e.g. SocialRelation (star | watch | follow), FeedSignal, RankingScore
+import { z } from "zod";
+export const SocialRelationTypeSchema = z.enum(["star", "watch", "follow"]);
+export type SocialRelationType = z.infer<typeof SocialRelationTypeSchema>;

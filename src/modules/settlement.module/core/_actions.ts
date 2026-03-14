@@ -1,3 +1,3 @@
 'use server';
-// Settlement server actions — Next.js Server Actions ('use server' mutations)
-// e.g. triggerSettlementAction
+export type { SettlementDTO } from "./_use-cases";
+export { createSettlementRecord, submitClaim, approveClaim, recordPayment } from "./_use-cases";

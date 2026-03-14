@@ -1,3 +1,3 @@
 'use server';
-// Workforce server actions — Next.js Server Actions ('use server' mutations)
-// e.g. approveAssignmentAction, adjustScheduleAction
+export type { ScheduleDTO } from "./_use-cases";
+export { proposeSchedule, approveSchedule, rejectSchedule } from "./_use-cases";

@@ -1,3 +1,2 @@
-// Search domain events — published to the Event Bus
-// e.g. SearchIndexUpdated, SearchIndexEntryDeleted
-// Note: search.module primarily CONSUMES events from other modules; it rarely produces them.
+// Search domain events — note: search.module primarily consumes events from other modules.
+// SearchIndexEntryDeleted — emitted when an index entry is removed.

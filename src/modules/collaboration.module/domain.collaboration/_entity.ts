@@ -1,9 +1,22 @@
-// Comment aggregate root — threaded comment anchored to any artifact
-// Sub-aggregates: Thread (root comment + replies), Reaction
-//
-// Invariants:
-//   - A Comment is anchored to exactly one artifact (workspaceId + artifactType + artifactId).
-//   - A reply is always a child of an existing thread root.
-//   - Editing a posted comment preserves edit history.
-//   - Deleting a comment redacts content but retains thread structure.
-//   - A Reaction is unique per (accountId, commentId, reactionType).
+import type { CommentId, ReactionType } from "./_value-objects";
+
+/** A comment anchored to any artifact. */
+export interface Comment {
+  readonly id: CommentId;
+  readonly workspaceId: string;
+  readonly artifactType: string;
+  readonly artifactId: string;
+  readonly authorAccountId: string;
+  readonly body: string;
+  readonly parentId?: CommentId;
+  readonly editedAt?: string;
+  readonly deletedAt?: string;
+  readonly createdAt: string;
+}
+
+export function buildComment(
+  id: CommentId, workspaceId: string, artifactType: string, artifactId: string,
+  authorAccountId: string, body: string, now: string, parentId?: CommentId,
+): Comment {
+  return { id, workspaceId, artifactType, artifactId, authorAccountId, body, parentId, createdAt: now };
+}

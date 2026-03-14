@@ -1,5 +1,8 @@
-// Collaboration port interfaces — implemented by infrastructure adapters
-// e.g. ICommentRepository       — CRUD for comment threads
-//      IPresencePort            — pub/sub channel for real-time presence signals
-//      ICoEditSessionPort       — manages CRDT/OT session coordination
-//      IMentionResolutionPort   — resolves @handles to AccountIds via account.module
+import type { Comment } from "./_entity";
+import type { CommentId } from "./_value-objects";
+export interface ICommentRepository {
+  findById(id: CommentId): Promise<Comment | null>;
+  findByArtifact(artifactType: string, artifactId: string): Promise<Comment[]>;
+  save(comment: Comment): Promise<void>;
+  deleteById(id: CommentId): Promise<void>;
+}

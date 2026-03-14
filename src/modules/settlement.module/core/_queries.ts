@@ -1,3 +1,2 @@
-// Settlement queries — server-side reads and DTO type definitions
-// e.g. getARByWorkspaceQuery, getAPByAssigneeQuery
-// DTOs: SettlementDTO, ARRecordDTO, APRecordDTO
+export type { SettlementDTO } from "./_use-cases";
+export { getSettlementsByWorkspace } from "./_use-cases";

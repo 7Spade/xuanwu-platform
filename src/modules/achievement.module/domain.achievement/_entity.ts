@@ -1,5 +1,15 @@
-// Achievement aggregate root — enforces achievement rule evaluation and badge unlock invariants
-// Sub-aggregates: Badge, AchievementRule, UserAchievementRecord
-//
-// Badge unlocks are projected to Account public profile via IAccountBadgeWritePort
-// in account.module (cross-module via event bus).
+import type { AchievementId, BadgeSlug } from "./_value-objects";
+
+/** An unlocked badge for a specific account. */
+export interface AchievementRecord {
+  readonly id: AchievementId;
+  readonly accountId: string;
+  readonly badgeSlug: BadgeSlug;
+  readonly unlockedAt: string; // ISO-8601
+}
+
+export function buildAchievementRecord(
+  id: AchievementId, accountId: string, badgeSlug: BadgeSlug, now: string,
+): AchievementRecord {
+  return { id, accountId, badgeSlug, unlockedAt: now };
+}

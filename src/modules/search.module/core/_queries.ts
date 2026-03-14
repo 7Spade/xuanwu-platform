@@ -1,3 +1,2 @@
-// Search queries — server-side reads and DTO type definitions
-// e.g. searchQuery, suggestQuery, getRecentSearchesQuery
-// DTOs: SearchResultDTO, SearchSuggestionDTO, SearchFiltersDTO
+export type { SearchResultDTO } from "./_use-cases";
+export { executeSearch } from "./_use-cases";

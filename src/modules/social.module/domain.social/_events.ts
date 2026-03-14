@@ -1,2 +1,4 @@
-// Social domain events — published to the Event Bus
-// e.g. WorkspaceStarred, UserFollowed, WorkspaceWatched, FeedUpdated
+import type { SocialRelationType } from "./_value-objects";
+export interface WorkspaceStarred { readonly type: "social:workspace:starred"; readonly accountId: string; readonly workspaceId: string; readonly occurredAt: string; }
+export interface UserFollowed { readonly type: "social:user:followed"; readonly subjectAccountId: string; readonly targetAccountId: string; readonly occurredAt: string; }
+export type SocialDomainEventUnion = WorkspaceStarred | UserFollowed;

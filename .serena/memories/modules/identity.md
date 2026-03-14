@@ -1,0 +1,137 @@
+# identity.module — File Index
+
+**Bounded Context**: 身份識別 / Authentication
+**職責**: 驗證憑證、管理 session、處理多重 identity provider 及 JWT custom claims。
+**不包含**: 帳號資料（由 account.module 負責）、政策執行（由 audit.module 負責）。
+
+---
+
+## `index.ts`
+**描述**: 公開 API barrel — 僅匯出 DTOs、用例函數及 Port 介面，不暴露 Entity/VO。
+**函數清單**:
+- `export type IdentityDTO` — 身份識別公開 DTO
+- `export type SessionStatusDTO` — Session 狀態 DTO
+- `export signIn` — 電子郵件/密碼登入
+- `export signOut` — 登出當前使用者
+- `export signInAnonymously` — 匿名登入
+- `export sendPasswordResetEmail` — 發送密碼重置信件
+- `export registerIdentity` — 建立新 Auth 帳號
+- `export getCurrentIdentity` — 取得當前認證使用者 DTO
+- `export getIdentityById` — 依 ID 讀取持久化身份記錄
+- `export type IAuthProviderPort` — 外部 Auth Provider Port 介面
+- `export type IIdentityRepository` — 身份記錄 Repository Port 介面
+- `export type IAuthClaimsPort` — JWT Claims 寫入 Port 介面
+- `export type ISessionPort` — Server-side Session Port 介面
+- `export type AuthUser` — Auth Provider 回傳的最小使用者快照
+
+---
+
+## `core/_use-cases.ts`
+**描述**: 與框架無關的用例函數。所有函數接受 Port 介面（依賴注入），回傳 `Result<T>`。
+**函數清單**:
+- `interface IdentityDTO` — 安全的身份識別公開投影
+- `interface SessionStatusDTO` — Session 狀態 DTO
+- `authUserToDTO(user, provider): IdentityDTO` — 將 AuthUser 轉為 DTO（私有 helper）
+- `signIn(auth, email, password): Promise<Result<string>>` — 登入，回傳 uid
+- `signOut(auth): Promise<Result<void>>` — 登出
+- `signInAnonymously(auth): Promise<Result<string>>` — 匿名登入，回傳 uid
+- `sendPasswordResetEmail(auth, email): Promise<Result<void>>` — 發送重置信
+- `registerIdentity(auth, email, password, displayName): Promise<Result<string>>` — 建立帳號並設定暱稱
+- `getCurrentIdentity(auth): IdentityDTO | null` — 取得當前使用者（同步）
+- `getIdentityById(repo, id): Promise<Result<IdentityDTO | null>>` — 依 ID 查詢
+
+---
+
+## `core/_actions.ts`
+**描述**: `'use server'` 薄包裝層，作為 Next.js Server Actions 入口，重新匯出用例函數。
+**函數清單**:
+- 重新匯出 `IdentityDTO`、`SessionStatusDTO`（型別）
+- 重新匯出 `signIn`、`signOut`、`signInAnonymously`、`sendPasswordResetEmail`、`registerIdentity`
+
+---
+
+## `core/_queries.ts`
+**描述**: 伺服器端唯讀查詢重新匯出，供 React Server Components 直接呼叫。
+**函數清單**:
+- 重新匯出 `IdentityDTO`、`SessionStatusDTO`（型別）
+- 重新匯出 `getCurrentIdentity`、`getIdentityById`
+
+---
+
+## `domain.identity/_value-objects.ts`
+**描述**: Zod 驗證的 Branded Types，定義 identity.module 使用的所有值物件。
+**函數清單**:
+- `IdentityIdSchema` / `type IdentityId` — 驗證不為空字串的身份識別 ID
+- `makeIdentityId(raw): IdentityId` — 建立 IdentityId 的 factory function
+- `IdentityProviderSchema` / `type IdentityProvider` — enum: `"email"|"google"|"github"|"anonymous"`
+- `ProviderUidSchema` / `type ProviderUid` — 外部 Provider UID
+- `interface AuthClaims` — JWT 自定義 claims 結構（accountId, accountType, role）
+- `interface AuthUser` — Provider 操作回傳的最小使用者快照
+- `SessionTokenSchema` / `type SessionToken` — 短效 JWT access token
+
+---
+
+## `domain.identity/_entity.ts`
+**描述**: `IdentityRecord` Aggregate Root，代表單一主體的認證憑證記錄。
+**不變式**:
+- Identity 唯一索引為 `(provider, providerUid)` 組合
+- Identity 僅屬於一個 Account，不可跨帳號轉移
+- 匿名 Identity 可升級為永久 Provider Identity
+**函數清單**:
+- `interface IdentityRecord` — Aggregate Root 結構（id, provider, providerUid, accountId, email, displayName, isAnonymous, claims, createdAt, lastSignedInAt）
+- `buildIdentityRecord(user, provider, now): IdentityRecord` — 從 AuthUser 建立 IdentityRecord
+
+---
+
+## `domain.identity/_events.ts`
+**描述**: Identity Bounded Context 的 Domain Event 型別定義（union type）。
+**函數清單**:
+- `interface IdentityRegistered` — 使用者完成首次註冊並完成帳號佈建後觸發
+- `interface IdentitySignedIn` — 每次成功登入後觸發
+- `interface IdentitySignedOut` — 使用者明確登出後觸發
+- `interface AuthClaimsUpdated` — JWT custom claims 更新後觸發（應強制刷新 token）
+- `interface SessionRevoked` — Session 被主動撤銷（登出/管理員/安全封鎖）
+- `type IdentityDomainEventUnion` — 上述事件的 union type
+
+---
+
+## `domain.identity/_ports.ts`
+**描述**: Port 介面定義，由 Infrastructure 層實作，Application 層依賴注入。
+**函數清單**:
+- `interface IAuthProviderPort` — 外部 Auth Provider 抽象（signIn, signOut, createUser, sendReset, updateProfile, getCurrentUser, onAuthStateChanged）
+- `interface IIdentityRepository` — 身份記錄持久化介面（findById, save, deleteById）
+- `interface IAuthClaimsPort` — JWT Claims 管理（emitRefreshSignal）
+- `interface ISessionPort` — Server-side Session（createSessionCookie, verifySessionCookie, revokeRefreshTokens）
+
+---
+
+## `domain.identity/_service.ts`
+**描述**: Identity Domain Service — 純商業規則函數（無 I/O、無框架依賴）。衍生自 7Spade/xuanwu `_claims-handler.ts`，適配 4 層 DDD 架構。
+**函數清單**:
+- `isActiveSession(identity): boolean` — 判斷 identity 是否為活躍的非匿名 session
+- `canUpgradeAnonymous(identity): boolean` — 判斷匿名 identity 是否可升級為永久 provider
+- `claimedAccountId(identity): IdentityId | null` — 從 custom claims 中取出 accountId
+- `isTokenStale(identity, expectedVersion): boolean` — 判斷 JWT token 是否需要強制刷新（支援 TOKEN_REFRESH_SIGNAL 握手）
+- `isSessionExpired(identity, maxDurationMs, nowMs?): boolean` — 判斷 session 是否超過最大存活時間
+- `findExpiredSessions(identities, maxDurationMs, nowMs?): IdentityRecord[]` — 批次過濾過期 session（SessionCleanupService 使用）
+
+---
+
+## `infra.firestore/_repository.ts`
+**描述**: `IIdentityRepository`、`IAuthProviderPort`、`IAuthClaimsPort` 的 Firestore + Firebase Auth 實作。衍生自 7Spade/xuanwu `identity.slice/_claims-handler.ts`。
+**函數清單**:
+- `class FirestoreIdentityRepository` — 實作 IIdentityRepository
+  - `findById(id): Promise<IdentityRecord | null>`
+  - `save(identity): Promise<void>`
+  - `deleteById(id): Promise<void>`
+- `class FirebaseAuthAdapter` — 實作 IAuthProviderPort（Firebase Auth client SDK）
+  - `signInWithEmailAndPassword(email, password): Promise<AuthUser>`
+  - `createUserWithEmailAndPassword(email, password): Promise<AuthUser>`
+  - `signInAnonymously(): Promise<AuthUser>`
+  - `sendPasswordResetEmail(email): Promise<void>`
+  - `updateProfile(user, profile): Promise<void>`
+  - `signOut(): Promise<void>`
+  - `getCurrentUser(): AuthUser | null`
+  - `onAuthStateChanged(callback): () => void`
+- `class FirestoreAuthClaimsAdapter` — 實作 IAuthClaimsPort（TOKEN_REFRESH_SIGNAL 寫入）
+  - `emitRefreshSignal(accountId): Promise<void>` — 寫入 tokenRefreshSignals/{accountId}

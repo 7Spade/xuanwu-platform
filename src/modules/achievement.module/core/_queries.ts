@@ -1,3 +1,2 @@
-// Achievement queries — server-side reads and DTO type definitions
-// e.g. getUserAchievementsQuery, getBadgesByUserQuery
-// DTOs: AchievementDTO, BadgeDTO, UserProfileAchievementsDTO
+export type { AchievementDTO } from "./_use-cases";
+export { getAchievementsByAccount } from "./_use-cases";
