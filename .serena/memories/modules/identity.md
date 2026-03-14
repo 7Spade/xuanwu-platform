@@ -184,3 +184,24 @@
 ## `_components/share-view.tsx` *(Wave 21)*
 **描述**: 共享分享連結頁面（`/share/[shareId]`）— 分享資源預覽 shell。
 **Export**: `ShareView({ shareId })` — 用於 `app/(shared)/share/[shareId]/page.tsx`
+
+## `domain.identity/_api-key-entity.ts` *(Wave 28 — 新增)*
+**描述**: `ApiKeyRecord` 聚合根 — 命名空間 API 金鑰（id, namespaceSlug, name, keyPreview, createdAt, expiresAt, lastUsedAt, isActive）。
+**Export**: `ApiKeyRecord` interface
+
+## `domain.identity/_api-key-service.ts` *(Wave 28 — 新增)*
+**描述**: API 金鑰 domain service（純函數）。
+**Functions**: `isApiKeyExpired`, `isApiKeyUsable`, `sortApiKeysByCreatedAt`, `countActiveApiKeys`
+
+## `infra.firestore/_api-key-mapper.ts` *(Wave 28 — 新增)*
+**描述**: Firestore 文件 ↔ ApiKeyRecord 轉換（`ApiKeyDoc` interface, `apiKeyDocToRecord`, `apiKeyRecordToDoc`）。
+
+## `infra.firestore/_api-key-repository.ts` *(Wave 28 — 新增)*
+**描述**: `FirestoreApiKeyRepository implements IApiKeyRepository`。Firestore 路徑: `namespaces/{slug}/api-keys/{id}`。
+**Methods**: `findById`, `findByNamespaceSlug`, `save`, `revokeById`
+
+## `_components/use-api-keys.ts` *(Wave 28 — 新增)*
+**描述**: `useApiKeys(namespaceSlug)` hook — memoized FirestoreApiKeyRepository → getApiKeysBySlug use-case。Returns `{ apiKeys, loading, error }`。
+
+## `_components/api-keys-view.tsx` *(Wave 28 — 升級)*
+**描述**: API 金鑰管理頁面 — 已接 Firestore 真實資料（loading spinner → key 列表 → empty state）。每筆金鑰顯示名稱、keyPreview、狀態 badge（active/revoked/expired）、建立時間、上次使用時間。

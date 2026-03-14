@@ -165,6 +165,10 @@ const dictionary: Dictionary = {
     "settings.apiKeys.noKeys": "尚無金鑰",
     "settings.apiKeys.created": "建立時間",
     "settings.apiKeys.lastUsed": "上次使用",
+    "settings.apiKeys.status.active": "使用中",
+    "settings.apiKeys.status.revoked": "已撤銷",
+    "settings.apiKeys.status.expired": "已過期",
+    "settings.apiKeys.never": "永不過期",
     // --- wbs ---
     "wbs.title": "工作分解結構",
     "wbs.empty": "尚無任務",
@@ -347,6 +351,10 @@ const dictionary: Dictionary = {
     "settings.apiKeys.noKeys": "No keys yet",
     "settings.apiKeys.created": "Created",
     "settings.apiKeys.lastUsed": "Last Used",
+    "settings.apiKeys.status.active": "Active",
+    "settings.apiKeys.status.revoked": "Revoked",
+    "settings.apiKeys.status.expired": "Expired",
+    "settings.apiKeys.never": "Never",
     // --- wbs ---
     "wbs.title": "Work Breakdown Structure",
     "wbs.empty": "No tasks yet",

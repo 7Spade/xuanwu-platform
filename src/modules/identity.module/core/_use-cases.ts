@@ -166,3 +166,53 @@ export async function getIdentityById(
     return fail(err instanceof Error ? err : new Error(String(err)));
   }
 }
+
+// ---------------------------------------------------------------------------
+// API Key use cases
+// ---------------------------------------------------------------------------
+
+import type { IApiKeyRepository } from "../domain.identity/_ports";
+import type { ApiKeyRecord } from "../domain.identity/_api-key-entity";
+import { sortApiKeysByCreatedAt } from "../domain.identity/_api-key-service";
+
+/** DTO exposed at the application boundary — mirrors ApiKeyRecord. */
+export interface ApiKeyDTO {
+  readonly id: string;
+  readonly namespaceSlug: string;
+  readonly name: string;
+  readonly keyPreview: string;
+  readonly createdAt: string;
+  readonly expiresAt: string | null;
+  readonly lastUsedAt: string | null;
+  readonly isActive: boolean;
+}
+
+function apiKeyRecordToDTO(r: ApiKeyRecord): ApiKeyDTO {
+  return {
+    id: r.id,
+    namespaceSlug: r.namespaceSlug,
+    name: r.name,
+    keyPreview: r.keyPreview,
+    createdAt: r.createdAt,
+    expiresAt: r.expiresAt,
+    lastUsedAt: r.lastUsedAt,
+    isActive: r.isActive,
+  };
+}
+
+/**
+ * GetApiKeysBySlugQuery
+ * Returns all API keys for the given namespace slug, sorted newest-first.
+ */
+export async function getApiKeysBySlug(
+  repo: IApiKeyRepository,
+  namespaceSlug: string,
+): Promise<Result<ApiKeyDTO[]>> {
+  try {
+    const records = await repo.findByNamespaceSlug(namespaceSlug);
+    const sorted = sortApiKeysByCreatedAt(records);
+    return ok(sorted.map(apiKeyRecordToDTO));
+  } catch (err) {
+    return fail(err instanceof Error ? err : new Error(String(err)));
+  }
+}

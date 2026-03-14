@@ -241,8 +241,8 @@ After Wave 16 all 16 modules will have complete domain service + infra (mapper +
 | Organizations | `src/app/(main)/(account)/organizations/page.tsx` | ✅ Wave 20 (data Wave 23) |
 | Org general settings | `src/app/(main)/[slug]/settings/general/page.tsx` | ✅ Wave 20 (data Wave 23) |
 | Org members | `src/app/(main)/[slug]/settings/members/page.tsx` | ✅ Wave 20 (data ✅ Wave 26) |
-| Org billing | `src/app/(main)/[slug]/settings/billing/page.tsx` | ✅ Wave 20 (data Wave 23) |
-| Org API keys | `src/app/(main)/[slug]/settings/api-keys/page.tsx` | ✅ Wave 20 (data Wave 23) |
+| Org billing | `src/app/(main)/[slug]/settings/billing/page.tsx` | ✅ Wave 20 (data ✅ Wave 27) |
+| Org API keys | `src/app/(main)/[slug]/settings/api-keys/page.tsx` | ✅ Wave 20 (data ✅ Wave 28) |
 | Admin | `src/app/(admin)/admin/page.tsx` | ✅ Wave 21 |
 | Share | `src/app/(shared)/share/[shareId]/page.tsx` | ✅ Wave 21 |
 | Invite | `src/app/(invite)/invite/[token]/page.tsx` | ✅ Wave 21 |
@@ -260,7 +260,7 @@ After Wave 16 all 16 modules will have complete domain service + infra (mapper +
 **i18n keys added to `src/shared/i18n/index.ts`:**
 - auth.* keys (login, register, email, password, etc.)
 
-### Next Priorities (Waves 23–26)
+### Next Priorities (Waves 23–28)
 
 | Wave | Scope | Target modules |
 |------|-------|----------------|
@@ -268,6 +268,14 @@ After Wave 16 all 16 modules will have complete domain service + infra (mapper +
 | 24 | Real-time notifications (NotificationsView real data) | `notification.module` | ✅ Done |
 | 25 | WBS task tree real data | `work.module`, `workspace.module` | ✅ Done |
 | 26 | Members settings real data | `account.module` (IMembershipRepository) | ✅ Done |
+| 27 | Org Settings real data (WorkspaceSettingsView + BillingView) | `namespace.module` | ✅ Done |
+| 28 | ApiKeysView real data (ApiKey domain + useApiKeys hook) | `identity.module` | ✅ Done |
+
+### Remaining static shells (no backing domain model yet)
+
+| Shell | Blocker | Future wave |
+|-------|---------|-------------|
+| `EditorView` | Document-parser domain model not yet extracted | Wave 29+ |
 
 ### Acceptance Criteria for Presentation Waves
 
