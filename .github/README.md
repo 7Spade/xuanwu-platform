@@ -20,6 +20,7 @@ Copilot customizations in this repository must stay aligned with:
 
 - Business logic: `docs/architecture/README.md`
 - Codebase reference baseline: `docs/architecture/README.md` and established code patterns
+- Copilot customization documentation: `docs/copilot/README.md` (agent system overview, six-step pipeline, MCP matrix)
 
 ## Customization Selection Matrix
 
@@ -124,6 +125,7 @@ Design or refactor Copilot customization assets in this order:
 | `repomix/*` | `xuanwu-research`, `xuanwu-docs`, `xuanwu-architect`, `xuanwu-architecture-chief`, `xuanwu-repo-browser` |
 | `markitdown/*` | `xuanwu-research`, `xuanwu-docs` (URL/file → Markdown conversion) |
 | `sequential-thinking/*` | `xuanwu-software-planner`, `xuanwu-sequential-thinking`, `xuanwu-product`, `xuanwu-architect`, `ddd-orchestrator`, `xuanwu-quality` |
+| | `xuanwu-commander` also includes `sequential-thinking/*` for complex ambiguous requests |
 | `software-planning/*` | `xuanwu-orchestrator`, `xuanwu-commander`, `xuanwu-software-planner` |
 | `playwright/*` | `xuanwu-ui`, `xuanwu-test-expert` (browser automation) |
 | `next-devtools/*` | `xuanwu-ui`, `xuanwu-test-expert`, `xuanwu-architect`, `xuanwu-quality` (Next.js diagnostics) |
@@ -169,7 +171,7 @@ The repository now follows these consolidation rules:
 3. `.github/skills/` is the canonical project skill location for VS Code settings.
 4. Stable repository references used by prompts must exist under `docs/` or other committed paths.
 5. `README.md` remains the user-facing entry point and must keep its prompt command table synchronized with `.github/prompts/`.
-6. The canonical project-specific agent suite is `xuanwu-orchestrator`, `xuanwu-product`, `xuanwu-research`, `xuanwu-architect`, `xuanwu-implementer`, `xuanwu-ui`, `xuanwu-quality`, `xuanwu-docs`, `xuanwu-ops`, and `xuanwu-test-expert`. Supplementary agents extending the suite: `xuanwu-commander` (intent clarification and single dispatch), `xuanwu-software-planner` (implementation planning), `xuanwu-sequential-thinking` (step-by-step reasoning), `xuanwu-architecture-chief` (architecture doc refinement), `xuanwu-architecture-refactor` (doc structure refactoring), `xuanwu-diagram-designer` (Mermaid diagram refinement), and `xuanwu-repo-browser` (read-only architecture analysis). The architecture sub-cluster (`xuanwu-architecture-chief`, `xuanwu-architecture-refactor`, `xuanwu-diagram-designer`, `xuanwu-repo-browser`) is reachable via the `/xuanwu-architecture-realign` prompt or directly from `xuanwu-commander` and `xuanwu-orchestrator`. DDD sub-cluster: `ddd-orchestrator` (DDD delivery coordinator), `ddd-domain-modeler` (Domain Layer), `ddd-application-layer` (Application Layer), and `ddd-infrastructure` (Infrastructure Layer) — reachable via `/ddd-slice-scaffold` or from `xuanwu-orchestrator`.
+6. The canonical project-specific agent suite is `xuanwu-orchestrator`, `xuanwu-product`, `xuanwu-research`, `xuanwu-architect`, `xuanwu-implementer`, `xuanwu-ui`, `xuanwu-quality`, `xuanwu-docs`, `xuanwu-ops`, and `xuanwu-test-expert`. Supplementary agents extending the suite: `xuanwu-commander` (six-step intent pipeline and single dispatch), `xuanwu-software-planner` (implementation planning), `xuanwu-sequential-thinking` (step-by-step reasoning), `xuanwu-architecture-chief` (architecture doc refinement), `xuanwu-architecture-refactor` (doc structure refactoring), `xuanwu-diagram-designer` (Mermaid diagram refinement), and `xuanwu-repo-browser` (read-only architecture analysis). The architecture sub-cluster (`xuanwu-architecture-chief`, `xuanwu-architecture-refactor`, `xuanwu-diagram-designer`, `xuanwu-repo-browser`) is reachable via the `/xuanwu-architecture-realign` prompt or directly from `xuanwu-commander` and `xuanwu-orchestrator`. DDD sub-cluster: `ddd-orchestrator` (DDD delivery coordinator), `ddd-domain-modeler` (Domain Layer), `ddd-application-layer` (Application Layer), and `ddd-infrastructure` (Infrastructure Layer) — reachable via `/ddd-slice-scaffold` or from `xuanwu-orchestrator`.
 7. The canonical instruction suite is `xuanwu-customization-authoring`, `xuanwu-code-quality`, `xuanwu-application-architecture`, `xuanwu-typescript-platform`, `xuanwu-github-workflows`, `xuanwu-task-tracking`, and `xuanwu-test-expert`. Additional scoped instructions: `xuanwu-coding-style` (`**/*.{ts,tsx,js,jsx}`), `xuanwu-documentation` (`**/*.md`), `xuanwu-repo-structure` (`src/**/*.{ts,tsx,js,jsx}`), `xuanwu-security` (`**/*.{ts,tsx,js,jsx,json,yaml,yml}`), `xuanwu-ddd-layers` (`src/**/*.{ts,tsx,js,jsx}` — 4-layer DDD boundary enforcement), and `xuanwu-ddd-progressive-migration` (`src/**/*.{ts,tsx,js,jsx}` — incremental migration workflow toward layered DDD).
 8. The canonical prompt suite is `xuanwu-orchestrator`, `xuanwu-product`, `xuanwu-research`, `xuanwu-architect`, `xuanwu-docs`, `xuanwu-implementer`, `xuanwu-ui`, `xuanwu-ops`, and `xuanwu-test-expert`. Additional prompts: `xuanwu-planning` (quick implementation plan via `xuanwu-software-planner`), `xuanwu-refactor` (refactor guidance via `xuanwu-implementer`), `xuanwu-code-review` (code review via `xuanwu-quality`), `xuanwu-debug` (debugging via `xuanwu-sequential-thinking`), `xuanwu-architecture-realign` (architecture doc realignment via `xuanwu-architecture-chief`), and `xuanwu-ssot-sync` (sync architecture docs with Semantic Kernel SSOT via `xuanwu-architecture-chief`). DDD prompts: `ddd-domain-model`, `ddd-application-service`, `ddd-infrastructure-adapter`, `ddd-layer-audit`, `ddd-slice-scaffold`, and `ddd-progressive-layering`.
 9. `breakdown-plan` is the canonical planning and backlog decomposition skill; merged wrappers `create-implementation-plan` and `gen-specs-as-issues` were removed.
@@ -180,7 +182,8 @@ The repository now follows these consolidation rules:
 14. `agent-governance` is the canonical agent safety and governance skill; merged wrappers `agentic-eval` and `ai-prompt-engineering-safety-review` were removed.
 15. `ddd-architecture` is the DDD architecture skill providing 4-layer patterns, agent kit (ddd-orchestrator, ddd-domain-modeler, ddd-application-layer, ddd-infrastructure), prompt commands, and implementation examples.
 16. `ddd-progressive-layering` is the DDD migration skill for moving existing slices toward the 4-layer model with compatibility seams, ordered extraction steps, and low-risk refactor guidance.
-17. Serena lifecycle enforcement is split across `.github/copilot-instructions.md`, `.github/hooks/serena-session-lifecycle.json`, and the repository entry agents/prompts. Agents that can originate repository work must expose `serena/*`.
+17. `xuanwu-intent-pipeline` is the six-step intelligent understanding pipeline skill (① Raw Input → ② Intent Detection → ③ Context Extraction → ④ Entity Extraction → ⑤ Dependency Analysis → ⑥ Task Instruction) embedded in `xuanwu-commander` and available to all entry-point agents.
+18. Serena lifecycle enforcement is split across `.github/copilot-instructions.md`, `.github/hooks/serena-session-lifecycle.json`, and the repository entry agents/prompts. Agents that can originate repository work must expose `serena/*`.
 
 ## Required Reference Documents for Customizations
 
@@ -190,6 +193,7 @@ These documents are stable link targets for prompts and agents that need reposit
 - `docs/architecture/catalog/business-entities.md`
 - `docs/architecture/glossary/business-terms.md`
 - `docs/architecture/adr/README.md`
+- `docs/copilot/README.md`
 
 ## Change Workflow
 
