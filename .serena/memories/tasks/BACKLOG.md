@@ -233,8 +233,8 @@ After Wave 16 all 16 modules will have complete domain service + infra (mapper +
 | Forgot Password | `src/app/(auth)/forgot-password/page.tsx` | ✅ Wave 17 |
 | Onboarding | `src/app/(main)/onboarding/page.tsx` | ✅ Wave 19 |
 | Workspaces list | `src/app/(main)/[slug]/workspaces/page.tsx` | ✅ Wave 19 (real data Wave 22) |
-| WBS | `src/app/(main)/[slug]/[workspaceId]/(workspace)/wbs/page.tsx` | ✅ Wave 21 (data Wave 25) |
-| Editor | `src/app/(main)/[slug]/[workspaceId]/(standalone)/editor/page.tsx` | ✅ Wave 21 (data Wave 25) |
+| WBS | `src/app/(main)/[slug]/[workspaceId]/(workspace)/wbs/page.tsx` | ✅ Wave 21 (data ✅ Wave 25) |
+| Editor | `src/app/(main)/[slug]/[workspaceId]/(standalone)/editor/page.tsx` | ✅ Wave 21 (data Wave 26+) |
 | Profile settings | `src/app/(main)/(account)/profile/page.tsx` | ✅ Wave 19 (real data Wave 22) |
 | Security settings | `src/app/(main)/(account)/security/page.tsx` | ✅ Wave 20 |
 | Notifications | `src/app/(main)/(account)/notifications/page.tsx` | ✅ Wave 20 (data Wave 24) |
@@ -264,9 +264,9 @@ After Wave 16 all 16 modules will have complete domain service + infra (mapper +
 
 | Wave | Scope | Target modules |
 |------|-------|----------------|
-| 23 | Organization data (OrganizationsView + org settings real data) | `namespace.module`, `account.module` |
-| 24 | Real-time notifications (NotificationsView real data) | `notification.module` |
-| 25 | WBS task tree real data + editor content | `work.module`, `workspace.module` |
+| 23 | Organization data (OrganizationsView + org settings real data) | `namespace.module`, `account.module` | ✅ Done |
+| 24 | Real-time notifications (NotificationsView real data) | `notification.module` | ✅ Done |
+| 25 | WBS task tree real data | `work.module`, `workspace.module` | ✅ Done |
 | 26 | Members settings real data | `account.module` (IMembershipRepository) |
 
 ### Acceptance Criteria for Presentation Waves

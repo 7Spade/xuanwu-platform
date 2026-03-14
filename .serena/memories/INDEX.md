@@ -47,10 +47,10 @@ Xuanwu Platform 所有 Serena 記憶檔案的主索引。
 | `src/shared/` | ✅ 9 檔 | 9 |
 | `src/design-system/` | ✅ 63 檔 | 63 |
 | `src/infrastructure/` | ✅ 17 檔 | 17 |
-| `src/modules/` (×16) | ✅ 220 檔 | 220 |
-| **總計** | **✅ 347 檔** | **347** |
+| `src/modules/` (×16) | ✅ 222 檔 | 222 |
+| **總計** | **✅ 349 檔** | **349** |
 
-> *Last updated: Waves 17–22 (auth UI, shell, workspaces list, profile, all placeholder pages, AccountProvider + real data connectivity). Modules gained 40 new `_components/*.tsx` files across account, identity, workspace, notification, namespace, and settlement modules.*
+> *Last updated: Waves 17–25 (auth UI, shell, workspaces list, profile, all placeholder pages, AccountProvider + real data connectivity for workspaces/orgs/notifications/WBS tasks). Modules gained 42 new `_components/*.tsx` + hook files across account, identity, workspace, notification, namespace, and settlement modules.*
 
 ---
 

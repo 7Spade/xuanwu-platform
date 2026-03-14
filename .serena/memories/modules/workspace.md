@@ -176,9 +176,17 @@
 **描述**: 成員管理設定頁（`/[slug]/settings/members`）— 成員列表 + 邀請 CTA shell。
 **Export**: `MembersSettingsView` — 用於 `app/(main)/[slug]/settings/members/page.tsx`
 
-## `_components/wbs-view.tsx` *(Wave 21)*
-**描述**: WBS 任務樹 shell（`/[slug]/[workspaceId]/wbs`）— 任務節點樹狀檢視框架（Wave 25 接資料）。
+## `_components/wbs-view.tsx` *(Wave 25)*
+**描述**: WBS 任務清單，自行取得 Firestore 資料 via `useWorkItems(workspaceId)`。載入中 → 任務列表（`WorkItemRow`）→ 空狀態。
 **Export**: `WbsView` — 用於 `app/(main)/[slug]/[workspaceId]/(workspace)/wbs/page.tsx`
+
+## `_components/use-work-items.ts` *(Wave 25)*
+**描述**: Client-side React hook。透過 `FirestoreWorkItemRepository.findByWorkspaceId(workspaceId)` 取得任務清單。回傳 `{ items, loading, error, refresh }`，依 createdAt 降冪排序。
+**Export**: `useWorkItems(workspaceId: string | null | undefined)`
+
+## `_components/work-item-row.tsx` *(Wave 25)*
+**描述**: 單一工作項目列，顯示狀態 Badge、優先度色點、標題、到期日。status.* i18n keys (`wbs.status.open/in-progress/blocked/closed`)。
+**Export**: `WorkItemRow` — 用於 `WbsView`
 
 ## `_components/editor-view.tsx` *(Wave 21)*
 **描述**: 獨立編輯器 shell（`/[slug]/[workspaceId]/editor`）— 文件編輯框架（Wave 25 接資料）。

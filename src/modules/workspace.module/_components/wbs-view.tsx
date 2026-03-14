@@ -1,22 +1,26 @@
 "use client";
 /**
- * WbsView — Work Breakdown Structure task tree shell.
+ * WbsView — Work Breakdown Structure task list with real data.
  *
  * Source: workspace.slice/domain.tasks/_components/
- * Adapted: hierarchical task tree shell with empty state.
+ * Wave 25: wired to Firestore via useWorkItems(workspaceId).
+ * Shows loading spinner → task list → empty state.
  */
 
-import { GitBranch, Plus } from "lucide-react";
+import { GitBranch, Loader2, Plus } from "lucide-react";
 import { Button } from "@/design-system/primitives/ui/button";
 import { useTranslation } from "@/shared/i18n";
+import { useWorkItems } from "./use-work-items";
+import { WorkItemRow } from "./work-item-row";
 
 interface WbsViewProps {
   slug: string;
   workspaceId: string;
 }
 
-export function WbsView({ slug: _slug, workspaceId: _workspaceId }: WbsViewProps) {
+export function WbsView({ slug: _slug, workspaceId }: WbsViewProps) {
   const t = useTranslation("zh-TW");
+  const { items, loading } = useWorkItems(workspaceId);
 
   return (
     <div className="flex h-full flex-col space-y-4 duration-500 animate-in fade-in">
@@ -36,21 +40,33 @@ export function WbsView({ slug: _slug, workspaceId: _workspaceId }: WbsViewProps
         </Button>
       </div>
 
-      {/* Task tree area */}
-      <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border/40 bg-muted/5 px-6 py-16 text-center">
-        <GitBranch className="mb-4 size-12 text-muted-foreground opacity-10" />
-        <h3 className="text-lg font-bold">{t("wbs.empty")}</h3>
-        <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
-          {t("wbs.emptyHint")}
-        </p>
-        <Button
-          size="lg"
-          className="mt-8 rounded-full px-8 text-xs font-bold uppercase tracking-widest shadow-lg"
-          disabled
-        >
-          {t("wbs.addTask")}
-        </Button>
-      </div>
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : items.length > 0 ? (
+        <div className="space-y-2">
+          {items.map((item) => (
+            <WorkItemRow key={item.id} item={item} />
+          ))}
+        </div>
+      ) : (
+        /* Empty state */
+        <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border/40 bg-muted/5 px-6 py-16 text-center">
+          <GitBranch className="mb-4 size-12 text-muted-foreground opacity-10" />
+          <h3 className="text-lg font-bold">{t("wbs.empty")}</h3>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+            {t("wbs.emptyHint")}
+          </p>
+          <Button
+            size="lg"
+            className="mt-8 rounded-full px-8 text-xs font-bold uppercase tracking-widest shadow-lg"
+            disabled
+          >
+            {t("wbs.addTask")}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

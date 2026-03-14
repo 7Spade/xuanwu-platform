@@ -161,6 +161,10 @@ const dictionary: Dictionary = {
     "wbs.empty": "尚無任務",
     "wbs.emptyHint": "從這裡建立您的第一個任務",
     "wbs.addTask": "新增任務",
+    "wbs.status.open": "待處理",
+    "wbs.status.in-progress": "進行中",
+    "wbs.status.blocked": "已阻塞",
+    "wbs.status.closed": "已完成",
     // --- admin ---
     "admin.title": "管理後台",
     "admin.subtitle": "系統管理功能",
@@ -330,6 +334,10 @@ const dictionary: Dictionary = {
     "wbs.empty": "No tasks yet",
     "wbs.emptyHint": "Create your first task from here",
     "wbs.addTask": "Add Task",
+    "wbs.status.open": "Open",
+    "wbs.status.in-progress": "In Progress",
+    "wbs.status.blocked": "Blocked",
+    "wbs.status.closed": "Closed",
     // --- admin ---
     "admin.title": "Admin Panel",
     "admin.subtitle": "System administration",
