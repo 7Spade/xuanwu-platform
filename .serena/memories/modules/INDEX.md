@@ -1,5 +1,7 @@
 # Modules File Index — Master Index
 
+> 主索引請見：[../ INDEX.md](../INDEX.md)（涵蓋 app、shared、design-system、infrastructure、modules 所有區域）
+
 每個 Domain Module 的完整 `.ts` 檔案索引。詳細內容請參閱各模組子文件。
 
 ## 模組清單
