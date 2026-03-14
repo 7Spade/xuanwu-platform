@@ -191,7 +191,7 @@ export function WorkspaceSettingsDialog({
                 {t("workspace.settings.photoURLLabel")}
               </span>
             </Label>
-            {photoURL && (
+            {photoURL && /^https?:\/\//i.test(photoURL) && (
               <div className="relative h-24 w-full overflow-hidden rounded-xl border border-border/40">
                 <img
                   src={photoURL}
