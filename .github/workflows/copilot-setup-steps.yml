@@ -43,3 +43,24 @@ jobs:
         uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
+
+      # Pre-install Python-based MCP servers so the agent doesn't wait for cold-start
+      # downloads on first invocation. uv tool install caches the virtualenvs in
+      # ~/.local/share/uv/tools/  which is restored from the uv cache above.
+      - name: Pre-install Python MCP servers (serena, markitdown)
+        run: |
+          uv tool install markitdown-mcp
+          uv tool install "git+https://github.com/oraios/serena"
+
+      # Pre-install npm-based MCP servers globally so `npx -y <pkg>` is a no-op cache
+      # hit when the agent actually calls each server. github: installs are excluded from
+      # the npm cache key but still benefit from the Node.js binary cache above.
+      - name: Pre-install npm MCP servers (sequential-thinking, software-planning, everything, filesystem, context7, repomix)
+        run: |
+          npm install -g \
+            @modelcontextprotocol/server-sequential-thinking \
+            @modelcontextprotocol/server-everything \
+            @modelcontextprotocol/server-filesystem \
+            @upstash/context7-mcp \
+            repomix
+          npm install -g "github:NightTrek/Software-planning-mcp"
