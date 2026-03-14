@@ -73,19 +73,37 @@
 ---
 
 ## `domain.collaboration/_service.ts`
-**描述**: Collaboration Domain Service 規格說明。
+**描述**: Collaboration domain service — 純函數，無 I/O。@handle 提取、回覆樹建構、反應聚合。
 **函數清單**:
-- `CommentModerationService`（描述）— 評論內容審核（含黑名單過濾）
-- `ReactionAggregationService`（描述）— 聚合計算各類型反應數量
-
----
-
-## `infra.firestore/_repository.ts`
-**描述**: `ICommentRepository` 的 Firestore 實作骨架。使用 artifact 子集合結構以支援高效查詢。
-**函數清單**: *(待實作，目前為佔位註解)*
+- `MENTION_PATTERN: RegExp` — `/@([a-zA-Z0-9_-]+)/g`
+- `extractMentionedHandles(body): string[]` — 從評論內容提取唯一 @handle 清單
+- `interface CommentNode extends Comment { replies: CommentNode[] }` — 巢狀評論節點
+- `buildReplyTree(comments): CommentNode[]` — 按 parentId 建立巢狀回覆樹
+- `isEditableByAuthor(comment, accountId): boolean` — 作者守衛（未刪除且為作者）
+- `isSoftDeleted(comment): boolean` — `!!comment.deletedAt`
+- `interface Reaction` — 反應值物件（commentId, accountId, type, createdAt）
+- `hasReaction(reactions, type, accountId): boolean` — 是否已有相同反應
+- `aggregateReactionCounts(reactions): Partial<Record<ReactionType, number>>` — 依類型計數
 
 ---
 
 ## `infra.firestore/_mapper.ts`
-**描述**: Firestore 文件 ↔ Comment 的雙向轉換。
-**函數清單**: *(待實作，目前為佔位註解)*
+**描述**: Firestore document ↔ Comment / Reaction 雙向轉換。
+**函數清單**:
+- `interface CommentDoc` — Firestore 評論文件結構
+- `interface ReactionDoc` — Firestore 反應文件結構
+- `commentDocToEntity(doc): Comment`
+- `commentEntityToDoc(comment): CommentDoc`
+- `reactionDocToVO(doc): Reaction`
+- `reactionVOToDoc(reaction): ReactionDoc`
+
+---
+
+## `infra.firestore/_repository.ts`
+**描述**: `ICommentRepository` 的 Firestore 實作。扁平集合 `comments/{commentId}`，複合查詢：artifactType + artifactId。
+**函數清單**:
+- `class FirestoreCommentRepository implements ICommentRepository`
+  - `findById(id): Promise<Comment|null>`
+  - `findByArtifact(artifactType, artifactId): Promise<Comment[]>`
+  - `save(comment): Promise<void>`
+  - `deleteById(id): Promise<void>`

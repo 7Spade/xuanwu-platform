@@ -78,19 +78,38 @@
 ---
 
 ## `domain.audit/_service.ts`
-**描述**: Audit Domain Service 規格說明。
+**描述**: Audit domain service — 純函數，無 I/O。可稽核動作集合、分群、合規率計算。
 **函數清單**:
-- `AuditRetentionService`（描述）— 依保留政策歸檔舊稽核記錄（冷儲存）
-- `PolicyEvaluationService`（描述）— 評估操作是否符合政策並記錄結果
-
----
-
-## `infra.firestore/_repository.ts`
-**描述**: `IAuditRepository` 的 Firestore 實作骨架（Append-only，使用 addDoc 而非 setDoc）。
-**函數清單**: *(待實作，目前為佔位註解)*
+- `AUDITABLE_ACTIONS: ReadonlySet<string>` — 所有可稽核的 AuditAction 值集合
+- `isActionAuditable(action: string): action is AuditAction` — 型別守衛
+- `filterByResource(entries, resourceType, resourceId?): AuditEntry[]`
+- `filterByActor(entries, actorAccountId): AuditEntry[]`
+- `filterByWorkspace(entries, workspaceId): AuditEntry[]`
+- `groupByAction(entries): Partial<Record<AuditAction, AuditEntry[]>>`
+- `groupByResourceType(entries): Record<string, AuditEntry[]>`
+- `computeComplianceRate(entries, predicate): number` — 0–1 合規率
+- `summarizeByResourceType(entries): Record<string, number>` — 每資源類型計數
+- `sortByOccurredAt(entries, order?): AuditEntry[]` — 預設降冪（最新優先）
 
 ---
 
 ## `infra.firestore/_mapper.ts`
-**描述**: Firestore 文件 ↔ AuditEntry 的映射（只需單向：Firestore→DTO，因為寫入直接使用 entity 結構）。
-**函數清單**: *(待實作，目前為佔位註解)*
+**描述**: Firestore document ↔ AuditEntry 雙向轉換（ActorRefDoc + ResourceRefDoc 子文件）。
+**函數清單**:
+- `interface ActorRefDoc` — Firestore actor 子文件結構
+- `interface ResourceRefDoc` — Firestore resource 子文件結構
+- `interface AuditEntryDoc` — Firestore 稽核記錄文件結構
+- `auditEntryDocToEntity(doc): AuditEntry`
+- `auditEntryToDoc(entry): AuditEntryDoc`
+
+---
+
+## `infra.firestore/_repository.ts`
+**描述**: `IAuditRepository` 的 Firestore 實作。扁平集合 `audit-entries/{entryId}`，僅用 setDoc（Append-only 不變式）。
+**函數清單**:
+- `class FirestoreAuditRepository implements IAuditRepository`
+  - `append(entry): Promise<void>` — 僅寫入，絕不更新
+  - `findById(id): Promise<AuditEntry|null>`
+  - `findByResourceId(resourceId, limit?): Promise<AuditEntry[]>` — 依 resource.resourceId 查詢
+  - `findByActorId(actorId, limit?): Promise<AuditEntry[]>` — 依 actor.accountId 查詢
+  - `findByWorkspaceId(workspaceId, limit?): Promise<AuditEntry[]>` — 依 resource.workspaceId 查詢

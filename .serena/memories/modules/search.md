@@ -75,19 +75,32 @@
 ---
 
 ## `domain.search/_service.ts`
-**描述**: Search Domain Service 規格說明。
+**描述**: Search domain service — 純函數，無 I/O。可見性過濾、TF 評分、結果排序、Tombstone 標記。
 **函數清單**:
-- `IndexSyncService`（描述）— 監聽其他 BC 事件並同步更新搜尋索引
-- `RelevanceRankingService`（描述）— 搜尋結果相關性評分策略
-
----
-
-## `infra.firestore/_repository.ts`
-**描述**: `ISearchIndexRepository` 的 Firestore 實作骨架。未來可替換為 Algolia/Elasticsearch 等搜尋後端。
-**函數清單**: *(待實作，目前為佔位註解)*
+- `isVisibleTo(entry, accountId, workspaceId?): boolean` — 可見性守衛（public/account-private/workspace-private）
+- `filterByVisibility(entries, ownerAccountId, workspaceId?): SearchIndexEntry[]`
+- `scoreRelevance(entry, terms): number` — TF 評分（title×3, tags×2, snippet×1）
+- `rankResults(entries, queryText, limit?): SearchResult[]` — 評分→降冪→截斷
+- `tombstoneEntry(entry): SearchIndexEntry` — 回傳 title/snippet=[deleted] 的副本
+- `buildIndexEntry(id, sourceModule, sourceId, title, snippet, ownerAccountId, visibility, now, tags?, workspaceId?): SearchIndexEntry` — Factory
 
 ---
 
 ## `infra.firestore/_mapper.ts`
-**描述**: Firestore 文件 ↔ SearchIndexEntry 的雙向轉換。
-**函數清單**: *(待實作，目前為佔位註解)*
+**描述**: Firestore document ↔ SearchIndexEntry 雙向轉換。
+**函數清單**:
+- `interface SearchIndexEntryDoc` — Firestore 搜尋索引文件結構
+- `searchEntryDocToEntity(doc): SearchIndexEntry`
+- `searchEntryToDoc(entry): SearchIndexEntryDoc`
+
+---
+
+## `infra.firestore/_repository.ts`
+**描述**: `ISearchIndexRepository` + `ISearchQueryPort` 的 Firestore 實作。集合 `search-index/{entryId}`。查詢時在記憶體中套用 `rankResults`；可替換為 Algolia 等搜尋引擎。
+**函數清單**:
+- `class FirestoreSearchIndexRepository implements ISearchIndexRepository`
+  - `upsert(entry): Promise<void>`
+  - `deleteBySourceRef(sourceModule, sourceId): Promise<void>`
+  - `findBySourceRef(sourceModule, sourceId): Promise<SearchIndexEntry|null>` — limit(1)
+- `class FirestoreSearchQueryAdapter implements ISearchQueryPort`
+  - `query(q, ownerAccountId, scope, workspaceId?, limit?): Promise<SearchResult[]>` — 抓取候選記錄後套用 rankResults

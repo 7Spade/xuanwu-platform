@@ -78,19 +78,40 @@
 ---
 
 ## `domain.file/_service.ts`
-**描述**: File Domain Service 規格說明。
+**描述**: File domain service — 純函數，無 I/O。版本衝突偵測、MIME 分群、版本查找。
 **函數清單**:
-- `FileVersioningService`（描述）— 管理版本號遞增與舊版本清理
-- `DocumentParsingOrchestrator`（描述）— 協調文件解析流程（PDF/Office 格式）
-
----
-
-## `infra.firestore/_repository.ts`
-**描述**: `IFileRepository` 的 Firestore 實作骨架。Storage URL 存於 Firestore，實際檔案存於 Firebase Storage。
-**函數清單**: *(待實作，目前為佔位註解)*
+- `type MimeGroup = 'image'|'document'|'code'|'data'|'other'` — MIME 粗分類型別
+- `MIME_PREFIX_MAP` — MIME 前綴 → MimeGroup 映射常數
+- `getMimeGroup(mimeType): MimeGroup` — 將 mimeType 分類至 MimeGroup
+- `getCurrentVersion(file): FileVersion|undefined` — 找到 currentVersionId 對應的版本
+- `resolveCanonicalVersion(versions): FileVersion` — 返回 versionNumber 最大的版本
+- `isVersionStale(version, file): boolean` — 版本是否不再是目前版本
+- `detectVersionConflict(a, b): boolean` — 同 versionNumber 但不同 versionId（並發衝突）
+- `getVersionByNumber(file, n): FileVersion|undefined` — 按版本號查找版本
+- `buildFileVersion(id, versionNumber, versionName, size, uploadedBy, downloadURL, now, storagePath?): FileVersion` — Factory
+- `isParseComplete(file): boolean`
+- `isParseInProgress(file): boolean`
+- `canSubmitForParsing(file, supportedGroups?): boolean`
 
 ---
 
 ## `infra.firestore/_mapper.ts`
-**描述**: Firestore 文件 ↔ FileEntity 的雙向轉換（含版本記錄子集合映射）。
-**函數清單**: *(待實作，目前為佔位註解)*
+**描述**: Firestore document ↔ FileEntity / FileVersion 雙向轉換。
+**函數清單**:
+- `interface FileVersionDoc` — Firestore 版本子文件結構
+- `interface FileEntityDoc` — Firestore 檔案文件結構
+- `fileVersionDocToVO(doc): FileVersion`
+- `fileVersionToDoc(version): FileVersionDoc`
+- `fileEntityDocToEntity(doc): FileEntity`
+- `fileEntityToDoc(entity): FileEntityDoc`
+
+---
+
+## `infra.firestore/_repository.ts`
+**描述**: `IFileRepository` 的 Firestore 實作。扁平集合 `files/{fileId}`，workspaceId 為索引欄位。
+**函數清單**:
+- `class FirestoreFileRepository implements IFileRepository`
+  - `findById(id): Promise<FileEntity|null>`
+  - `findByWorkspaceId(workspaceId): Promise<FileEntity[]>`
+  - `save(file): Promise<void>`
+  - `deleteById(id): Promise<void>`

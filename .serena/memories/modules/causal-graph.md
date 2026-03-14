@@ -86,19 +86,37 @@
 ---
 
 ## `domain.causal-graph/_service.ts`
-**描述**: CausalGraph Domain Service 規格說明。
+**描述**: Causal-graph domain service — 純函數 BFS/DFS 圖遍歷。路徑解析、影響範圍計算、循環偵測。
 **函數清單**:
-- `CyclicDependencyDetector`（描述）— 偵測因果圖中的循環依賴
-- `ImpactPropagationService`（描述）— 計算多跳影響傳播路徑
-
----
-
-## `infra.firestore/_repository.ts`
-**描述**: `ICausalNodeRepository` 及 `ICausalEdgeRepository` 的 Firestore 實作骨架。
-**函數清單**: *(待實作，目前為佔位註解)*
+- `buildCausalNode(id, kind, sourceRef, label, occurredAt): CausalNode` — Factory
+- `buildCausalEdge(id, causeNodeId, effectNodeId, confidence, createdAt, reason?): CausalEdge` — Factory
+- `resolveCausalPath(nodes, edges, fromId, toId): CausalPath|null` — BFS 最短路徑
+- `computeImpactScope(nodes, edges, triggerNodeId, direction, maxDepth): ImpactScope` — BFS/DFS 有界遍歷
+- `detectCycles(nodes, edges): CausalNodeId[][]` — DFS 循環偵測，回傳所有循環路徑
+- `mergeImpactScopes(scopes): ImpactScope` — 合併相同 triggerNodeId 的影響範圍（union + max depth）
 
 ---
 
 ## `infra.firestore/_mapper.ts`
-**描述**: Firestore 文件 ↔ CausalNode / CausalEdge 的雙向轉換。
-**函數清單**: *(待實作，目前為佔位註解)*
+**描述**: Firestore document ↔ CausalNode / CausalEdge 雙向轉換。
+**函數清單**:
+- `interface CausalNodeDoc` — Firestore 因果節點文件結構
+- `interface CausalEdgeDoc` — Firestore 因果邊文件結構
+- `causalNodeDocToEntity(doc): CausalNode`
+- `causalNodeToDoc(node): CausalNodeDoc`
+- `causalEdgeDocToEntity(doc): CausalEdge`
+- `causalEdgeToDoc(edge): CausalEdgeDoc`
+
+---
+
+## `infra.firestore/_repository.ts`
+**描述**: `ICausalNodeRepository` + `ICausalEdgeRepository` 的 Firestore 實作。集合 `causal-nodes/{nodeId}` 和 `causal-edges/{edgeId}`。
+**函數清單**:
+- `class FirestoreCausalNodeRepository implements ICausalNodeRepository`
+  - `findById(id): Promise<CausalNode|null>`
+  - `findBySourceRef(sourceRef): Promise<CausalNode|null>` — limit(1)
+  - `save(node): Promise<void>`
+- `class FirestoreCausalEdgeRepository implements ICausalEdgeRepository`
+  - `findByCauseNodeId(nodeId): Promise<CausalEdge[]>`
+  - `findByEffectNodeId(nodeId): Promise<CausalEdge[]>`
+  - `save(edge): Promise<void>`

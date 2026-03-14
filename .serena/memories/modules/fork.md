@@ -79,19 +79,32 @@
 ---
 
 ## `domain.fork/_service.ts`
-**描述**: Fork Domain Service 規格說明。
+**描述**: Fork domain service — 純函數，無 I/O。Fork FSM 轉換、合併資格守衛、分叉差異計算。
 **函數清單**:
-- `ForkMergeService`（描述）— 分叉合併邏輯（active→merged，需協調 workspace.module）
-- `ForkDiffService`（描述）— 計算分叉與來源工作空間之間的差異
-
----
-
-## `infra.firestore/_repository.ts`
-**描述**: `IForkRepository` 的 Firestore 實作骨架。
-**函數清單**: *(待實作，目前為佔位註解)*
+- `VALID_FORK_TRANSITIONS: Readonly<Record<ForkStatus, ForkStatus[]>>` — Fork 狀態機（active→merged|abandoned）
+- `canTransitionForkStatus(current, next): boolean`
+- `hasPendingCR(fork): boolean` — `!!fork.pendingCRId`
+- `isMergeBackEligible(fork): boolean` — status=active
+- `isForkClosed(fork): boolean` — merged 或 abandoned
+- `computeDivergenceCount(forkedItems, originItems): number` — 新增項目數
+- `buildDivergenceSummary(added, modified, removed): string` — 人類可讀的差異摘要
 
 ---
 
 ## `infra.firestore/_mapper.ts`
-**描述**: Firestore 文件 ↔ ForkEntity 的雙向轉換。
-**函數清單**: *(待實作，目前為佔位註解)*
+**描述**: Firestore document ↔ ForkEntity 雙向轉換。
+**函數清單**:
+- `interface ForkDoc` — Firestore 文件結構
+- `forkDocToEntity(doc): ForkEntity`
+- `forkEntityToDoc(entity): ForkDoc`
+
+---
+
+## `infra.firestore/_repository.ts`
+**描述**: `IForkRepository` 的 Firestore 實作。扁平集合 `forks/{forkId}`，索引欄位：originWorkspaceId、forkedByAccountId。
+**函數清單**:
+- `class FirestoreForkRepository implements IForkRepository`
+  - `findById(id): Promise<ForkEntity|null>`
+  - `findByOriginWorkspace(originWorkspaceId): Promise<ForkEntity[]>`
+  - `findByAccount(accountId): Promise<ForkEntity[]>`
+  - `save(fork): Promise<void>`
