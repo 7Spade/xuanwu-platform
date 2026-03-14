@@ -135,11 +135,25 @@ UI Action (React component / form)
 
 | Module | Layer | Bounded Context |
 |--------|-------|----------------|
-| `org.module/` | SaaS | Organization · Namespace · Team · Identity (User) |
-| `workspace.module/` | Workspace | Workspace · Epic · Milestone · WBS · Issue · CR · Baseline |
-| `file.module/` | Workspace | File · FileVersion · Document Intelligence |
+| `identity.module/` | SaaS (cross-cutting) | Identity · Authentication · Sessions · Credentials (replaces raw Firebase Auth) |
+| `account.module/` | SaaS | Unified Account entity (AccountType: personal \| organization) · Public profile · Team + Membership governance |
+| `namespace.module/` | SaaS | Namespace (shared: org account namespaces + personal account namespaces) |
+| `workspace.module/` | Workspace | Workspace · WBS · Issue · CR · QA · Acceptance · Baseline |
+| `file.module/` | Workspace | File · FileVersion · Document Intelligence (DocParse · ObjExtract) |
+| `work.module/` | Workspace | Work Items · Milestones · Dependencies |
+| `fork.module/` | Workspace | Fork Network (planning branches · merge-back proposals) |
 | `workforce.module/` | Bridge | Workforce Scheduling (SaaS ↔ Workspace) |
 | `settlement.module/` | SaaS | Settlement · AR · AP |
+| `notification.module/` | SaaS (cross-cutting) | Notification Engine · Inbox · Email · Mobile Push |
+| `social.module/` | SaaS | Social Graph (Star/Watch/Follow) · Feed · Dashboard · Discovery |
+| `achievement.module/` | SaaS | Achievement Rules · Badge Unlocking (projected to account.module) |
+| `collaboration.module/` | Workspace (cross-cutting) | Comments · Reactions · Presence · Co-editing sessions |
+| `search.module/` | SaaS (cross-cutting) | Full-text + semantic search index · Unified query surface |
+| `audit.module/` | SaaS (cross-cutting) | Audit trail (immutable) · Policy automation (Sec) · Compliance reports |
+| `feature.module/` | SaaS (cross-cutting) | Feature Flags · Rollout Management · Kill-switch |
+| `causal-graph.module/` | SaaS / Workspace (cross-cutting) | Causal Graph · Impact Analysis · CausalPath query |
+
+> Each module folder contains a `README.md` documenting its bounded context, aggregates, and cross-module dependencies.
 
 ---
 

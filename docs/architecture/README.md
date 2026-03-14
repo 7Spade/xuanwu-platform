@@ -71,18 +71,21 @@ Infrastructure implements → Domain interfaces
 The system is divided into two primary layers with a governing boundary between them:
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                     SaaS Layer                          │
-│  Organization · Namespace · Team · Settlement · Social  │
-│              ┌──────────────────────┐                   │
-│              │  Workforce Scheduling │  ← Bridge        │
-│              └──────────────────────┘                   │
-└──────────────────────┬──────────────────────────────────┘
-                       │  Crossed via: Event Bus + typed contracts
-┌──────────────────────▼──────────────────────────────────┐
-│                  Workspace Layer                         │
-│  Workspace · WBS · Issue · CR · Files · Intelligence    │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                            SaaS Layer                                    │
+│  Identity · Account (+ Teams/Membership) · Namespace  ·  Settlement  ·  │
+│  Social  ·  Notification  ·  Achievement  ·  Audit  ·  Search           │
+│              ┌──────────────────────┐                                    │
+│              │  Workforce Scheduling │  ← Bridge                        │
+│              └──────────────────────┘                                    │
+└───────────────────────────────┬──────────────────────────────────────────┘
+                                │  Crossed via: Event Bus + typed contracts
+┌───────────────────────────────▼──────────────────────────────────────────┐
+│                        Workspace Layer                                   │
+│  Workspace · WBS · Issue · CR · QA · Acceptance · Baseline ·            │
+│  Files · Intelligence Pipeline · Work Items/Milestones · Fork Network · │
+│  Collaboration (Comments · Presence · Co-editing)                        │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
 See [Service Boundary](./catalog/service-boundary.md) for crossing protocols and ownership rules.
@@ -93,13 +96,27 @@ See [Service Boundary](./catalog/service-boundary.md) for crossing protocols and
 
 | Module | Location | Layer | Description |
 |--------|----------|-------|-------------|
-| Organization | `src/modules/org.module/` | SaaS | Org, Namespace, Team |
-| Workspace | `src/modules/workspace.module/` | Workspace | Workspace, WBS, Issues, CR |
-| File & Intel | `src/modules/file.module/` | Workspace | Files, Document Parsing, Object Extraction |
+| Identity | `src/modules/identity.module/` | SaaS (cross-cutting) | Authentication · Credentials · Sessions · Identity Providers (replaces raw Firebase Auth) |
+| Account | `src/modules/account.module/` | SaaS | Unified Account entity (AccountType: personal \| organization) · Public profile · Team + Membership governance (absorbed from removed org.module) |
+| Namespace | `src/modules/namespace.module/` | SaaS | Namespace (shared path-resolution: org account namespaces + personal account namespaces) |
+| Workspace | `src/modules/workspace.module/` | Workspace | Workspace, WBS, Issue, CR, QA, Acceptance, Baseline |
+| File & Intel | `src/modules/file.module/` | Workspace | Files, Document Parsing, Object Extraction, Intelligence Pipeline |
+| Work | `src/modules/work.module/` | Workspace | Work Items, Milestones, Dependencies |
+| Fork | `src/modules/fork.module/` | Workspace | Fork Network (planning branches + merge-back proposals) |
 | Workforce Scheduling | `src/modules/workforce.module/` | Bridge | Workforce Scheduling (SaaS ↔ Workspace bridge) |
 | Settlement | `src/modules/settlement.module/` | SaaS | AR, AP, Settlement records |
+| Notification | `src/modules/notification.module/` | SaaS (cross-cutting) | Notification Engine, Inbox, Email, Mobile Push |
+| Social | `src/modules/social.module/` | SaaS | Social Graph (Star/Watch/Follow), Feed, Dashboard, Discovery |
+| Achievement | `src/modules/achievement.module/` | SaaS | Achievement Rules, Badge Unlocking (projected to account.module via IAccountBadgeWritePort) |
+| Collaboration | `src/modules/collaboration.module/` | Workspace (cross-cutting) | Comments, Reactions, Presence, Co-editing sessions |
+| Search | `src/modules/search.module/` | SaaS (cross-cutting) | Full-text + semantic search index, unified query surface |
+| Audit | `src/modules/audit.module/` | SaaS (cross-cutting) | Audit trail (immutable), Policy automation (Sec), Compliance reports |
+| Feature Flags | `src/modules/feature.module/` | SaaS (cross-cutting) | Feature flags, rollout management, kill-switch, targeting rules |
+| Causal Graph | `src/modules/causal-graph.module/` | SaaS / Workspace (cross-cutting) | Causal nodes, cause-effect edges, impact scope, causal path analysis |
 
-> Expand this table as modules are implemented. Each module is self-contained — ports, value objects, and infrastructure adapters live inside the module, not in shared global directories.
+> Each module is self-contained — ports, value objects, and infrastructure adapters live inside the module, not in shared global directories.
+> Every module folder contains a `README.md` documenting its bounded context, aggregates, and cross-module dependencies.
+> See [`core-logic.mermaid`](./diagrams/core-logic.mermaid) for the full interaction sequence that drove this module decomposition.
 
 ---
 

@@ -4,26 +4,45 @@
 Each module = one Bounded Context, named `<name>.module/`:
 ```
 src/modules/<name>.module/
-├── domain/              ← Domain Layer (pure, no I/O; entities, value-objects, services, repositories[interface], types)
-├── application/         ← Application Layer (use-cases, dto, commands, queries)
-├── infrastructure/      ← Infrastructure Layer (repositories[impl], mappers, persistence)
-├── presentation/        ← Presentation Layer (components, hooks, store)
-├── constants/
-├── utils/
-└── index.ts             ← ONLY public API surface
+├── README.md            ← Bounded context description, aggregates, cross-module deps
+├── index.ts             ← ONLY public API surface (barrel exports)
+├── domain.<aggregate>/  ← Domain Layer (pure, no I/O; _entity, _value-objects, _ports, _events, _service)
+├── core/                ← Application Layer (_use-cases, _actions ['use server'], _queries)
+├── infra.<adapter>/     ← Infrastructure Layer (_repository, _mapper)
+└── _components/         ← Presentation Layer (React Server / Client components)
 ```
 
-Known modules (as of PR #10):
-- `org.module/` — Organisation management
-- `workspace.module/` — Workspace management
-- `ai.module/` — AI/Genkit integration
-- `workforce.module/` — Workforce scheduling (planned)
+**Active modules (17 total as of PR feat: scaffold feature.module + causal-graph.module):**
+
+| Module | Layer | Bounded Context |
+|--------|-------|-----------------|
+| `identity.module/` | SaaS (cross-cutting) | Auth · Sessions · Credentials · Identity Providers (replaces raw Firebase Auth) |
+| `account.module/` | SaaS | Unified Account (personal\|org) · Profile · Team · Membership |
+| `namespace.module/` | SaaS | Namespace path-resolution for account handles |
+| `workspace.module/` | Workspace | WBS · Issue · CR · QA · Acceptance · Baseline |
+| `file.module/` | Workspace | Files · DocParse · ObjExtract · Intelligence |
+| `work.module/` | Workspace | Work Items · Milestones · Dependencies |
+| `fork.module/` | Workspace | Fork Network (planning branches + merge-back) |
+| `workforce.module/` | Bridge | Workforce Scheduling (SaaS ↔ Workspace) |
+| `settlement.module/` | SaaS | Settlement · AR · AP |
+| `notification.module/` | SaaS (cross-cutting) | Notification Engine · Inbox · Push |
+| `social.module/` | SaaS | Social Graph · Feed · Discovery |
+| `achievement.module/` | SaaS | Achievement Rules · Badge Unlocking → account.module |
+| `collaboration.module/` | Workspace (cross-cutting) | Comments · Reactions · Presence · Co-editing |
+| `search.module/` | SaaS (cross-cutting) | Full-text + semantic search index + query |
+| `audit.module/` | SaaS (cross-cutting) | Audit trail (immutable) · Sec policy automation |
+| `feature.module/` | SaaS (cross-cutting) | Feature flags · Rollout management · Kill-switch |
+| `causal-graph.module/` | SaaS / Workspace (cross-cutting) | Causal nodes · Cause-effect edges · Impact scope analysis |
+
+**Removed modules:**
+- `org.module/` — removed; Team/Membership absorbed into `account.module` (AccountType: organization)
+- `profile.module/` — removed; public profile is a sub-aggregate of `account.module`
 
 ## DDD Layer Rules
 - **Domain**: pure, no I/O, no framework imports
 - **Application**: orchestrates domain via port interfaces; no direct DB/UI
-- **Infrastructure**: implements Domain repository interfaces; no business rules
-- **Presentation**: React components, hooks, store; no direct DB access
+- **Infrastructure**: implements Domain port interfaces; no business rules
+- **Presentation**: React components; calls Application only; no direct DB access
 
 ## Design System (`src/design-system/`)
 ```
@@ -53,7 +72,7 @@ Import pattern: `import { Button } from "@/design-system/primitives"`
 
 ## Shared Utilities (`src/shared/`)
 - `i18n/index.ts` — in-code translation dictionary (en + zh-TW)
-- `interfaces/` — API contracts (ApiResponse, PaginationQuery, FirestoreDocument, VisDateMetadata)
+- `interfaces/` — API contracts
 
 ## App Router Structure (`src/app/`)
 - `(marketing)/` — public marketing pages
