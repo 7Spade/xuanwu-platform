@@ -78,7 +78,6 @@ export function resolveCausalPath(
   if (fromId === toId) return null;
 
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
-  const edgeMap = new Map(edges.map((e) => [e.id, e]));
   const { downstream } = buildAdjacencyMaps(edges);
 
   // BFS — track predecessor nodeId + edgeId for path reconstruction

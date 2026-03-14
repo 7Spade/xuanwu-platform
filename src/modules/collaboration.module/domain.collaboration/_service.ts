@@ -86,7 +86,7 @@ export interface Reaction {
   readonly commentId: CommentId;
   readonly accountId: string;
   readonly type: ReactionType;
-  readonly createdAt: string;
+  readonly createdAt?: string;
 }
 
 /**

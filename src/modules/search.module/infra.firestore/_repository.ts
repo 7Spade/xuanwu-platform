@@ -17,7 +17,6 @@ import {
   getFirestore,
   collection,
   doc,
-  getDoc,
   getDocs,
   setDoc,
   deleteDoc,

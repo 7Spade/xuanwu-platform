@@ -9,7 +9,7 @@ import {
   isParseComplete,
 } from "../_service";
 import type { FileEntity, FileVersion } from "../_entity";
-import type { FileVersionId } from "../_value-objects";
+import type { FileId, FileVersionId } from "../_value-objects";
 
 function makeVersion(id: string, versionNumber: number): FileVersion {
   return {
@@ -29,7 +29,7 @@ function makeFile(
   parseStatus: FileEntity["parseStatus"] = "pending",
 ): FileEntity {
   return {
-    id: "file-1" as any,
+    id: "file-1" as FileId,
     workspaceId: "ws-1",
     name: "report.pdf",
     mimeType: "application/pdf",

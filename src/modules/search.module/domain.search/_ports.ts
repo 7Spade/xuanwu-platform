@@ -1,5 +1,5 @@
 import type { SearchIndexEntry, SearchResult } from "./_entity";
-import type { SearchIndexId, SearchScope } from "./_value-objects";
+import type { SearchScope } from "./_value-objects";
 
 export interface ISearchIndexRepository {
   upsert(entry: SearchIndexEntry): Promise<void>;

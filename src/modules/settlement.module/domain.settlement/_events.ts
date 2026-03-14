@@ -1,4 +1,4 @@
-import type { SettlementId, FinanceLifecycleStage } from "./_value-objects";
+import type { SettlementId } from "./_value-objects";
 
 interface SettlementDomainEvent {
   readonly settlementId: SettlementId;

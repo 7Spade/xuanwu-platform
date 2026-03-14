@@ -66,7 +66,7 @@ All code in `src/` MUST respect the layer dependency direction defined below.
 
 ```typescript
 // ❌ Application layer calling Infrastructure directly (bypass port)
-import { FirestoreAdapter } from '@/modules/org.module/infra.firestore/_repository'
+import { FirestoreAdapter } from '@/modules/namespace.module/infra.firestore/_repository'
 
 // ❌ Domain layer importing Application logic
 import { createTaskUseCase } from '@/modules/workspace.module/core/_use-cases'

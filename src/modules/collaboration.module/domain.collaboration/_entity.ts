@@ -1,4 +1,4 @@
-import type { CommentId, ReactionType } from "./_value-objects";
+import type { CommentId } from "./_value-objects";
 
 /** A comment anchored to any artifact. */
 export interface Comment {

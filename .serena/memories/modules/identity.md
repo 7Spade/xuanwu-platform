@@ -135,3 +135,73 @@
   - `onAuthStateChanged(callback): () => void`
 - `class FirestoreAuthClaimsAdapter` — 實作 IAuthClaimsPort（TOKEN_REFRESH_SIGNAL 寫入）
   - `emitRefreshSignal(accountId): Promise<void>` — 寫入 tokenRefreshSignals/{accountId}
+
+---
+
+## `_client-actions.ts` *(Wave 17 — 新增)*
+**描述**: 客戶端 Firebase Auth 操作封裝。無 `'use server'`，直接使用 Firebase Web SDK（因為 Auth 必須在瀏覽器端執行）。
+**函數清單**:
+- `clientSignIn(email, password): Promise<Result<string>>` — Email + 密碼登入，回傳 UID
+- `clientRegister(email, password, displayName): Promise<Result<string>>` — 建立帳號並設定顯示名稱
+- `clientSignInAnonymously(): Promise<Result<string>>` — 匿名登入
+- `clientSendPasswordResetEmail(email): Promise<Result<void>>` — 發送密碼重置郵件
+- `clientSignOut(): Promise<Result<void>>` — 登出
+
+---
+
+## `_components/login-form.tsx` *(Wave 17 — 新增)*
+**描述**: 登入表單 UI 元件（email + 密碼欄位、忘記密碼按鈕）。
+**Props**: `email`, `setEmail`, `password`, `setPassword`, `handleLogin`, `isLoading`, `onForgotPassword`
+
+## `_components/register-form.tsx` *(Wave 17 — 新增)*
+**描述**: 註冊表單 UI 元件（暱稱 + email + 密碼欄位）。
+**Props**: `name`, `setName`, `email`, `setEmail`, `password`, `setPassword`, `handleRegister`, `isLoading`
+
+## `_components/reset-password-form.tsx` *(Wave 17 — 新增)*
+**描述**: 密碼重置表單（email 輸入、發送/取消按鈕、內建錯誤顯示）。
+**Props**: `defaultEmail?`, `onSuccess`, `onCancel`
+
+## `_components/auth-tabs-root.tsx` *(Wave 17 — 新增)*
+**描述**: 驗證卡片容器，含登入/註冊分頁 (Tabs) 和訪客登入按鈕。
+**Props**: `isLoading`, `email`, `setEmail`, `password`, `setPassword`, `name`, `setName`, `handleAuth`, `handleAnonymous`, `openResetDialog`
+
+## `_components/auth-view.tsx` *(Wave 17 — 新增)*
+**描述**: 智能驗證容器。管理所有 auth 狀態，委派渲染給子元件。含重置密碼彈窗 (Dialog)。成功後 router.push("/")。
+**Export**: `AuthView` — 直接在 `app/(auth)/login/page.tsx` 使用
+
+## `_components/admin-view.tsx` *(Wave 21)*
+**描述**: 管理員面板頁面 shell（`/admin`）— 系統管理功能入口框架（Wave 23+ 接資料）。
+**Export**: `AdminView` — 用於 `app/(admin)/admin/page.tsx`
+
+## `_components/api-keys-view.tsx` *(Wave 20)*
+**描述**: API 金鑰管理頁面（`/[slug]/settings/api-keys`）— 金鑰列表 + 產生 CTA shell。
+**Export**: `ApiKeysView` — 用於 `app/(main)/[slug]/settings/api-keys/page.tsx`
+
+## `_components/invite-view.tsx` *(Wave 21)*
+**描述**: 邀請連結接受頁面（`/invite/[token]`）— 邀請 token 顯示與接受 CTA shell。
+**Export**: `InviteView({ token })` — 用於 `app/(invite)/invite/[token]/page.tsx`
+
+## `_components/share-view.tsx` *(Wave 21)*
+**描述**: 共享分享連結頁面（`/share/[shareId]`）— 分享資源預覽 shell。
+**Export**: `ShareView({ shareId })` — 用於 `app/(shared)/share/[shareId]/page.tsx`
+
+## `domain.identity/_api-key-entity.ts` *(Wave 28 — 新增)*
+**描述**: `ApiKeyRecord` 聚合根 — 命名空間 API 金鑰（id, namespaceSlug, name, keyPreview, createdAt, expiresAt, lastUsedAt, isActive）。
+**Export**: `ApiKeyRecord` interface
+
+## `domain.identity/_api-key-service.ts` *(Wave 28 — 新增)*
+**描述**: API 金鑰 domain service（純函數）。
+**Functions**: `isApiKeyExpired`, `isApiKeyUsable`, `sortApiKeysByCreatedAt`, `countActiveApiKeys`
+
+## `infra.firestore/_api-key-mapper.ts` *(Wave 28 — 新增)*
+**描述**: Firestore 文件 ↔ ApiKeyRecord 轉換（`ApiKeyDoc` interface, `apiKeyDocToRecord`, `apiKeyRecordToDoc`）。
+
+## `infra.firestore/_api-key-repository.ts` *(Wave 28 — 新增)*
+**描述**: `FirestoreApiKeyRepository implements IApiKeyRepository`。Firestore 路徑: `namespaces/{slug}/api-keys/{id}`。
+**Methods**: `findById`, `findByNamespaceSlug`, `save`, `revokeById`
+
+## `_components/use-api-keys.ts` *(Wave 28 — 新增)*
+**描述**: `useApiKeys(namespaceSlug)` hook — memoized FirestoreApiKeyRepository → getApiKeysBySlug use-case。Returns `{ apiKeys, loading, error }`。
+
+## `_components/api-keys-view.tsx` *(Wave 28 — 升級)*
+**描述**: API 金鑰管理頁面 — 已接 Firestore 真實資料（loading spinner → key 列表 → empty state）。每筆金鑰顯示名稱、keyPreview、狀態 badge（active/revoked/expired）、建立時間、上次使用時間。

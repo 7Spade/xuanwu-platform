@@ -94,6 +94,23 @@ export async function getNamespaceBySlug(
 }
 
 /**
+ * GetNamespaceByOwnerIdUseCase
+ * Returns the namespace (personal or org) that belongs to the given owner account ID.
+ * Each account has at most one namespace, so returns null when none exists yet.
+ */
+export async function getNamespaceByOwnerId(
+  repo: INamespaceRepository,
+  ownerId: string,
+): Promise<Result<NamespaceDTO | null>> {
+  try {
+    const namespace = await repo.findByOwnerId(ownerId);
+    return ok(namespace ? entityToDTO(namespace) : null);
+  } catch (err) {
+    return fail(err instanceof Error ? err : new Error(String(err)));
+  }
+}
+
+/**
  * ResolveWorkspacePathUseCase
  * Resolves a path string ("namespace-slug/workspace-slug") to workspaceId.
  * Returns null when the namespace or workspace is not found.

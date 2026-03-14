@@ -102,3 +102,7 @@
 **描述**: `INotificationRepository` 的 Firestore 實作（Wave 11 實作，使用 Client SDK）。
 **函數清單**:
 - `class FirestoreNotificationRepository` — 實作 `INotificationRepository`（findById, findByRecipient, save, markRead）
+
+## `_components/notifications-view.tsx` *(Wave 20)*
+**描述**: 通知收件匣頁面容器（`/(account)/notifications`）— 空狀態 shell，Wave 24 接 Firestore 資料。
+**Export**: `NotificationsView` — 用於 `app/(main)/(account)/notifications/page.tsx`

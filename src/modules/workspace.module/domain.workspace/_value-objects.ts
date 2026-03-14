@@ -58,6 +58,7 @@ export const TaskStateSchema = z.enum([
   "completed",
   "verified",
   "accepted",
+  "planning",
 ]);
 export type TaskState = z.infer<typeof TaskStateSchema>;
 

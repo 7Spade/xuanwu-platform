@@ -20,12 +20,12 @@
 | `skill-xp.slice` | `achievement.module` | ✅ Wave 12 |
 | `organization.slice` (namespaces) | `namespace.module` | ✅ Wave 13 |
 | `social-graph.slice` | `social.module` | ✅ Wave 13 |
-| `workspace.slice/domain.files` | `file.module` | ⬜ Wave 14 |
-| `organization.slice/gov.*` | `audit.module` | ⬜ Wave 14 |
-| `workspace.slice` (fork/divergence) | `fork.module` | ⬜ Wave 15 |
-| `workspace.slice` (comments/reactions) | `collaboration.module` | ⬜ Wave 15 |
-| `global-search.slice` + `semantic-graph.slice` | `search.module` | ⬜ Wave 16 |
-| `semantic-graph.slice` (BFS/DFS causal) | `causal-graph.module` | ⬜ Wave 16 |
+| `workspace.slice/domain.files` | `file.module` | ✅ Wave 14 |
+| `organization.slice/gov.*` | `audit.module` | ✅ Wave 14 |
+| `workspace.slice` (fork/divergence) | `fork.module` | ✅ Wave 15 |
+| `workspace.slice` (comments/reactions) | `collaboration.module` | ✅ Wave 15 |
+| `global-search.slice` + `semantic-graph.slice` | `search.module` | ✅ Wave 16 |
+| `semantic-graph.slice` (BFS/DFS causal) | `causal-graph.module` | ✅ Wave 16 |
 
 ---
 
@@ -213,3 +213,79 @@ After Wave 16 all 16 modules will have complete domain service + infra (mapper +
 2. All 3 files per module implemented: `domain.*/_service.ts`, `infra.firestore/_mapper.ts`, `infra.firestore/_repository.ts`
 3. Serena memory updated for both modules
 4. CodeQL: 0 alerts on changed files
+
+---
+
+## Phase 2 — Presentation Layer (所有 Waves 完成後的下一階段)
+
+> Status: ✅ **All pages completed** — Waves 17–22 delivered full Presentation Layer parity with 7Spade/xuanwu.
+> Auth UI (Wave 17), Shell (Wave 18), workspaces + profile + onboarding (Wave 19), 9 settings/route pages (Waves 20–21), AccountProvider + real Firestore data (Wave 22).
+> Source reference: `7Spade/xuanwu` has 99 `_components/*.tsx` files across all feature slices.
+> Target: `src/modules/*/_components/` + `src/app/` pages.
+
+### Current State (App pages)
+
+| Page | Path | Status |
+|------|------|--------|
+| Root redirect | `src/app/page.tsx` | ✅ Shows platform info |
+| Login/Register | `src/app/(auth)/login/page.tsx` | ✅ Wave 17 |
+| Register (redirect) | `src/app/(auth)/register/page.tsx` | ✅ Wave 17 |
+| Forgot Password | `src/app/(auth)/forgot-password/page.tsx` | ✅ Wave 17 |
+| Onboarding | `src/app/(main)/onboarding/page.tsx` | ✅ Wave 19 |
+| Workspaces list | `src/app/(main)/[slug]/workspaces/page.tsx` | ✅ Wave 19 (real data Wave 22) |
+| WBS | `src/app/(main)/[slug]/[workspaceId]/(workspace)/wbs/page.tsx` | ✅ Wave 21 (data ✅ Wave 25) |
+| Editor | `src/app/(main)/[slug]/[workspaceId]/(standalone)/editor/page.tsx` | ✅ Wave 21 (data ✅ Wave 29) |
+| Profile settings | `src/app/(main)/(account)/profile/page.tsx` | ✅ Wave 19 (real data Wave 22) |
+| Security settings | `src/app/(main)/(account)/security/page.tsx` | ✅ Wave 20 |
+| Notifications | `src/app/(main)/(account)/notifications/page.tsx` | ✅ Wave 20 (data Wave 24) |
+| Organizations | `src/app/(main)/(account)/organizations/page.tsx` | ✅ Wave 20 (data Wave 23) |
+| Org general settings | `src/app/(main)/[slug]/settings/general/page.tsx` | ✅ Wave 20 (data Wave 23) |
+| Org members | `src/app/(main)/[slug]/settings/members/page.tsx` | ✅ Wave 20 (data ✅ Wave 26) |
+| Org billing | `src/app/(main)/[slug]/settings/billing/page.tsx` | ✅ Wave 20 (data ✅ Wave 27) |
+| Org API keys | `src/app/(main)/[slug]/settings/api-keys/page.tsx` | ✅ Wave 20 (data ✅ Wave 28) |
+| Admin | `src/app/(admin)/admin/page.tsx` | ✅ Wave 21 |
+| Share | `src/app/(shared)/share/[shareId]/page.tsx` | ✅ Wave 21 |
+| Invite | `src/app/(invite)/invite/[token]/page.tsx` | ✅ Wave 21 |
+
+### Identity module components — Wave 17 (AUTH UI)
+
+**Files completed:**
+- `src/modules/identity.module/_components/login-form.tsx` ✅
+- `src/modules/identity.module/_components/register-form.tsx` ✅
+- `src/modules/identity.module/_components/reset-password-form.tsx` ✅
+- `src/modules/identity.module/_components/auth-tabs-root.tsx` ✅
+- `src/modules/identity.module/_components/auth-view.tsx` ✅
+- `src/modules/identity.module/_client-actions.ts` ✅
+
+**i18n keys added to `src/shared/i18n/index.ts`:**
+- auth.* keys (login, register, email, password, etc.)
+
+### Next Priorities (Waves 23–28)
+
+| Wave | Scope | Target modules |
+|------|-------|----------------|
+| 23 | Organization data (OrganizationsView + org settings real data) | `namespace.module`, `account.module` | ✅ Done |
+| 24 | Real-time notifications (NotificationsView real data) | `notification.module` | ✅ Done |
+| 25 | WBS task tree real data | `work.module`, `workspace.module` | ✅ Done |
+| 26 | Members settings real data | `account.module` (IMembershipRepository) | ✅ Done |
+| 27 | Org Settings real data (WorkspaceSettingsView + BillingView) | `namespace.module` | ✅ Done |
+| 28 | ApiKeysView real data (ApiKey domain + useApiKeys hook) | `identity.module` | ✅ Done |
+| 29 | EditorView real data (useFiles hook + FileItem, wired to file.module) | `file.module`, `workspace.module` | ✅ Done |
+
+### Remaining static shells
+
+All Phase 2 presentation shells are now wired to real Firestore data. **Phase 2 complete.**
+
+| Shell | Status |
+|-------|--------|
+| EditorView | ✅ Wave 29 — file browser panel via file.module |
+
+### Next Phase — Phase 3: Write-side actions & collaboration
+
+### Acceptance Criteria for Presentation Waves
+
+1. TypeScript: `npx tsc --noEmit` passes with 0 errors
+2. Components use `@/design-system/primitives/ui/` (NOT `@/shadcn-ui/`)
+3. i18n via `useTranslation("zh-TW")` from `@/shared/i18n`
+4. No direct infrastructure imports in components (go through module barrel `index.ts`)
+5. Pages use real Firestore data via module hooks (no Placeholder shells)

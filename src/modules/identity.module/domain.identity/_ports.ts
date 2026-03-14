@@ -68,3 +68,21 @@ export interface ISessionPort {
   /** Revoke all session cookies for the given user. */
   revokeRefreshTokens(uid: string): Promise<void>;
 }
+
+// ---------------------------------------------------------------------------
+// IApiKeyRepository
+// ---------------------------------------------------------------------------
+
+import type { ApiKeyRecord } from "./_api-key-entity";
+import type { ApiKeyId } from "./_value-objects";
+
+/**
+ * Port interface for persisting and querying API keys.
+ * Implemented by the Firestore infrastructure adapter.
+ */
+export interface IApiKeyRepository {
+  findById(id: ApiKeyId): Promise<ApiKeyRecord | null>;
+  findByNamespaceSlug(namespaceSlug: string): Promise<ApiKeyRecord[]>;
+  save(key: ApiKeyRecord): Promise<void>;
+  revokeById(id: ApiKeyId): Promise<void>;
+}

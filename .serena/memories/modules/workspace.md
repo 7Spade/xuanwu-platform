@@ -140,3 +140,66 @@
 - `interface WorkspaceTaskDoc` — WBS 任務子文件
 - `workspaceDocToEntity(doc): WorkspaceEntity` — Firestore → domain
 - `workspaceEntityToDoc(entity): WorkspaceDoc` — domain → Firestore
+
+---
+
+## `_components/shell/nav-main.tsx` *(Wave 18 — 新增)*
+**描述**: 主導航選單 — 首頁與工作空間連結。使用 `usePathname` 高亮目前路由。
+**Export**: `NavMain` (no props — reads pathname internally)
+
+## `_components/shell/nav-user.tsx` *(Wave 18, updated Wave 22)*
+**描述**: 認證用戶選單（側邊欄底部）。顯示用戶頭像、名稱、登出選項。
+**架構注意**: Wave 22 起改用 `useCurrentAccount()` 從 `AccountProvider` 取得 auth + 帳號資料，不再直接訂閱 Firebase Auth。
+**Export**: `NavUser` (no props)
+
+## `_components/shell/dashboard-sidebar.tsx` *(Wave 18 — 新增)*
+**描述**: 主側邊欄組合元件。使用 design system Sidebar 元件組裝 NavMain + NavUser。
+**Export**: `DashboardSidebar` (no props)
+
+## `_components/shell/shell-header.tsx` *(Wave 18 — 新增)*
+**描述**: 認證頁面頂部導覽列。包含 SidebarTrigger、麵包屑導航（支援 i18n）。
+**Export**: `ShellHeader` (no props)
+
+## `_components/workspaces-view.tsx` *(Wave 19, updated Wave 22)*
+**描述**: 工作空間列表頁面容器。Wave 22 起透過 `useWorkspaces(account?.id)` 自行從 Firestore 抓取資料，無需 server 傳入 props。含 loading/error 狀態處理。
+**Export**: `WorkspacesView` — 用於 `app/(main)/[slug]/workspaces/page.tsx`
+
+## `_components/workspace-card.tsx` *(Wave 19)*
+**描述**: 單一工作空間卡片 UI。顯示名稱、狀態、成員數；支援 grid/list 切換檢視。
+**Export**: `WorkspaceCard({ workspace })`
+
+## `_components/workspace-settings-view.tsx` *(Wave 20)*
+**描述**: 組織通用設定頁（`/[slug]/settings/general`）— 工作空間名稱/描述 form shell。
+**Export**: `WorkspaceSettingsView` — 用於 `app/(main)/[slug]/settings/general/page.tsx`
+
+## `_components/members-settings-view.tsx` *(Wave 26)*
+**描述**: 成員管理設定頁，自行取得 Firestore 資料 via `useMembers(slug)`。載入中 → 成員列表（`MemberRow`）→ 空狀態。
+**Export**: `MembersSettingsView` — 用於 `app/(main)/[slug]/settings/members/page.tsx`
+
+## `_components/use-members.ts` *(Wave 26)*
+**描述**: Client-side React hook。透過 `FirestoreAccountRepository.findByHandle(slug)` 取得 org 成員清單（`AccountEntity.members[]`）。回傳 `{ members, loading, error, refresh }`。
+**Export**: `useMembers(slug: string | null | undefined)`
+
+## `_components/member-row.tsx` *(Wave 26)*
+**描述**: 單一成員列，顯示 accountId（前12碼）、role Badge、status Badge、邀請日期。role/status i18n keys (`settings.members.role.*` / `settings.members.status.*`)。
+**Export**: `MemberRow` — 用於 `MembersSettingsView`
+
+## `_components/wbs-view.tsx` *(Wave 25)*
+**描述**: WBS 任務清單，自行取得 Firestore 資料 via `useWorkItems(workspaceId)`。載入中 → 任務列表（`WorkItemRow`）→ 空狀態。
+**Export**: `WbsView` — 用於 `app/(main)/[slug]/[workspaceId]/(workspace)/wbs/page.tsx`
+
+## `_components/use-work-items.ts` *(Wave 25)*
+**描述**: Client-side React hook。透過 `FirestoreWorkItemRepository.findByWorkspaceId(workspaceId)` 取得任務清單。回傳 `{ items, loading, error, refresh }`，依 createdAt 降冪排序。
+**Export**: `useWorkItems(workspaceId: string | null | undefined)`
+
+## `_components/work-item-row.tsx` *(Wave 25)*
+**描述**: 單一工作項目列，顯示狀態 Badge、優先度色點、標題、到期日。status.* i18n keys (`wbs.status.open/in-progress/blocked/closed`)。
+**Export**: `WorkItemRow` — 用於 `WbsView`
+
+## `_components/editor-view.tsx` *(Wave 21 → wired Wave 29)*
+**描述**: 獨立編輯器 shell（`/[slug]/[workspaceId]/editor`）— 文件編輯器 + 左側 file.module 檔案面板（useFiles hook，loading→FileItem 列表→空狀態）。
+**Export**: `EditorView` — 用於 `app/(main)/[slug]/[workspaceId]/(standalone)/editor/page.tsx`
+
+## `_components/use-workspaces.ts` *(Wave 22)*
+**描述**: Client-side React hook。透過 `FirestoreWorkspaceRepository.findByDimensionId(dimensionId)` 取得工作空間清單。回傳 `{ workspaces, loading, error, refresh }`。
+**Export**: `useWorkspaces(dimensionId: string | null | undefined)`

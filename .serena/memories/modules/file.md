@@ -115,3 +115,13 @@
   - `findByWorkspaceId(workspaceId): Promise<FileEntity[]>`
   - `save(file): Promise<void>`
   - `deleteById(id): Promise<void>`
+
+---
+
+## `_components/use-files.ts` *(Wave 29)*
+**描述**: Client-side React hook。透過 `FirestoreFileRepository.findByWorkspaceId(workspaceId)` 取得工作空間檔案清單。回傳 `{ files, loading, error }`。
+**Export**: `useFiles(workspaceId: string | null | undefined)` — 用於 `EditorView`
+
+## `_components/file-item.tsx` *(Wave 29)*
+**描述**: 單一檔案列，顯示 mime group badge（image/document/code/data/other）、版本數、建立日期。
+**Export**: `FileItem` — 用於 `EditorView`

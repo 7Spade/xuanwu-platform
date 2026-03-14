@@ -5,7 +5,7 @@ import {
   buildTaskTree,
 } from "../_service";
 import type { WorkspaceEntity, WorkspaceTask } from "../_entity";
-import type { WorkspaceId, WorkspaceSlug } from "../_value-objects";
+import type { WorkspaceId } from "../_value-objects";
 
 function makeWorkspace(
   id: string,
@@ -61,7 +61,7 @@ describe("isWorkspaceVisibleToUser", () => {
 
   it("returns true for hidden workspace when user has explicit grant", () => {
     const ws = makeWorkspace("ws-1", "dim-1", "hidden", [
-      { grantId: "g1", userId: "acc-1", role: "viewer", status: "active", grantedAt: "2024-01-01T00:00:00Z" },
+      { grantId: "g1", userId: "acc-1", role: "Viewer", status: "active", grantedAt: "2024-01-01T00:00:00Z" },
     ]);
     expect(isWorkspaceVisibleToUser(ws, "acc-1", new Set())).toBe(true);
   });

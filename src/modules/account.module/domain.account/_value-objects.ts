@@ -61,7 +61,7 @@ export type MemberRole = z.infer<typeof MemberRoleSchema>;
 // MembershipStatus
 // ---------------------------------------------------------------------------
 
-export const MembershipStatusSchema = z.enum(["pending", "active", "revoked"]);
+export const MembershipStatusSchema = z.enum(["pending", "active", "revoked", "suspended"]);
 export type MembershipStatus = z.infer<typeof MembershipStatusSchema>;
 
 // ---------------------------------------------------------------------------

@@ -10,7 +10,7 @@ import {
   type EligibleMemberSnapshot,
 } from "../_service";
 import type { ScheduleAssignment } from "../_entity";
-import type { SkillRequirement, ScheduleStatus } from "../_value-objects";
+import type { SkillRequirement, ScheduleStatus, ScheduleId } from "../_value-objects";
 
 function makeSnapshot(
   accountId: string,
@@ -28,7 +28,7 @@ function makeSchedule(
   status: ScheduleStatus = "PROPOSAL",
 ): ScheduleAssignment {
   return {
-    id: id as any,
+    id: id as ScheduleId,
     accountId: "acc-org",
     workspaceId: "ws-1",
     title: `Schedule ${id}`,

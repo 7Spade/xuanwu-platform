@@ -45,6 +45,8 @@ export interface AuthClaims {
   readonly accountId: string;
   readonly accountType: "personal" | "organization";
   readonly role: string;
+  /** Monotonically increasing version counter used to detect stale tokens. */
+  readonly claimsVersion?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -69,3 +71,15 @@ export interface AuthUser {
 /** Short-lived access token string (e.g. Firebase ID token). */
 export const SessionTokenSchema = z.string().min(1, "SessionToken must not be empty");
 export type SessionToken = z.infer<typeof SessionTokenSchema>;
+
+// ---------------------------------------------------------------------------
+// ApiKeyId
+// ---------------------------------------------------------------------------
+
+/** Opaque identifier for an organisation API key. */
+export const ApiKeyIdSchema = z.string().min(1, "ApiKeyId must not be empty");
+export type ApiKeyId = z.infer<typeof ApiKeyIdSchema>;
+
+export function makeApiKeyId(raw: string): ApiKeyId {
+  return ApiKeyIdSchema.parse(raw);
+}

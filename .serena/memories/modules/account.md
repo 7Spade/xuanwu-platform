@@ -144,3 +144,21 @@
 - `interface TeamDoc` — 團隊子文件結構
 - `accountDocToEntity(doc): AccountEntity` — Firestore doc → domain entity
 - `accountEntityToDoc(entity): AccountDoc` — domain entity → Firestore doc（供寫入）
+
+---
+
+## `_components/user-settings-view.tsx` *(Wave 19)*
+**描述**: 使用者設定頁面容器（`/(account)/profile`）。組合 ProfileCard + EmailCard + SecurityCard + PreferencesCard。
+**Export**: `UserSettingsView` — 用於 `app/(main)/(account)/profile/page.tsx`
+
+## `_components/profile-card.tsx` *(Wave 19, updated Wave 22)*
+**描述**: 個人資料卡片元件（顯示名稱、頭像、bio 等）。Wave 22 起使用 `useCurrentAccount()` 取得帳號資料，不再直接訂閱 Firebase Auth。
+**Export**: `ProfileCard` — 用於 `UserSettingsView`
+
+## `_components/security-view.tsx` *(Wave 20)*
+**描述**: 安全設定頁面容器（`/(account)/security`）。包含 Firebase `reauthenticateWithCredential` + `updatePassword` 操作，並暴露 `auth/wrong-password`、`auth/too-many-requests` 錯誤碼。
+**Export**: `SecurityView` — 用於 `app/(main)/(account)/security/page.tsx`
+
+## `_components/account-provider.tsx` *(Wave 22)*
+**描述**: `AccountProvider` React context，透過單一 `onAuthStateChanged` + `FirestoreAccountRepository` 訂閱，向 `(main)` 子樹提供 `{ user, account, loading }`。`useCurrentAccount()` hook 供所有子元件使用。
+**Export**: `AccountProvider`, `useCurrentAccount()` — 包裹於 `app/(main)/layout.tsx`

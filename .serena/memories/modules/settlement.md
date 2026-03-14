@@ -114,3 +114,7 @@
   - `findByDimensionId(dimensionId: string): Promise<SettlementRecord[]>`
   - `save(record: SettlementRecord): Promise<void>`
   - `deleteById(id: SettlementId): Promise<void>`
+
+## `_components/billing-view.tsx` *(Wave 20)*
+**描述**: 帳單/訂閱設定頁（`/[slug]/settings/billing`）— 目前方案卡片 + 用量條 shell，Wave 23 接 Firestore 資料。
+**Export**: `BillingView` — 用於 `app/(main)/[slug]/settings/billing/page.tsx`

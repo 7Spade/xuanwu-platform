@@ -14,12 +14,8 @@
  * Only use this module in Server Actions or Route Handlers.
  */
 
-import {
-  getFirestore,
-  WriteBatch,
-  FieldValue,
-  type DocumentReference,
-} from "firebase-admin/firestore";
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
+import type { WriteBatch, DocumentReference } from "firebase-admin/firestore";
 import { getAdminApp } from "../index";
 
 /** Maximum operations per Firestore batch (hard limit: 500). */

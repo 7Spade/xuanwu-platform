@@ -6,7 +6,7 @@
  */
 
 import type { FileEntity, FileVersion } from "./_entity";
-import type { FileId, FileVersionId, ParseStatus } from "./_value-objects";
+import type { FileVersionId } from "./_value-objects";
 
 // ---------------------------------------------------------------------------
 // MIME type grouping

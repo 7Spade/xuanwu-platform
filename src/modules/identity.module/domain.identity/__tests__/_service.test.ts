@@ -74,12 +74,12 @@ describe("claimedAccountId", () => {
 
 describe("isTokenStale", () => {
   it("returns false when claimsVersion matches expected", () => {
-    const identity = makeIdentity({ claims: { accountId: "acc-1", accountType: "personal", role: "member", claimsVersion: 3 } as any });
+    const identity = makeIdentity({ claims: { accountId: "acc-1", accountType: "personal", role: "member", claimsVersion: 3 } });
     expect(isTokenStale(identity, 3)).toBe(false);
   });
 
   it("returns true when claimsVersion is behind expected", () => {
-    const identity = makeIdentity({ claims: { accountId: "acc-1", accountType: "personal", role: "member", claimsVersion: 1 } as any });
+    const identity = makeIdentity({ claims: { accountId: "acc-1", accountType: "personal", role: "member", claimsVersion: 1 } });
     expect(isTokenStale(identity, 3)).toBe(true);
   });
 
