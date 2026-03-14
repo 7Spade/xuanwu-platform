@@ -380,6 +380,16 @@
 - ✅ AchievementRule 定義、評估、BadgeUnlock
 - ❌ 徽章展示 → `account` AccountProfile
 
+**`feature`** — 功能開關
+- ✅ FeatureFlag CRUD、FlagRule 評估、Rollout 百分比、Kill-switch、Staff Preview
+- ❌ 帳戶訂閱方案 → `account` Plan/Subscription（Plan 管「被授權什麼」，Feature Flag 管「工程 Ops 開什麼」）
+- ❌ 角色授權 → `account` MemberRole
+
+**`causal-graph`** — 因果圖
+- ✅ CausalNode / CausalEdge 建模、CausalPath 推導、ImpactScope 分析
+- ❌ 任務排程依賴（A 先 B）→ `work` Dependency（排程順序 ≠ 因果關係）
+- ❌ 稽核日誌 → `audit`（append-only 事件記錄 ≠ 跨 BC 因果模型）
+
 ---
 
 ## ⑥ Feature Routing Flowchart / 功能路由流程
@@ -395,8 +405,9 @@
   Q5: 流程/執行         → workspace / workforce / settlement
   Q6: 通知              → notification
   Q7: 搜尋              → search
-  Q8: 安全/監控         → audit
+  Q8: 安全/監控/因果分析 → audit / causal-graph
   Q9: 金錢              → settlement
+  Q+: 功能開關 (Ops)    → feature
 
 步驟三：用 Q10–Q12 確認 Aggregate Root
   唯一生命周期 → Aggregate Root
@@ -419,7 +430,7 @@
 
 ---
 
-> 最後更新：feat: scaffold feature.module + causal-graph.module (15 → 17 modules); flag 4 overlapping proposals  
+> 最後更新：feat: scaffold feature.module + causal-graph.module (15 → 17 modules); flag 4 overlapping proposals; pre-merge memory extraction  
 > 對應 Serena 記憶：`project/architecture.md`
 
 ---

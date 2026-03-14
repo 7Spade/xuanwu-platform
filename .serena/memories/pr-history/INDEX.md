@@ -24,7 +24,7 @@ This index covers all PRs in the xuanwu-platform repository (2026-03-13).
 - `project/overview` — Purpose, tech stack, key architectural decisions
 - `project/commands` — Development, lint, type-check commands; task completion workflow
 - `project/architecture` — Domain modules, DDD layers, design system, Firebase structure, App Router layout
-- `project/domain-lookup` — **Domain Routing Table**: 15 domains × 核心問題 × 主要概念 + Decision Flowchart. Use when deciding which module to implement a new feature in.
+- `project/domain-lookup` — **Domain Routing Table**: 17 domains × 核心問題 × 主要概念 + 20 Architectural Questions + merge/split rules + 6-step routing flowchart + routing entries for all 17 domains + section ⑦ overlap analysis (4 rejected proposals). Use when deciding which module to implement a new feature in.
 
 ### PR history memories
 - `pr-history/pr-01-parallel-routes` — Next.js @sidebar parallel routes
@@ -35,7 +35,8 @@ This index covers all PRs in the xuanwu-platform repository (2026-03-13).
 - `pr-history/pr-07-agent-memory-mcp` — agent-memory MCP server integration
 - `pr-history/pr-08-agent-memory-verification` — agent-memory compatibility verification (not merged)
 - `pr-history/pr-09-docs-conflict-resolution` — Occam's Razor docs cleanup
-- `pr-history/pr-10-docs-module-migration` — Current PR (open): module terminology, design-system tokens
+- `pr-history/pr-10-docs-module-migration` — module terminology, design-system tokens, VS Code URL fixes
+- `pr-history/pr-create-modules-for-mddd` — **Stacked PR**: scaffold all 17 Domain Modules + domain-lookup decision framework + overlap analysis
 
 ## Architectural Evolution Timeline
 1. **PR #1** — App Router structure: parallel routes, named slots
@@ -51,23 +52,27 @@ This index covers all PRs in the xuanwu-platform repository (2026-03-13).
 ## stacked PR: create-modules-for-mddd
 `copilot/create-modules-for-mddd` (stacked on `copilot/init-serena-and-index-memory`)
 
-Scaffolded all Domain Modules from `core-logic.mermaid` analysis.
-Final state: **15 modules** (13 - org - profile + collaboration + search + audit).
+Scaffolded all Domain Modules from `core-logic.mermaid` analysis.  
+Final state: **17 modules** (15 core BC + feature.module + causal-graph.module).  
+Full history: `pr-history/pr-create-modules-for-mddd.md`
 
 | PR iteration | Action |
 |---|---|
 | feat: scaffold 8 MDDD modules | org, workspace, file, workforce, settlement, notification, social, achievement |
-| feat: extract namespace + work + fork + profile (8→12) | namespace, work, fork, profile added; profile as cross-cutting BC |
-| feat: add identity.module + account.module, remove profile.module (12→13) | identity (auth), account (unified personal\|org); profile removed |
+| feat: extract namespace + work + fork + profile (8→12) | namespace independent (serves personal + org); work/fork/profile added |
+| feat: add identity.module + account.module, remove profile.module (12→13) | identity replaces Firebase Auth; account unifies User/Org |
 | feat: add collaboration/search/audit, delete org.module, add per-module READMEs (13→15) | +collaboration, +search, +audit; org removed; 15×README.md |
+| feat: create domain-lookup.md routing table | 15 domains × 核心問題 × 主要概念 |
+| feat: expand domain-lookup.md with 20 Architectural Questions + merge/split rules + 6-step flowchart | Decision framework complete |
+| feat: scaffold feature.module + causal-graph.module, flag 4 overlapping proposals (15→17) | +feature (功能開關), +causal-graph (因果圖核心); event/activity/entitlement/timeline rejected |
+| chore: pre-merge memory extraction | domain-lookup.md routing entries added for feature/causal-graph; INDEX.md updated |
 
 **Removed modules:**
 - `org.module` — Team/Membership absorbed into account.module (AccountType: organization sub-aggregates)
 - `profile.module` — public profile is a sub-aggregate of account.module
 
-**New modules:**
-- `identity.module` — auth boundary, replaces raw Firebase Auth SDK usage
-- `account.module` — unified Account (personal|organization) with Team/Membership sub-aggregates
-- `collaboration.module` — comments, reactions, presence, co-editing
-- `search.module` — cross-BC search index and query surface
-- `audit.module` — immutable audit trail + Sec policy automation (previously unowned)
+**Rejected proposals (documented in domain-lookup.md section ⑦):**
+- `event.module` → `audit.module` + `src/infrastructure/`
+- `activity.module` → `social.module` (Feed IS an activity stream)
+- `entitlement.module` → `account.module` (Plan/Subscription)
+- `timeline.module` → not a BC; each domain provides `_queries.ts` CQRS projections
