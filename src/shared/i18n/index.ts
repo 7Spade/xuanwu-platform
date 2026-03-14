@@ -121,6 +121,11 @@ const dictionary: Dictionary = {
     "notifications.empty": "目前沒有通知",
     "notifications.emptyHint": "當有新活動時，通知將會顯示在此",
     "notifications.markAllRead": "全部標為已讀",
+    "notifications.markRead": "標為已讀",
+    "notifications.justNow": "剛剛",
+    "notifications.minutesAgo": "分鐘前",
+    "notifications.hoursAgo": "小時前",
+    "notifications.daysAgo": "天前",
     // --- organizations ---
     "organizations.title": "我的組織",
     "organizations.subtitle": "您所屬的組織與命名空間",
@@ -285,6 +290,11 @@ const dictionary: Dictionary = {
     "notifications.empty": "No notifications yet",
     "notifications.emptyHint": "Notifications will appear here when there is new activity",
     "notifications.markAllRead": "Mark all as read",
+    "notifications.markRead": "Mark as read",
+    "notifications.justNow": "just now",
+    "notifications.minutesAgo": "minutes ago",
+    "notifications.hoursAgo": "hours ago",
+    "notifications.daysAgo": "days ago",
     // --- organizations ---
     "organizations.title": "My Organizations",
     "organizations.subtitle": "Organizations and namespaces you belong to",
