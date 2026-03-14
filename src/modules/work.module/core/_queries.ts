@@ -1,3 +1,2 @@
-// Work queries — server-side reads and DTO type definitions
-// e.g. getWorkItemsByWorkspaceQuery, getMilestonesByWorkspaceQuery, getDependencyGraphQuery
-// DTOs: WorkItemDTO, MilestoneDTO, DependencyDTO
+export type { WorkItemDTO } from "./_use-cases";
+export { getWorkItemsByWorkspace } from "./_use-cases";

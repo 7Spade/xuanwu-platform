@@ -1,7 +1,5 @@
 // file.module — Public API barrel
-// Bounded Context: File · FileVersion · Document Intelligence (DocParse · ObjExtract)
-// Layer: Workspace
-//
-// Re-export DTOs, actions, and queries as they are implemented.
-// NEVER export entities, value objects, repositories, or domain events.
-export {};
+// Bounded Context: File · FileVersion · Document Intelligence
+export type { FileDTO } from "./core/_use-cases";
+export { uploadFile, getFilesByWorkspace } from "./core/_use-cases";
+export type { IFileRepository, IStoragePort } from "./domain.file/_ports";

@@ -1,3 +1,3 @@
 'use server';
-// File server actions — Next.js Server Actions ('use server' mutations)
-// e.g. uploadFileAction, downloadFileAction
+export type { FileDTO } from "./_use-cases";
+export { uploadFile } from "./_use-cases";

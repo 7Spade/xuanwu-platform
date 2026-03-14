@@ -1,3 +1,2 @@
-// File queries — server-side reads and DTO type definitions
-// e.g. getFilesByWorkspaceQuery, getExtractedObjectsQuery
-// DTOs: FileDTO, ParsedDocumentDTO, ExtractedObjectDTO
+export type { FileDTO } from "./_use-cases";
+export { getFilesByWorkspace } from "./_use-cases";

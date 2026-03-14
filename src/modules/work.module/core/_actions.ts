@@ -1,3 +1,3 @@
 'use server';
-// Work server actions — Next.js Server Actions ('use server' mutations)
-// e.g. createWorkItemAction, createMilestoneAction, linkDependencyAction
+export type { WorkItemDTO } from "./_use-cases";
+export { createWorkItem, updateWorkItemStatus } from "./_use-cases";
