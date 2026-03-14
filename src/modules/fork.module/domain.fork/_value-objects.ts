@@ -1,3 +1,5 @@
-// Fork value objects — immutable and self-validating
-// e.g. ForkId, ForkStatus (active | merged | abandoned), BaselineVersionAtFork
-//      ForkSlug, ForkedFromWorkspaceId
+import { z } from "zod";
+export const ForkIdSchema = z.string().min(1);
+export type ForkId = z.infer<typeof ForkIdSchema>;
+export const ForkStatusSchema = z.enum(["active", "merged", "abandoned"]);
+export type ForkStatus = z.infer<typeof ForkStatusSchema>;

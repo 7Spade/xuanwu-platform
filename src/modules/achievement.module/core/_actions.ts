@@ -1,3 +1,3 @@
 'use server';
-// Achievement server actions — Next.js Server Actions ('use server' mutations)
-// Typically triggered by domain events from workspace.module
+export type { AchievementDTO } from "./_use-cases";
+export { unlockBadge } from "./_use-cases";

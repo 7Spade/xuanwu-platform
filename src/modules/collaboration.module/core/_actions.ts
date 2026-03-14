@@ -1,4 +1,3 @@
 'use server';
-// Collaboration server actions — Next.js Server Actions ('use server' mutations)
-// e.g. postCommentAction, editCommentAction, deleteCommentAction
-//      addReactionAction, requestReviewAction
+export type { CommentDTO } from "./_use-cases";
+export { postComment } from "./_use-cases";

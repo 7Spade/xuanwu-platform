@@ -1,3 +1,2 @@
-// Fork queries — server-side reads and DTO type definitions
-// e.g. getForksOfWorkspaceQuery, getForkByIdQuery, getForkNetworkQuery
-// DTOs: ForkDTO, ForkNetworkDTO
+export type { ForkDTO } from "./_use-cases";
+export { getForksByAccount } from "./_use-cases";

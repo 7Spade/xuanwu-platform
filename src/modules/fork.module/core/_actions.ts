@@ -1,3 +1,3 @@
 'use server';
-// Fork server actions — Next.js Server Actions ('use server' mutations)
-// e.g. forkWorkspaceAction, submitMergeBackAction
+export type { ForkDTO } from "./_use-cases";
+export { forkWorkspace, abandonFork } from "./_use-cases";

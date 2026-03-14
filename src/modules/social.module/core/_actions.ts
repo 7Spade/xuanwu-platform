@@ -1,3 +1,3 @@
 'use server';
-// Social server actions — Next.js Server Actions ('use server' mutations)
-// e.g. starWorkspaceAction, watchWorkspaceAction, followUserAction
+export type { SocialRelationDTO } from "./_use-cases";
+export { addRelation, removeRelation } from "./_use-cases";
