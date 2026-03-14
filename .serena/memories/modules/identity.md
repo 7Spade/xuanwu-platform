@@ -106,19 +106,32 @@
 ---
 
 ## `domain.identity/_service.ts`
-**描述**: Domain Service 規格說明（跨多個 aggregate 的邏輯，目前為描述式佔位）。
+**描述**: Identity Domain Service — 純商業規則函數（無 I/O、無框架依賴）。衍生自 7Spade/xuanwu `_claims-handler.ts`，適配 4 層 DDD 架構。
 **函數清單**:
-- `ProviderMigrationService`（描述）— 匿名身份升級至永久 provider，保留 accountId
-- `SessionCleanupService`（描述）— 批量撤銷過期或孤立 session
+- `isActiveSession(identity): boolean` — 判斷 identity 是否為活躍的非匿名 session
+- `canUpgradeAnonymous(identity): boolean` — 判斷匿名 identity 是否可升級為永久 provider
+- `claimedAccountId(identity): IdentityId | null` — 從 custom claims 中取出 accountId
+- `isTokenStale(identity, expectedVersion): boolean` — 判斷 JWT token 是否需要強制刷新（支援 TOKEN_REFRESH_SIGNAL 握手）
+- `isSessionExpired(identity, maxDurationMs, nowMs?): boolean` — 判斷 session 是否超過最大存活時間
+- `findExpiredSessions(identities, maxDurationMs, nowMs?): IdentityRecord[]` — 批次過濾過期 session（SessionCleanupService 使用）
 
 ---
 
 ## `infra.firestore/_repository.ts`
-**描述**: `IIdentityRepository` 的 Firestore 實作骨架，使用 Firebase Admin SDK（伺服器端）。
-**函數清單**: *(待實作，目前為佔位註解)*
-
----
-
-## `infra.firestore/_mapper.ts`
-**描述**: Firestore 文件 ↔ IdentityEntity 的雙向轉換，以及 Firebase Auth UserRecord ↔ IdentityEntity 的映射。
-**函數清單**: *(待實作，目前為佔位註解)*
+**描述**: `IIdentityRepository`、`IAuthProviderPort`、`IAuthClaimsPort` 的 Firestore + Firebase Auth 實作。衍生自 7Spade/xuanwu `identity.slice/_claims-handler.ts`。
+**函數清單**:
+- `class FirestoreIdentityRepository` — 實作 IIdentityRepository
+  - `findById(id): Promise<IdentityRecord | null>`
+  - `save(identity): Promise<void>`
+  - `deleteById(id): Promise<void>`
+- `class FirebaseAuthAdapter` — 實作 IAuthProviderPort（Firebase Auth client SDK）
+  - `signInWithEmailAndPassword(email, password): Promise<AuthUser>`
+  - `createUserWithEmailAndPassword(email, password): Promise<AuthUser>`
+  - `signInAnonymously(): Promise<AuthUser>`
+  - `sendPasswordResetEmail(email): Promise<void>`
+  - `updateProfile(user, profile): Promise<void>`
+  - `signOut(): Promise<void>`
+  - `getCurrentUser(): AuthUser | null`
+  - `onAuthStateChanged(callback): () => void`
+- `class FirestoreAuthClaimsAdapter` — 實作 IAuthClaimsPort（TOKEN_REFRESH_SIGNAL 寫入）
+  - `emitRefreshSignal(accountId): Promise<void>` — 寫入 tokenRefreshSignals/{accountId}

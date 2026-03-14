@@ -104,19 +104,43 @@
 ---
 
 ## `domain.account/_service.ts`
-**描述**: Account Domain Service 規格說明（跨 aggregate 邏輯描述）。
+**描述**: Account Domain Service — 純商業規則函數（無 I/O、無框架依賴）。衍生自 7Spade/xuanwu `_account.rules.ts`，適配 4 層 DDD 架構。
 **函數清單**:
-- `HandleTransferService`（描述）— 組織帳號 handle 所有權轉移邏輯
-- `MembershipBulkInviteService`（描述）— 批量邀請成員加入組織
+- `isOwner(account, userId): boolean` — 判斷 userId 是否為組織帳號擁有者
+- `getActiveMembership(account, userId): MembershipRecord | null` — 取得活躍成員資格
+- `getMemberRole(account, userId): MemberRole | null` — 取得成員角色
+- `canInviteMember(account, actorId): boolean` — 判斷 actorId 是否有邀請成員的權限（owner 或 admin）
+- `canTransferOwnership(account, newOwnerId): boolean` — 判斷 newOwnerId 是否可接受所有權轉移（需為活躍 admin）
+- `isAlreadyMember(account, targetId): boolean` — 判斷 targetId 是否已是活躍成員
+- `getUserTeams(account, userId): TeamRecord[]` — 取得使用者所在的所有 Team
+- `getUserTeamIds(account, userId): Set<string>` — 取得使用者所在 Team 的 ID 集合（高效成員檢查用）
+- `isValidHandle(handle): boolean` — 驗證 handle 格式是否符合 AccountHandle 規則
 
 ---
 
 ## `infra.firestore/_repository.ts`
-**描述**: `IAccountRepository` 及 `IMembershipRepository` 的 Firestore 實作骨架。Handle 唯一性需使用 Firestore Transaction（原子性 check-and-write）。
-**函數清單**: *(待實作，目前為佔位註解)*
+**描述**: `IAccountRepository`、`IAccountBadgeWritePort`、`IMembershipRepository` 的 Firestore 實作。
+**函數清單**:
+- `class FirestoreAccountRepository` — 實作 IAccountRepository + IAccountBadgeWritePort
+  - `findById(id): Promise<AccountEntity | null>`
+  - `findByHandle(handle): Promise<AccountEntity | null>`
+  - `save(account): Promise<void>`
+  - `deleteById(id): Promise<void>`
+  - `addBadge(accountId, badgeSlug): Promise<void>` — achievement.module 呼叫（via port）
+- `class FirestoreMembershipRepository` — 實作 IMembershipRepository（sub-aggregate 管理）
+  - `findById(id): Promise<{accountId, role, status} | null>`
+  - `invite(orgId, memberId, role, now): Promise<void>`
+  - `accept(id, now): Promise<void>`
+  - `updateRole(id, newRole): Promise<void>`
+  - `revoke(id): Promise<void>`
 
 ---
 
 ## `infra.firestore/_mapper.ts`
-**描述**: Firestore 文件 ↔ AccountEntity 的雙向轉換。
-**函數清單**: *(待實作，目前為佔位註解)*
+**描述**: Firestore 文件 ↔ AccountEntity 雙向轉換。Firestore-specific 欄位命名和 null coercion 均集中此處。
+**函數清單**:
+- `interface AccountDoc` — Firestore 原始文件結構
+- `interface MembershipDoc` — 成員資格子文件結構
+- `interface TeamDoc` — 團隊子文件結構
+- `accountDocToEntity(doc): AccountEntity` — Firestore doc → domain entity
+- `accountEntityToDoc(entity): AccountDoc` — domain entity → Firestore doc（供寫入）
