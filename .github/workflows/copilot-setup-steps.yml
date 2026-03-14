@@ -15,7 +15,7 @@ jobs:
   # This job name MUST be `copilot-setup-steps` — Copilot coding agent only
   # picks up a job with this exact name.
   copilot-setup-steps:
-    runs-on: ubuntu-4-core
+    runs-on: ubuntu-latest
 
     permissions:
       contents: read
