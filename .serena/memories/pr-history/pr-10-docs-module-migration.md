@@ -1,6 +1,6 @@
 # PR #10 — docs: resolve cross-file documentation inconsistencies, fix slice→module migration, correct VS Code URLs
 
-**Status**: Open (current PR — update to "Merged" once closed)
+**Status**: ✅ Merged
 **Branch**: `copilot/init-serena-and-index-memory`
 
 ## Summary

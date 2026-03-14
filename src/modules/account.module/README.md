@@ -6,9 +6,18 @@
 ## Purpose
 
 `account.module` provides the unified Account entity for the platform.
+It answers the question: **"What is your account and what do you own?"**
+
 `AccountType: personal | organization` — a single model covers both personal user accounts and organization accounts.
 
 Previously, User and Organization were separate identity concepts. This module unifies them and also absorbs the organization operational concerns (Teams, Membership governance) that were previously in the removed `org.module`.
+
+> **Boundary vs `identity.module`:**  
+> `account.module` = "What is your account?" (profile data, handle, team structure, membership roles — the **data** that belongs to you)  
+> `identity.module` = "How do you prove you are you?" (auth credentials, sessions, login/logout, password — the **authentication mechanism**)  
+>  
+> Display name / avatar / organization / team / member role → `account.module`  
+> Sign in / sign out / session token / provider linking → `identity.module`
 
 ## What this module owns
 
@@ -18,16 +27,19 @@ Previously, User and Organization were separate identity concepts. This module u
 | AccountProfile | Public surface: display name, avatar, bio, badges |
 | Team | Sub-aggregate for org accounts: team creation and management |
 | Membership | Invitation, role assignment (owner/admin/member/viewer), revocation |
+| MemberRole | Role assignment within an org: owner/admin/member/viewer (data structure; policy *enforcement* is `audit.module`) |
 | Badge projection | Receives badge unlocks from `achievement.module` via `IAccountBadgeWritePort` |
 
 ## What this module does NOT own
 
 | Concern | Owned by |
 |---------|----------|
-| Auth credentials / sessions | `identity.module` |
+| Auth credentials / sessions / password | `identity.module` |
+| Sign-in / sign-out / provider linking | `identity.module` |
 | Namespace slug registration | `namespace.module` |
 | Social graph (follow, star) | `social.module` |
 | Badge rule evaluation | `achievement.module` |
+| Audit / compliance policy enforcement | `audit.module` |
 
 ## Key aggregates
 

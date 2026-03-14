@@ -12,6 +12,7 @@ Project-wide always-on instructions for GitHub Copilot Chat in this repository.
 
 - Business logic: `docs/architecture/README.md`
 - Codebase reference baseline: `docs/architecture/README.md` and established code patterns
+- Copilot customization guide: `docs/copilot/README.md`
 
 If a task touches business rules or domain terminology, read the SSOT documents before changing code or documentation.
 
@@ -53,6 +54,7 @@ If a task touches business rules or domain terminology, read the SSOT documents 
 2. Reuse established repository patterns from existing code.
 3. **Validate before implement** — verify architecture correctness, module boundaries, and existing tests before writing any new code. Prefer the smallest correct diff.
 4. For Copilot customization changes, follow `.github/README.md` first, then the matching spec at https://code.visualstudio.com/docs/copilot/customization, before editing `.github/agents`, `.github/instructions`, `.github/prompts`, or `.github/skills`.
+5. For new or ambiguous requests, apply the **Six-Step Intent Pipeline** (`xuanwu-commander` or `.github/skills/xuanwu-intent-pipeline/SKILL.md`) before dispatching work to any specialist agent.
 
 ## Knowledge Persistence
 
@@ -146,9 +148,11 @@ Serena symbol tools > grep/glob > filesystem > raw codebase search
 
 ## Companion Files
 
+- Copilot customization documentation: `docs/copilot/README.md`
 - Repository Copilot customization guide: `.github/README.md`
 - Shared multi-agent conventions: `AGENTS.md`
 - File-scoped rules: `.github/instructions/*.instructions.md`
+- Six-step intent pipeline skill: `.github/skills/xuanwu-intent-pipeline/SKILL.md`
 
 ## GitHub Coding Agent Environment Setup
 

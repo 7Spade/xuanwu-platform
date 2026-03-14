@@ -1,13 +1,13 @@
-# PR: create-modules-for-mddd
+# PR #11 — feat: scaffold all 17 MDDD modules from core-logic.mermaid + document conflicts + architectural decision framework
 
 Branch: `copilot/create-modules-for-mddd`  
 Base: `copilot/init-serena-and-index-memory`  
-Status: 🔄 Open (stacked PR, pre-merge)
+Status: ✅ Merged (PR #11)
 
 ## Summary
 
 Scaffolded all Domain Modules for the Xuanwu Platform from analysis of `core-logic.mermaid`.  
-Final module count: **17** (15 core BC + `feature.module` + `causal-graph.module`).
+Final module count: **16** (15 core BC + `causal-graph.module`; `feature.module` removed in PR #12).
 
 Each module uses the standard 4-layer DDD structure:
 ```
@@ -76,10 +76,10 @@ Each module uses the standard 4-layer DDD structure:
 1. **`namespace.module` is independent** — NS serves both personal + org accounts; cannot live inside `org.module`
 2. **`identity.module` replaces raw Firebase Auth** — All auth SDK calls should go through `identity.module` ports
 3. **`account.module` unifies User/Org** — `AccountType: personal | organization`; Team/Membership are org sub-aggregates
-4. **`feature.module` ≠ `account.module`** — Plan/Subscription = "what you're allowed"; Feature Flag = "engineering Ops kill-switch/rollout"
-5. **`causal-graph.module` ≠ `work.module` Dependency** — Work Dependency = scheduling order; CausalGraph = cross-BC cause-effect reasoning
-6. **EventBus is Infrastructure** — `src/infrastructure/event-bus/`, not a Domain Module
-7. **Timeline queries are not a BC** — Each domain provides `_queries.ts` CQRS projections for its own timeline view
+4. **`causal-graph.module` ≠ `work.module` Dependency** — Work Dependency = scheduling order; CausalGraph = cross-BC cause-effect reasoning
+5. **EventBus is Infrastructure** — `src/infrastructure/event-bus/`, not a Domain Module
+6. **Timeline queries are not a BC** — Each domain provides `_queries.ts` CQRS projections for its own timeline view
+7. **`feature.module` removed (PR #12)** — Feature flag infrastructure is too vague to locate clearly as a BC; can use Firebase Remote Config or `src/infrastructure/` if needed
 
 ## Files Changed (Key)
 

@@ -12,7 +12,7 @@ src/modules/<name>.module/
 └── _components/         ← Presentation Layer (React Server / Client components)
 ```
 
-**Active modules (17 total as of PR feat: scaffold feature.module + causal-graph.module):**
+**Active modules (16 total — feature.module removed per PR #12 decision):**
 
 | Module | Layer | Bounded Context |
 |--------|-------|-----------------|
@@ -31,12 +31,12 @@ src/modules/<name>.module/
 | `collaboration.module/` | Workspace (cross-cutting) | Comments · Reactions · Presence · Co-editing |
 | `search.module/` | SaaS (cross-cutting) | Full-text + semantic search index + query |
 | `audit.module/` | SaaS (cross-cutting) | Audit trail (immutable) · Sec policy automation |
-| `feature.module/` | SaaS (cross-cutting) | Feature flags · Rollout management · Kill-switch |
 | `causal-graph.module/` | SaaS / Workspace (cross-cutting) | Causal nodes · Cause-effect edges · Impact scope analysis |
 
 **Removed modules:**
 - `org.module/` — removed; Team/Membership absorbed into `account.module` (AccountType: organization)
 - `profile.module/` — removed; public profile is a sub-aggregate of `account.module`
+- `feature.module/` — removed (PR #12); too vague to locate clearly; runtime feature flag infrastructure can live in `src/infrastructure/` or be handled via Firebase Remote Config if needed
 
 ## DDD Layer Rules
 - **Domain**: pure, no I/O, no framework imports
