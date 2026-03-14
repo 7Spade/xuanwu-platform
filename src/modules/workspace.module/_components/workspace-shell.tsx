@@ -4,7 +4,7 @@
  *
  * Renders:
  *  - Workspace name (live from Firestore via useWorkspace)
- *  - Lifecycle state badge
+ *  - Lifecycle state badge + Settings gear button
  *  - WorkspaceStatusBar (ID + Mounted/Isolated + Flowing/Blocked)
  *  - Physical address (if present)
  *  - WorkspaceNavTabs horizontal capability strip (dynamic from capabilities)
@@ -12,14 +12,17 @@
  * Source equivalent: WorkspaceLayoutInner in workspace.slice/[id]/layout.tsx.
  */
 
-import { MapPin, Loader2 } from "lucide-react";
+import { MapPin, Loader2, Settings } from "lucide-react";
+import { useState } from "react";
 
 import { Badge } from "@/design-system/primitives/ui/badge";
+import { Button } from "@/design-system/primitives/ui/button";
 import type { WorkspaceAddress } from "@/modules/workspace.module/domain.workspace/_entity";
 
 import { useWorkspace } from "./use-workspace";
 import { WorkspaceNavTabs } from "./workspace-nav-tabs";
 import { WorkspaceStatusBar } from "./workspace-status-bar";
+import { WorkspaceSettingsDialog } from "./workspace-settings-dialog";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -57,7 +60,8 @@ const LIFECYCLE_VARIANT: Record<
 };
 
 export function WorkspaceShell({ slug, workspaceId }: WorkspaceShellProps) {
-  const { workspace, loading } = useWorkspace(workspaceId);
+  const { workspace, loading, refresh } = useWorkspace(workspaceId);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const formattedAddress = workspace?.address
     ? formatWorkspaceAddress(workspace.address)
@@ -65,7 +69,7 @@ export function WorkspaceShell({ slug, workspaceId }: WorkspaceShellProps) {
 
   return (
     <div className="space-y-3 border-b border-border/40 pb-4">
-      {/* Workspace name + lifecycle badge */}
+      {/* Workspace name + lifecycle badge + settings button */}
       <div className="flex items-center gap-3">
         {loading ? (
           <Loader2 className="size-4 animate-spin text-muted-foreground" />
@@ -84,6 +88,15 @@ export function WorkspaceShell({ slug, workspaceId }: WorkspaceShellProps) {
                 {workspace.lifecycleState}
               </Badge>
             )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="ml-auto size-7 text-muted-foreground hover:text-foreground"
+              onClick={() => setSettingsOpen(true)}
+              title="Workspace settings"
+            >
+              <Settings className="size-4" />
+            </Button>
           </>
         )}
       </div>
@@ -110,8 +123,17 @@ export function WorkspaceShell({ slug, workspaceId }: WorkspaceShellProps) {
         workspaceId={workspaceId}
         capabilities={workspace?.capabilities}
       />
+
+      {/* Settings dialog */}
+      {workspace && settingsOpen && (
+        <WorkspaceSettingsDialog
+          workspace={workspace}
+          open={settingsOpen}
+          onOpenChange={setSettingsOpen}
+          onSaved={() => { refresh(); }}
+        />
+      )}
     </div>
   );
 }
-
 

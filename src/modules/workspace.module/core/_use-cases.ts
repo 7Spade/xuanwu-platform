@@ -1,6 +1,6 @@
 import { ok, fail } from "@/shared";
 import type { Result } from "@/shared";
-import type { WorkspaceEntity } from "../domain.workspace/_entity";
+import type { WorkspaceEntity, WorkspaceAddress, WorkspaceLocation, WorkspacePersonnel } from "../domain.workspace/_entity";
 import { buildWorkspace, hasWorkspaceAccess } from "../domain.workspace/_entity";
 import type {
   WorkspaceId,
@@ -9,7 +9,6 @@ import type {
   WorkspaceRole,
   WorkspaceCapability,
 } from "../domain.workspace/_value-objects";
-import type { WorkspaceAddress, WorkspaceLocation } from "../domain.workspace/_entity";
 import type { IWorkspaceRepository } from "../domain.workspace/_ports";
 
 // ---------------------------------------------------------------------------
@@ -28,6 +27,7 @@ export interface WorkspaceDTO {
   readonly capabilities?: readonly WorkspaceCapability[];
   readonly grants?: readonly WorkspaceGrantDTO[];
   readonly address?: WorkspaceAddress;
+  readonly personnel?: WorkspacePersonnel;
   readonly locations?: readonly WorkspaceLocation[];
   readonly createdAt: string;
   readonly updatedAt: string;
@@ -72,6 +72,7 @@ function entityToDTO(workspace: WorkspaceEntity): WorkspaceDTO {
         }
       : {}),
     ...(workspace.address != null ? { address: workspace.address } : {}),
+    ...(workspace.personnel != null ? { personnel: workspace.personnel } : {}),
     ...(workspace.locations != null && workspace.locations.length > 0
       ? { locations: workspace.locations }
       : {}),
@@ -202,4 +203,112 @@ export function filterVisibleWorkspaces(
       hasWorkspaceAccess(w, userId, userTeamIds),
     )
     .map(entityToDTO);
+}
+
+// ---------------------------------------------------------------------------
+// UpdateWorkspaceSettingsUseCase
+// ---------------------------------------------------------------------------
+
+export interface UpdateWorkspaceSettingsInput {
+  name?: string;
+  visibility?: WorkspaceVisibility;
+  lifecycleState?: WorkspaceLifecycleState;
+  address?: WorkspaceAddress;
+  personnel?: WorkspacePersonnel;
+  photoURL?: string;
+}
+
+/**
+ * Updates mutable workspace metadata.
+ * Does NOT enforce lifecycle state transitions — callers may override freely.
+ */
+export async function updateWorkspaceSettings(
+  repo: IWorkspaceRepository,
+  id: string,
+  input: UpdateWorkspaceSettingsInput,
+): Promise<Result<WorkspaceDTO>> {
+  try {
+    const existing = await repo.findById(id as WorkspaceId);
+    if (!existing) return fail(new Error(`Workspace not found: ${id}`));
+
+    const now = new Date().toISOString();
+    const updated: WorkspaceEntity = {
+      ...existing,
+      ...(input.name !== undefined ? { name: input.name } : {}),
+      ...(input.visibility !== undefined ? { visibility: input.visibility } : {}),
+      ...(input.lifecycleState !== undefined ? { lifecycleState: input.lifecycleState } : {}),
+      ...(input.address !== undefined ? { address: input.address } : {}),
+      ...(input.personnel !== undefined ? { personnel: input.personnel } : {}),
+      ...(input.photoURL !== undefined ? { photoURL: input.photoURL } : {}),
+      updatedAt: now,
+    };
+    await repo.save(updated);
+    return ok(entityToDTO(updated));
+  } catch (err) {
+    return fail(err instanceof Error ? err : new Error(String(err)));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// MountCapabilitiesUseCase
+// ---------------------------------------------------------------------------
+
+/**
+ * Mounts one or more capabilities onto a workspace.
+ * Idempotent — silently skips capabilities that are already mounted.
+ */
+export async function mountCapabilities(
+  repo: IWorkspaceRepository,
+  id: string,
+  caps: readonly WorkspaceCapability[],
+): Promise<Result<WorkspaceDTO>> {
+  try {
+    const existing = await repo.findById(id as WorkspaceId);
+    if (!existing) return fail(new Error(`Workspace not found: ${id}`));
+
+    const alreadyMounted = new Set((existing.capabilities ?? []).map((c) => c.id));
+    const toAdd = caps.filter((c) => !alreadyMounted.has(c.id));
+
+    if (toAdd.length === 0) return ok(entityToDTO(existing));
+
+    const now = new Date().toISOString();
+    const updated: WorkspaceEntity = {
+      ...existing,
+      capabilities: [...(existing.capabilities ?? []), ...toAdd],
+      updatedAt: now,
+    };
+    await repo.save(updated);
+    return ok(entityToDTO(updated));
+  } catch (err) {
+    return fail(err instanceof Error ? err : new Error(String(err)));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// UnmountCapabilityUseCase
+// ---------------------------------------------------------------------------
+
+/**
+ * Removes a capability from a workspace by its ID.
+ */
+export async function unmountCapability(
+  repo: IWorkspaceRepository,
+  id: string,
+  capabilityId: string,
+): Promise<Result<WorkspaceDTO>> {
+  try {
+    const existing = await repo.findById(id as WorkspaceId);
+    if (!existing) return fail(new Error(`Workspace not found: ${id}`));
+
+    const now = new Date().toISOString();
+    const updated: WorkspaceEntity = {
+      ...existing,
+      capabilities: (existing.capabilities ?? []).filter((c) => c.id !== capabilityId),
+      updatedAt: now,
+    };
+    await repo.save(updated);
+    return ok(entityToDTO(updated));
+  } catch (err) {
+    return fail(err instanceof Error ? err : new Error(String(err)));
+  }
 }

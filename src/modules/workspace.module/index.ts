@@ -39,3 +39,5 @@ export { WorkspaceShell } from "./_components/workspace-shell";
 export { WorkspaceStatusBar } from "./_components/workspace-status-bar";
 export { WorkspaceCapabilitiesView } from "./_components/workspace-capabilities-view";
 export { WorkspaceGrantsView } from "./_components/workspace-grants-view";
+export { WorkspaceSettingsDialog } from "./_components/workspace-settings-dialog";
+export { CAPABILITY_SPECS, NON_MOUNTABLE_CAPABILITY_IDS } from "./domain.workspace/_capability-specs";
