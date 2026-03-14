@@ -398,3 +398,25 @@ export async function updateWorkspaceRole(
     return fail(err instanceof Error ? err : new Error(String(err)));
   }
 }
+
+// ---------------------------------------------------------------------------
+// DeleteWorkspace
+// ---------------------------------------------------------------------------
+
+/**
+ * Permanently deletes a workspace and all its data.
+ * This is a destructive irreversible operation.
+ */
+export async function deleteWorkspace(
+  repo: IWorkspaceRepository,
+  id: string,
+): Promise<Result<void>> {
+  try {
+    const existing = await repo.findById(id as WorkspaceId);
+    if (!existing) return fail(new Error(`Workspace not found: ${id}`));
+    await repo.deleteById(id as WorkspaceId);
+    return ok(undefined);
+  } catch (err) {
+    return fail(err instanceof Error ? err : new Error(String(err)));
+  }
+}

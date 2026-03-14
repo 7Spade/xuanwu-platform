@@ -12,4 +12,5 @@ export {
   grantWorkspaceAccess,
   revokeWorkspaceAccess,
   updateWorkspaceRole,
+  deleteWorkspace,
 } from "./_use-cases";

@@ -10,9 +10,19 @@
  */
 
 import { useState, useEffect } from "react";
-import { HardHat, Loader2, Settings, ShieldCheck, User2 } from "lucide-react";
+import { HardHat, Loader2, Settings, ShieldCheck, Trash2, User2 } from "lucide-react";
 
 import { Button } from "@/design-system/primitives/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/design-system/primitives/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -35,7 +45,7 @@ import { useTranslation } from "@/shared/i18n";
 import type { WorkspaceDTO } from "@/modules/workspace.module/core/_use-cases";
 import type { WorkspaceLifecycleState } from "@/modules/workspace.module/domain.workspace/_value-objects";
 import type { WorkspaceAddress, WorkspacePersonnel } from "@/modules/workspace.module/domain.workspace/_entity";
-import { updateWorkspaceSettings } from "@/modules/workspace.module/core/_actions";
+import { updateWorkspaceSettings, deleteWorkspace } from "@/modules/workspace.module/core/_actions";
 import { FirestoreWorkspaceRepository } from "@/modules/workspace.module/infra.firestore/_repository";
 
 // ---------------------------------------------------------------------------
@@ -66,6 +76,7 @@ interface WorkspaceSettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSaved?: (updated: WorkspaceDTO) => void;
+  onDeleted?: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -77,6 +88,7 @@ export function WorkspaceSettingsDialog({
   open,
   onOpenChange,
   onSaved,
+  onDeleted,
 }: WorkspaceSettingsDialogProps) {
   const t = useTranslation("zh-TW");
 
@@ -93,6 +105,8 @@ export function WorkspaceSettingsDialog({
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Sync state when workspace changes (e.g., dialog reopened for a different workspace)
   useEffect(() => {
@@ -137,7 +151,25 @@ export function WorkspaceSettingsDialog({
     }
   };
 
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const result = await deleteWorkspace(getRepo(), workspace.id);
+      if (!result.ok) {
+        setError(result.error.message);
+        setIsDeleteOpen(false);
+        return;
+      }
+      setIsDeleteOpen(false);
+      onOpenChange(false);
+      onDeleted?.();
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl rounded-2xl">
         <DialogHeader>
@@ -307,6 +339,33 @@ export function WorkspaceSettingsDialog({
               {error}
             </p>
           )}
+
+          {/* Danger Zone */}
+          <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 space-y-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-destructive/70">
+              {t("workspace.settings.dangerZone.title")}
+            </p>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold text-foreground">
+                  {t("workspace.settings.dangerZone.deleteLabel")}
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  {t("workspace.settings.dangerZone.deleteHint")}
+                </p>
+              </div>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="h-8 shrink-0 gap-1.5 rounded-xl text-[11px]"
+                onClick={() => setIsDeleteOpen(true)}
+                disabled={loading}
+              >
+                <Trash2 className="size-3.5" />
+                {t("workspace.settings.dangerZone.deleteButton")}
+              </Button>
+            </div>
+          </div>
         </div>
 
         <DialogFooter>
@@ -324,5 +383,36 @@ export function WorkspaceSettingsDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    {/* Delete Confirmation */}
+    <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+      <AlertDialogContent className="rounded-2xl">
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {t("workspace.settings.dangerZone.confirmTitle")}
+          </AlertDialogTitle>
+          <AlertDialogDescription className="text-xs">
+            {t("workspace.settings.dangerZone.confirmDescription").replace(
+              "{name}", workspace.name,
+            )}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isDeleting}>
+            {t("common.cancel")}
+          </AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={handleDelete}
+            disabled={isDeleting}
+          >
+            {isDeleting
+              ? <Loader2 className="size-4 animate-spin" />
+              : t("workspace.settings.dangerZone.confirmButton")}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

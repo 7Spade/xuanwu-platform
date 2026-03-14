@@ -15,6 +15,7 @@ export {
   grantWorkspaceAccess,
   revokeWorkspaceAccess,
   updateWorkspaceRole,
+  deleteWorkspace,
 } from "./core/_use-cases";
 
 // Pure domain utilities (no I/O)
