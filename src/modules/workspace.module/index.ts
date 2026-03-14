@@ -4,7 +4,7 @@
 // Exports: DTOs, application use cases, port interfaces.
 // NEVER export entities, value objects, repositories, or domain events directly.
 
-export type { WorkspaceDTO, WorkspaceGrantDTO } from "./core/_use-cases";
+export type { WorkspaceDTO, WorkspaceGrantDTO, GrantWorkspaceAccessInput } from "./core/_use-cases";
 
 export {
   createWorkspace,
@@ -12,6 +12,9 @@ export {
   getWorkspacesByDimension,
   advanceWorkspaceLifecycle,
   filterVisibleWorkspaces,
+  grantWorkspaceAccess,
+  revokeWorkspaceAccess,
+  updateWorkspaceRole,
 } from "./core/_use-cases";
 
 // Pure domain utilities (no I/O)

@@ -6,10 +6,11 @@ import type {
   WorkspaceId,
   WorkspaceLifecycleState,
   WorkspaceVisibility,
-  WorkspaceRole,
   WorkspaceCapability,
 } from "../domain.workspace/_value-objects";
-import type { IWorkspaceRepository } from "../domain.workspace/_ports";
+export type { WorkspaceRole } from "../domain.workspace/_value-objects";
+import type { WorkspaceRole } from "../domain.workspace/_value-objects";
+import type { IWorkspaceRepository, IWorkspaceGrantRepository } from "../domain.workspace/_ports";
 
 // ---------------------------------------------------------------------------
 // DTOs
@@ -308,6 +309,91 @@ export async function unmountCapability(
     };
     await repo.save(updated);
     return ok(entityToDTO(updated));
+  } catch (err) {
+    return fail(err instanceof Error ? err : new Error(String(err)));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// GrantWorkspaceAccess
+// ---------------------------------------------------------------------------
+
+export interface GrantWorkspaceAccessInput {
+  readonly userId: string;
+  readonly role: WorkspaceRole;
+}
+
+/**
+ * Adds a new active WorkspaceGrant for a user.
+ * Idempotent: if the user already has an active grant, it updates the role.
+ */
+export async function grantWorkspaceAccess(
+  grantRepo: IWorkspaceGrantRepository,
+  workspaceId: string,
+  input: GrantWorkspaceAccessInput,
+): Promise<Result<void>> {
+  try {
+    const existing = await grantRepo.findByWorkspaceId(workspaceId as WorkspaceId);
+    const active = existing.find(
+      (g) => g.userId === input.userId && g.status === "active",
+    );
+    const now = new Date().toISOString();
+    if (active) {
+      if (active.role !== input.role) {
+        await grantRepo.updateRole(workspaceId as WorkspaceId, active.grantId, input.role);
+      }
+      return ok(undefined);
+    }
+    const grant: import("../domain.workspace/_entity").WorkspaceGrant = {
+      grantId: `grant-${crypto.randomUUID()}`,
+      userId: input.userId,
+      role: input.role,
+      status: "active",
+      grantedAt: now,
+    };
+    await grantRepo.addGrant(workspaceId as WorkspaceId, grant);
+    return ok(undefined);
+  } catch (err) {
+    return fail(err instanceof Error ? err : new Error(String(err)));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// RevokeWorkspaceAccess
+// ---------------------------------------------------------------------------
+
+/**
+ * Revokes a WorkspaceGrant by grantId (sets status to "revoked").
+ */
+export async function revokeWorkspaceAccess(
+  grantRepo: IWorkspaceGrantRepository,
+  workspaceId: string,
+  grantId: string,
+): Promise<Result<void>> {
+  try {
+    await grantRepo.revokeGrant(workspaceId as WorkspaceId, grantId, new Date().toISOString());
+    return ok(undefined);
+  } catch (err) {
+    return fail(err instanceof Error ? err : new Error(String(err)));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// UpdateWorkspaceRole
+// ---------------------------------------------------------------------------
+
+/**
+ * Updates the role of an existing active grant.
+ */
+export async function updateWorkspaceRole(
+  grantRepo: IWorkspaceGrantRepository,
+  workspaceId: string,
+  grantId: string,
+  newRole: WorkspaceRole,
+): Promise<Result<void>> {
+  try {
+    await grantRepo.updateRole(workspaceId as WorkspaceId, grantId, newRole);
+    return ok(undefined);
   } catch (err) {
     return fail(err instanceof Error ? err : new Error(String(err)));
   }
