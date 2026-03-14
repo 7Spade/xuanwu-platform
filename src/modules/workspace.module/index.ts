@@ -14,6 +14,15 @@ export {
   filterVisibleWorkspaces,
 } from "./core/_use-cases";
 
+// Pure domain utilities (no I/O)
+export {
+  summarizeWorkflowBlockers,
+  deriveWorkflowBlockersFromSources,
+  applyWorkflowBlocked,
+  applyWorkflowUnblocked,
+} from "./domain.workspace/workflow-blockers-state";
+export type { WorkflowBlockersState, WorkflowBlockersSummary } from "./domain.workspace/workflow-blockers-state";
+
 export type {
   IWorkspaceRepository,
   IWorkspaceGrantRepository,
@@ -27,4 +36,6 @@ export { hasWorkspaceAccess } from "./domain.workspace/_entity";
 export { useWorkspace } from "./_components/use-workspace";
 export { WorkspaceNavTabs } from "./_components/workspace-nav-tabs";
 export { WorkspaceShell } from "./_components/workspace-shell";
+export { WorkspaceStatusBar } from "./_components/workspace-status-bar";
 export { WorkspaceCapabilitiesView } from "./_components/workspace-capabilities-view";
+export { WorkspaceGrantsView } from "./_components/workspace-grants-view";

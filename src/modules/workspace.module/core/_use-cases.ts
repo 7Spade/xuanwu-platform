@@ -2,7 +2,14 @@ import { ok, fail } from "@/shared";
 import type { Result } from "@/shared";
 import type { WorkspaceEntity } from "../domain.workspace/_entity";
 import { buildWorkspace, hasWorkspaceAccess } from "../domain.workspace/_entity";
-import type { WorkspaceId, WorkspaceLifecycleState, WorkspaceVisibility, WorkspaceRole, WorkspaceCapability } from "../domain.workspace/_value-objects";
+import type {
+  WorkspaceId,
+  WorkspaceLifecycleState,
+  WorkspaceVisibility,
+  WorkspaceRole,
+  WorkspaceCapability,
+} from "../domain.workspace/_value-objects";
+import type { WorkspaceAddress, WorkspaceLocation } from "../domain.workspace/_entity";
 import type { IWorkspaceRepository } from "../domain.workspace/_ports";
 
 // ---------------------------------------------------------------------------
@@ -19,6 +26,9 @@ export interface WorkspaceDTO {
   readonly lifecycleState: WorkspaceLifecycleState;
   readonly visibility: WorkspaceVisibility;
   readonly capabilities?: readonly WorkspaceCapability[];
+  readonly grants?: readonly WorkspaceGrantDTO[];
+  readonly address?: WorkspaceAddress;
+  readonly locations?: readonly WorkspaceLocation[];
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -47,6 +57,23 @@ function entityToDTO(workspace: WorkspaceEntity): WorkspaceDTO {
     visibility: workspace.visibility,
     ...(workspace.capabilities != null
       ? { capabilities: workspace.capabilities }
+      : {}),
+    ...(workspace.grants != null && workspace.grants.length > 0
+      ? {
+          grants: workspace.grants
+            .filter((g) => g.status === "active")
+            .map((g) => ({
+              grantId: g.grantId,
+              userId: g.userId,
+              role: g.role,
+              status: g.status as "active" | "revoked" | "expired",
+              grantedAt: g.grantedAt,
+            })),
+        }
+      : {}),
+    ...(workspace.address != null ? { address: workspace.address } : {}),
+    ...(workspace.locations != null && workspace.locations.length > 0
+      ? { locations: workspace.locations }
       : {}),
     createdAt: workspace.createdAt,
     updatedAt: workspace.updatedAt,
