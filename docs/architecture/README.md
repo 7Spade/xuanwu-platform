@@ -111,6 +111,8 @@ See [Service Boundary](./catalog/service-boundary.md) for crossing protocols and
 | Collaboration | `src/modules/collaboration.module/` | Workspace (cross-cutting) | Comments, Reactions, Presence, Co-editing sessions |
 | Search | `src/modules/search.module/` | SaaS (cross-cutting) | Full-text + semantic search index, unified query surface |
 | Audit | `src/modules/audit.module/` | SaaS (cross-cutting) | Audit trail (immutable), Policy automation (Sec), Compliance reports |
+| Feature Flags | `src/modules/feature.module/` | SaaS (cross-cutting) | Feature flags, rollout management, kill-switch, targeting rules |
+| Causal Graph | `src/modules/causal-graph.module/` | SaaS / Workspace (cross-cutting) | Causal nodes, cause-effect edges, impact scope, causal path analysis |
 
 > Each module is self-contained — ports, value objects, and infrastructure adapters live inside the module, not in shared global directories.
 > Every module folder contains a `README.md` documenting its bounded context, aggregates, and cross-module dependencies.

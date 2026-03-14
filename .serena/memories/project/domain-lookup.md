@@ -1,10 +1,11 @@
 # Domain Lookup Table / 領域對照表
 
 > **Purpose / 用途**  
-> This file has three jobs:  
+> This file has four jobs:  
 > 1. **Route** — find the right Domain for any new feature  
 > 2. **Decide** — answer the 20 architectural questions that determine Domain boundary, Aggregate, Event design, Service boundary, and Data ownership  
 > 3. **Merge / Split** — rules for when to combine or separate Domains  
+> 4. **Overlap** — record evaluated-but-rejected proposals to prevent re-introduction  
 >
 > 新增功能時，先用三個核心問題路由，再用 20 個架構判斷問題精確定位邊界。
 
@@ -29,6 +30,8 @@
 | `collaboration` | **你在討論什麼？誰在線？如何協作編輯？** | Comment · Thread · Reaction · Presence · CoEditSession · MentionList |
 | `search` | **如何找到它？支援哪些搜尋範圍與過濾條件？** | SearchIndex · SearchQuery · SearchScope · SearchResultEntry · Suggestion |
 | `audit` | **誰做了什麼？何時？是否符合政策規定？** | AuditEntry · PolicyRule · PolicyOutcome · ActorRef · ComplianceReport |
+| `feature` | **這個功能現在應該開啟嗎？對誰開？** | FeatureFlag · FlagKey · FlagRule · RolloutStrategy · EvaluationContext · FlagEvaluation |
+| `causal-graph` | **為什麼 X 發生了？X 會影響哪些東西？** | CausalNode · CausalEdge · CausalPath · ImpactScope · CausalDirection |
 
 ---
 
@@ -416,5 +419,18 @@
 
 ---
 
-> 最後更新：docs: enhance domain-lookup with 20 architectural questions + merge/split rules  
+> 最後更新：feat: scaffold feature.module + causal-graph.module (15 → 17 modules); flag 4 overlapping proposals  
 > 對應 Serena 記憶：`project/architecture.md`
+
+---
+
+## ⑦ 已評估但未收錄的模組提案（重疊分析）
+
+下表記錄曾被提出但因重疊而未作為獨立 Bounded Context 收錄的模組，供後續架構討論參考。
+
+| 提案模組 | 說明 | 重疊 / 架構問題 | 正確歸屬 |
+|----------|------|-----------------|---------|
+| `event.module`（事件來源） | Event Sourcing store / EventBus | `audit.module` 已是 append-only 不可變日誌（= event store）；EventBus 屬於 `src/infrastructure/`，不是 Domain Module | → `audit.module` + `src/infrastructure/` |
+| `activity.module`（活動流） | Activity stream / 動態牆 | `social.module` 已擁有 `Feed · FeedEntry · Discovery`；活動流就是 Feed 的另一個名稱 | → `social.module` |
+| `entitlement.module`（訂閱 / 權限） | 訂閱制功能授權 | `account.module` 已有 `Plan · Subscription`；「帳戶被允許使用什麼」是 Plan/Subscription 的職責 | → `account.module` |
+| `timeline.module`（時間軸投影） | 跨 Domain 事件投影到時間軸 | 名稱中的「投影」即 CQRS 讀側 Read Model，不是 Bounded Context；每個 Domain 各自提供 timeline query | → 各 Domain 的 `_queries.ts`（讀側投影） |

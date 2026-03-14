@@ -150,6 +150,8 @@ UI Action (React component / form)
 | `collaboration.module/` | Workspace (cross-cutting) | Comments · Reactions · Presence · Co-editing sessions |
 | `search.module/` | SaaS (cross-cutting) | Full-text + semantic search index · Unified query surface |
 | `audit.module/` | SaaS (cross-cutting) | Audit trail (immutable) · Policy automation (Sec) · Compliance reports |
+| `feature.module/` | SaaS (cross-cutting) | Feature Flags · Rollout Management · Kill-switch |
+| `causal-graph.module/` | SaaS / Workspace (cross-cutting) | Causal Graph · Impact Analysis · CausalPath query |
 
 > Each module folder contains a `README.md` documenting its bounded context, aggregates, and cross-module dependencies.
 

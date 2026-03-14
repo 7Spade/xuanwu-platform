@@ -12,7 +12,7 @@ src/modules/<name>.module/
 └── _components/         ← Presentation Layer (React Server / Client components)
 ```
 
-**Active modules (15 total as of PR feat: add collaboration/search/audit):**
+**Active modules (17 total as of PR feat: scaffold feature.module + causal-graph.module):**
 
 | Module | Layer | Bounded Context |
 |--------|-------|-----------------|
@@ -31,6 +31,8 @@ src/modules/<name>.module/
 | `collaboration.module/` | Workspace (cross-cutting) | Comments · Reactions · Presence · Co-editing |
 | `search.module/` | SaaS (cross-cutting) | Full-text + semantic search index + query |
 | `audit.module/` | SaaS (cross-cutting) | Audit trail (immutable) · Sec policy automation |
+| `feature.module/` | SaaS (cross-cutting) | Feature flags · Rollout management · Kill-switch |
+| `causal-graph.module/` | SaaS / Workspace (cross-cutting) | Causal nodes · Cause-effect edges · Impact scope analysis |
 
 **Removed modules:**
 - `org.module/` — removed; Team/Membership absorbed into `account.module` (AccountType: organization)
