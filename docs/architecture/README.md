@@ -48,7 +48,7 @@ This project follows a strict 4-layer DDD architecture within each Domain Module
 
 | Layer | Location | Responsibility | Allowed dependencies |
 |-------|----------|----------------|----------------------|
-| **Domain** | `src/modules/<module>/domain.<aggregate>/` | Entities, value objects, aggregates, domain events, port interfaces | None (pure business logic) |
+| **Domain** | `src/modules/<module>/domain.<aggregate>/` | Entities, value objects, aggregates, domain events, port interfaces, domain services | None (pure business logic) |
 | **Application** | `src/modules/<module>/core/_use-cases.ts`, `_actions.ts`, `_queries.ts` | Use cases, application services, DTOs, command/query objects | Domain layer only |
 | **Infrastructure** | `src/modules/<module>/infra.<adapter>/` | Repository implementations, external API adapters, Firebase integration, persistence | Domain + Application port interfaces |
 | **UI / Presentation** | `src/modules/<module>/_components/`, `src/app/` | React components, Next.js pages and route handlers | Application layer (via DTOs) |
@@ -190,6 +190,36 @@ dropTargetForElements({
 });
 // Render <DropIndicator /> from @atlaskit/pragmatic-drag-and-drop-react-drop-indicator
 ```
+
+---
+
+## Shared Layer / 共享層
+
+Cross-cutting utilities, types, errors, and i18n that are NOT domain-specific live in `src/shared/`.
+
+**All shared imports should use the unified barrel entry point:**
+
+```typescript
+import { AppError, formatDate, PaginatedResponse, ok, fail } from "@/shared";
+import { useTranslation } from "@/shared"; // i18n translate function
+```
+
+**Client-side hooks** carry a `"use client"` directive and must be imported separately from within Client Components only:
+
+```typescript
+import { useToggle, useDebounce, useLocalStorage } from "@/shared/directives";
+```
+
+| Sub-module | Alias | Contents |
+|------------|-------|---------|
+| `constants/` | `@/shared` | `APP_NAME`, `DEFAULT_LOCALE`, `SUPPORTED_LOCALES`, date format tokens |
+| `errors/` | `@/shared` | `AppError`, `NotFoundError`, `UnauthorizedError`, `ForbiddenError`, `ValidationError`, `ConflictError`, `toAppError` |
+| `interfaces/` | `@/shared` | `ApiResponse`, `ApiError`, `PaginationQuery`, `PaginatedResult`, `FirestoreDocument`, `VisDateMetadata` |
+| `i18n/` | `@/shared` | `isSupportedLocale`, `resolveLocale`, `useTranslation`, `getMessages` |
+| `pipes/` | `@/shared` | `Pipe`, `schemaPipe`, `transformPipe`, `composePipes`, `trimPipe` |
+| `types/` | `@/shared` | `UuidSchema`, `PaginationSchema`, `LocaleSchema`, `Result`, `ok`, `fail`, Zod primitives |
+| `utils/` | `@/shared` | `formatDate`, `formatDateTime`, `capitalise`, `toKebabCase`, `omit`, `pick`, `unique`, `chunk` |
+| `directives/` | `@/shared/directives` | React hooks: `useToggle`, `useDebounce`, `useLocalStorage`, `usePrevious`, `useIsMounted` (client only) |
 
 ---
 

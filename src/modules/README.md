@@ -45,7 +45,7 @@ Presentation  (_components/, src/app/)
 Application   (core/_actions.ts, core/_queries.ts, core/_use-cases.ts)
       │  delegates domain logic, calls via ports
       ▼
-Domain        (domain.*/_entity.ts, _value-objects.ts, _ports.ts, _events.ts)
+Domain        (domain.*/_entity.ts, _value-objects.ts, _ports.ts, _events.ts, _service.ts)
       ▲  implements
       │
 Infrastructure (infra.<adapter>/_repository.ts)
@@ -53,7 +53,7 @@ Infrastructure (infra.<adapter>/_repository.ts)
 
 | Layer | Location | Responsibility |
 |-------|----------|----------------|
-| **Domain** | `domain.<aggregate>/` | Entities, Value Objects, Aggregates, Domain Events, Port Interfaces. **Pure — no I/O, no framework imports.** |
+| **Domain** | `domain.<aggregate>/` | Entities, Value Objects, Aggregates, Domain Events, Port Interfaces, Domain Services. **Pure — no I/O, no framework imports.** |
 | **Application** | `core/` | Use cases, Server Actions, Queries, DTOs. Orchestrates: load → apply domain logic → persist via port → emit event. |
 | **Infrastructure** | `infra.<adapter>/` | Firestore, Storage, Genkit, external API adapters. Implements port interfaces defined in Domain. |
 | **Presentation** | `_components/` | React Server / Client components. Calls Application layer only via DTOs. |
