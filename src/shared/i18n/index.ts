@@ -196,6 +196,15 @@ const dictionary: Dictionary = {
     "editor.empty": "開始撰寫內容…",
     "editor.files": "檔案",
     "editor.noFiles": "尚無檔案",
+    // --- audit ---
+    "audit.title": "稽核記錄",
+    "audit.noEntries": "尚無稽核事件",
+    "audit.notAvailable": "稽核記錄不可用",
+    "audit.notAvailableDescription": "個人帳號不提供跨維度稽核記錄",
+    // --- dashboard ---
+    "dashboard.orgDescription": "您的組織工作空間概覽",
+    "dashboard.personalDescription": "您的個人工作空間",
+    "dashboard.viewAll": "查看全部",
   },
   en: {
     "home.welcome": "Welcome to Xuanwu Platform",
@@ -384,6 +393,15 @@ const dictionary: Dictionary = {
     "editor.empty": "Start writing…",
     "editor.files": "Files",
     "editor.noFiles": "No files yet",
+    // --- audit ---
+    "audit.title": "Audit Log",
+    "audit.noEntries": "No audit events yet",
+    "audit.notAvailable": "Audit log not available",
+    "audit.notAvailableDescription": "Personal accounts do not include cross-dimension audit logs",
+    // --- dashboard ---
+    "dashboard.orgDescription": "Overview of your organisation workspaces",
+    "dashboard.personalDescription": "Your personal workspace",
+    "dashboard.viewAll": "View all",
   },
 };
 
