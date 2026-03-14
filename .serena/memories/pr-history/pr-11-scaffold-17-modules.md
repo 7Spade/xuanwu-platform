@@ -7,7 +7,7 @@
 
 Scaffolded all 17 Domain Modules from analysis of `core-logic.mermaid`. Each module uses the standard 4-layer DDD structure with README.md, index.ts, domain.<aggregate>/, core/, infra.firestore/, and _components/. Also created the domain-lookup.md architectural decision framework.
 
-## Final Module Count: 17
+## Final Module Count: 16 (feature.module removed in PR #12)
 
 | Module | Layer | Core Problem |
 |--------|-------|-------------|
@@ -26,7 +26,6 @@ Scaffolded all 17 Domain Modules from analysis of `core-logic.mermaid`. Each mod
 | `collaboration.module` | Workspace (cross-cutting) | 你在討論什麼？誰在線？ |
 | `search.module` | SaaS (cross-cutting) | 如何找到它？ |
 | `audit.module` | SaaS (cross-cutting) | 誰做了什麼？是否符合政策？ |
-| `feature.module` | SaaS (cross-cutting) | 這個功能現在應該開啟嗎？對誰開？ |
 | `causal-graph.module` | SaaS/Workspace (cross-cutting) | 為什麼 X 發生了？X 影響了什麼？ |
 
 ## Removed Modules

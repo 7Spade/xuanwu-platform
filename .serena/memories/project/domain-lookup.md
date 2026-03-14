@@ -30,7 +30,6 @@
 | `collaboration` | **你在討論什麼？誰在線？如何協作編輯？** | Comment · Thread · Reaction · Presence · CoEditSession · MentionList |
 | `search` | **如何找到它？支援哪些搜尋範圍與過濾條件？** | SearchIndex · SearchQuery · SearchScope · SearchResultEntry · Suggestion |
 | `audit` | **誰做了什麼？何時？是否符合政策規定？** | AuditEntry · PolicyRule · PolicyOutcome · ActorRef · ComplianceReport |
-| `feature` | **這個功能現在應該開啟嗎？對誰開？** | FeatureFlag · FlagKey · FlagRule · RolloutStrategy · EvaluationContext · FlagEvaluation |
 | `causal-graph` | **為什麼 X 發生了？X 會影響哪些東西？** | CausalNode · CausalEdge · CausalPath · ImpactScope · CausalDirection |
 
 ---
@@ -380,11 +379,6 @@
 - ✅ AchievementRule 定義、評估、BadgeUnlock
 - ❌ 徽章展示 → `account` AccountProfile
 
-**`feature`** — 功能開關
-- ✅ FeatureFlag CRUD、FlagRule 評估、Rollout 百分比、Kill-switch、Staff Preview
-- ❌ 帳戶訂閱方案 → `account` Plan/Subscription（Plan 管「被授權什麼」，Feature Flag 管「工程 Ops 開什麼」）
-- ❌ 角色授權 → `account` MemberRole
-
 **`causal-graph`** — 因果圖
 - ✅ CausalNode / CausalEdge 建模、CausalPath 推導、ImpactScope 分析
 - ❌ 任務排程依賴（A 先 B）→ `work` Dependency（排程順序 ≠ 因果關係）
@@ -407,7 +401,6 @@
   Q7: 搜尋              → search
   Q8: 安全/監控/因果分析 → audit / causal-graph
   Q9: 金錢              → settlement
-  Q+: 功能開關 (Ops)    → feature
 
 步驟三：用 Q10–Q12 確認 Aggregate Root
   唯一生命周期 → Aggregate Root
@@ -430,7 +423,7 @@
 
 ---
 
-> 最後更新：feat: scaffold feature.module + causal-graph.module (15 → 17 modules); flag 4 overlapping proposals; pre-merge memory extraction  
+> 最後更新：PR #12 — feature.module 已移除；16 個 Domain Modules  
 > 對應 Serena 記憶：`project/architecture.md`
 
 ---
