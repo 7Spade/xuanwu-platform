@@ -194,6 +194,8 @@ const dictionary: Dictionary = {
     // --- editor ---
     "editor.title": "文件編輯器",
     "editor.empty": "開始撰寫內容…",
+    "editor.files": "檔案",
+    "editor.noFiles": "尚無檔案",
   },
   en: {
     "home.welcome": "Welcome to Xuanwu Platform",
@@ -380,6 +382,8 @@ const dictionary: Dictionary = {
     // --- editor ---
     "editor.title": "Document Editor",
     "editor.empty": "Start writing…",
+    "editor.files": "Files",
+    "editor.noFiles": "No files yet",
   },
 };
 

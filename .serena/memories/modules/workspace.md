@@ -196,8 +196,8 @@
 **描述**: 單一工作項目列，顯示狀態 Badge、優先度色點、標題、到期日。status.* i18n keys (`wbs.status.open/in-progress/blocked/closed`)。
 **Export**: `WorkItemRow` — 用於 `WbsView`
 
-## `_components/editor-view.tsx` *(Wave 21)*
-**描述**: 獨立編輯器 shell（`/[slug]/[workspaceId]/editor`）— 文件編輯框架（Wave 25 接資料）。
+## `_components/editor-view.tsx` *(Wave 21 → wired Wave 29)*
+**描述**: 獨立編輯器 shell（`/[slug]/[workspaceId]/editor`）— 文件編輯器 + 左側 file.module 檔案面板（useFiles hook，loading→FileItem 列表→空狀態）。
 **Export**: `EditorView` — 用於 `app/(main)/[slug]/[workspaceId]/(standalone)/editor/page.tsx`
 
 ## `_components/use-workspaces.ts` *(Wave 22)*
