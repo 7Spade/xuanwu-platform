@@ -86,19 +86,29 @@
 ---
 
 ## `domain.work/_service.ts`
-**描述**: Work Domain Service 規格說明。
+**描述**: Work Domain Service — 純函數，無 I/O。DependencyGraphValidationService（DAG 循環偵測）+ MilestoneProgressCalculationService（里程碑完成率）。
 **函數清單**:
-- `DependencyResolutionService`（描述）— 偵測循環依賴（directed graph cycle detection）
-- `WorkItemBulkUpdateService`（描述）— 批量狀態更新（關閉里程碑時批量關閉子任務）
-
----
-
-## `infra.firestore/_repository.ts`
-**描述**: `IWorkItemRepository` 及 `IMilestoneRepository` 的 Firestore 實作骨架。
-**函數清單**: *(待實作，目前為佔位註解)*
+- `detectDependencyCycle(adjacency, newSourceId, newTargetId): boolean` — DFS 偵測新增依賴邊是否形成循環
+- `getBlockingItems(items, blockedId): WorkItemId[]` — 回傳所有 blocks 指定 item 的 WorkItemId 陣列
+- `calculateMilestoneProgress(items): number` — 計算 closed 工作項目百分比（0–100）
 
 ---
 
 ## `infra.firestore/_mapper.ts`
-**描述**: Firestore 文件 ↔ WorkItemEntity / MilestoneEntity 的雙向轉換。
-**函數清單**: *(待實作，目前為佔位註解)*
+**描述**: Firestore 文件 ↔ WorkItemEntity / MilestoneEntity 的雙向轉換（Wave 11 實作）。
+**函數清單**:
+- `interface WorkDependencyDoc` — 依賴關係 Firestore 文件格式
+- `interface WorkItemDoc` — WorkItem Firestore 文件格式
+- `interface MilestoneDoc` — Milestone Firestore 文件格式
+- `workItemDocToEntity(d): WorkItemEntity` — Firestore → WorkItemEntity
+- `workItemEntityToDoc(e): WorkItemDoc` — WorkItemEntity → Firestore
+- `milestoneDocToEntity(d): MilestoneEntity` — Firestore → MilestoneEntity
+- `milestoneEntityToDoc(e): MilestoneDoc` — MilestoneEntity → Firestore
+
+---
+
+## `infra.firestore/_repository.ts`
+**描述**: `IWorkItemRepository` 及 `IMilestoneRepository` 的 Firestore 實作（Wave 11 實作，使用 Client SDK）。
+**函數清單**:
+- `class FirestoreWorkItemRepository` — 實作 `IWorkItemRepository`（findById, findByWorkspaceId, save, deleteById）
+- `class FirestoreMilestoneRepository` — 實作 `IMilestoneRepository`（findById, findByWorkspaceId, save）

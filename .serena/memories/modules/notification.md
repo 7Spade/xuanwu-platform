@@ -79,19 +79,26 @@
 ---
 
 ## `domain.notification/_service.ts`
-**描述**: Notification Domain Service 規格說明。
+**描述**: Notification Domain Service — 純函數，無 I/O。NotificationDeduplicationService（去重邏輯）+ NotificationPriorityService（優先級排序）。Wave 11 實作。
 **函數清單**:
-- `NotificationBatchService`（描述）— 批量通知去重與合併（避免通知風暴）
-- `PreferenceFilterService`（描述）— 依使用者偏好過濾通知 channel
-
----
-
-## `infra.firestore/_repository.ts`
-**描述**: `INotificationRepository` 的 Firestore 實作骨架。
-**函數清單**: *(待實作，目前為佔位註解)*
+- `NOTIFICATION_PRIORITY_ORDER` — 常數陣列，urgent → high → normal → low
+- `priorityIndex(p): number` — 回傳優先級的數字索引（0 = 最緊急）
+- `sortByPriority(records): NotificationRecord[]` — 由高至低優先級排序
+- `shouldDispatch(record, existing, windowMs): boolean` — 判斷是否在去重窗口內已存在相同通知
+- `deduplicateNotifications(records, windowMs): NotificationRecord[]` — 過濾批次中的重複通知
 
 ---
 
 ## `infra.firestore/_mapper.ts`
-**描述**: Firestore 文件 ↔ NotificationRecord 的雙向轉換。
-**函數清單**: *(待實作，目前為佔位註解)*
+**描述**: Firestore 文件 ↔ NotificationRecord 的雙向轉換（Wave 11 實作）。
+**函數清單**:
+- `interface NotificationDoc` — NotificationRecord Firestore 文件格式
+- `notificationDocToRecord(d): NotificationRecord` — Firestore → NotificationRecord
+- `notificationRecordToDoc(e): NotificationDoc` — NotificationRecord → Firestore
+
+---
+
+## `infra.firestore/_repository.ts`
+**描述**: `INotificationRepository` 的 Firestore 實作（Wave 11 實作，使用 Client SDK）。
+**函數清單**:
+- `class FirestoreNotificationRepository` — 實作 `INotificationRepository`（findById, findByRecipient, save, markRead）
