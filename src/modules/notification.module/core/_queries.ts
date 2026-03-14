@@ -1,3 +1,2 @@
-// Notification queries — server-side reads and DTO type definitions
-// e.g. getInboxItemsQuery, getUnreadCountQuery
-// DTOs: InboxItemDTO, NotificationDTO
+export type { NotificationDTO } from "./_use-cases";
+export { getNotificationsByAccount } from "./_use-cases";

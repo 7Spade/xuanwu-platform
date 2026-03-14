@@ -1,3 +1,3 @@
 'use server';
-// Notification server actions — Next.js Server Actions ('use server' mutations)
-// e.g. markInboxItemDoneAction, unsubscribeFromNotificationAction
+export type { NotificationDTO } from "./_use-cases";
+export { sendNotification, markNotificationRead } from "./_use-cases";

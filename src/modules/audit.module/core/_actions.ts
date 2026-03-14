@@ -1,3 +1,3 @@
 'use server';
-// Audit server actions — Next.js Server Actions ('use server' mutations)
-// e.g. createPolicyRuleAction, updatePolicyRuleAction, deletePolicyRuleAction
+export type { AuditEntryDTO } from "./_use-cases";
+export { recordAuditEntry } from "./_use-cases";
