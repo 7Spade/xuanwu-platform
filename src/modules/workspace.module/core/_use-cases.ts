@@ -2,7 +2,7 @@ import { ok, fail } from "@/shared";
 import type { Result } from "@/shared";
 import type { WorkspaceEntity } from "../domain.workspace/_entity";
 import { buildWorkspace, hasWorkspaceAccess } from "../domain.workspace/_entity";
-import type { WorkspaceId, WorkspaceLifecycleState, WorkspaceVisibility, WorkspaceRole } from "../domain.workspace/_value-objects";
+import type { WorkspaceId, WorkspaceLifecycleState, WorkspaceVisibility, WorkspaceRole, WorkspaceCapability } from "../domain.workspace/_value-objects";
 import type { IWorkspaceRepository } from "../domain.workspace/_ports";
 
 // ---------------------------------------------------------------------------
@@ -18,6 +18,7 @@ export interface WorkspaceDTO {
   readonly photoURL?: string;
   readonly lifecycleState: WorkspaceLifecycleState;
   readonly visibility: WorkspaceVisibility;
+  readonly capabilities?: readonly WorkspaceCapability[];
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -44,6 +45,9 @@ function entityToDTO(workspace: WorkspaceEntity): WorkspaceDTO {
     photoURL: workspace.photoURL,
     lifecycleState: workspace.lifecycleState,
     visibility: workspace.visibility,
+    ...(workspace.capabilities != null
+      ? { capabilities: workspace.capabilities }
+      : {}),
     createdAt: workspace.createdAt,
     updatedAt: workspace.updatedAt,
   };

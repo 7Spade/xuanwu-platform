@@ -21,6 +21,11 @@ import type {
   WorkspaceRole,
   TaskState,
   TaskPriority,
+  WorkspaceCapability,
+} from "../domain.workspace/_value-objects";
+import {
+  WorkspaceCapabilityTypeSchema,
+  WorkspaceCapabilityStatusSchema,
 } from "../domain.workspace/_value-objects";
 
 // ---------------------------------------------------------------------------
@@ -44,6 +49,7 @@ export interface WorkspaceDoc {
   personnel: WorkspacePersonnelDoc | null;
   address: WorkspaceAddressDoc | null;
   locations: WorkspaceLocationDoc[] | null;
+  capabilities: WorkspaceCapabilityDoc[] | null;
   tasks: Record<string, WorkspaceTaskDoc> | null;
   createdAt: string;
   updatedAt: string;
@@ -64,6 +70,15 @@ export interface WorkspaceLocationDoc {
   label: string;
   description: string | null;
   capacity: number | null;
+}
+
+export interface WorkspaceCapabilityDoc {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  description: string;
+  config: object | null;
 }
 
 export interface WorkspacePersonnelDoc {
@@ -123,6 +138,17 @@ function locationDocToLocation(d: WorkspaceLocationDoc): WorkspaceLocation {
     label: d.label,
     ...(d.description != null ? { description: d.description } : {}),
     ...(d.capacity != null ? { capacity: d.capacity } : {}),
+  };
+}
+
+function capabilityDocToCapability(d: WorkspaceCapabilityDoc): WorkspaceCapability {
+  return {
+    id: d.id,
+    name: d.name,
+    type: WorkspaceCapabilityTypeSchema.parse(d.type),
+    status: WorkspaceCapabilityStatusSchema.parse(d.status),
+    description: d.description,
+    ...(d.config != null ? { config: d.config } : {}),
   };
 }
 
@@ -206,6 +232,9 @@ export function workspaceDocToEntity(d: WorkspaceDoc): WorkspaceEntity {
       : {}),
     ...(d.locations != null
       ? { locations: d.locations.map(locationDocToLocation) }
+      : {}),
+    ...(d.capabilities != null
+      ? { capabilities: d.capabilities.map(capabilityDocToCapability) }
       : {}),
     tasks: tasksMap,
     createdAt: d.createdAt,
@@ -310,6 +339,16 @@ export function workspaceEntityToDoc(e: WorkspaceEntity): WorkspaceDoc {
     address: e.address ? addressToAddressDoc(e.address) : null,
     locations: e.locations
       ? e.locations.map(locationToLocationDoc)
+      : null,
+    capabilities: e.capabilities
+      ? e.capabilities.map((c) => ({
+          id: c.id,
+          name: c.name,
+          type: c.type,
+          status: c.status,
+          description: c.description,
+          config: c.config ?? null,
+        }))
       : null,
     tasks: tasksMap,
     createdAt: e.createdAt,

@@ -28,9 +28,10 @@ interface TabDef {
 }
 
 const WORKSPACE_TABS: TabDef[] = [
-  { id: "wbs",    labelKey: "workspace.nav.wbs" },
-  { id: "editor", labelKey: "workspace.nav.editor" },
-  { id: "audit",  labelKey: "workspace.nav.audit" },
+  { id: "wbs",          labelKey: "workspace.nav.wbs" },
+  { id: "capabilities", labelKey: "workspace.nav.capabilities" },
+  { id: "editor",       labelKey: "workspace.nav.editor" },
+  { id: "audit",        labelKey: "workspace.nav.audit" },
 ];
 
 interface WorkspaceNavTabsProps {

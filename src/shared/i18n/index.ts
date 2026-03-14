@@ -204,8 +204,16 @@ const dictionary: Dictionary = {
     // --- workspace navigation tabs ---
     "workspace.nav.ariaLabel": "工作空間導覽分頁",
     "workspace.nav.wbs": "任務",
+    "workspace.nav.capabilities": "功能模組",
     "workspace.nav.editor": "文件",
     "workspace.nav.audit": "稽核",
+    // --- workspace capabilities ---
+    "workspace.capabilities.mounted": "已掛載的原子功能",
+    "workspace.capabilities.production": "正式",
+    "workspace.capabilities.beta": "測試版",
+    "workspace.capabilities.none": "尚未掛載功能模組",
+    "workspace.capabilities.noneHint": "此工作空間尚未掛載任何功能模組",
+    "workspace.capabilities.count": "已掛載 {count} 個功能模組",
     // --- dashboard ---
     "dashboard.orgDescription": "您的組織工作空間概覽",
     "dashboard.personalDescription": "您的個人工作空間",
@@ -406,8 +414,16 @@ const dictionary: Dictionary = {
     // --- workspace navigation tabs ---
     "workspace.nav.ariaLabel": "Workspace capability navigation",
     "workspace.nav.wbs": "Tasks",
+    "workspace.nav.capabilities": "Capabilities",
     "workspace.nav.editor": "Editor",
     "workspace.nav.audit": "Audit",
+    // --- workspace capabilities ---
+    "workspace.capabilities.mounted": "Mounted Atomic Capabilities",
+    "workspace.capabilities.production": "Stable",
+    "workspace.capabilities.beta": "Beta",
+    "workspace.capabilities.none": "No capabilities mounted",
+    "workspace.capabilities.noneHint": "This workspace has no capabilities mounted yet",
+    "workspace.capabilities.count": "{count} capabilities mounted",
     // --- dashboard ---
     "dashboard.orgDescription": "Overview of your organisation workspaces",
     "dashboard.personalDescription": "Your personal workspace",

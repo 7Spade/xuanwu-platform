@@ -68,3 +68,28 @@ export type TaskState = z.infer<typeof TaskStateSchema>;
 
 export const TaskPrioritySchema = z.enum(["low", "medium", "high"]);
 export type TaskPriority = z.infer<typeof TaskPrioritySchema>;
+
+// ---------------------------------------------------------------------------
+// WorkspaceCapability
+// ---------------------------------------------------------------------------
+
+export const WorkspaceCapabilityTypeSchema = z.enum([
+  "ui",
+  "api",
+  "data",
+  "governance",
+  "monitoring",
+]);
+export type WorkspaceCapabilityType = z.infer<typeof WorkspaceCapabilityTypeSchema>;
+
+export const WorkspaceCapabilityStatusSchema = z.enum(["stable", "beta"]);
+export type WorkspaceCapabilityStatus = z.infer<typeof WorkspaceCapabilityStatusSchema>;
+
+export interface WorkspaceCapability {
+  readonly id: string;
+  readonly name: string;
+  readonly type: WorkspaceCapabilityType;
+  readonly status: WorkspaceCapabilityStatus;
+  readonly description: string;
+  readonly config?: object;
+}

@@ -6,6 +6,7 @@ import type {
   WorkspaceRole,
   TaskState,
   TaskPriority,
+  WorkspaceCapability,
 } from "./_value-objects";
 
 // ---------------------------------------------------------------------------
@@ -113,6 +114,7 @@ export interface WorkspaceEntity {
   readonly personnel?: WorkspacePersonnel;
   readonly address?: WorkspaceAddress;
   readonly locations?: readonly WorkspaceLocation[];
+  readonly capabilities?: readonly WorkspaceCapability[];
   readonly tasks?: Record<string, WorkspaceTask>;
   readonly createdAt: string;  // ISO-8601
   readonly updatedAt: string;  // ISO-8601

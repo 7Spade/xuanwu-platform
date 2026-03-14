@@ -27,3 +27,4 @@ export { hasWorkspaceAccess } from "./domain.workspace/_entity";
 export { useWorkspace } from "./_components/use-workspace";
 export { WorkspaceNavTabs } from "./_components/workspace-nav-tabs";
 export { WorkspaceShell } from "./_components/workspace-shell";
+export { WorkspaceCapabilitiesView } from "./_components/workspace-capabilities-view";
