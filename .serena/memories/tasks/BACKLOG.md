@@ -218,7 +218,8 @@ After Wave 16 all 16 modules will have complete domain service + infra (mapper +
 
 ## Phase 2 — Presentation Layer (所有 Waves 完成後的下一階段)
 
-> Status: ⬜ Not started. All 16 domain+infra layers done as of Wave 16.
+> Status: ✅ **All pages completed** — Waves 17–22 delivered full Presentation Layer parity with 7Spade/xuanwu.
+> Auth UI (Wave 17), Shell (Wave 18), workspaces + profile + onboarding (Wave 19), 9 settings/route pages (Waves 20–21), AccountProvider + real Firestore data (Wave 22).
 > Source reference: `7Spade/xuanwu` has 99 `_components/*.tsx` files across all feature slices.
 > Target: `src/modules/*/_components/` + `src/app/` pages.
 
@@ -227,24 +228,24 @@ After Wave 16 all 16 modules will have complete domain service + infra (mapper +
 | Page | Path | Status |
 |------|------|--------|
 | Root redirect | `src/app/page.tsx` | ✅ Shows platform info |
-| Login/Register | `src/app/(auth)/login/page.tsx` | ✅ **Implemented** (Wave 17) |
-| Register (redirect) | `src/app/(auth)/register/page.tsx` | ✅ **Implemented** (Wave 17) |
-| Forgot Password | `src/app/(auth)/forgot-password/page.tsx` | ✅ **Implemented** (Wave 17) |
-| Onboarding | `src/app/(main)/onboarding/page.tsx` | ⬜ Placeholder |
-| Workspaces list | `src/app/(main)/[slug]/workspaces/page.tsx` | ⬜ Placeholder |
-| WBS | `src/app/(main)/[slug]/[workspaceId]/(workspace)/wbs/page.tsx` | ⬜ Placeholder |
-| Editor | `src/app/(main)/[slug]/[workspaceId]/(standalone)/editor/page.tsx` | ⬜ Placeholder |
-| Profile settings | `src/app/(main)/(account)/profile/page.tsx` | ⬜ Placeholder |
-| Security settings | `src/app/(main)/(account)/security/page.tsx` | ⬜ Placeholder |
-| Notifications | `src/app/(main)/(account)/notifications/page.tsx` | ⬜ Placeholder |
-| Organizations | `src/app/(main)/(account)/organizations/page.tsx` | ⬜ Placeholder |
-| Org general settings | `src/app/(main)/[slug]/settings/general/page.tsx` | ⬜ Placeholder |
-| Org members | `src/app/(main)/[slug]/settings/members/page.tsx` | ⬜ Placeholder |
-| Org billing | `src/app/(main)/[slug]/settings/billing/page.tsx` | ⬜ Placeholder |
-| Org API keys | `src/app/(main)/[slug]/settings/api-keys/page.tsx` | ⬜ Placeholder |
-| Admin | `src/app/(admin)/admin/page.tsx` | ⬜ Placeholder |
-| Share | `src/app/(shared)/share/[shareId]/page.tsx` | ⬜ Placeholder |
-| Invite | `src/app/(invite)/invite/[token]/page.tsx` | ⬜ Placeholder |
+| Login/Register | `src/app/(auth)/login/page.tsx` | ✅ Wave 17 |
+| Register (redirect) | `src/app/(auth)/register/page.tsx` | ✅ Wave 17 |
+| Forgot Password | `src/app/(auth)/forgot-password/page.tsx` | ✅ Wave 17 |
+| Onboarding | `src/app/(main)/onboarding/page.tsx` | ✅ Wave 19 |
+| Workspaces list | `src/app/(main)/[slug]/workspaces/page.tsx` | ✅ Wave 19 (real data Wave 22) |
+| WBS | `src/app/(main)/[slug]/[workspaceId]/(workspace)/wbs/page.tsx` | ✅ Wave 21 (data Wave 25) |
+| Editor | `src/app/(main)/[slug]/[workspaceId]/(standalone)/editor/page.tsx` | ✅ Wave 21 (data Wave 25) |
+| Profile settings | `src/app/(main)/(account)/profile/page.tsx` | ✅ Wave 19 (real data Wave 22) |
+| Security settings | `src/app/(main)/(account)/security/page.tsx` | ✅ Wave 20 |
+| Notifications | `src/app/(main)/(account)/notifications/page.tsx` | ✅ Wave 20 (data Wave 24) |
+| Organizations | `src/app/(main)/(account)/organizations/page.tsx` | ✅ Wave 20 (data Wave 23) |
+| Org general settings | `src/app/(main)/[slug]/settings/general/page.tsx` | ✅ Wave 20 (data Wave 23) |
+| Org members | `src/app/(main)/[slug]/settings/members/page.tsx` | ✅ Wave 20 (data Wave 26) |
+| Org billing | `src/app/(main)/[slug]/settings/billing/page.tsx` | ✅ Wave 20 (data Wave 23) |
+| Org API keys | `src/app/(main)/[slug]/settings/api-keys/page.tsx` | ✅ Wave 20 (data Wave 23) |
+| Admin | `src/app/(admin)/admin/page.tsx` | ✅ Wave 21 |
+| Share | `src/app/(shared)/share/[shareId]/page.tsx` | ✅ Wave 21 |
+| Invite | `src/app/(invite)/invite/[token]/page.tsx` | ✅ Wave 21 |
 
 ### Identity module components — Wave 17 (AUTH UI)
 
@@ -259,18 +260,14 @@ After Wave 16 all 16 modules will have complete domain service + infra (mapper +
 **i18n keys added to `src/shared/i18n/index.ts`:**
 - auth.* keys (login, register, email, password, etc.)
 
-### Next Priority (Wave 18+)
+### Next Priorities (Waves 23–26)
 
-**Workspace Shell** (required for any authenticated page to work):
-- `src/modules/workspace.module/_components/shell/dashboard-sidebar.tsx`
-- `src/modules/workspace.module/_components/shell/header.tsx`
-- `src/modules/workspace.module/_components/shell/nav-workspaces.tsx`
-- `src/modules/workspace.module/_components/workspace-card.tsx`
-- `src/modules/workspace.module/_components/workspace-list.tsx`
-
-**Work items (WBS)**:
-- `src/modules/work.module/_components/task-tree-node.tsx`
-- `src/modules/work.module/_components/tasks-view.tsx`
+| Wave | Scope | Target modules |
+|------|-------|----------------|
+| 23 | Organization data (OrganizationsView + org settings real data) | `namespace.module`, `account.module` |
+| 24 | Real-time notifications (NotificationsView real data) | `notification.module` |
+| 25 | WBS task tree real data + editor content | `work.module`, `workspace.module` |
+| 26 | Members settings real data | `account.module` (IMembershipRepository) |
 
 ### Acceptance Criteria for Presentation Waves
 
@@ -278,4 +275,4 @@ After Wave 16 all 16 modules will have complete domain service + infra (mapper +
 2. Components use `@/design-system/primitives/ui/` (NOT `@/shadcn-ui/`)
 3. i18n via `useTranslation("zh-TW")` from `@/shared/i18n`
 4. No direct infrastructure imports in components (go through module barrel `index.ts`)
-5. Pages updated from `<div>Placeholder</div>` to real components
+5. Pages use real Firestore data via module hooks (no Placeholder shells)

@@ -121,3 +121,7 @@
   - `findByOwnerId(ownerId): Promise<NamespaceEntity | null>` — limit(1) query
   - `save(namespace): Promise<void>` — 首次寫入以 transaction + `namespace-slugs/{slug}` 保留文件確保 slug 唯一性（無 TOCTOU race condition）
   - `deleteById(id): Promise<void>`
+
+## `_components/organizations-view.tsx` *(Wave 20)*
+**描述**: 組織列表頁面容器（`/(account)/organizations`）— org grid + 建立 CTA shell，Wave 23 接 Firestore 資料。
+**Export**: `OrganizationsView` — 用於 `app/(main)/(account)/organizations/page.tsx`

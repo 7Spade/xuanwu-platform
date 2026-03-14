@@ -168,3 +168,19 @@
 ## `_components/auth-view.tsx` *(Wave 17 — 新增)*
 **描述**: 智能驗證容器。管理所有 auth 狀態，委派渲染給子元件。含重置密碼彈窗 (Dialog)。成功後 router.push("/")。
 **Export**: `AuthView` — 直接在 `app/(auth)/login/page.tsx` 使用
+
+## `_components/admin-view.tsx` *(Wave 21)*
+**描述**: 管理員面板頁面 shell（`/admin`）— 系統管理功能入口框架（Wave 23+ 接資料）。
+**Export**: `AdminView` — 用於 `app/(admin)/admin/page.tsx`
+
+## `_components/api-keys-view.tsx` *(Wave 20)*
+**描述**: API 金鑰管理頁面（`/[slug]/settings/api-keys`）— 金鑰列表 + 產生 CTA shell。
+**Export**: `ApiKeysView` — 用於 `app/(main)/[slug]/settings/api-keys/page.tsx`
+
+## `_components/invite-view.tsx` *(Wave 21)*
+**描述**: 邀請連結接受頁面（`/invite/[token]`）— 邀請 token 顯示與接受 CTA shell。
+**Export**: `InviteView({ token })` — 用於 `app/(invite)/invite/[token]/page.tsx`
+
+## `_components/share-view.tsx` *(Wave 21)*
+**描述**: 共享分享連結頁面（`/share/[shareId]`）— 分享資源預覽 shell。
+**Export**: `ShareView({ shareId })` — 用於 `app/(shared)/share/[shareId]/page.tsx`

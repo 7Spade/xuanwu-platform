@@ -147,9 +147,9 @@
 **描述**: 主導航選單 — 首頁與工作空間連結。使用 `usePathname` 高亮目前路由。
 **Export**: `NavMain` (no props — reads pathname internally)
 
-## `_components/shell/nav-user.tsx` *(Wave 18 — 新增)*
+## `_components/shell/nav-user.tsx` *(Wave 18, updated Wave 22)*
 **描述**: 認證用戶選單（側邊欄底部）。顯示用戶頭像、名稱、登出選項。
-**架構注意**: 直接使用 Firebase Auth `onAuthStateChanged` — 預期未來由 AuthProvider context 替換。
+**架構注意**: Wave 22 起改用 `useCurrentAccount()` 從 `AccountProvider` 取得 auth + 帳號資料，不再直接訂閱 Firebase Auth。
 **Export**: `NavUser` (no props)
 
 ## `_components/shell/dashboard-sidebar.tsx` *(Wave 18 — 新增)*
@@ -159,3 +159,31 @@
 ## `_components/shell/shell-header.tsx` *(Wave 18 — 新增)*
 **描述**: 認證頁面頂部導覽列。包含 SidebarTrigger、麵包屑導航（支援 i18n）。
 **Export**: `ShellHeader` (no props)
+
+## `_components/workspaces-view.tsx` *(Wave 19, updated Wave 22)*
+**描述**: 工作空間列表頁面容器。Wave 22 起透過 `useWorkspaces(account?.id)` 自行從 Firestore 抓取資料，無需 server 傳入 props。含 loading/error 狀態處理。
+**Export**: `WorkspacesView` — 用於 `app/(main)/[slug]/workspaces/page.tsx`
+
+## `_components/workspace-card.tsx` *(Wave 19)*
+**描述**: 單一工作空間卡片 UI。顯示名稱、狀態、成員數；支援 grid/list 切換檢視。
+**Export**: `WorkspaceCard({ workspace })`
+
+## `_components/workspace-settings-view.tsx` *(Wave 20)*
+**描述**: 組織通用設定頁（`/[slug]/settings/general`）— 工作空間名稱/描述 form shell。
+**Export**: `WorkspaceSettingsView` — 用於 `app/(main)/[slug]/settings/general/page.tsx`
+
+## `_components/members-settings-view.tsx` *(Wave 20)*
+**描述**: 成員管理設定頁（`/[slug]/settings/members`）— 成員列表 + 邀請 CTA shell。
+**Export**: `MembersSettingsView` — 用於 `app/(main)/[slug]/settings/members/page.tsx`
+
+## `_components/wbs-view.tsx` *(Wave 21)*
+**描述**: WBS 任務樹 shell（`/[slug]/[workspaceId]/wbs`）— 任務節點樹狀檢視框架（Wave 25 接資料）。
+**Export**: `WbsView` — 用於 `app/(main)/[slug]/[workspaceId]/(workspace)/wbs/page.tsx`
+
+## `_components/editor-view.tsx` *(Wave 21)*
+**描述**: 獨立編輯器 shell（`/[slug]/[workspaceId]/editor`）— 文件編輯框架（Wave 25 接資料）。
+**Export**: `EditorView` — 用於 `app/(main)/[slug]/[workspaceId]/(standalone)/editor/page.tsx`
+
+## `_components/use-workspaces.ts` *(Wave 22)*
+**描述**: Client-side React hook。透過 `FirestoreWorkspaceRepository.findByDimensionId(dimensionId)` 取得工作空間清單。回傳 `{ workspaces, loading, error, refresh }`。
+**Export**: `useWorkspaces(dimensionId: string | null | undefined)`

@@ -65,7 +65,7 @@ This skill helps migrate existing Xuanwu code toward the repository's 4-layer DD
 ## Guardrails
 
 - Do not move Firebase or SDK code into Domain or Application.
-- Do not introduce new shared-kernel abstractions without proven cross-slice need.
+- Do not introduce new `src/shared/` abstractions without proven cross-module need.
 - Do not export internal domain or infrastructure details from a slice public API.
 - Do not let compatibility seams become new permanent architecture debt.
 
