@@ -50,6 +50,6 @@ Normative execution contract: [xuanwu-test-expert.instructions.md](../../instruc
 
 ## Source
 
-- VS Code prompt files: `docs/copilot/customization/prompt-files.md`
-- VS Code custom agents: `docs/copilot/customization/custom-agents.md`
-- VS Code agent skills: `docs/copilot/customization/agent-skills.md`
+- VS Code prompt files: https://code.visualstudio.com/docs/copilot/customization/prompt-files
+- VS Code custom agents: https://code.visualstudio.com/docs/copilot/customization/custom-agents
+- VS Code agent skills: https://code.visualstudio.com/docs/copilot/customization/agent-skills

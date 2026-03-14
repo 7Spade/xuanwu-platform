@@ -1,7 +1,7 @@
 ---
 name: 'xuanwu-orchestrator'
 description: 'Project-specific Xuanwu delivery orchestrator. Routes work across product, research, architecture, implementation, UI, quality, docs, ops, and browser validation.'
-tools: ['agent', 'codebase', 'search', 'software-planning/*', 'serena/*']
+tools: ['agent', 'codebase', 'search', 'software-planning/*', 'serena/*', 'agent-memory/*']
 agents:
   - ddd-orchestrator
   - ddd-domain-modeler
@@ -80,7 +80,7 @@ Use this as the main Xuanwu project agent when the task spans multiple functions
 - The correct specialist is not obvious yet.
 
 ## Required workflow
-1. Run the Serena session-start sequence from `.github/copilot-instructions.md` before broader routing.
+1. Run the Serena session-start sequence from `.github/copilot-instructions.md` before broader routing. Use `agent-memory-search_long_term_memory` to retrieve relevant prior session context.
 2. Clarify the request and desired outcome.
 3. Hand off to `xuanwu-product` or `xuanwu-research` first when requirements or context are incomplete.
 4. **For DDD slice design or implementation**: route to `ddd-orchestrator` which coordinates the Domain → Application → Infrastructure → Presentation sequence.

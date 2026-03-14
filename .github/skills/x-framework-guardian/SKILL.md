@@ -2,12 +2,12 @@
 name: x-framework-guardian
 description: >
   Xuanwu 架構守護者三位一體掃描工作流。Use this skill when you need to run an
-  architecture compliance audit, check for cross-slice boundary violations,
-  generate migration git mv commands, bootstrap a new feature slice, or
-  validate a feature's logic chain against the L0→L5 canonical flow.
+  architecture compliance audit, check for cross-module boundary violations,
+  generate migration git mv commands, bootstrap a new Domain Module, or
+  validate a module's logic chain against the L0→L5 canonical flow.
   Trigger keywords: architecture audit, drift report, boundary audit,
-  migration audit, new slice, logic chain, compliance status, 架構審計,
-  邊界巡邏, 清理舊債, 建立切片, 邏輯鏈驗證.
+  migration audit, new module, logic chain, compliance status, 架構審計,
+  邊界巡邏, 清理舊債, 建立模組, 邏輯鏈驗證.
 ---
 
 # Xuanwu 架構守護者（x-framework-guardian）
@@ -29,10 +29,10 @@ description: >
 ## 何時使用本 Skill
 
 - 執行架構合規審計（全量 or 專項）
-- 檢查跨切片邊界違規（cross-slice private import）
+- 檢查跨模組邊界違規（cross-module private import）
 - 列出舊版命名殘留並生成 `git mv` 修正指令
-- 驗證某 Slice 的邏輯流向是否符合 L0→L3→L4→L5
-- 為新功能 Bootstrap 正確的 Slice 目錄結構
+- 驗證某模組的邏輯流向是否符合 L0→L3→L4→L5
+- 為新功能 Bootstrap 正確的模組目錄結構
 
 ---
 
@@ -66,7 +66,7 @@ and docs/architecture/README.md. Please provide the Drift Report and Compliance 
 #### 邊界巡邏（Boundary Audit）
 
 ```text
-執行 Boundary Audit。檢查 src/features/ 下是否有檔案直接 import 其他切片的
+執行 Boundary Audit。檢查 src/modules/ 下是否有檔案直接 import 其他模組的
 內部路徑（如 domain.* 或 _ 開頭檔案），而非透過 index.ts。
 請列出違規行號與重構建議。
 ```
@@ -86,10 +86,10 @@ and docs/architecture/README.md. Please provide the Drift Report and Compliance 
 
 ### 第三階段：開發輔助
 
-#### 建立新 Slice
+#### 建立新模組（Module）
 
 ```text
-依照 §8 的 Bootstrap Template，為我生成一個名為 {feature-name} 的新切片（Slice）
+依照 §8 的 Bootstrap Template，為我生成一個名為 {module-name}.module 的新模組
 目錄結構。確保包含 index.ts 以及私有的 _ 開頭檔案。
 ```
 
@@ -98,7 +98,7 @@ and docs/architecture/README.md. Please provide the Drift Report and Compliance 
 #### 邏輯鏈驗證
 
 ```text
-追蹤 src/features/{feature}.slice 的邏輯流向。
+追蹤 src/modules/{module}.module 的邏輯流向。
 它是否嚴格遵守 docs/architecture/README.md 定義的 L0 -> L3 -> L4 -> L5 流程？
 特別檢查是否有 Command 流程直接回傳大量 Query Data 的違規。
 ```
@@ -112,7 +112,7 @@ and docs/architecture/README.md. Please provide the Drift Report and Compliance 
 | 等級 | 定義 | 處置 |
 |-----|------|------|
 | **Critical** | firebase-admin 洩漏（FI-001/D25）、L1 依賴 L3（FI-003）、CQRS 讀寫混用 | 阻斷合入，立即修復 |
-| **High** | 跨切片偷渡（FC-003）、Route Thinness 違規、Query route 執行寫操作（FQ-001） | 合入前必須修復 |
+| **High** | 跨模組偷渡（FC-003）、Route Thinness 違規、Query route 執行寫操作（FQ-001） | 合入前必須修復 |
 | **Medium** | 命名不符（舊版 `*.actions.ts` 等）、孤兒子目錄 | 計入技術債，排期修復 |
 
 ---

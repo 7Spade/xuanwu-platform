@@ -8,7 +8,7 @@ applyTo: ".github/**/*.{md,json,yml,yaml}"
 
 ## Source of Truth
 
-- MUST follow `docs/copilot/customization/custom-instructions.md`, `custom-agents.md`, `prompt-files.md`, `agent-skills.md`, and `hooks.md` before editing repository customizations.
+- MUST follow the official VS Code Copilot customization documentation (https://code.visualstudio.com/docs/copilot/customization) for custom instructions, agents, prompt files, agent skills, and hooks before editing repository customizations.
 - MUST treat `.github/README.md` as the canonical repository maintenance guide for customization structure and consolidation decisions.
 - MUST keep local customization names aligned with the project-specific `xuanwu-*` naming strategy when consolidating overlapping assets.
 

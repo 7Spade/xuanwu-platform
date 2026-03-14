@@ -65,7 +65,7 @@ This agent is the Xuanwu UI specialist enforcing mobile-first design, mandatory 
 - SHOULD use `playwright-browser_snapshot` (from the `playwright` server) for visual verification of responsive breakpoints after significant layout changes.
 
 ### i18n
-- MUST update both `public/localized-files/en.json` and `public/localized-files/zh-TW.json` with identical keys for every new or changed UI string.
+- MUST update the in-code translation dictionary in `src/shared/i18n/index.ts` (add keys to both the `en` and `zh-TW` locale entries) for every new or changed UI string.
 - MUST NOT hardcode user-visible text in components or pages.
 
 ## Execution Workflow
@@ -74,7 +74,7 @@ This agent is the Xuanwu UI specialist enforcing mobile-first design, mandatory 
 2. **Search components** — Run `shadcn-get_project_registries` to identify available registries, then use `shadcn-search_items_in_registries` before building any new UI element.
 3. **Install** — Use `shadcn-get_add_command_for_items` and execute the command.
 4. **Implement** — Apply changes using Tailwind utilities, mobile-first breakpoints, and shadcn composition.
-5. **i18n** — Add or update locale keys in both locale files.
+5. **i18n** — Add or update translation keys in `src/shared/i18n/index.ts` (both `en` and `zh-TW` locale entries).
 6. **Verify** — Run `next-devtools-nextjs_call` for runtime diagnostics; use `playwright-browser_snapshot` (via `playwright/*`) at 320 px width to capture evidence of mobile layout.
 7. **Audit** — Run `shadcn-get_audit_checklist` and ESLint; resolve all flagged issues before completing.
 

@@ -9,14 +9,14 @@
 
 **xuanwu-platform** is a Next.js 15 platform built with **Modular Domain-Driven Design (Modular DDD)** and parallel routing, implementing the Serena operational work management system.
 
-**Modular DDD** means every bounded context lives in its own self-contained feature slice under `src/features/`. Slices expose a single public `index.ts` barrel; no slice imports the internal files of another. This modular boundary is enforced in addition to the 4-layer DDD direction rules (Presentation → Application → Domain ← Infrastructure).
+**Modular DDD** means every bounded context lives in its own self-contained **Domain Module** under `src/modules/`. Each module exposes a single public `index.ts` barrel; no module imports the internal files of another. This modular boundary is enforced in addition to the 4-layer DDD direction rules (Presentation → Application → Domain ← Infrastructure).
 
 | Concern | Choice |
 |---------|--------|
 | Framework | Next.js 15 (App Router, parallel routing) |
 | Language | TypeScript 5 |
 | UI | React 19, Tailwind CSS v4, shadcn/ui |
-| Design System | Three-tier: primitives / components / patterns (see [Design System](#design-system)) |
+| Design System | Four-tier: primitives / components / patterns / tokens (see [Design System](#design-system)) |
 | Drag and Drop | `@atlaskit/pragmatic-drag-and-drop` + Visual Indicators (VIs) |
 | Validation | Zod |
 | Backend / DB | Firebase (Firestore, Auth, Storage, App Check) |
@@ -42,16 +42,16 @@
 
 ## DDD Layer Architecture / DDD 層次架構
 
-This project follows a strict 4-layer DDD architecture within each feature slice.
+This project follows a strict 4-layer DDD architecture within each Domain Module.
 
 ### Layer Responsibilities
 
 | Layer | Location | Responsibility | Allowed dependencies |
 |-------|----------|----------------|----------------------|
-| **Domain** | `src/features/<slice>/domain.<aggregate>/` | Entities, value objects, aggregates, domain events, port interfaces | None (pure business logic) |
-| **Application** | `src/features/<slice>/core/_use-cases.ts`, `_actions.ts`, `_queries.ts` | Use cases, application services, DTOs, command/query objects | Domain layer only |
-| **Infrastructure** | `src/features/<slice>/infra.<adapter>/` | Repository implementations, external API adapters, Firebase integration, persistence | Domain + Application port interfaces |
-| **UI / Presentation** | `src/features/<slice>/_components/`, `src/app/` | React components, Next.js pages and route handlers | Application layer (via DTOs) |
+| **Domain** | `src/modules/<module>/domain.<aggregate>/` | Entities, value objects, aggregates, domain events, port interfaces | None (pure business logic) |
+| **Application** | `src/modules/<module>/core/_use-cases.ts`, `_actions.ts`, `_queries.ts` | Use cases, application services, DTOs, command/query objects | Domain layer only |
+| **Infrastructure** | `src/modules/<module>/infra.<adapter>/` | Repository implementations, external API adapters, Firebase integration, persistence | Domain + Application port interfaces |
+| **UI / Presentation** | `src/modules/<module>/_components/`, `src/app/` | React components, Next.js pages and route handlers | Application layer (via DTOs) |
 
 ### Layer Direction Rules
 
@@ -71,34 +71,52 @@ Infrastructure implements → Domain interfaces
 The system is divided into two primary layers with a governing boundary between them:
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                     SaaS Layer                          │
-│  Organization · Namespace · Team · Settlement · Social  │
-│              ┌──────────────────────┐                   │
-│              │  Workforce Scheduling │  ← Bridge        │
-│              └──────────────────────┘                   │
-└──────────────────────┬──────────────────────────────────┘
-                       │  Crossed via: Event Bus + typed contracts
-┌──────────────────────▼──────────────────────────────────┐
-│                  Workspace Layer                         │
-│  Workspace · WBS · Issue · CR · Files · Intelligence    │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                            SaaS Layer                                    │
+│  Identity · Account (+ Teams/Membership) · Namespace  ·  Settlement  ·  │
+│  Social  ·  Notification  ·  Achievement  ·  Audit  ·  Search           │
+│              ┌──────────────────────┐                                    │
+│              │  Workforce Scheduling │  ← Bridge                        │
+│              └──────────────────────┘                                    │
+└───────────────────────────────┬──────────────────────────────────────────┘
+                                │  Crossed via: Event Bus + typed contracts
+┌───────────────────────────────▼──────────────────────────────────────────┐
+│                        Workspace Layer                                   │
+│  Workspace · WBS · Issue · CR · QA · Acceptance · Baseline ·            │
+│  Files · Intelligence Pipeline · Work Items/Milestones · Fork Network · │
+│  Collaboration (Comments · Presence · Co-editing)                        │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
 See [Service Boundary](./catalog/service-boundary.md) for crossing protocols and ownership rules.
 
 ---
 
-## Domain Slices / 領域切片
+## Domain Modules / 領域模組
 
-| Slice | Location | Layer | Description |
-|-------|----------|-------|-------------|
-| Organization | `src/features/org.slice/` | SaaS | Org, Namespace, Team |
-| Workspace | `src/features/workspace.slice/` | Workspace | Workspace, WBS, Issues, CR |
-| File & Intel | `src/features/file.slice/` | Workspace | Files, Document Parsing, Object Extraction |
-| Settlement | `src/features/settlement.slice/` | SaaS | AR, AP, Settlement records |
+| Module | Location | Layer | Description |
+|--------|----------|-------|-------------|
+| Identity | `src/modules/identity.module/` | SaaS (cross-cutting) | Authentication · Credentials · Sessions · Identity Providers (replaces raw Firebase Auth) |
+| Account | `src/modules/account.module/` | SaaS | Unified Account entity (AccountType: personal \| organization) · Public profile · Team + Membership governance (absorbed from removed org.module) |
+| Namespace | `src/modules/namespace.module/` | SaaS | Namespace (shared path-resolution: org account namespaces + personal account namespaces) |
+| Workspace | `src/modules/workspace.module/` | Workspace | Workspace, WBS, Issue, CR, QA, Acceptance, Baseline |
+| File & Intel | `src/modules/file.module/` | Workspace | Files, Document Parsing, Object Extraction, Intelligence Pipeline |
+| Work | `src/modules/work.module/` | Workspace | Work Items, Milestones, Dependencies |
+| Fork | `src/modules/fork.module/` | Workspace | Fork Network (planning branches + merge-back proposals) |
+| Workforce Scheduling | `src/modules/workforce.module/` | Bridge | Workforce Scheduling (SaaS ↔ Workspace bridge) |
+| Settlement | `src/modules/settlement.module/` | SaaS | AR, AP, Settlement records |
+| Notification | `src/modules/notification.module/` | SaaS (cross-cutting) | Notification Engine, Inbox, Email, Mobile Push |
+| Social | `src/modules/social.module/` | SaaS | Social Graph (Star/Watch/Follow), Feed, Dashboard, Discovery |
+| Achievement | `src/modules/achievement.module/` | SaaS | Achievement Rules, Badge Unlocking (projected to account.module via IAccountBadgeWritePort) |
+| Collaboration | `src/modules/collaboration.module/` | Workspace (cross-cutting) | Comments, Reactions, Presence, Co-editing sessions |
+| Search | `src/modules/search.module/` | SaaS (cross-cutting) | Full-text + semantic search index, unified query surface |
+| Audit | `src/modules/audit.module/` | SaaS (cross-cutting) | Audit trail (immutable), Policy automation (Sec), Compliance reports |
+| Feature Flags | `src/modules/feature.module/` | SaaS (cross-cutting) | Feature flags, rollout management, kill-switch, targeting rules |
+| Causal Graph | `src/modules/causal-graph.module/` | SaaS / Workspace (cross-cutting) | Causal nodes, cause-effect edges, impact scope, causal path analysis |
 
-> Expand this table as slices are implemented. Each slice is self-contained — ports, value objects, and infrastructure adapters live inside the slice, not in shared global directories.
+> Each module is self-contained — ports, value objects, and infrastructure adapters live inside the module, not in shared global directories.
+> Every module folder contains a `README.md` documenting its bounded context, aggregates, and cross-module dependencies.
+> See [`core-logic.mermaid`](./diagrams/core-logic.mermaid) for the full interaction sequence that drove this module decomposition.
 
 ---
 
@@ -128,13 +146,13 @@ The design system lives in `src/design-system/` and follows a **four-tier hierar
 | **primitives** | `src/design-system/primitives/` | Raw shadcn/ui components (Button, Input, Dialog, …). Configured via `components.json` with new-york style and Tailwind v4 CSS variables. |
 | **components** | `src/design-system/components/` | Project-specific wrappers that compose or extend primitives with Xuanwu branding and behaviour. |
 | **patterns** | `src/design-system/patterns/` | Higher-order composites built from components (e.g. data tables, sidebars, command palettes). |
-| **presentation** | `src/design-system/presentation/` | Drag-and-drop wrappers and Visual Indicator (VI) components. All `"use client"` — no business logic. |
+| **tokens** | `src/design-system/tokens/` | Design-token constants: colours, spacing, typography, radii, shadows, z-index, and motion values. Mirrors the CSS custom-properties in `globals.css` / `tailwind.config.ts`. |
 
 ```typescript
 import { Button }        from "@/design-system/primitives";
 import { SearchField }   from "@/design-system/components";
 import { LoginForm }     from "@/design-system/patterns";
-import { DraggableItem } from "@/design-system/presentation";
+import { colorBrand }    from "@/design-system/tokens";
 ```
 
 ### Drag and Drop — `@atlaskit/pragmatic-drag-and-drop`
@@ -145,7 +163,7 @@ Drag-and-drop interactions use **`@atlaskit/pragmatic-drag-and-drop`** (Atlassia
 - `@atlaskit/pragmatic-drag-and-drop-hitbox` — edge / center hitbox helpers for tree and list reordering
 - `@atlaskit/pragmatic-drag-and-drop-react-drop-indicator` — **Visual Indicators (VIs)**: rendered drop-indicator lines and boxes that provide visible drag feedback
 
-**Visual Indicators (VIs)** are the visual feedback elements shown during a drag operation (e.g. a blue line between list items, a border highlight on a drop zone). They always live in the **`presentation/`** tier and must not contain business logic.
+**Visual Indicators (VIs)** are the visual feedback elements shown during a drag operation (e.g. a blue line between list items, a border highlight on a drop zone). They live in the module's Presentation layer (`src/modules/<module>/_components/`) and must not contain business logic.
 
 **vis-date + Firebase collaboration:**  
 `VisDateMetadata` (defined in `@/shared/interfaces`) carries the temporal position of a draggable item resolved from Firestore. Server Actions fetch and cache these values via `cacheAside` and pass them as serialised props. The Presentation layer reads these props to render `<DateDropIndicator>` at the correct timeline position — **without making any additional DB calls**.

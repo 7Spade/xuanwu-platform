@@ -37,8 +37,8 @@ Configure the following MCP servers at **[Settings → Copilot → Coding Agent]
 | ⭐⭐⭐ | **Repomix** | `npx repomix --mcp` | Pack the full repository into an AI-readable snapshot; enables agents to understand the entire DDD layer structure at once |
 | ⭐⭐⭐ | **Context7** | `npx @upstash/context7-mcp` | Retrieve version-accurate Next.js 15, React 19, and Tailwind v4 documentation on demand |
 | ⭐⭐⭐ | **Sequential Thinking** | `npx @modelcontextprotocol/server-sequential-thinking` | Multi-step structured reasoning — essential for DDD layer decomposition, domain modeling, and debugging complex route boundaries |
-| ⭐⭐⭐ | **Software Planning** | `npx @joshuarileydev/software-planning-tool` | Implementation plan and todo tracking across DDD slices and parallel route features |
-| ⭐⭐⭐ | **Serena** | `uvx serena` | Deep TypeScript symbol navigation, cross-file rename, and persistent per-project memory across sessions |
+| ⭐⭐⭐ | **Software Planning** | `npx github:NightTrek/Software-planning-mcp` | Implementation plan and todo tracking across DDD modules and parallel route features |
+| ⭐⭐⭐ | **Serena** | `uvx --from git+https://github.com/oraios/serena serena start-mcp-server --context ide` | Deep TypeScript symbol navigation, cross-file rename, and persistent per-project memory across sessions |
 | ⭐⭐⭐ | **Firebase** | `npx firebase-mcp-server` | Firestore, Firebase Auth, and Firebase App Hosting management — core to this project's infrastructure |
 
 ### 🔧 Recommended MCP Servers
@@ -46,7 +46,7 @@ Configure the following MCP servers at **[Settings → Copilot → Coding Agent]
 | Priority | Server Name | npm / install | Why it matters for this project |
 |----------|-------------|---------------|----------------------------------|
 | ⭐⭐ | **Playwright** | `npx @playwright/mcp@latest` | Browser automation for end-to-end testing of Next.js parallel routes and intercepting routes |
-| ⭐⭐ | **Next.js DevTools** | `npx @next/mcp` | Next.js dev-server diagnostics, route inspection, and runtime performance analysis |
+| ⭐⭐ | **Next.js DevTools** | `npx next-devtools-mcp@latest` | Next.js dev-server diagnostics, route inspection, and runtime performance analysis |
 | ⭐⭐ | **shadcn/ui** | `npx shadcn@latest` | Install and compose shadcn/ui components without leaving Copilot — accelerates UI layer implementation |
 | ⭐⭐ | **Markitdown** | `npx markitdown-mcp` | Convert external URLs and design docs to Markdown for AI consumption during research and architecture tasks |
 | ⭐ | **Everything** | `npx @modelcontextprotocol/server-everything` | General-purpose MCP protocol testing and utility tasks |
@@ -61,13 +61,13 @@ Configure the following MCP servers at **[Settings → Copilot → Coding Agent]
     "repomix":             { "type": "stdio", "command": "npx", "args": ["-y", "repomix", "--mcp"], "tools": ["*"] },
     "context7":            { "type": "stdio", "command": "npx", "args": ["-y", "@upstash/context7-mcp"], "tools": ["*"] },
     "sequential-thinking": { "type": "stdio", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"], "tools": ["*"] },
-    "software-planning":   { "type": "stdio", "command": "npx", "args": ["-y", "@joshuarileydev/software-planning-tool"], "tools": ["*"] },
+    "software-planning":   { "type": "stdio", "command": "npx", "args": ["-y", "github:NightTrek/Software-planning-mcp"], "tools": ["*"] },
     "playwright":          { "type": "stdio", "command": "npx", "args": ["-y", "@playwright/mcp@latest"], "tools": ["*"] },
-    "next-devtools":       { "type": "stdio", "command": "npx", "args": ["-y", "@next/mcp"], "tools": ["*"] },
+    "next-devtools":       { "type": "stdio", "command": "npx", "args": ["-y", "next-devtools-mcp@latest"], "tools": ["*"] },
     "shadcn":              { "type": "stdio", "command": "npx", "args": ["-y", "shadcn@latest", "mcp"], "tools": ["*"] },
     "markitdown":          { "type": "stdio", "command": "uvx", "args": ["markitdown-mcp"], "tools": ["*"] },
     "everything":          { "type": "stdio", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-everything"], "tools": ["*"] },
-    "serena":              { "type": "stdio", "command": "uvx", "args": ["serena"], "tools": ["*"] },
+    "serena":              { "type": "stdio", "command": "uvx", "args": ["--from", "git+https://github.com/oraios/serena", "serena", "start-mcp-server", "--context", "ide", "--project", "."], "tools": ["*"] },
     "firebase-mcp-server": { "type": "stdio", "command": "npx", "args": ["-y", "firebase-mcp-server"], "env": { "FIREBASE_PROJECT_ID": "xuanwu-i-00708880-4e2d8", "SERVICE_ACCOUNT_KEY_PATH": "$COPILOT_MCP_FIREBASE_SERVICE_ACCOUNT_KEY_PATH" }, "tools": ["*"] }
   }
 }
@@ -139,7 +139,7 @@ This repository ships a complete set of GitHub Copilot customizations under `.gi
 | `/xuanwu-product` | Product feature definition |
 | `/xuanwu-architecture-realign` | Align architecture docs with code reality |
 | `/xuanwu-ssot-sync` | Sync docs with single source of truth |
-| `/ddd-slice-scaffold` | Scaffold a new DDD slice (all 4 layers) |
+| `/ddd-slice-scaffold` | Scaffold a new DDD module (all 4 layers) |
 | `/ddd-domain-model` | Design or refine a domain model |
 | `/ddd-application-service` | Create or update an application service |
 | `/ddd-infrastructure-adapter` | Create a repository adapter or external service |
@@ -193,7 +193,7 @@ This repository ships a complete set of GitHub Copilot customizations under `.gi
 
 ## 🏗 Architecture Overview
 
-This project follows a **Modular Domain-Driven Design (Modular DDD)** architecture with **Next.js 15 parallel routing**. Each bounded context is a self-contained feature slice under `src/features/`; slices communicate only through their public `index.ts` barrel.
+This project follows a **Modular Domain-Driven Design (Modular DDD)** architecture with **Next.js 15 parallel routing**. Each bounded context is a self-contained **Domain Module** under `src/modules/`; modules communicate only through their public `index.ts` barrel.
 
 ### Design System
 
@@ -202,7 +202,7 @@ src/design-system/
 ├── primitives/    ← shadcn/ui components (Button, Input, Dialog, …)
 ├── components/    ← project-specific wrappers
 ├── patterns/      ← higher-order composites (tables, sidebars, …)
-└── presentation/  ← DnD wrappers + Visual Indicator components
+└── tokens/        ← design-token constants (colours, spacing, typography, …)
 ```
 
 Import from the appropriate tier:
@@ -210,10 +210,10 @@ Import from the appropriate tier:
 import { Button }        from "@/design-system/primitives";
 import { SearchField }   from "@/design-system/components";
 import { LoginForm }     from "@/design-system/patterns";
-import { DragDropBoard } from "@/design-system/presentation";
+import { colorBrand }    from "@/design-system/tokens";
 ```
 
-Drag-and-drop interactions use **`@atlaskit/pragmatic-drag-and-drop`**. Visual Indicators (VIs) — the visible drop-indicator lines and zone highlights rendered during a drag operation — come from `@atlaskit/pragmatic-drag-and-drop-react-drop-indicator` and are always pure Presentation-layer components.
+Drag-and-drop interactions use **`@atlaskit/pragmatic-drag-and-drop`**. Visual Indicators (VIs) — the visible drop-indicator lines and zone highlights rendered during a drag operation — come from `@atlaskit/pragmatic-drag-and-drop-react-drop-indicator` and live in each module's presentation layer.
 
 ### DDD Layer Structure
 
@@ -223,15 +223,16 @@ src/
 │   ├── @modal/            # Parallel route: modal slot
 │   ├── @sidebar/          # Parallel route: sidebar slot
 │   └── (features)/        # Feature-grouped route segments
-├── shared/                # Cross-cutting concerns
-│   ├── domain/            # Shared domain types and value objects
-│   ├── ui/                # Shared UI components
-│   └── lib/               # Utility functions
-└── <domain>/              # Domain slices (e.g., user, product)
-    ├── domain/            # Entities, value objects, aggregates, repository interfaces
-    ├── application/       # Use cases, application services, DTOs
-    ├── infrastructure/    # Repository implementations, external adapters
-    └── ui/                # Domain-specific UI components and pages
+├── modules/               # Domain Modules (Bounded Contexts)
+│   └── <name>.module/     # e.g., org.module, workspace.module
+│       ├── index.ts       # Public barrel — only export from here
+│       ├── domain.<aggregate>/  # Domain layer (entities, VOs, ports, events)
+│       ├── core/          # Application layer (use cases, actions, queries)
+│       ├── infra.<adapter>/    # Infrastructure layer (Firestore, etc.)
+│       └── _components/   # Presentation layer (React components)
+├── design-system/         # Four-tier UI system (primitives/components/patterns/tokens)
+├── infrastructure/        # Shared infrastructure (Firebase client + Admin SDK)
+└── shared/                # Cross-cutting utilities (constants, i18n, interfaces, types, utils)
 ```
 
 ### Technology Stack
@@ -241,7 +242,7 @@ src/
 | Framework | Next.js 15 (App Router, parallel routes) |
 | Language | TypeScript 5 |
 | UI | React 19, Tailwind CSS v4 |
-| Design System | Four-tier (`primitives` → shadcn/ui, `components` → wrappers, `patterns` → composites, `presentation` → DnD + VIs) |
+| Design System | Four-tier (`primitives` → shadcn/ui, `components` → wrappers, `patterns` → composites, `tokens` → design tokens) |
 | Drag and Drop | `@atlaskit/pragmatic-drag-and-drop` + Visual Indicators (VIs) |
 | Validation | Zod |
 | Backend / DB | Firebase (Firestore, Auth, Storage, App Check) |

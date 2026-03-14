@@ -1,8 +1,8 @@
 ---
 name: ddd-slice-scaffold
-description: 'Scaffold a complete DDD-structured feature slice with all four layers: Domain (entities/VOs), Application (use cases/actions), Infrastructure (repository/outbox), and Presentation (components/index).'
+description: 'Scaffold a complete DDD-structured domain module with all four layers: Domain (entities/VOs), Application (use cases/actions), Infrastructure (repository/outbox), and Presentation (components/index).'
 agent: 'ddd-orchestrator'
-argument-hint: 'Slice name and main aggregate, e.g.: reporting.slice ReportEntity | billing.slice InvoiceEntity'
+argument-hint: 'Slice name and main aggregate, e.g.: reporting.module ReportEntity | billing.module InvoiceEntity'
 ---
 
 # DDD Slice Scaffold Workflow
@@ -12,7 +12,7 @@ This prompt drives the full DDD cycle for a new bounded context from scratch.
 ## What is scaffolded
 
 ```
-src/features/{slice-name}/
+src/modules/{module-name}.module/
 ├── index.ts                         ← Public API (Presentation exports only)
 │
 ├── domain.{context}/                ← Step 1: Domain Layer
@@ -40,13 +40,13 @@ src/features/{slice-name}/
 
 ## Workflow
 
-1. Read domain glossary from `docs/architecture/models/domain-model.md`.
+1. Read domain glossary from `docs/architecture/catalog/business-entities.md` and `docs/architecture/glossary/business-terms.md`.
 2. **Domain Layer** (ddd-domain-modeler): Entity + VOs + Events.
 3. **Application Layer** (ddd-application-layer): Use cases + Server Actions + Queries.
 4. **Infrastructure Layer** (ddd-infrastructure): Repository + Outbox + EventBus adapters.
 5. **Presentation Layer** (xuanwu-ui): Components calling server actions.
 6. **Public API**: Wire `index.ts` to expose only Presentation exports.
-7. **Register**: Add slice to `src/features/README.md`.
+7. **Register**: Add slice to `src/modules/README.md`.
 
 ## Guardrails
 
@@ -54,7 +54,7 @@ src/features/{slice-name}/
 - Application layer MUST call only port interfaces.
 - Infrastructure MUST implement port interfaces.
 - `index.ts` MUST export only Presentation-safe APIs.
-- Follow naming from `docs/architecture/README.md` and `.serena\memories\*`.
+- Follow naming from `docs/architecture/README.md` and Serena project memories.
 
 ## Output Contract
 
@@ -62,8 +62,8 @@ src/features/{slice-name}/
 - Each file with correct imports and layer boundary enforcement.
 - Unit tests for all domain invariants.
 - Integration tests for application use cases with mocked ports.
-- Updated `src/features/README.md` slice table.
+- Updated `src/modules/README.md` slice table.
 
-Slice name: ${input:sliceName:e.g. reporting.slice}
+Module name: ${input:moduleName:e.g. reporting.module}
 Main aggregate: ${input:aggregate:e.g. ReportEntity}
 Primary use cases: ${input:usecases:e.g. CreateReport, ApproveReport, ArchiveReport}

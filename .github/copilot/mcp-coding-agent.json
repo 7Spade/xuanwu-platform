@@ -38,7 +38,7 @@
     "software-planning": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@joshuarileydev/software-planning-tool"],
+      "args": ["-y", "github:NightTrek/Software-planning-mcp"],
       "tools": ["*"]
     },
     "playwright": {
@@ -50,7 +50,7 @@
     "next-devtools": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@next/mcp"],
+      "args": ["-y", "next-devtools-mcp@latest"],
       "tools": ["*"]
     },
     "shadcn": {
@@ -74,7 +74,16 @@
     "serena": {
       "type": "stdio",
       "command": "uvx",
-      "args": ["serena"],
+      "args": [
+        "--from",
+        "git+https://github.com/oraios/serena",
+        "serena",
+        "start-mcp-server",
+        "--context",
+        "ide",
+        "--project",
+        "."
+      ],
       "tools": ["*"]
     },
     "firebase-mcp-server": {

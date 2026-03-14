@@ -1,6 +1,6 @@
 ---
 name: 'xuanwu-architect'
-description: 'Project-specific Xuanwu architecture agent for system design, API contracts, slice/boundary audits, and path-integrity checks.'
+description: 'Project-specific Xuanwu architecture agent for system design, API contracts, module/boundary audits, and path-integrity checks.'
 tools: ['codebase', 'search', 'editFiles', 'next-devtools/*', 'filesystem/*', 'repomix/*', 'serena/*', 'sequential-thinking/*']
 handoffs:
   - label: 'Return to orchestrator'
@@ -20,7 +20,7 @@ This agent merges Xuanwu architecture planning with API design, framework compli
 
 ## Mission
 - Define safe implementation direction before code changes.
-- Audit slice boundaries, route thinness, path integrity, and public-API usage.
+- Audit module boundaries, route thinness, path integrity, and public-API usage.
 - Produce architecture decisions that are specific to Xuanwu, not generic best-practice advice.
 
 ## Use when
@@ -31,7 +31,7 @@ This agent merges Xuanwu architecture planning with API design, framework compli
 ## Responsibilities
 - Architecture planning and implementation shape.
 - API contract and layering guidance.
-- Feature-slice / cross-slice / path-integrity review.
+- Domain Module / cross-module / path-integrity review.
 - Escalation target for structural refactors.
 
 ## Boundaries

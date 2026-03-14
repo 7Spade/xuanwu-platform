@@ -14,6 +14,8 @@ domain modeling, runtime behavior, or operational constraints.
 | ADR-003 | Use Tailwind CSS v4 with shadcn/ui | Accepted | — |
 | ADR-004 | Use Firebase (Firestore + Auth + Storage) as infrastructure | Accepted | — |
 | ADR-005 | Use Event Bus for SaaS ↔ Workspace boundary crossing | Accepted | — |
+| ADR-006 | Adopt Modular DDD — each module is self-contained, no shared global domain directory | Accepted | — |
+| ADR-007 | Use `@atlaskit/pragmatic-drag-and-drop` for drag-and-drop interactions + Visual Indicators (VIs) | Accepted | — |
 
 When adding new ADRs, update this index with links in chronological order.
 

@@ -45,6 +45,6 @@ applyTo: "**/*xuanwu-test-expert*.{md,yml,yaml,json}"
 
 ## References
 
-- `docs/copilot/customization/custom-agents.md`
-- `docs/copilot/customization/prompt-files.md`
-- `docs/copilot/customization/agent-skills.md`
+- https://code.visualstudio.com/docs/copilot/customization/custom-agents
+- https://code.visualstudio.com/docs/copilot/customization/prompt-files
+- https://code.visualstudio.com/docs/copilot/customization/agent-skills

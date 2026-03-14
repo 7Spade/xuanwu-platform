@@ -1,17 +1,17 @@
 ---
 name: "Xuanwu Application Architecture Rules"
-description: "Project-specific application rules for feature-slice boundaries, Next.js App Router behavior, and performance-aware implementation."
+description: "Project-specific application rules for Domain Module boundaries, Next.js App Router behavior, and performance-aware implementation."
 applyTo: "src/**/*.{ts,tsx,js,jsx,css,md}"
 ---
 
 # Xuanwu Application Architecture Rules
 
-## Feature Slice Architecture
+## Domain Module Architecture
 
-- MUST enforce unidirectional dependency flow and route cross-feature imports through public `index.ts` barrels only.
-- MUST keep server-side data fetching in feature `queries.ts` files and server mutations in `actions.ts` files.
-- MUST wrap third-party services behind feature adapters instead of calling SDKs directly from UI components.
-- MUST colocate tests with their feature code and keep feature READMEs synchronized with public API or integration changes.
+- MUST enforce unidirectional dependency flow and route cross-module imports through public `index.ts` barrels only.
+- MUST keep server-side data fetching in module `queries.ts` files and server mutations in `actions.ts` files.
+- MUST wrap third-party services behind module adapters instead of calling SDKs directly from UI components.
+- MUST colocate tests with their module code and keep module READMEs synchronized with public API or integration changes.
 
 ## Next.js App Router
 

@@ -1,8 +1,8 @@
 ---
 name: ddd-layer-audit
-description: 'Audit a Xuanwu feature slice or the entire src/ for DDD layer dependency violations: wrong-direction imports, business logic leaks, and D24 Firebase violations.'
+description: 'Audit a Xuanwu domain module or the entire src/ for DDD layer dependency violations: wrong-direction imports, business logic leaks, and D24 Firebase violations.'
 agent: 'ddd-orchestrator'
-argument-hint: 'Scope to audit, e.g.: src/features/workspace.slice | src/features/skill-xp.slice/domain.tasks'
+argument-hint: 'Scope to audit, e.g.: src/modules/workspace.module | src/modules/skill-xp.module/domain.tasks'
 ---
 
 # DDD Layer Audit Workflow
@@ -23,8 +23,8 @@ This prompt audits compliance with the 4-layer DDD dependency direction rule.
 - Domain invariants expressed as DTOs rather than as Value Objects.
 
 ### D24 Firebase Violations
-- `import { Firestore } from 'firebase/firestore'` in feature slice files.
-- Direct Firebase SDK usage outside `src/features/infra.*`.
+- `import { Firestore } from 'firebase/firestore'` in domain module files.
+- Direct Firebase SDK usage outside `src/modules/<module>/infra.*` or `src/infrastructure/firebase/`.
 
 ### Port Contract Gaps
 - Application calling infrastructure adapters by concrete class name (not via port interface).
@@ -45,4 +45,4 @@ This prompt audits compliance with the 4-layer DDD dependency direction rule.
 - Summary: BLOCKERS (must fix) / MAJORS (should fix) / MINORS (good to fix).
 - Optional: initiate `ddd-domain-modeler` or `ddd-infrastructure` for fixes.
 
-Audit scope: ${input:scope:e.g. src/features/workspace.slice or src/}
+Audit scope: ${input:scope:e.g. src/modules/workspace.module or src/}
