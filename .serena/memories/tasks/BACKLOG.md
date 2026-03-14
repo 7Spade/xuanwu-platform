@@ -20,12 +20,12 @@
 | `skill-xp.slice` | `achievement.module` | ✅ Wave 12 |
 | `organization.slice` (namespaces) | `namespace.module` | ✅ Wave 13 |
 | `social-graph.slice` | `social.module` | ✅ Wave 13 |
-| `workspace.slice/domain.files` | `file.module` | ⬜ Wave 14 |
-| `organization.slice/gov.*` | `audit.module` | ⬜ Wave 14 |
-| `workspace.slice` (fork/divergence) | `fork.module` | ⬜ Wave 15 |
-| `workspace.slice` (comments/reactions) | `collaboration.module` | ⬜ Wave 15 |
-| `global-search.slice` + `semantic-graph.slice` | `search.module` | ⬜ Wave 16 |
-| `semantic-graph.slice` (BFS/DFS causal) | `causal-graph.module` | ⬜ Wave 16 |
+| `workspace.slice/domain.files` | `file.module` | ✅ Wave 14 |
+| `organization.slice/gov.*` | `audit.module` | ✅ Wave 14 |
+| `workspace.slice` (fork/divergence) | `fork.module` | ✅ Wave 15 |
+| `workspace.slice` (comments/reactions) | `collaboration.module` | ✅ Wave 15 |
+| `global-search.slice` + `semantic-graph.slice` | `search.module` | ✅ Wave 16 |
+| `semantic-graph.slice` (BFS/DFS causal) | `causal-graph.module` | ✅ Wave 16 |
 
 ---
 
@@ -213,3 +213,69 @@ After Wave 16 all 16 modules will have complete domain service + infra (mapper +
 2. All 3 files per module implemented: `domain.*/_service.ts`, `infra.firestore/_mapper.ts`, `infra.firestore/_repository.ts`
 3. Serena memory updated for both modules
 4. CodeQL: 0 alerts on changed files
+
+---
+
+## Phase 2 — Presentation Layer (所有 Waves 完成後的下一階段)
+
+> Status: ⬜ Not started. All 16 domain+infra layers done as of Wave 16.
+> Source reference: `7Spade/xuanwu` has 99 `_components/*.tsx` files across all feature slices.
+> Target: `src/modules/*/_components/` + `src/app/` pages.
+
+### Current State (App pages)
+
+| Page | Path | Status |
+|------|------|--------|
+| Root redirect | `src/app/page.tsx` | ✅ Shows platform info |
+| Login/Register | `src/app/(auth)/login/page.tsx` | ✅ **Implemented** (Wave 17) |
+| Register (redirect) | `src/app/(auth)/register/page.tsx` | ✅ **Implemented** (Wave 17) |
+| Forgot Password | `src/app/(auth)/forgot-password/page.tsx` | ✅ **Implemented** (Wave 17) |
+| Onboarding | `src/app/(main)/onboarding/page.tsx` | ⬜ Placeholder |
+| Workspaces list | `src/app/(main)/[slug]/workspaces/page.tsx` | ⬜ Placeholder |
+| WBS | `src/app/(main)/[slug]/[workspaceId]/(workspace)/wbs/page.tsx` | ⬜ Placeholder |
+| Editor | `src/app/(main)/[slug]/[workspaceId]/(standalone)/editor/page.tsx` | ⬜ Placeholder |
+| Profile settings | `src/app/(main)/(account)/profile/page.tsx` | ⬜ Placeholder |
+| Security settings | `src/app/(main)/(account)/security/page.tsx` | ⬜ Placeholder |
+| Notifications | `src/app/(main)/(account)/notifications/page.tsx` | ⬜ Placeholder |
+| Organizations | `src/app/(main)/(account)/organizations/page.tsx` | ⬜ Placeholder |
+| Org general settings | `src/app/(main)/[slug]/settings/general/page.tsx` | ⬜ Placeholder |
+| Org members | `src/app/(main)/[slug]/settings/members/page.tsx` | ⬜ Placeholder |
+| Org billing | `src/app/(main)/[slug]/settings/billing/page.tsx` | ⬜ Placeholder |
+| Org API keys | `src/app/(main)/[slug]/settings/api-keys/page.tsx` | ⬜ Placeholder |
+| Admin | `src/app/(admin)/admin/page.tsx` | ⬜ Placeholder |
+| Share | `src/app/(shared)/share/[shareId]/page.tsx` | ⬜ Placeholder |
+| Invite | `src/app/(invite)/invite/[token]/page.tsx` | ⬜ Placeholder |
+
+### Identity module components — Wave 17 (AUTH UI)
+
+**Files completed:**
+- `src/modules/identity.module/_components/login-form.tsx` ✅
+- `src/modules/identity.module/_components/register-form.tsx` ✅
+- `src/modules/identity.module/_components/reset-password-form.tsx` ✅
+- `src/modules/identity.module/_components/auth-tabs-root.tsx` ✅
+- `src/modules/identity.module/_components/auth-view.tsx` ✅
+- `src/modules/identity.module/_client-actions.ts` ✅
+
+**i18n keys added to `src/shared/i18n/index.ts`:**
+- auth.* keys (login, register, email, password, etc.)
+
+### Next Priority (Wave 18+)
+
+**Workspace Shell** (required for any authenticated page to work):
+- `src/modules/workspace.module/_components/shell/dashboard-sidebar.tsx`
+- `src/modules/workspace.module/_components/shell/header.tsx`
+- `src/modules/workspace.module/_components/shell/nav-workspaces.tsx`
+- `src/modules/workspace.module/_components/workspace-card.tsx`
+- `src/modules/workspace.module/_components/workspace-list.tsx`
+
+**Work items (WBS)**:
+- `src/modules/work.module/_components/task-tree-node.tsx`
+- `src/modules/work.module/_components/tasks-view.tsx`
+
+### Acceptance Criteria for Presentation Waves
+
+1. TypeScript: `npx tsc --noEmit` passes with 0 errors
+2. Components use `@/design-system/primitives/ui/` (NOT `@/shadcn-ui/`)
+3. i18n via `useTranslation("zh-TW")` from `@/shared/i18n`
+4. No direct infrastructure imports in components (go through module barrel `index.ts`)
+5. Pages updated from `<div>Placeholder</div>` to real components

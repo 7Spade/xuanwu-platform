@@ -135,3 +135,36 @@
   - `onAuthStateChanged(callback): () => void`
 - `class FirestoreAuthClaimsAdapter` — 實作 IAuthClaimsPort（TOKEN_REFRESH_SIGNAL 寫入）
   - `emitRefreshSignal(accountId): Promise<void>` — 寫入 tokenRefreshSignals/{accountId}
+
+---
+
+## `_client-actions.ts` *(Wave 17 — 新增)*
+**描述**: 客戶端 Firebase Auth 操作封裝。無 `'use server'`，直接使用 Firebase Web SDK（因為 Auth 必須在瀏覽器端執行）。
+**函數清單**:
+- `clientSignIn(email, password): Promise<Result<string>>` — Email + 密碼登入，回傳 UID
+- `clientRegister(email, password, displayName): Promise<Result<string>>` — 建立帳號並設定顯示名稱
+- `clientSignInAnonymously(): Promise<Result<string>>` — 匿名登入
+- `clientSendPasswordResetEmail(email): Promise<Result<void>>` — 發送密碼重置郵件
+- `clientSignOut(): Promise<Result<void>>` — 登出
+
+---
+
+## `_components/login-form.tsx` *(Wave 17 — 新增)*
+**描述**: 登入表單 UI 元件（email + 密碼欄位、忘記密碼按鈕）。
+**Props**: `email`, `setEmail`, `password`, `setPassword`, `handleLogin`, `isLoading`, `onForgotPassword`
+
+## `_components/register-form.tsx` *(Wave 17 — 新增)*
+**描述**: 註冊表單 UI 元件（暱稱 + email + 密碼欄位）。
+**Props**: `name`, `setName`, `email`, `setEmail`, `password`, `setPassword`, `handleRegister`, `isLoading`
+
+## `_components/reset-password-form.tsx` *(Wave 17 — 新增)*
+**描述**: 密碼重置表單（email 輸入、發送/取消按鈕、內建錯誤顯示）。
+**Props**: `defaultEmail?`, `onSuccess`, `onCancel`
+
+## `_components/auth-tabs-root.tsx` *(Wave 17 — 新增)*
+**描述**: 驗證卡片容器，含登入/註冊分頁 (Tabs) 和訪客登入按鈕。
+**Props**: `isLoading`, `email`, `setEmail`, `password`, `setPassword`, `name`, `setName`, `handleAuth`, `handleAnonymous`, `openResetDialog`
+
+## `_components/auth-view.tsx` *(Wave 17 — 新增)*
+**描述**: 智能驗證容器。管理所有 auth 狀態，委派渲染給子元件。含重置密碼彈窗 (Dialog)。成功後 router.push("/")。
+**Export**: `AuthView` — 直接在 `app/(auth)/login/page.tsx` 使用
