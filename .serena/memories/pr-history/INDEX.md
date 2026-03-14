@@ -68,3 +68,4 @@ This index covers all PRs in the xuanwu-platform repository (updated 2026-03-14)
 9. **PR #10** — 🧹 Docs: features→modules rename, design-system tokens, VS Code URL fixes; Serena initialization
 10. **PR #11** — 🏗 Major: scaffold all 17 Domain Modules; domain-lookup decision framework (20 Qs + merge/split rules + 6-step flowchart + overlap analysis)
 11. **PR #12** — 🧹 Docs: Occam's Razor maintenance pass after PRs #1–#11; mcp.md firebase env var fix; memory index update
+12. **PR #13 (copilot/gradual-value-extraction)** — 🏗 Major: Progressive domain value extraction (Waves 1–8) — all 16 modules receive full domain + application layer extracted from 7Spade/xuanwu; `.serena/memories/modules/` file index created (INDEX.md + 16 per-module files; each lists every .ts file with name, description, and function list)
