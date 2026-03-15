@@ -1,6 +1,5 @@
-'use server';
-// Account server actions — thin 'use server' wrappers over application use cases.
-// Wire port interfaces to real infrastructure adapters once infra.firestore is implemented.
+// Account actions — re-export barrel for application use cases.
+// Components import mutation functions from here; repos are injected at the call site.
 
 export type { AccountDTO, PublicProfileDTO } from "./_use-cases";
 export {

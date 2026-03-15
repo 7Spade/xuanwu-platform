@@ -339,6 +339,40 @@ export type { CurrentAccountState } from "./_components/account-provider";
 
 ---
 
+## Issue 26：所有模組 `core/_actions.ts` 錯誤使用 `'use server'` 指令（Build 失敗）
+
+**受影響範圍：** 全部 16 個模組的 `core/_actions.ts`  
+**嚴重程度：** 高（🔴）  
+**狀態：** ✅ Fixed
+
+### 問題描述
+
+16 個模組的 `core/_actions.ts` 頂端均有 `'use server';` 指令，但檔案內容僅為從 `_use-cases.ts` 的 **re-export 轉接**，並未在檔案內部定義任何 `async function`。
+
+Next.js 15.5+ 嚴格規定：`'use server'` 檔案只能匯出**在該檔案內部定義的** `async function`，不允許 re-export 其他模組的函數。
+
+```
+// ❌ 觸發 Build 失敗
+'use server';
+export { createWorkspace, getWorkspaceById, ... } from "./_use-cases"; // re-export 不允許
+```
+
+### 實際影響
+
+- `workspace-grants-view.tsx` import `workspace.module/core/_actions` 觸發 Vercel Build 錯誤：  
+  `Only async functions are allowed to be exported in a "use server" file.`
+- 所有 16 個模組的 `_actions.ts` 均有相同問題，Build 成功僅因其他模組的 `_actions.ts` 尚未被 Client Component tree-shaking 命中
+
+### 根本原因
+
+這些 `_actions.ts` 檔案從一開始就被設計為「組織性轉接層」而非真正的 Next.js Server Action。專案中所有 Firebase 操作均透過 Firebase Web SDK 在用戶端執行（Client Components 直接 `new Firestore*Repository()`），因此 `'use server'` 完全不適用於這些轉接檔案。
+
+### 修正方式
+
+移除全部 16 個模組 `core/_actions.ts` 頂端的 `'use server';` 指令，將其還原為純粹的 re-export 轉接層。Build 恢復正常。
+
+---
+
 ## 摘要表 / Summary（現有待解決問題）
 
 | # | 嚴重程度 | 違規類型 | 受影響範圍 | 狀態 |
@@ -350,3 +384,4 @@ export type { CurrentAccountState } from "./_components/account-provider";
 | 23 | 高（🔴）| workspace.module 跨模組直接存取 work.module / account.module 內部層 | 11 個元件 | ❌ Open |
 | 24 | 中（🟡）| 跨模組 Presentation Layer 元件直接依賴 | 3 個元件，3 個模組 | ❌ Open |
 | 25 | 中（🟡）| `useCurrentAccount` 跨模組 Presentation Hook 耦合（壞味道） | 11 個元件，7 個模組 | ❌ Open |
+| 26 | 高（🔴）| 全部 16 個 `core/_actions.ts` 錯誤使用 `'use server'`（僅含 re-export） | 16 個模組 | ✅ Fixed |

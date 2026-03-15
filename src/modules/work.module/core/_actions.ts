@@ -1,4 +1,3 @@
-'use server';
 export type { WorkItemDTO, UpdateWorkItemInput } from "./_use-cases";
 export {
   createWorkItem,
