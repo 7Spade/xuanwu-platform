@@ -26,9 +26,23 @@ src/
 | From | Allowed imports |
 |------|----------------|
 | `src/shared/*` | Only other `src/shared/*` sub-modules (no circular deps) |
-| `src/modules/*` | `@/shared` barrel or specific sub-paths |
 | `src/infrastructure/*` | `@/shared` barrel or specific sub-paths |
+| `src/modules/*` | `@/shared` barrel or specific sub-paths |
 | `src/app/*` | `@/shared` barrel or specific sub-paths |
+
+### Dependency direction
+
+```
+src/shared/          ← foundation layer (no external deps)
+      ↓
+src/infrastructure/  ← adapters implement shared port interfaces
+      ↓
+src/modules/         ← domain modules depend on shared + infrastructure via ports
+      ↓
+src/app/             ← Next.js App Router (Presentation)
+```
+
+`src/shared/` is intentionally the **lowest layer** — it has no knowledge of modules, infrastructure, or the framework. This makes it independently testable, reusable in Cloud Functions, and safe to use in every runtime context.
 
 ### Recommended import path
 
