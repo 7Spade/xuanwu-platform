@@ -436,6 +436,11 @@ const dictionary: Dictionary = {
     "search.module.workspace": "工作空間",
     "search.module.account": "帳號",
     "search.module.work": "任務",
+    // --- social reactions ---
+    "social.like": "按讚",
+    "social.liked": "已按讚",
+    "social.bookmark": "收藏",
+    "social.bookmarked": "已收藏",
     // --- workspace QA ---
     "workspace.qa.title": "品質保證",
     "workspace.qa.description": "審核已完成的任務並標記為已驗證",
@@ -477,6 +482,12 @@ const dictionary: Dictionary = {
     "workspace.schedule.unscheduled": "未排程任務",
     "workspace.schedule.empty": "尚無任務",
     "workspace.schedule.emptyHint": "在 WBS 中新增任務並設定到期日即可顯示在此日曆",
+    // --- workspace Files ---
+    "workspace.files.title": "檔案管理",
+    "workspace.files.description": "工作空間的文件與資料管理",
+    "workspace.files.searchPlaceholder": "搜尋檔案名稱或類型…",
+    "workspace.files.empty": "尚無上傳的檔案",
+    "workspace.files.noResults": "找不到符合的檔案",
   },
   en: {
     "home.welcome": "Welcome to Xuanwu Platform",
@@ -907,6 +918,11 @@ const dictionary: Dictionary = {
     "search.module.workspace": "Workspaces",
     "search.module.account": "Accounts",
     "search.module.work": "Tasks",
+    // --- social reactions ---
+    "social.like": "Like",
+    "social.liked": "Liked",
+    "social.bookmark": "Bookmark",
+    "social.bookmarked": "Bookmarked",
     // --- workspace QA ---
     "workspace.qa.title": "Quality Assurance",
     "workspace.qa.description": "Review completed tasks and mark them as verified",
@@ -948,6 +964,12 @@ const dictionary: Dictionary = {
     "workspace.schedule.unscheduled": "Unscheduled Tasks",
     "workspace.schedule.empty": "No tasks yet",
     "workspace.schedule.emptyHint": "Add tasks in WBS with a due date to see them on this calendar",
+    // --- workspace Files ---
+    "workspace.files.title": "Files",
+    "workspace.files.description": "Document and file management for workspace resources",
+    "workspace.files.searchPlaceholder": "Search by file name or type…",
+    "workspace.files.empty": "No files uploaded yet",
+    "workspace.files.noResults": "No files match your search",
   },
 };
 
