@@ -47,14 +47,14 @@ For each target document:
 2. Align structure and headings to match the baseline.
 3. Unify terminology with the baseline documents.
 4. Refactor Mermaid diagrams:
-   - Must reflect VS8 architecture layer system
+   - Must reflect architecture layer system
    - Maintain clear directional flows and visible lines
    - Simplify node layout without losing meaning
 5. Preserve essential content, flows, and architecture semantics.
 
 ---
 
-### VS8 Architecture Layer System
+### Architecture Layer System
 
 Ensure all diagrams and references are aligned with these layers:
 
@@ -85,7 +85,7 @@ After refinement:
 - Target documents are fully aligned with the Protocol SSOT (`Xuanwu-Semantic-Kernel-and-Matchmaking-Protocol.md`) and the topology SSOT (`docs/architecture/README.md`)
 - Redundant or bloated sections are shrunk
 - Terminology is consistent across all documents
-- Mermaid diagrams are clean, readable, and VS8-aligned
+- Mermaid diagrams are clean, readable, and aligned with the architecture layer system
 - Documents reflect a lean, professional system architecture blueprint
 
 ---

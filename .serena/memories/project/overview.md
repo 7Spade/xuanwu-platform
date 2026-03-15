@@ -20,5 +20,5 @@ Xuanwu Platform is a multi-tenant SaaS project management tool built on Next.js 
 ## Key Architecture Decisions
 - **Modular DDD**: Domain Modules live in `src/modules/<name>.module/`; each is a Bounded Context with 4 layers
 - **Design System**: 4-tier — `primitives/` (shadcn), `components/` (wrappers), `patterns/` (composites), `tokens/` (design constants)
-- **Firebase infra**: `src/infrastructure/firebase/client/` (Web SDK) + `src/infrastructure/firebase/functions/` (Admin SDK)
+- **Firebase infra**: `src/infrastructure/firebase/client/` (Web SDK) + `src/infrastructure/firebase/admin/` (Admin SDK)
 - **No shared-kernel / shared-infra**: Deleted in PR #6. Cross-module access only via public `index.ts` barrels.

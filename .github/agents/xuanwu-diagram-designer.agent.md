@@ -1,6 +1,6 @@
 ---
 name: 'xuanwu-diagram-designer'
-description: 'Specialized agent for refining and standardizing architecture diagrams using Mermaid and the VS8 visual system.'
+description: 'Specialized agent for refining and standardizing architecture diagrams using Mermaid.'
 tools: ['codebase', 'search', 'editFiles', 'filesystem/*', 'serena/*']
 handoffs:
   - label: 'Escalate to architecture chief'
@@ -53,9 +53,9 @@ Diagrams should communicate architecture structure instantly.
 
 ---
 
-## VS8 Architecture Color System
+## Architecture Color System
 
-All diagrams must follow the VS8 architecture layer color system.
+All diagrams must follow the architecture layer color system.
 
 Layer| Meaning
 Identity| identity / actor / account
@@ -164,7 +164,7 @@ When encountering diagrams:
 1. read surrounding documentation
 2. understand architecture meaning
 3. refine visual structure
-4. align with VS8 layers
+4. align with architecture layers
 5. simplify the graph
 
 Always ensure diagram matches architecture narrative.

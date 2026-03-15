@@ -79,7 +79,7 @@ src/infrastructure/firebase/
 ├── client/          # Web SDK（客戶端用）
 │   ├── index.ts     # getFirestore, getAuth, getDatabase
 │   └── app-check.ts # reCAPTCHA Enterprise App Check
-├── functions/       # Admin SDK（伺服器端用）
+├── admin/           # Admin SDK（伺服器端用）
 │   └── index.ts     # adminDb, adminAuth
 └── index.ts         # 匯出兩側 helper
 ```

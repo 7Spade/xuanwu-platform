@@ -20,7 +20,11 @@ This index covers all PRs in the xuanwu-platform repository (updated 2026-03-14)
 | #11 | feat: scaffold all 17 MDDD modules + domain-lookup decision framework + overlap analysis | ✅ Merged | Architecture / Domain Modules |
 | #12 | docs: maintain documentation consistency after PRs #1–#11 (Occam's Razor pass) | ✅ Merged | Docs / Maintenance |
 | #13 | feat: progressive domain value extraction — Waves 1–16, all 16 modules domain + application layers | ✅ Merged | Domain Layers |
-| Current | feat: Waves 17–22 — auth UI, shell, all placeholder pages → UX shells, AccountProvider + real data | 🔄 Open | Presentation / Data |
+| #14 | feat: workspace parity Waves 17–42 (auth UI, shell, workspaces, WBS, grants, capabilities, locations) | ✅ Merged | Presentation / Workspace |
+| #15 | feat: workspace parity Waves 43–46 (WBS tree engine, CreateWorkspaceDialog, DailyLog, Issues) | ✅ Merged | Workspace / Work |
+| #16 | fix: rename firebase/functions → firebase/admin; shared ports layer; Upstash infra; Document AI | ✅ Merged | Infrastructure / Docs |
+| #17 | feat: workspace parity Waves 47–62 (all 16 modules full UI + nav parity) | ✅ Merged | Presentation / Full Parity |
+| #18 | docs+fix: VS8 trace removal, admin path sync, memory/index update | ✅ Merged | Docs / Maintenance |
 
 ## Memory File Index
 
@@ -70,27 +74,9 @@ This index covers all PRs in the xuanwu-platform repository (updated 2026-03-14)
 9. **PR #10** — 🧹 Docs: features→modules rename, design-system tokens, VS Code URL fixes; Serena initialization
 10. **PR #11** — 🏗 Major: scaffold all 17 Domain Modules; domain-lookup decision framework (20 Qs + merge/split rules + 6-step flowchart + overlap analysis)
 11. **PR #12** — 🧹 Docs: Occam's Razor maintenance pass after PRs #1–#11; mcp.md firebase env var fix; memory index update
-12. **PR #13 (copilot/gradual-value-extraction)** — 🏗 Major: Progressive domain value extraction (Waves 1–8) — all 16 modules receive full domain + application layer extracted from 7Spade/xuanwu; `.serena/memories/modules/` file index created (INDEX.md + 16 per-module files; each lists every .ts file with name, description, and function list)
-13. **PR #13 continued (Waves 9–16)** — domain service enrichment for all remaining modules (identity, account, workspace, workforce, work, notification, settlement, achievement, namespace, social, file, audit, fork, collaboration, search, causal-graph) + infra.firestore mapper + repository for all 16 modules
-14. **Current PR (copilot/implement-ocams-razor-principle — Waves 17–22)** — 🏗 Major: Presentation Layer
-    - Wave 17: identity auth UI (login-form, register-form, reset-password-form, auth-tabs-root, auth-view, _client-actions)
-    - Wave 18: workspace shell (nav-main, nav-user, dashboard-sidebar, shell-header; main layout uses SidebarProvider)
-    - Wave 19: workspaces list + profile settings + onboarding (WorkspacesView, WorkspaceCard, UserSettingsView, ProfileCard)
-    - Waves 20+21: all 12 remaining placeholder pages → functional UX shells (security, notifications, organizations, org settings, billing, api-keys, wbs, editor, admin, invite, share)
-    - Wave 22: AccountProvider (React context with onAuthStateChanged + Firestore account), useWorkspaces hook, real data for workspaces list and nav-user
-15. **PR #14 (feat/workspace-parity-waves-30-42)** — 🏗 Major: Workspace parity Waves 30–42
-    - Wave 30: audit presentation (WorkspaceAuditView, AuditLogView, DashboardView upgrade)
-    - Wave 31: WorkspaceShell + WorkspaceNavTabs + useWorkspace hook
-    - Wave 32: WorkspaceCapability type + WorkspaceCapabilitiesView + /capabilities route
-    - Wave 33: WorkspaceStatusBar + dynamic tabs from capabilities + WorkspaceGrantsView (read-only)
-    - Wave 34: updateWorkspaceSettings + mountCapabilities + unmountCapability + WorkspaceSettingsDialog (interactive)
-    - Wave 35: grantWorkspaceAccess + revokeWorkspaceAccess + updateWorkspaceRole + WorkspaceGrantsView (interactive)
-    - Wave 36: deleteWorkspace use case + WorkspaceSettingsDialog Danger Zone
-    - Wave 37: advanceWorkspaceLifecycle wired to WorkspaceCard + settings gear on card
-    - Wave 38: CreateWorkItemDialog + WbsView "+ Add Task" button
-    - Wave 39: updateWorkItem use case + WorkItemEditDialog (6 fields) + WorkItemRow hover-pencil
-    - Wave 40: photoURL field in WorkspaceSettingsDialog with live preview
-    - Wave 41: deleteWorkItem use case + WorkItemRow trash→AlertDialog
-    - Wave 42: WorkspaceLocationsView (building/floor/room hierarchy) + addWorkspaceLocation/removeWorkspaceLocation + /locations route
-    - tsc clean, 255/255 tests throughout
-    - **Next: Wave 43 (Advanced WBS Task Tree Engine), Wave 44 (Create Workspace Dialog), Wave 45 (Daily Log), Wave 46 (Issues)**
+12. **PR #13** — 🏗 Major: Progressive domain value extraction (Waves 1–16) — all 16 modules receive full domain + application layer; `.serena/memories/modules/` file index created
+13. **PR #14** — 🏗 Major: Workspace parity Waves 17–42 (auth UI, shell, WBS, grants, capabilities, locations)
+14. **PR #15** — 🏗 Major: Workspace parity Waves 43–46 (WBS tree engine, CreateWorkspaceDialog, DailyLog, Issues)
+15. **PR #16** — 🔧 Infra: rename firebase/functions→firebase/admin; shared ports (ICachePort, IQueuePort, IVectorIndexPort, IWorkflowPort); Upstash infrastructure; Document AI pipeline
+16. **PR #17** — 🏗 Major: Workspace parity Waves 47–62 — all 16 modules full UI + nav parity; complete feature/UX parity with 7Spade/xuanwu; 0 lint, 0 tsc, 255/255 tests, 0 CodeQL
+17. **PR #18** — 🧹 Docs: VS8 trace removal, admin path sync across memories/index

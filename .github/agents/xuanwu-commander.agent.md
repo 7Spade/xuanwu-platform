@@ -42,7 +42,7 @@ handoffs:
     prompt: 'Restructure the architecture documentation for clarity and consistency.'
   - label: 'Refine architecture diagrams'
     agent: xuanwu-diagram-designer
-    prompt: 'Refine the architecture diagrams using Mermaid and the VS8 visual system.'
+    prompt: 'Refine the architecture diagrams using Mermaid.'
   - label: 'Read-only architecture analysis'
     agent: xuanwu-repo-browser
     prompt: 'Analyze the architecture documentation for the task above without making changes.'

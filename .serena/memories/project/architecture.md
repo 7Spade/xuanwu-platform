@@ -68,7 +68,7 @@ Import pattern: `import { Button } from "@/design-system/primitives"`
 
 ## Firebase Infrastructure (`src/infrastructure/firebase/`)
 - `client/` — Web SDK (browser)
-- `functions/` — Admin SDK (server-side)
+- `admin/` — Admin SDK (server-side)
 
 ## Shared Utilities (`src/shared/`)
 - `i18n/index.ts` — in-code translation dictionary (en + zh-TW)
