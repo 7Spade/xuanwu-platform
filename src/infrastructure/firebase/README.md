@@ -39,7 +39,7 @@ src/
 │               └─ index.ts          # 公共工具函數
 ```
 
-> **Note:** `functions/` has been renamed to `admin/` to avoid confusion with Firebase Cloud Functions (which live at the repo root in `functions/`). The old `functions/` path is kept as a re-export shim for backward compatibility.
+> **Note:** `functions/` has been renamed to `admin/` to avoid confusion with Firebase Cloud Functions (which live at the repo root in `functions/`). All imports should use `@/infrastructure/firebase/admin`.
 
 ### Dependency direction
 
