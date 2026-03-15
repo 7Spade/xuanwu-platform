@@ -17,7 +17,6 @@
 
 import { User as UserIcon, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useMemo } from "react";
 
 import { useTranslation } from "@/shared/i18n";
 import { Badge } from "@/design-system/primitives/ui/badge";

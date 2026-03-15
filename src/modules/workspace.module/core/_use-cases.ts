@@ -1,6 +1,6 @@
 import { ok, fail } from "@/shared";
 import type { Result } from "@/shared";
-import type { WorkspaceEntity, WorkspaceAddress, WorkspaceLocation, WorkspacePersonnel } from "../domain.workspace/_entity";
+import type { WorkspaceEntity, WorkspaceAddress, WorkspaceLocation, WorkspacePersonnel, WorkspaceGrant } from "../domain.workspace/_entity";
 import { buildWorkspace, hasWorkspaceAccess } from "../domain.workspace/_entity";
 import type {
   WorkspaceId,
@@ -344,7 +344,7 @@ export async function grantWorkspaceAccess(
       }
       return ok(undefined);
     }
-    const grant: import("../domain.workspace/_entity").WorkspaceGrant = {
+    const grant: WorkspaceGrant = {
       grantId: `grant-${crypto.randomUUID()}`,
       userId: input.userId,
       role: input.role,

@@ -7,7 +7,8 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { getFirestore, collection, getDocs, query, where, QueryDocumentSnapshot } from "firebase/firestore";
+import { getFirestore, collection, getDocs, query, where } from "firebase/firestore";
+import type { QueryDocumentSnapshot } from "firebase/firestore";
 import type { ForkDTO } from "../core/_use-cases";
 
 interface ForkDoc {

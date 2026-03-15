@@ -10,7 +10,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { FirestoreCausalEdgeRepository } from "../infra.firestore/_repository";
 import type { CausalNode, CausalEdge, CausalNodeId } from "../domain.causal-graph/_entity";
-import { getFirestore, collection, getDocs, query, where, QueryDocumentSnapshot } from "firebase/firestore";
+import { getFirestore, collection, getDocs, query, where } from "firebase/firestore";
+import type { QueryDocumentSnapshot } from "firebase/firestore";
 
 // ---------------------------------------------------------------------------
 // Firestore document shape

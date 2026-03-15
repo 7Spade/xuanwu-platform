@@ -6,7 +6,7 @@
  */
 
 import type { SocialRelation } from "../domain.social/_entity";
-import type { SocialRelationType, SocialTargetType } from "../domain.social/_value-objects";
+import type { SocialRelationType } from "../domain.social/_value-objects";
 import { SocialTargetTypeSchema } from "../domain.social/_value-objects";
 
 // ---------------------------------------------------------------------------

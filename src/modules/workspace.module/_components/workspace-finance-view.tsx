@@ -27,7 +27,6 @@ import {
   Receipt,
   TrendingUp,
 } from "lucide-react";
-import { Badge } from "@/design-system/primitives/ui/badge";
 import { Button } from "@/design-system/primitives/ui/button";
 import {
   Select,
@@ -143,7 +142,7 @@ interface FinanceItemRowProps {
   onUpdated: () => void;
 }
 
-function FinanceItemRow({ item, workspaceId, onUpdated }: FinanceItemRowProps) {
+function FinanceItemRow({ item, workspaceId: _workspaceId, onUpdated }: FinanceItemRowProps) {
   const t = useTranslation("zh-TW");
   const stage = getFinanceStage(item);
   const [updating, setUpdating] = useState(false);
