@@ -191,6 +191,7 @@ The repository now follows these consolidation rules:
 20. `vercel-react-best-practices` is the Vercel-sourced React and Next.js performance optimization skill (40+ rules: Server Components, memoization, code splitting, Image/Font, bundle analysis, streaming). Set `user-invocable: false` — auto-loaded when working on React/Next.js performance.
 21. `vercel-composition-patterns` is the Vercel-sourced React composition skill (compound components, slot composition, `asChild`, render props, controlled vs. uncontrolled). Set `user-invocable: false` — auto-loaded when designing component APIs.
 22. `shadcn` is the project-aware shadcn/ui skill for Xuanwu. Reads `components.json` config, documents correct import aliases (`@/design-system/primitives`), CLI commands, and MCP server usage. Set `user-invocable: false` — auto-loaded when working with shadcn/ui components.
+23. `xuanwu-diagram-standards` is the diagram methodology skill that is the single source of truth for all Xuanwu Mermaid diagram standards: architecture layer color system, layout principles, preferred diagram types, refactoring rules, and quality targets. Referenced by `xuanwu-diagram-designer` agent and `xuanwu-architecture-chief` agent instead of repeating inline content.
 
 ## Required Reference Documents for Customizations
 

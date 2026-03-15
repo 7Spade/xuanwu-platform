@@ -81,18 +81,7 @@ Characteristics:
 
 # Diagram Requirements
 
-Use **Mermaid diagrams**.
-
-Apply the **architecture layer color system** for layers:
-
-1 Identity  
-2 Governance  
-3 Semantic  
-4 Task / Skill  
-5 Data Lifecycle  
-6 Matching / AI  
-7 Infrastructure  
-8 Observability
+For diagram standards, architecture layer color system, layout principles, and Mermaid guidelines, follow `.github/skills/xuanwu-diagram-standards/SKILL.md`.
 
 ---
 
