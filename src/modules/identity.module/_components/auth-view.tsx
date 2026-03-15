@@ -6,7 +6,7 @@
  * Renders the full-page auth flow with login/register tabs and password reset dialog.
  */
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useTranslation } from "@/shared/i18n";
@@ -55,7 +55,21 @@ function resolvePostLoginUrl(
   return fallback;
 }
 
+/**
+ * AuthView — public export.
+ *
+ * Wraps the real implementation in a `<Suspense>` boundary because
+ * `useSearchParams()` (used inside) requires one for Next.js static rendering.
+ */
 export function AuthView() {
+  return (
+    <Suspense>
+      <AuthViewInner />
+    </Suspense>
+  );
+}
+
+function AuthViewInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useTranslation("zh-TW");
