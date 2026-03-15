@@ -2,6 +2,7 @@
 /**
  * DailyLogCard — shows a single daily log entry with edit/delete actions.
  * Wave 45: core card. Wave 52: social reactions (like + bookmark).
+ * Wave 55: comment thread (collaboration.module).
  */
 
 import { useState } from "react";
@@ -22,6 +23,7 @@ import { deleteDailyLog } from "@/modules/workspace.module/core/_daily-log-use-c
 import type { DailyLogDTO } from "@/modules/workspace.module/core/_daily-log-use-cases";
 import { useCurrentAccount } from "@/modules/account.module/_components/account-provider";
 import { SocialActionsBar } from "@/modules/social.module/_components/social-actions-bar";
+import { CommentThread } from "@/modules/collaboration.module/_components/comment-thread";
 
 let _repo: FirestoreDailyLogRepository | null = null;
 function getRepo() {
@@ -105,6 +107,13 @@ export function DailyLogCard({ log, onEdit, onDeleted }: DailyLogCardProps) {
             currentAccountId={account?.id}
           />
         </div>
+
+        {/* Comment thread — Wave 55 */}
+        <CommentThread
+          artifactType="daily-log"
+          artifactId={log.id}
+          defaultCollapsed
+        />
       </div>
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>

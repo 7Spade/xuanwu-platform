@@ -11,9 +11,12 @@ import { Settings } from "lucide-react";
 import { useTranslation } from "@/shared/i18n";
 
 import { ProfileCard } from "./profile-card";
+import { useCurrentAccount } from "./account-provider";
+import { AchievementsPanel } from "@/modules/achievement.module/_components/achievements-panel";
 
 export function UserSettingsView() {
   const t = useTranslation("zh-TW");
+  const { account } = useCurrentAccount();
 
   return (
     <div className="mx-auto max-w-3xl space-y-8 duration-500 animate-in fade-in">
@@ -26,6 +29,9 @@ export function UserSettingsView() {
       </div>
 
       <ProfileCard />
+
+      {/* Achievements — Wave 56 */}
+      <AchievementsPanel accountId={account?.id} />
     </div>
   );
 }

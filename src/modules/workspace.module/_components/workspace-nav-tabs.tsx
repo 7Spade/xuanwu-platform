@@ -40,6 +40,9 @@ const CAPABILITY_LABEL_KEY: Record<string, string> = {
   schedule:            "workspace.nav.schedule",
   "document-parser":   "workspace.nav.editor",
   editor:              "workspace.nav.editor",
+  "causal-graph":      "workspace.nav.causalGraph",
+  workforce:           "workspace.nav.workforce",
+  forks:               "workspace.nav.forks",
   // Projection
   audit:               "workspace.nav.audit",
 };
