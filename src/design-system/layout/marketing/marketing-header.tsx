@@ -19,6 +19,12 @@ export interface MarketingHeaderProps {
   locale: Locale;
   /** Called when the user requests a locale change. */
   onLocaleChange: (locale: Locale) => void;
+  /**
+   * Whether the current visitor is authenticated.
+   * When `true`, the Login CTA is replaced with an "Enter Platform" link.
+   * Defaults to `false` (unauthenticated view) so SSR / loading states are safe.
+   */
+  isAuthenticated?: boolean;
 }
 
 /**
@@ -32,8 +38,10 @@ export interface MarketingHeaderProps {
  *   - App name / brand (left)
  *   - Language dropdown + theme toggle + Login CTA (right)
  */
-export function MarketingHeader({ locale, onLocaleChange }: MarketingHeaderProps) {
+export function MarketingHeader({ locale, onLocaleChange, isAuthenticated = false }: MarketingHeaderProps) {
   const t = useTranslation(locale);
+  const ctaClassName =
+    "inline-flex items-center rounded-md bg-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between border-b bg-background/80 px-6 backdrop-blur">
@@ -65,13 +73,16 @@ export function MarketingHeader({ locale, onLocaleChange }: MarketingHeaderProps
         {/* Dark / light / system theme toggle */}
         <ModeToggle locale={locale} />
 
-        {/* Login CTA */}
-        <Link
-          href="/login?callbackUrl=/"
-          className="inline-flex items-center rounded-md bg-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          {t("home.login")}
-        </Link>
+        {/* Auth CTA: "Enter Platform" when signed in, "Login" otherwise */}
+        {isAuthenticated ? (
+          <Link href="/onboarding" className={ctaClassName}>
+            {t("home.enterPlatform")}
+          </Link>
+        ) : (
+          <Link href="/login?callbackUrl=/" className={ctaClassName}>
+            {t("home.login")}
+          </Link>
+        )}
       </div>
     </header>
   );

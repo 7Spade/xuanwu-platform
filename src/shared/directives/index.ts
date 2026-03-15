@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { getAuth, onAuthStateChanged, type User } from "firebase/auth";
+import { getFirebaseApp } from "@/infrastructure/firebase/app";
 import { DEFAULT_LOCALE } from "@/shared/constants";
 import { resolveLocale } from "@/shared/i18n";
 import type { Locale } from "@/shared/types";
@@ -165,4 +167,45 @@ export function useLocale(): [Locale, (locale: Locale) => void] {
   );
 
   return [locale, setLocale];
+}
+
+// ---------------------------------------------------------------------------
+// useAuthState
+// ---------------------------------------------------------------------------
+
+/** Return value of `useAuthState`. */
+export interface AuthState {
+  /** Firebase Auth user, or `null` when signed out. */
+  user: User | null;
+  /** `true` while the initial auth-state resolution is in-flight. */
+  loading: boolean;
+}
+
+/**
+ * Lightweight auth-state directive — implements `IAuthPort` observation for
+ * client components that are outside the `<AccountProvider>` tree (e.g. the
+ * marketing homepage).
+ *
+ * Listens to `onAuthStateChanged` and surfaces the current `User` object.
+ * Avoids loading the full `AccountDTO`; use `useCurrentAccount` inside
+ * `(main)` routes when the full profile is needed.
+ *
+ * @example
+ * const { user, loading } = useAuthState();
+ * if (!loading && user) { ... }
+ */
+export function useAuthState(): AuthState {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const auth = getAuth(getFirebaseApp());
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
+  return { user, loading };
 }

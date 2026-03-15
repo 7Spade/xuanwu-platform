@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useLocale } from "@/shared/directives";
+import { useLocale, useAuthState } from "@/shared/directives";
 import { RootShell } from "@/design-system/layout/base";
 import { MarketingHeader } from "./marketing-header";
 
@@ -24,10 +24,17 @@ interface HomeLayoutProps {
  */
 export function HomeLayout({ children }: HomeLayoutProps) {
   const [locale, setLocale] = useLocale();
+  const { user, loading } = useAuthState();
 
   return (
     <RootShell
-      header={<MarketingHeader locale={locale} onLocaleChange={setLocale} />}
+      header={
+        <MarketingHeader
+          locale={locale}
+          onLocaleChange={setLocale}
+          isAuthenticated={!loading && !!user}
+        />
+      }
     >
       {children}
     </RootShell>
