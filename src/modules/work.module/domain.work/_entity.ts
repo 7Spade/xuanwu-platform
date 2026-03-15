@@ -7,6 +7,14 @@ export interface WorkDependency {
   readonly type: DependencyType;
 }
 
+/** Physical location tag for a task (building/floor/room). */
+export interface TaskLocation {
+  readonly building?: string;
+  readonly floor?: string;
+  readonly room?: string;
+  readonly description?: string;
+}
+
 /**
  * WorkItem aggregate root.
  * Invariants:
@@ -26,6 +34,18 @@ export interface WorkItemEntity {
   readonly dependencies: readonly WorkDependency[];
   readonly createdAt: string;
   readonly updatedAt: string;
+  // --- Wave 43: WBS Tree Engine extensions ---
+  readonly parentId?: WorkItemId;
+  readonly type?: string;
+  readonly quantity?: number;
+  readonly unitPrice?: number;
+  readonly discount?: number;
+  /** Auto-computed: quantity × unitPrice − discount. Stored for fast reads. */
+  readonly subtotal?: number;
+  readonly completedQuantity?: number;
+  readonly location?: TaskLocation;
+  readonly photoURLs?: readonly string[];
+  readonly sourceIntentIndex?: number;
 }
 
 /** Milestone — groups WorkItems under a target date. */

@@ -78,3 +78,19 @@ This index covers all PRs in the xuanwu-platform repository (updated 2026-03-14)
     - Wave 19: workspaces list + profile settings + onboarding (WorkspacesView, WorkspaceCard, UserSettingsView, ProfileCard)
     - Waves 20+21: all 12 remaining placeholder pages → functional UX shells (security, notifications, organizations, org settings, billing, api-keys, wbs, editor, admin, invite, share)
     - Wave 22: AccountProvider (React context with onAuthStateChanged + Firestore account), useWorkspaces hook, real data for workspaces list and nav-user
+15. **PR #14 (feat/workspace-parity-waves-30-42)** — 🏗 Major: Workspace parity Waves 30–42
+    - Wave 30: audit presentation (WorkspaceAuditView, AuditLogView, DashboardView upgrade)
+    - Wave 31: WorkspaceShell + WorkspaceNavTabs + useWorkspace hook
+    - Wave 32: WorkspaceCapability type + WorkspaceCapabilitiesView + /capabilities route
+    - Wave 33: WorkspaceStatusBar + dynamic tabs from capabilities + WorkspaceGrantsView (read-only)
+    - Wave 34: updateWorkspaceSettings + mountCapabilities + unmountCapability + WorkspaceSettingsDialog (interactive)
+    - Wave 35: grantWorkspaceAccess + revokeWorkspaceAccess + updateWorkspaceRole + WorkspaceGrantsView (interactive)
+    - Wave 36: deleteWorkspace use case + WorkspaceSettingsDialog Danger Zone
+    - Wave 37: advanceWorkspaceLifecycle wired to WorkspaceCard + settings gear on card
+    - Wave 38: CreateWorkItemDialog + WbsView "+ Add Task" button
+    - Wave 39: updateWorkItem use case + WorkItemEditDialog (6 fields) + WorkItemRow hover-pencil
+    - Wave 40: photoURL field in WorkspaceSettingsDialog with live preview
+    - Wave 41: deleteWorkItem use case + WorkItemRow trash→AlertDialog
+    - Wave 42: WorkspaceLocationsView (building/floor/room hierarchy) + addWorkspaceLocation/removeWorkspaceLocation + /locations route
+    - tsc clean, 255/255 tests throughout
+    - **Next: Wave 43 (Advanced WBS Task Tree Engine), Wave 44 (Create Workspace Dialog), Wave 45 (Daily Log), Wave 46 (Issues)**

@@ -6,6 +6,7 @@ import type {
   WorkspaceRole,
   TaskState,
   TaskPriority,
+  WorkspaceCapability,
 } from "./_value-objects";
 
 // ---------------------------------------------------------------------------
@@ -31,6 +32,8 @@ export interface WorkspaceGrant {
 export interface WorkspaceLocation {
   readonly locationId: string;
   readonly label: string;
+  readonly type?: "building" | "floor" | "room";
+  readonly parentId?: string;
   readonly description?: string;
   readonly capacity?: number;
 }
@@ -113,6 +116,7 @@ export interface WorkspaceEntity {
   readonly personnel?: WorkspacePersonnel;
   readonly address?: WorkspaceAddress;
   readonly locations?: readonly WorkspaceLocation[];
+  readonly capabilities?: readonly WorkspaceCapability[];
   readonly tasks?: Record<string, WorkspaceTask>;
   readonly createdAt: string;  // ISO-8601
   readonly updatedAt: string;  // ISO-8601

@@ -3,3 +3,5 @@
 export type { WorkItemDTO } from "./core/_use-cases";
 export { createWorkItem, updateWorkItemStatus, getWorkItemsByWorkspace } from "./core/_use-cases";
 export type { IWorkItemRepository, IMilestoneRepository } from "./domain.work/_ports";
+export type { TaskWithChildren } from "./domain.work/_task-tree";
+export { buildTaskTree } from "./domain.work/_task-tree";

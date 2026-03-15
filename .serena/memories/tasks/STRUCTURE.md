@@ -207,3 +207,41 @@ For Wave 19, simpler patterns (direct Firebase auth, server queries) are suffici
 | 24 | Real-time notifications | notification.module |
 | 25 | WBS task tree real data | work.module |
 | 26 | Members settings real data | account.module (IMembershipRepository) |
+
+---
+
+## Waves 30–42 Completed (Workspace Parity — PR #14 / current PR)
+
+| Wave | Scope | Key Components Added | Status |
+|------|-------|---------------------|--------|
+| 30 | Audit presentation | WorkspaceAuditView, DashboardView upgrade, /audit route | ✅ |
+| 31 | WorkspaceShell + nav tabs | workspace-shell.tsx, workspace-nav-tabs.tsx, use-workspace.ts | ✅ |
+| 32 | Capabilities model + view | WorkspaceCapabilitiesView, /capabilities route | ✅ |
+| 33 | StatusBar + dynamic tabs | workspace-status-bar.tsx, WorkspaceGrantsView (read-only) | ✅ |
+| 34 | Settings write-path | WorkspaceSettingsDialog (full form) + WorkspaceCapabilitiesView (interactive) | ✅ |
+| 35 | Access-control write-path | WorkspaceGrantsView interactive (invite/role/revoke) | ✅ |
+| 36 | Delete workspace | WorkspaceSettingsDialog Danger Zone AlertDialog | ✅ |
+| 37 | WorkspaceCard interactive | lifecycle advance + settings gear on WorkspaceCard | ✅ |
+| 38 | WBS create task | CreateWorkItemDialog + WbsView "+ Add Task" | ✅ |
+| 39 | Work item inline edit | WorkItemEditDialog + WorkItemRow hover-pencil | ✅ |
+| 40 | Workspace photo URL | photoURL field + preview in WorkspaceSettingsDialog | ✅ |
+| 41 | Work item delete + description | WorkItemRow trash→AlertDialog + description second line | ✅ |
+| 42 | Sub-locations panel | WorkspaceLocationsView + /locations route + NavTab | ✅ |
+
+## Next Waves (43–46)
+
+| Wave | Scope | Status |
+|------|-------|--------|
+| **43** | **Advanced WBS Task Tree Engine** — flat→tree with wbsNo, budget, 8 columns, task-tree-node.tsx, task-editor-dialog.tsx | **⬜ NEXT** |
+| 44 | Create Workspace Dialog — create-workspace-dialog.tsx wired to WorkspacesView | ⬜ |
+| 45 | Daily Log View — daily-log-card, daily-log-dialog, daily-workspace-view, /daily route | ⬜ |
+| 46 | Issues View — issues-view.tsx, /issues route | ⬜ |
+
+## Waves 43–46 Completed (Advanced WBS + Create Workspace + Daily Log + Issues — PR #15 / current PR)
+
+| Wave | Scope | Key Components Added | Status |
+|------|-------|---------------------|--------|
+| 43 | Advanced WBS Task Tree Engine | TaskTreeNode (recursive), TaskEditorDialog, ProgressReportDialog, LocationDialog, AttachmentsDialog, buildTaskTree utility, createChildWorkItem/reportProgress use cases | ✅ |
+| 44 | Create Workspace Dialog | CreateWorkspaceDialog + WorkspacesView "+ Create" wired to dialog | ✅ |
+| 45 | Daily Log View | DailyLogEntity, IDailyLogRepository, FirestoreDailyLogRepository, getDailyLogs/createDailyLog/updateDailyLog/deleteDailyLog, DailyWorkspaceView, DailyLogCard, DailyLogDialog, /daily route | ✅ |
+| 46 | Issues View | IssueEntity, IIssueRepository, FirestoreIssueRepository, getIssues/createIssue/updateIssue/deleteIssue, IssuesView (full CRUD), /issues route | ✅ |

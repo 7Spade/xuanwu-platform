@@ -26,6 +26,32 @@
 | `workspace.slice` (comments/reactions) | `collaboration.module` | ✅ Wave 15 |
 | `global-search.slice` + `semantic-graph.slice` | `search.module` | ✅ Wave 16 |
 | `semantic-graph.slice` (BFS/DFS causal) | `causal-graph.module` | ✅ Wave 16 |
+| `workspace.slice/domain.tasks` (advanced tree WBS) | `work.module` + `workspace.module` | ✅ Wave 43 |
+| `workspace.slice/core` (create-workspace-dialog) | `workspace.module` | ✅ Wave 44 |
+| `workspace.slice/domain.daily` | `workspace.module` | ✅ Wave 45 |
+| `workspace.slice/domain.issues` | `workspace.module` | ✅ Wave 46 |
+
+### Parity Status (Waves 30–42 complete)
+
+| Wave | Scope | Status |
+|------|-------|--------|
+| 30 | Audit presentation | ✅ |
+| 31 | WorkspaceShell + nav tabs | ✅ |
+| 32 | Capabilities domain model + view | ✅ |
+| 33 | StatusBar + dynamic tabs + grants | ✅ |
+| 34 | Settings write-path + mount/unmount | ✅ |
+| 35 | Access-control write-path (grant/revoke/role) | ✅ |
+| 36 | Delete workspace | ✅ |
+| 37 | WorkspaceCard lifecycle advance + gear | ✅ |
+| 38 | WBS create work item | ✅ |
+| 39 | Work item inline edit | ✅ |
+| 40 | Workspace photo URL | ✅ |
+| 41 | Work item delete + description display | ✅ |
+| 42 | Workspace sub-locations panel | ✅ |
+| **43** | **Advanced WBS task tree engine** | **⬜ NEXT** |
+| 44 | Create Workspace dialog | ⬜ |
+| 45 | Daily Log View (capability-gated) | ⬜ |
+| 46 | Issues View (capability-gated) | ⬜ |
 
 ---
 
@@ -213,6 +239,138 @@ After Wave 16 all 16 modules will have complete domain service + infra (mapper +
 2. All 3 files per module implemented: `domain.*/_service.ts`, `infra.firestore/_mapper.ts`, `infra.firestore/_repository.ts`
 3. Serena memory updated for both modules
 4. CodeQL: 0 alerts on changed files
+
+---
+
+## Wave 39 — Work Item Edit Dialog ✅
+
+### work.module
+- Added `description?: string` to `WorkItemDTO`
+- Added `updateWorkItem(repo, id, UpdateWorkItemInput)` use case
+- `UpdateWorkItemInput`: `{ title?, description?, status?, priority?, assigneeId?: string|null, dueDate?: string|null }`
+- Exported `updateWorkItem` + `UpdateWorkItemInput` from `core/_actions.ts`
+
+### workspace.module _components
+- `work-item-edit-dialog.tsx` (NEW): dialog with 6 fields (title, description, status, priority, assignee, due date)
+- `work-item-row.tsx`: hover-reveal Pencil edit button, opens `WorkItemEditDialog`
+- `wbs-view.tsx`: passes `onUpdated={refresh}` to each `WorkItemRow`
+
+### i18n
+- Added `wbs.editDialog.*` (8 keys) + `wbs.priority.*` (4 keys) — zh-TW + en-US
+
+---
+
+## Wave 42 — Workspace Sub-Locations Panel ✅
+
+### workspace.module
+- Extended `WorkspaceLocation` in `_entity.ts` with `type?: "building"|"floor"|"room"` and `parentId?: string`
+- Updated `infra.firestore/_mapper.ts` to round-trip `type` and `parentId`
+- Added `addWorkspaceLocation(repo, workspaceId, {id, label, type, parentId?})` use case
+- Added `removeWorkspaceLocation(repo, workspaceId, locationId)` use case (cascades children)
+- Exported both from `core/_actions.ts`
+- New `workspace-locations-view.tsx`: buildings → floors → rooms hierarchy, add/delete per type with AlertDialog
+- New route: `app/(main)/[slug]/[workspaceId]/(workspace)/locations/page.tsx`
+- `workspace-nav-tabs.tsx`: permanent `locations` tab between members and business caps
+- i18n: `workspace.nav.locations` + all `workspace.locations.*` keys (zh-TW + en)
+
+---
+
+## Wave 43 — Advanced WBS Task Tree Engine ✅
+
+**Source:** `workspace.slice/domain.tasks/_components/tasks-view.tsx`, `task-tree-node.tsx`, `task-editor-dialog.tsx`, `attachments-dialog.tsx`, `attachments-action.tsx`, `location-dialog.tsx`, `location-action.tsx`, `progress-report-dialog.tsx`
+
+**What:** Our current WbsView is a simple flat list. The source has a full tree-based WBS system ("WBS Engineering Task Governance Center").
+
+### work.module domain extension
+- Extend `WorkItem` entity with: `parentId?`, `quantity`, `unitPrice`, `discount`, `subtotal`, `completedQuantity`, `type` (string), `wbsNo` (auto-computed), `location?` (building/floor/room/description), `photoURLs?` (attachment URLs), `sourceIntentIndex?`
+- `buildTaskTree(tasks): TaskWithChildren[]` — flat list → tree with wbsNo auto-numbering and `descendantSum` budget roll-up
+- Budget constraint validation: children sum ≤ parent subtotal
+
+### workspace.module _components (new)
+- `task-tree-node.tsx` — recursive tree row; expand/collapse; 8 configurable columns (type, priority, location, attachments, discount, subtotal, progress, status); actions: add-child, edit, delete, report-progress, schedule-request, mark-blocked, submit-for-QA
+- `task-editor-dialog.tsx` — full task form (name, type, parentId, priority, quantity, unitPrice, discount, location, progressState)
+- `location-action.tsx` + `location-dialog.tsx` — building/floor/room/description sub-dialog
+- `attachments-action.tsx` + `attachments-dialog.tsx` — photoURL list management
+- `progress-report-dialog.tsx` — report completedQuantity
+- Replace `WbsView` flat list with tree view (import `buildTaskTree`, render `TaskTreeNode`)
+
+### i18n
+- `tasks.wbsTitle`, `tasks.wbsDescription`, `tasks.taskEngineering`
+- `tasks.viewOptions`, `tasks.visibleColumns`, `tasks.taskType`, `tasks.attachments`, `tasks.discount`, `tasks.budget`, `tasks.progress`, `tasks.status`
+- `tasks.createRootNode`, `tasks.splitIntoSubtasks`, `tasks.progressReport`, `tasks.sendScheduleRequest`, `tasks.markAsBlocked`, `tasks.deleteNode`, `tasks.submitForQa`
+- `tasks.awaitingDefinition`, `tasks.createFirstTask`
+- `tasks.budgetOverflow`, `tasks.budgetOverflowDescription`, `tasks.budgetConflict`, `tasks.budgetConflictDescription`
+- `tasks.failedToSaveTask`, `tasks.failedToDeleteTask`, `tasks.progressUpdated`, `tasks.taskSubmittedForQa`, `tasks.taskBlocked`, `tasks.taskBlockedDesc`, `tasks.confirmDestroyNode`
+- `tasks.imagePreviewTitle`, `tasks.imagePreviewDescription`, `tasks.attachmentPreviewAlt`
+
+---
+
+## Wave 44 — Create Workspace Dialog ✅
+
+**Source:** `workspace.slice/core/_components/create-workspace-dialog.tsx`
+
+### workspace.module _components
+- `create-workspace-dialog.tsx` — Dialog with name input → calls `createWorkspace` use case (already exists)
+- Wire `WorkspacesView` header "+ Create" button to open the dialog
+
+### i18n
+- `workspaces.createLogicalSpace`, `workspaces.createDescription`, `workspaces.spaceName`, `workspaces.spaceNamePlaceholder`
+- `common.creating`, `common.confirmCreation`
+
+---
+
+## Wave 45 — Daily Log View ✅ (capability-gated: "daily")
+
+**Source:** `workspace.slice/domain.daily/_components/`
+
+### workspace.module _components (new)
+- `daily-log-card.tsx` — card showing daily log entry (date, content, photos)
+- `daily-log-dialog.tsx` — create/edit dialog (date, text content, photoURLs)
+- `composer.tsx` — post composer for quick daily entries
+- `image-carousel.tsx` — carousel for post photos
+- `daily-workspace-view.tsx` — workspace-scoped daily log feed
+- Route: `/[slug]/[workspaceId]/(workspace)/daily`
+- `WorkspaceNavTabs` updated with `daily` tab (when capability mounted)
+
+### i18n
+- `workspace.nav.daily`, `workspace.daily.*` keys
+
+---
+
+## Wave 46 — Issues View ✅ (capability-gated: "issues")
+
+**Source:** `workspace.slice/domain.issues/_components/issues-view.tsx`
+
+### workspace.module _components (new)
+- `issues-view.tsx` — full issues CRUD view (list/create/edit/close issues)
+- Route: `/[slug]/[workspaceId]/(workspace)/issues`
+- `WorkspaceNavTabs` updated with `issues` tab (when capability mounted)
+
+### i18n
+- `workspace.nav.issues`, `workspace.issues.*` keys
+
+---
+
+## Wave 41 — Work Item Delete + Description Display ✅
+
+### work.module
+- Added `deleteWorkItem(repo, workspaceId, workItemId)` use case
+- Exported from `core/_actions.ts`
+
+### workspace.module _components
+- `work-item-row.tsx`: Trash2 delete button (group-hover reveal) → AlertDialog → deleteWorkItem; description second line (truncated)
+- `wbs-view.tsx`: passes `onDeleted={refresh}` to WorkItemRow
+- i18n: `wbs.deleteDialog.{title,description,confirm,cancel}` (zh-TW + en)
+
+---
+
+## Wave 40 — Workspace Photo URL ✅
+
+### workspace.module _components
+- `workspace-settings-dialog.tsx`: added `photoURL` URL input field with live preview image, passes `photoURL` to `updateWorkspaceSettings`
+
+### i18n
+- Added `workspace.settings.photoURLLabel` + `workspace.settings.photoURLPlaceholder`
 
 ---
 
