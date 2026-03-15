@@ -109,6 +109,48 @@ firebase-mcp-server/* (inspect/admin) > Admin SDK (server mutations) > Web SDK (
 - For **server-side writes**: use the Admin SDK in Server Actions or Route Handlers.
 - For **client real-time**: use the Web SDK in Client Components.
 
+## Upstash MCP Usage
+
+This project has Upstash infrastructure in `src/infrastructure/upstash/`.
+The `upstash/*` MCP server provides direct management of Upstash resources without writing code.
+
+### When to use upstash MCP vs SDK
+
+| Scenario | Preferred tool |
+|----------|----------------|
+| Inspect Redis databases / keys | `upstash/*` MCP |
+| Inspect Vector indexes | `upstash/*` MCP |
+| Inspect QStash queues / schedules | `upstash/*` MCP |
+| Monitor Workflow runs | `upstash/*` MCP |
+| Application-layer Redis reads/writes | `redis` from `@/infrastructure/upstash` |
+| Semantic vector search in app code | `vectorIndex()` from `@/infrastructure/upstash` |
+| Enqueue background jobs in app code | `qstash` from `@/infrastructure/upstash` |
+| Durable workflow Route Handlers | `serve` from `@/infrastructure/upstash` |
+| Spawn AI coding sandboxes in app code | `createBox` from `@/infrastructure/upstash` |
+
+### Infrastructure SDK import paths
+
+```typescript
+import { redis }          from "@/infrastructure/upstash";  // Redis client
+import { vectorIndex }    from "@/infrastructure/upstash";  // Vector Index factory
+import { qstash }         from "@/infrastructure/upstash";  // QStash publisher
+import { serve }          from "@/infrastructure/upstash";  // Workflow Route Handler factory
+import { createBox }      from "@/infrastructure/upstash";  // Box sandbox factory
+```
+
+All exports are **server-only** (marked with `import "server-only"`).
+Do not import from Client Components.
+
+### Coding Agent secrets
+
+Add two Copilot environment secrets to use the Upstash MCP:
+
+| Secret name | Value |
+|-------------|-------|
+| `COPILOT_MCP_UPSTASH_EMAIL` | Your Upstash account email |
+| `COPILOT_MCP_UPSTASH_API_KEY` | Management API key from Upstash console → Account → API Keys |
+
+
 ## Serena MCP Usage
 
 If Serena MCP is configured in `.vscode/mcp.json`, it is the preferred code-intelligence tool. Agents must prefer Serena over raw file search whenever working with TypeScript symbols, references, or project memory.
@@ -212,5 +254,6 @@ Reference them in agent `tools:` lists using `<server-name>/*`.
 | shadcn/ui | `shadcn/*` | shadcn/ui component registry and add commands |
 | Repomix | `repomix/*` | Pack repository or remote repos into AI-readable format |
 | Serena | `serena/*` | Primary code-intelligence tool: symbol search/edit/rename, reference tracing, pattern search, and per-project memory. Prefer over raw file search. See **Serena MCP Usage** section above. |
+| Upstash | `upstash/*` | Upstash platform management: create/inspect Redis databases, Vector indexes, QStash queues, Workflow runs, and Box sandboxes. Requires `COPILOT_MCP_UPSTASH_EMAIL` + `COPILOT_MCP_UPSTASH_API_KEY`. |
 
 Agents must only include tools they genuinely need. See `.github/README.md` for the per-agent tool assignment rationale.

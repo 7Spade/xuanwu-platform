@@ -11,6 +11,17 @@
       "type": "promptString",
       "description": "OpenAI API key for agent-memory-server embeddings and generation",
       "password": true
+    },
+    {
+      "id": "upstashEmail",
+      "type": "promptString",
+      "description": "Upstash account email (console.upstash.com)"
+    },
+    {
+      "id": "upstashApiKey",
+      "type": "promptString",
+      "description": "Upstash Management API key (console.upstash.com → Account → API Keys)",
+      "password": true
     }
   ],
   "servers": {
@@ -95,6 +106,18 @@
       "env": {
         "FIREBASE_PROJECT_ID": "xuanwu-i-00708880-4e2d8"
       }
+    },
+    "upstash": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/mcp-server@latest",
+        "--email",
+        "${input:upstashEmail}",
+        "--api-key",
+        "${input:upstashApiKey}"
+      ]
     }
   }
 }
