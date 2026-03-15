@@ -12,6 +12,10 @@ const dictionary: Dictionary = {
   "zh-TW": {
     "home.welcome": "歡迎使用玄武平台",
     "home.started": "啟動時間",
+    "home.login": "登入",
+    "home.langToggle": "切換語言",
+    "home.langZhTW": "繁體中文",
+    "home.langEn": "English",
     "common.loading": "載入中…",
     "common.error": "發生錯誤",
     "common.retry": "重試",
@@ -576,6 +580,10 @@ const dictionary: Dictionary = {
   en: {
     "home.welcome": "Welcome to Xuanwu Platform",
     "home.started": "Started at",
+    "home.login": "Login",
+    "home.langToggle": "Switch Language",
+    "home.langZhTW": "繁體中文",
+    "home.langEn": "English",
     "common.loading": "Loading…",
     "common.error": "An error occurred",
     "common.retry": "Retry",
