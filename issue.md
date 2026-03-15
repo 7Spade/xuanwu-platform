@@ -1,567 +1,441 @@
-# Documentation Inconsistencies / 文件不一致問題報告
+# Architecture Issues / 架構問題報告
 
-> 本文件記錄在 xuanwu-platform 儲存庫中發現的文件不一致項目。
-> 每個問題包含：所在檔案、問題描述、以及建議修正方向。
+> 本文件記錄在 xuanwu-platform 儲存庫中發現的架構問題、mDDD 違規與程式碼壞味道。
+> 每個問題包含：受影響檔案、問題描述、嚴重程度，以及建議修正方向。
 
 ---
 
-## Issue 1：`docs/architecture/README.md` — 設計系統層級數量自相矛盾 ✅ FIXED
+## 已解決問題摘要 / Resolved Issues Summary
 
-**檔案：** `docs/architecture/README.md`  
-**嚴重程度：** 中
+以下問題已在先前 PR 中修正（Issues 1–18），不再展開詳述：
+
+| # | 嚴重程度 | 問題類型 | 狀態 |
+|---|---------|---------|------|
+| 1 | 中 | 設計系統層數描述自相矛盾（3層 vs 4層） | ✅ Fixed |
+| 2 | 中 | ADR 索引不同步（5筆 vs 7筆） | ✅ Fixed |
+| 3 | 低 | Domain Modules 表格缺少 `workforce.module/` | ✅ Fixed |
+| 4 | 高 | i18n 指示引用不存在的 JSON 檔案路徑 | ✅ Fixed |
+| 5 | 高 | README DDD 層次結構圖描述的目錄路徑與實際不符 | ✅ Fixed |
+| 6 | 高 | 引用不存在的 `docs/copilot/` 目錄 | ✅ Fixed |
+| 7 | 低 | 文件範例描述尚未實現的組件如同現有功能 | ✅ Fixed |
+| 8 | 中 | Visual Indicators 路徑錯誤（`presentation/` → `_components/`） | ✅ Fixed |
+| 9 | 高 | xuanwu-ui.agent.md i18n 指示引用不存在的 JSON 路徑 | ✅ Fixed |
+| 10 | 中 | 仍使用 Feature Slice 術語而非 Domain Module | ✅ Fixed |
+| 11 | 低 | 仍使用 "slice boundaries" 術語 | ✅ Fixed |
+| 12 | 中 | 引用不存在的 `docs/architecture/models/`、`blueprints/`、`guidelines/` | ✅ Fixed |
+| 13 | 低 | `.serena\memories\*` 幻象本地路徑 | ✅ Fixed |
+| 14 | 低至中 | 14 個檔案殘留 "slice" 術語或路徑慣例不符 | ✅ Fixed |
+| 15 | 高 | 3 個 Bounded Context（Notification、Social、Achievement）未對應到任何 Module | ✅ Fixed |
+| 16 | 高 | `Namespace` 錯誤歸入 `org.module`；`Profile` 錯誤歸入 `achievement.module` | ✅ Fixed |
+| 17 | 高 | 缺少 `identity.module` 和 `account.module`；`profile.module` 冗餘 | ✅ Fixed |
+| 18 | 高 | 缺少 `collaboration.module`、`search.module`、`audit.module`；`org.module` 冗餘 | ✅ Fixed |
+
+---
+
+## Issue 19：Presentation Layer 直接實例化 Infrastructure Repository（全域性 mDDD 違規）
+
+**受影響範圍：** 15 個模組中的 **41 個** `_components/` 檔案  
+**嚴重程度：** 高（🔴）
 
 ### 問題描述
 
-同一份文件在不同位置對設計系統的層數有衝突的描述：
+mDDD 規定的依賴方向為：
 
-| 位置 | 描述 |
+```
+Presentation → Application (use-cases) → Domain (ports) ← Infrastructure
+```
+
+但專案中，所有 `_components/` hook 和 View 元件均**直接** `new Firestore*Repository()`，繞過 Application 層的中介角色。Use-cases 雖已正確透過 port 介面接受 repository（如 `getWorkspaceById(repo, id)`），但 **repository 的實例化發生在 Presentation 層**，而非 Application 或 Infrastructure 層。
+
+### 違規模式
+
+```typescript
+// ❌ 錯誤：Presentation 層直接實例化 Infrastructure 類別
+// src/modules/workspace.module/_components/use-workspace.ts
+import { FirestoreWorkspaceRepository } from "../infra.firestore/_repository"; // ← 越界
+
+export function useWorkspace(workspaceId: string) {
+  const repo = useMemo(() => new FirestoreWorkspaceRepository(), []); // ← 越界
+  // ...
+  getWorkspaceById(repo, workspaceId); // use-case 本身正確，但 repo 由 Presentation 創建
+}
+```
+
+### 受影響檔案（依模組）
+
+| 模組 | 違規檔案數 | 代表性違規路徑 |
+|------|-----------|---------------|
+| `workspace.module` | 23 | `use-workspace.ts`, `use-workspaces.ts`, `workspace-card.tsx`, `create-workspace-dialog.tsx`, `issues-view.tsx`, … |
+| `workforce.module` | 2 | `use-workforce-schedules.ts`, `workforce-schedule-view.tsx` |
+| `social.module` | 2 | `use-social-feed.ts`, `social-actions-bar.tsx` |
+| `search.module` | 2 | `search-results-view.tsx`, `global-search-dialog.tsx` |
+| `namespace.module` | 2 | `use-namespace.ts`, `use-namespace-by-slug.ts` |
+| `collaboration.module` | 2 | `use-comments.ts`, `comment-thread.tsx` |
+| `notification.module` | 1 | `use-notifications.ts` |
+| `identity.module` | 1 | `use-api-keys.ts` |
+| `fork.module` | 1 | `forks-view.tsx` |
+| `file.module` | 1 | `use-files.ts` |
+| `causal-graph.module` | 1 | `use-causal-graph.ts` |
+| `audit.module` | 1 | `use-audit-log.ts` |
+| `achievement.module` | 1 | `use-achievements.ts` |
+| `account.module` | 1 | `account-provider.tsx` |
+
+**合計：41 個元件檔案，遍及 14 個模組。**
+
+### 根本原因
+
+缺少應用層的 Repository Factory 或依賴注入機制。Use-cases 的 Repository 參數設計是正確的，但目前沒有統一的位置在「正確的層次」建立 repository 實例，導致 Presentation 層填補了這個空缺。
+
+### 修正方向
+
+**方案 A（推薦）：使用 React Context 提供 Repository 實例**
+
+在 Application 層建立 `RepositoryProvider`，集中實例化所有 Firestore Repository，透過 Context 注入給 hooks 使用：
+
+```typescript
+// src/infrastructure/di/repository-context.tsx（Application/Infrastructure 邊界）
+const WorkspaceRepositoryContext = createContext<IWorkspaceRepository | null>(null);
+
+export function RepositoryProvider({ children }: { children: ReactNode }) {
+  const workspaceRepo = useMemo(() => new FirestoreWorkspaceRepository(), []);
+  // ...
+  return (
+    <WorkspaceRepositoryContext.Provider value={workspaceRepo}>
+      {children}
+    </WorkspaceRepositoryContext.Provider>
+  );
+}
+```
+
+**方案 B：在 Application 層包裝 use-cases**
+
+為每個需要 repository 的 use-case 建立「有 repository 的版本」：
+
+```typescript
+// src/modules/workspace.module/core/_service.ts（Application 層）
+import { FirestoreWorkspaceRepository } from "../infra.firestore/_repository"; // 只在此處允許
+
+const defaultRepo = new FirestoreWorkspaceRepository();
+export const getWorkspaceByIdService = (id: string) => getWorkspaceById(defaultRepo, id);
+```
+
+---
+
+## Issue 20：Presentation Layer 直接 import Domain Layer 型別（19 處）
+
+**受影響範圍：** `workspace.module`、`work.module`、`social.module`、`file.module`、`causal-graph.module`  
+**嚴重程度：** 中（🟡）
+
+### 問題描述
+
+元件直接從 `domain.*/` 層匯入 Value Object 型別、Entity 型別與 Domain Service 函數，而非透過 Application 層公開的 DTO 取得所需資料形狀。
+
+### 違規清單
+
+| 檔案 | 違規 import | 層次 |
+|------|-------------|------|
+| `workspace.module/_components/work-item-edit-dialog.tsx` | `WorkItemStatus, WorkItemPriority` from `work.module/domain.work/_value-objects` | Domain VO |
+| `workspace.module/_components/create-work-item-dialog.tsx` | `WorkItemPriority` from `work.module/domain.work/_value-objects` | Domain VO |
+| `workspace.module/_components/workspace-nav-tabs.tsx` | `WorkspaceCapability` from `domain.workspace/_value-objects` | Domain VO |
+| `workspace.module/_components/workspace-capabilities-view.tsx` | `WorkspaceCapability` from `domain.workspace/_value-objects`；`CAPABILITY_SPECS` from `domain.workspace/_capability-specs` | Domain VO + Const |
+| `workspace.module/_components/workspace-card.tsx` | `WorkspaceLifecycleState` from `domain.workspace/_value-objects` | Domain VO |
+| `workspace.module/_components/workspace-settings-dialog.tsx` | `WorkspaceLifecycleState`, `WorkspaceAddress`, `WorkspacePersonnel` from `domain.workspace/_entity` | Domain Entity types |
+| `workspace.module/_components/workspace-shell.tsx` | `WorkspaceAddress` from `domain.workspace/_entity` | Domain Entity type |
+| `workspace.module/_components/workspace-locations-view.tsx` | `WorkspaceLocation` from `domain.workspace/_entity` | Domain Entity type |
+| `workspace.module/_components/workspace-files-view.tsx` | `getMimeGroup` from `file.module/domain.file/_service` | Cross-module Domain Service |
+| `workspace.module/_components/wbs-view.tsx` | `buildTaskTree` from `work.module/domain.work/_task-tree` | Cross-module Domain Service |
+| `workspace.module/_components/task-tree-node.tsx` | `TaskWithChildren` from `work.module/domain.work/_task-tree` | Cross-module Domain type |
+| `workspace.module/_components/issues-view.tsx` | `IssueSeverity, IssueStatus` from `domain.issues/_entity` | Domain Entity types |
+| `social.module/_components/social-actions-bar.tsx` | `SocialTargetType` from `domain.social/_value-objects` | Domain VO |
+| `file.module/_components/file-item.tsx` | `getMimeGroup, MimeGroup` from `domain.file/_service` | Domain Service |
+| `file.module/_components/file-preview.tsx` | `getMimeGroup` from `domain.file/_service` | Domain Service |
+| `causal-graph.module/_components/causal-graph-view.tsx` | `CausalNode, CausalEdge` from `domain.causal-graph/_entity` | Domain Entity types |
+| `causal-graph.module/_components/use-causal-graph.ts` | `CausalNode, CausalEdge, CausalNodeId` from `domain.causal-graph/_entity` | Domain Entity types |
+
+**注意**：`buildTaskTree`、`getMimeGroup` 等純函數（無 I/O）匯入較不嚴重，但仍違反「元件只知道 DTO」的原則，因為它們讓 Presentation 層了解 Domain 的內部資料形狀。
+
+### 修正方向
+
+1. 將 Value Object 型別提升至 DTO 定義中（`core/_use-cases.ts`），或在 Application 層建立對應的 union type。
+2. 將 Domain Service 函數（`buildTaskTree`、`getMimeGroup`）包裝為 Application 層的 utility，並透過 DTO 或 Application hook 公開。
+3. Entity 內嵌型別（`WorkspaceAddress`, `WorkspacePersonnel`）應改為 DTO 欄位，定義在 `core/_use-cases.ts` 的相關 DTO 中。
+
+---
+
+## Issue 21：Module Public API（`index.ts`）匯出 Presentation Layer 元件（5 個模組）
+
+**嚴重程度：** 中（🟡）
+
+### 問題描述
+
+以下模組的 `index.ts` 中直接 export `_components/` 的 React 元件與 hooks，違反「模組 Public API 只應匯出 DTO、Use-cases、Port 介面」的原則。其他模組若透過 `@/modules/<name>.module` barrel import 這些元件，等同於在模組邊界上建立了 Presentation 層的跨模組耦合。
+
+| 模組 | 在 `index.ts` 匯出的 Presentation 元件 |
+|------|---------------------------------------|
+| `workspace.module` | `useWorkspace`, `WorkspaceNavTabs`, `WorkspaceShell`, `WorkspaceStatusBar`, `WorkspaceCapabilitiesView`, `WorkspaceGrantsView`, `WorkspaceSettingsDialog` |
+| `audit.module` | `AuditLogView`, `WorkspaceAuditView`, `useWorkspaceAuditLog`, `useResourceAuditLog` |
+| `file.module` | `useFiles`, `FileItem`, `FilePreview` |
+| `search.module` | `GlobalSearchDialog`, `SearchResultsView`, `SearchFilterBar`, `useSearchHistory` |
+| `social.module` | `SocialActionsBar`, `SocialFeedView`, `SocialExploreView`, `FollowersPanel` |
+
+### 修正方向
+
+從各模組的 `index.ts` 中移除所有 `_components/` 相關的 export。  
+頁面（`src/app/`）與父元件應直接從 `@/modules/<name>.module/_components/<file>` import，而非透過 barrel。
+
+---
+
+## Issue 22：Module Public API 匯出 Domain Layer 物件（2 個模組）
+
+**嚴重程度：** 中（🟡）
+
+### 問題描述
+
+`index.ts` Public API 暴露了 Domain Layer 的 Entity 型別、Domain Service 函數與領域常數，讓其他模組可以繞過 Application 層直接使用 Domain 內部物件。
+
+#### `workspace.module/index.ts`
+
+```typescript
+// ❌ 匯出 Domain Entity 型別
+export type { WorkspaceEntity } from "./domain.workspace/_entity";
+
+// ❌ 匯出 Domain Service 函數（有副作用的邏輯）
+export { hasWorkspaceAccess } from "./domain.workspace/_entity";
+
+// ❌ 匯出 Domain 常數
+export { CAPABILITY_SPECS, NON_MOUNTABLE_CAPABILITY_IDS } from "./domain.workspace/_capability-specs";
+
+// ⚠️ 匯出 Domain 純狀態工具（邊界模糊）
+export { summarizeWorkflowBlockers, deriveWorkflowBlockersFromSources, ... } from "./domain.workspace/workflow-blockers-state";
+```
+
+#### `work.module/index.ts`
+
+```typescript
+// ❌ 匯出 Domain Service 函數
+export { buildTaskTree } from "./domain.work/_task-tree";
+
+// ❌ 匯出 Domain 內部型別
+export type { TaskWithChildren } from "./domain.work/_task-tree";
+```
+
+### 修正方向
+
+- `WorkspaceEntity` → 移除，使用者改用 `WorkspaceDTO`
+- `hasWorkspaceAccess` → 封裝在 Application use-case 內，不直接暴露
+- `CAPABILITY_SPECS` → 若外部需要，透過 Application 層 query 取得
+- `buildTaskTree` → 包裝成 Application 層 utility（e.g. `getWorkItemTree(repo, workspaceId): Promise<TaskWithChildren[]>`）
+
+---
+
+## Issue 23：workspace.module 跨模組直接存取 work.module 內部層（6 個元件）
+
+**嚴重程度：** 高（🔴）
+
+### 問題描述
+
+`workspace.module` 的 `_components/` 目錄中，有 6 個元件直接 import `work.module` 的 `infra.firestore/` 與 `domain.work/` 內部路徑，**完全繞過 `work.module` 的 `index.ts` Public API**。
+
+這是模組邊界的根本性違反：任何跨模組依賴都應該透過目標模組的 `index.ts` barrel 進行，不可存取其內部層。
+
+### 違規清單
+
+| 違規元件 | 直接存取的 work.module 內部路徑 |
+|---------|-------------------------------|
+| `work-item-edit-dialog.tsx` | `work.module/infra.firestore/_repository`（Infrastructure）、`work.module/domain.work/_value-objects`（Domain） |
+| `progress-report-dialog.tsx` | `work.module/infra.firestore/_repository`（Infrastructure） |
+| `workspace-qa-view.tsx` | `work.module/infra.firestore/_repository`（Infrastructure） |
+| `workspace-acceptance-view.tsx` | `work.module/infra.firestore/_repository`（Infrastructure） |
+| `create-work-item-dialog.tsx` | `work.module/infra.firestore/_repository`（Infrastructure）、`work.module/domain.work/_value-objects`（Domain） |
+| `workspace-finance-view.tsx` | `work.module/infra.firestore/_repository`（Infrastructure） |
+| `task-tree-node.tsx` | `work.module/infra.firestore/_repository`（Infrastructure）、`work.module/domain.work/_task-tree`（Domain） |
+| `work-item-row.tsx` | `work.module/infra.firestore/_repository`（Infrastructure） |
+| `task-editor-dialog.tsx` | `work.module/infra.firestore/_repository`（Infrastructure） |
+| `use-work-items.ts` | `work.module/infra.firestore/_repository`（Infrastructure） |
+| `wbs-view.tsx` | `work.module/domain.work/_task-tree`（Domain） |
+
+**此外，`workspace.module` 也直接存取 `account.module/infra.firestore/_repository`（`use-members.ts`）。**
+
+### 修正方向
+
+1. 所有 `work.module` 相關的 use-case 呼叫應透過 `work.module` 的 `index.ts` 中公開的函數。
+2. 在 `work.module/index.ts` 補充所有 workspace 需要的操作（`updateWorkItem`、`deleteWorkItem`、`createChildWorkItem`、`reportProgress`）。
+3. Repository 實例化應移至 `work.module` 內部（透過服務層或 DI），不讓外部模組知道 `FirestoreWorkItemRepository` 的存在。
+
+---
+
+## Issue 24：跨模組 Presentation Layer 元件直接依賴（3 處）
+
+**嚴重程度：** 中（🟡）
+
+### 問題描述
+
+以下三處違規是一個模組的 `_components/` 直接 import 另一個模組的 `_components/`，形成**跨模組的 Presentation 層耦合**。正確做法是：兩個模組的 Presentation 層都不應直接依賴對方，應透過共享 Context 或 props 傳遞。
+
+| 違規元件 | 直接 import 的跨模組元件 |
+|---------|------------------------|
+| `settlement.module/_components/billing-view.tsx:21` | `@/modules/namespace.module/_components/use-namespace-by-slug` |
+| `workspace.module/_components/dashboard-view.tsx:26` | `@/modules/audit.module/_components/audit-log-view` |
+| `workspace.module/_components/dashboard-view.tsx:27` | `@/modules/audit.module/_components/use-audit-log` |
+
+### 分析
+
+- **settlement → namespace**：`billing-view` 透過 `useNamespaceBySlug` 取得 workspace 計數以顯示免費方案用量。這個資訊應透過 `namespace.module` 的 Application 層（use-case / query）提供，而非直接耦合到另一模組的 hook。
+- **workspace → audit**：`dashboard-view` 把 `AuditLogView` 直接嵌入渲染，形成 workspace Presentation 依賴 audit Presentation。`AuditLogView` 的使用應透過 props 組合或 `slot` 模式，由頁面（`src/app/`）層組合兩個元件。
+
+### 修正方向
+
+1. **settlement → namespace**：在 `namespace.module/index.ts` 公開 `getNamespaceStats(slug)` query，`billing-view` 呼叫此 use-case 取得 `workspaceCount`，移除對 `_components/use-namespace-by-slug` 的直接依賴。
+2. **workspace → audit**：在 `dashboard-view` 的父層頁面（`src/app/(main)/...`）組合 `DashboardView` 和 `AuditLogView`，或透過 React `children`/`slot` props 注入，切斷跨模組 Presentation 耦合。
+
+---
+
+## Issue 25：`useCurrentAccount` 跨模組 Presentation Hook 耦合（7 個模組）
+
+**嚴重程度：** 中（🟡）（程式碼壞味道）
+
+### 問題描述
+
+`useCurrentAccount()` hook 定義在 `account.module/_components/account-provider.tsx`，但有 **7 個不同模組**的 `_components/` 直接 import 它。這讓 7 個模組的 Presentation 層都與 `account.module` 的 **內部** Presentation 層產生硬耦合。
+
+### 違規清單
+
+```
+collaboration.module/_components/comment-thread.tsx
+namespace.module/_components/organizations-view.tsx
+search.module/_components/search-results-view.tsx
+search.module/_components/global-search-dialog.tsx
+workspace.module/_components/dashboard-view.tsx
+workspace.module/_components/daily-workspace-view.tsx
+workspace.module/_components/shell/nav-user.tsx
+workspace.module/_components/workspaces-view.tsx
+workspace.module/_components/daily-log-card.tsx
+workspace.module/_components/issues-view.tsx
+notification.module/_components/notifications-view.tsx
+```
+
+（11 個元件，遍及 7 個模組）
+
+### 問題核心
+
+- `useCurrentAccount` 是一個 Presentation 層 hook，透過 React Context 存取 `account-provider` 提供的 session 狀態。
+- 其他模組**依賴 `account.module` 的 Presentation 內部實作細節**，而非 `account.module` 的公開 API。
+- 若 `account-provider.tsx` 重構或重命名，所有 7 個模組都會受影響。
+
+### 修正方向
+
+**方案（推薦）：將 `useCurrentAccount` 提升至 `account.module` 的 Public API**
+
+在 `account.module/index.ts` 中補充：
+
+```typescript
+export { useCurrentAccount } from "./_components/account-provider";
+export type { CurrentAccountState } from "./_components/account-provider";
+```
+
+這樣外部模組仍透過模組 barrel import，而非直接進入內部路徑。同時為 `useCurrentAccount` 定義穩定的介面合約。
+
+> **更長遠的作法**：將 `CurrentAccount` 狀態提升到 `src/infrastructure/session/` 的 React Context，使其不屬於任何單一 Domain Module，而是整個應用的 session provider。
+
+---
+
+## Issue 26：所有模組 `core/_actions.ts` 錯誤使用 `'use server'` 指令（Build 失敗）
+
+**受影響範圍：** 全部 16 個模組的 `core/_actions.ts`  
+**嚴重程度：** 高（🔴）  
+**狀態：** ✅ Fixed
+
+### 問題描述
+
+16 個模組的 `core/_actions.ts` 頂端均有 `'use server';` 指令，但檔案內容僅為從 `_use-cases.ts` 的 **re-export 轉接**，並未在檔案內部定義任何 `async function`。
+
+Next.js 15.5+ 嚴格規定：`'use server'` 檔案只能匯出**在該檔案內部定義的** `async function`，不允許 re-export 其他模組的函數。
+
+```
+// ❌ 觸發 Build 失敗
+'use server';
+export { createWorkspace, getWorkspaceById, ... } from "./_use-cases"; // re-export 不允許
+```
+
+### 實際影響
+
+- `workspace-grants-view.tsx` import `workspace.module/core/_actions` 觸發 Vercel Build 錯誤：  
+  `Only async functions are allowed to be exported in a "use server" file.`
+- 所有 16 個模組的 `_actions.ts` 均有相同問題，Build 成功僅因其他模組的 `_actions.ts` 尚未被 Client Component tree-shaking 命中
+
+### 根本原因
+
+這些 `_actions.ts` 檔案從一開始就被設計為「組織性轉接層」而非真正的 Next.js Server Action。專案中所有 Firebase 操作均透過 Firebase Web SDK 在用戶端執行（Client Components 直接 `new Firestore*Repository()`），因此 `'use server'` 完全不適用於這些轉接檔案。
+
+### 修正方式
+
+移除全部 16 個模組 `core/_actions.ts` 頂端的 `'use server';` 指令，將其還原為純粹的 re-export 轉接層。Build 恢復正常。
+
+---
+
+## 摘要表 / Summary（現有待解決問題）
+
+| # | 嚴重程度 | 違規類型 | 受影響範圍 | 狀態 |
+|---|---------|---------|-----------|------|
+| 19 | 高（🔴）| Presentation Layer 直接實例化 Infrastructure Repository | 41 個元件檔案，14 個模組 | ❌ Open |
+| 20 | 中（🟡）| Presentation Layer 直接 import Domain Layer 型別 | 17 個元件，5 個模組 | ❌ Open |
+| 21 | 中（🟡）| Module Public API（`index.ts`）匯出 Presentation Layer 元件 | 5 個模組 | ❌ Open |
+| 22 | 中（🟡）| Module Public API 匯出 Domain Layer 物件（Entity、Service、常數） | `workspace.module`, `work.module` | ❌ Open |
+| 23 | 高（🔴）| workspace.module 跨模組直接存取 work.module / account.module 內部層 | 11 個元件 | ❌ Open |
+| 24 | 中（🟡）| 跨模組 Presentation Layer 元件直接依賴 | 3 個元件，3 個模組 | ❌ Open |
+| 25 | 中（🟡）| `useCurrentAccount` 跨模組 Presentation Hook 耦合（壞味道） | 11 個元件，7 個模組 | ❌ Open |
+| 26 | 高（🔴）| 全部 16 個 `core/_actions.ts` 錯誤使用 `'use server'`（僅含 re-export） | 16 個模組 | ✅ Fixed |
+| 27 | 新功能（🔵）| Document AI 基礎設施設計與腳手架（見 `docs/architecture/document-ai.md`） | `file.module`, `src/infrastructure/document-ai/`, `functions/` | ✅ Scaffolded |
+
+---
+
+## Issue 27 — Document AI 基礎設施 🔵 Scaffolded
+
+### 背景
+
+本 Issue 記錄根據 `7Spade/xuanwu` 參考專案的 Document AI 實作（`src/app-runtime/ai/` + `src/shared-infra/firebase-admin/functions/src/document-ai/`），為本專案設計並搭建的 Document AI 基礎設施。
+
+### 兩段式解析流程
+
+```
+上傳文件 (Firebase Storage)
+    ↓
+Phase 1 — processDocument Cloud Function
+  Google Cloud Document AI → OcrDocumentObject + .document-ai.json sidecar
+    ↓
+Phase 2 — extractInvoiceItems (Genkit / Gemini 2.5 Flash)
+  OcrDocumentObject → ParsedWorkItem[] (含 semanticTagSlug)
+    ↓
+saveParsingIntent (file.module use case)
+  ParsingIntent 數位雙胞胎 → Firestore (含 SHA-256 語義雜湊去重)
+    ↓
+startParsingImport / finishParsingImport
+  冪等性作業日誌 → 工作項目物化
+```
+
+### 建立的檔案
+
+| 路徑 | 說明 |
 |------|------|
-| 第 19 行（技術概覽表） | `"Three-tier: primitives / components / patterns"` |
-| 第 124 行（Design System 章節） | `"follows a **four-tier hierarchy**"` |
-
-### 實際狀況
-
-程式碼確認是**四層**：`primitives`、`components`、`patterns`、`tokens`。
-
-- `src/design-system/index.ts`：`export * from "./primitives"; export * from "./components"; export * from "./patterns"; export * from "./tokens";`（四個層級均有匯出）
-- `src/design-system/` 目錄下存在 `primitives/`、`components/`、`patterns/`、`tokens/` 四個子目錄
-
-### 修正
-
-將第 19 行技術概覽表更新為：`Four-tier: primitives / components / patterns / tokens (see Design System)`
-
----
-
-## Issue 2：`docs/architecture/README.md` 與 `docs/architecture/adr/README.md` — ADR 索引不同步 ✅ FIXED
-
-**檔案：** `docs/architecture/README.md`（第 227–233 行）、`docs/architecture/adr/README.md`  
-**嚴重程度：** 中
-
-### 問題描述
-
-兩份文件的 ADR 索引條目數量不一致：
-
-| 文件 | ADR 條目 |
-|------|---------|
-| `docs/architecture/README.md` | ADR-001 ～ ADR-007（7 筆） |
-| `docs/architecture/adr/README.md` | ADR-001 ～ ADR-005（5 筆） |
-
-ADR-006（Adopt Modular DDD）和 ADR-007（Use `@atlaskit/pragmatic-drag-and-drop`）出現在 `docs/architecture/README.md`，但**未被加入** `docs/architecture/adr/README.md` 的索引中。
-
-### 修正
-
-已在 `docs/architecture/adr/README.md` 的 ADR 索引表中補上 ADR-006（"each module is self-contained" — 術語從 "slice" 更新為 "module" 以與 Domain Module 重命名保持一致）和 ADR-007。
-
----
-
-## Issue 3：`docs/architecture/README.md` Domain Modules 表格缺少 `workforce.module` ✅ FIXED
-
-**檔案：** `docs/architecture/README.md`（Domain Modules 章節）、`src/modules/README.md`  
-**嚴重程度：** 低
-
-### 問題描述
-
-`src/modules/README.md` 列出了 5 個 Domain Module，但 `docs/architecture/README.md` 的 Domain Modules 表格只列出 4 個，漏掉了 `workforce.module/`（雖然 SaaS ↔ Workspace 邊界圖中提到了 Workforce Scheduling）。
-
-### 修正
-
-已在 `docs/architecture/README.md` 的 Domain Modules 表格補上 `workforce.module/`（Layer: Bridge）。
-
----
-
-## Issue 4：`.github/copilot-instructions.md` — i18n 指示指向不存在的檔案 ✅ FIXED
-
-**檔案：** `.github/copilot-instructions.md`（第 36–38 行）  
-**嚴重程度：** 高
-
-### 問題描述
-
-`copilot-instructions.md` 的 i18n 規則要求更新 `public/localized-files/en.json` 和 `public/localized-files/zh-TW.json`，但這些檔案**不存在**。
-
-> **為何嚴重程度為「高」：** `.github/copilot-instructions.md` 是專案的 always-on 規則，GitHub Copilot Coding Agent 在每次任務中都會讀取並遵循此文件。
-
-### 實際狀況
-
-專案實際使用的 i18n 方案是**程式碼內嵌字典**，定義在 `src/shared/i18n/index.ts`。
-
-### 修正
-
-已將 `.github/copilot-instructions.md` 的 i18n 章節修改為引用 `src/shared/i18n/index.ts`。
-
----
-
-## Issue 5：`README.md` — DDD 層次結構圖描述的目錄不存在 ✅ FIXED
-
-**檔案：** `README.md`（DDD Layer Structure 章節）  
-**嚴重程度：** 高
-
-### 問題描述
-
-`README.md` 的 DDD Layer Structure 區塊顯示 `src/shared/domain/`、`src/shared/ui/`、`src/<domain>/application/` 等目錄，但這些路徑**完全不存在**。
-
-### 修正
-
-已更新 `README.md` 的 DDD Layer Structure 為與實際架構一致的描述，使用 `src/modules/<name>.module/` 結構。
-
----
-
-## Issue 6：`.github/README.md` 和 `.github/instructions/` — 引用不存在的 `docs/copilot/` 目錄 ✅ FIXED
-
-**檔案：** `.github/README.md`、`.github/instructions/xuanwu-customization-authoring.instructions.md`、`.github/instructions/xuanwu-test-expert.instructions.md`、`.github/copilot-instructions.md`、`.github/skills/xuanwu-test-expert/SKILL.md`  
-**嚴重程度：** 高
-
-### 問題描述
-
-多個文件頻繁引用 `docs/copilot/customization/` 路徑下的多個 Markdown 文件，但 **`docs/copilot/` 目錄不存在**。`docs/` 目錄下只有 `architecture/`。
-
-### 修正
-
-已將所有 `docs/copilot/customization/*.md` 的引用替換為對應的官方 VS Code 線上文件 URL：
-
-- `docs/copilot/customization/custom-instructions.md` → `https://code.visualstudio.com/docs/copilot/customization/custom-instructions`
-- `docs/copilot/customization/prompt-files.md` → `https://code.visualstudio.com/docs/copilot/customization/prompt-files`
-- `docs/copilot/customization/custom-agents.md` → `https://code.visualstudio.com/docs/copilot/customization/copilot-agents`
-- `docs/copilot/customization/agent-skills.md` → `https://code.visualstudio.com/docs/copilot/customization/agent-skills`
-- `docs/copilot/customization/hooks.md` → `https://code.visualstudio.com/docs/copilot/customization/hooks`
-- `docs/copilot/customization/agent-plugins.md` → `https://code.visualstudio.com/docs/copilot/customization/agent-plugins`
-- `docs/copilot/customization/overview.md` → `https://code.visualstudio.com/docs/copilot/customization`
-
----
-
-## Issue 7：`src/design-system/tokens/README.md` 和 `src/infrastructure/firebase/README.md` — 文件描述尚未實現的組件為現有功能 ✅ FIXED
-
-**檔案：** `src/design-system/tokens/README.md`（原 `presentation/README.md`）、`src/infrastructure/firebase/README.md`  
-**嚴重程度：** 低
-
-### 問題描述
-
-`tokens/` 層目前為規劃階段，`index.ts` 只有 `export {}`。Firebase README（Section 6）提供 Vis.js 和 PDnD 組件的使用範例程式碼，給人這些組件已可使用的印象，但 `VisNetwork`、`VisTimeline`、`DragDropBoard` 尚未實現。
-
-另外，Firebase README Section 6 原本寫 `presentation/` 層，但正確路徑是各 Module 的 `_components/` 目錄。
-
-### 修正
-
-- 已在 `src/infrastructure/firebase/README.md` Section 6 開頭加入「尚未實現」警告說明。
-- 已將 Section 6 中的 `presentation/` 引用修正為 `_components/`。
-
----
-
-## Issue 8：`docs/architecture/README.md` — Visual Indicators 路徑錯誤 ✅ FIXED
-
-**檔案：** `docs/architecture/README.md`（第 148 行）  
-**嚴重程度：** 中
-
-### 問題描述
-
-文件描述 Visual Indicators (VIs) 位置時使用了錯誤的路徑：
-
-```
-They live in the module's presentation layer (`src/modules/<module>/presentation/`)
-```
-
-但 Domain Module 的 Presentation Layer 實際路徑是 `_components/`，不是 `presentation/`。
-
-### 修正
-
-已將第 148 行更新為：`src/modules/<module>/_components/`。
-
----
-
-## Issue 9：`.github/agents/xuanwu-ui.agent.md` — i18n 指示指向不存在的 JSON 檔案 ✅ FIXED
-
-**檔案：** `.github/agents/xuanwu-ui.agent.md`（第 68 行、第 77 行）  
-**嚴重程度：** 高
-
-### 問題描述
-
-`xuanwu-ui.agent.md` 的 i18n 規則與 Issue 4 相同問題 — 要求更新 `public/localized-files/en.json` 和 `public/localized-files/zh-TW.json`，但這些檔案不存在。Issue 4 修正了 `copilot-instructions.md`，但遺漏了此 Agent 定義檔案。
-
-### 修正
-
-已將 `xuanwu-ui.agent.md` 的 i18n 章節更新為引用 `src/shared/i18n/index.ts`。
-
----
-
-## Issue 10：`.github/instructions/xuanwu-application-architecture.instructions.md` — 仍使用 Feature Slice 術語 ✅ FIXED
-
-**檔案：** `.github/instructions/xuanwu-application-architecture.instructions.md`  
-**嚴重程度：** 中
-
-### 問題描述
-
-此指令檔案標題仍使用 "feature-slice boundaries" 和 "Feature Slice Architecture"，與 PR #10 將術語從 `features/slice` 改為 `modules/module` 的決策不一致：
-
-| 位置 | 舊術語 | 正確術語 |
-|------|--------|---------|
-| 第 3 行（description） | `"feature-slice boundaries"` | `"Domain Module boundaries"` |
-| 第 9 行（章節標題） | `## Feature Slice Architecture` | `## Domain Module Architecture` |
-| 第 11–14 行（規則） | `feature queries.ts / feature adapters / cross-feature imports / feature READMEs` | `module queries.ts / module adapters / cross-module imports / module READMEs` |
-
-### 修正
-
-已更新 `xuanwu-application-architecture.instructions.md` 中的所有 "feature" / "slice" 術語為 "module" / "Domain Module"。
-
----
-
-## Issue 11：`.github/copilot-instructions.md` — 仍使用 "slice boundaries" 術語 ✅ FIXED
-
-**檔案：** `.github/copilot-instructions.md`（第 22 行、第 54 行）  
-**嚴重程度：** 低
-
-### 問題描述
-
-`copilot-instructions.md` 在兩個地方仍使用 "slice boundaries" 術語，與 Domain Module 重命名不一致：
-
-- 第 22 行：`"Respect layer direction, slice boundaries, and public APIs."`
-- 第 54 行：`"verify architecture correctness, slice boundaries, and existing tests"`
-
-### 修正
-
-已將兩處 "slice boundaries" 更新為 "module boundaries"。
-
----
-
-## Issue 12：多個 DDD 相關檔案 — 引用不存在的 `docs/architecture/` 子目錄 ✅ FIXED
-
-**檔案：** `.github/instructions/xuanwu-ddd-layers.instructions.md`（第 110–112 行）、`.github/skills/ddd-architecture/SKILL.md`（第 213–214 行）、`.github/prompts/ddd-domain-model.prompt.md`（第 21 行）、`.github/prompts/ddd-slice-scaffold.prompt.md`（第 43 行）  
-**嚴重程度：** 中
-
-### 問題描述
-
-多個 DDD 指令/技能/提示檔案引用了不存在的 `docs/architecture/` 子目錄：
-
-| 引用路徑 | 實際存在？ |
-|---------|----------|
-| `docs/architecture/models/domain-model.md` | ❌ 不存在 |
-| `docs/architecture/blueprints/application-service-spec.md` | ❌ 不存在 |
-| `docs/architecture/guidelines/infrastructure-spec.md` | ❌ 不存在 |
-
-`docs/architecture/` 實際只有：`README.md`、`adr/`、`catalog/`、`diagrams/`、`glossary/`
-
-### 修正
-
-已將所有幻象路徑替換為實際存在的文件路徑：
-- `docs/architecture/models/domain-model.md` → `docs/architecture/catalog/business-entities.md` + `docs/architecture/glossary/business-terms.md`
-- `docs/architecture/blueprints/application-service-spec.md` → `docs/architecture/README.md`
-- `docs/architecture/guidelines/infrastructure-spec.md` → `docs/architecture/README.md`
-
----
-
-## Issue 13：`.github/prompts/ddd-slice-scaffold.prompt.md` — `.serena\memories\*` 幻象本地路徑
-
-**檔案：** `.github/prompts/ddd-slice-scaffold.prompt.md`（第 57 行）  
-**嚴重程度：** 低
-
-### 問題描述
-
-Guardrails 章節引用 `.serena\memories\*`（Windows 反斜線格式路徑），但 `.serena/` 目錄**不存在**於本地儲存庫中。Serena 的 memories 是透過 MCP 伺服器管理的，不是本地目錄。
-
-### 修正
-
-已將 `.serena\memories\*` 替換為 `Serena project memories`（描述性文字，不引用本地路徑）。
-
----
-
-## Issue 14：多個 prompt/agent/instruction 檔案 — 仍使用 "slice" 術語或路徑慣例不符 ✅ FIXED
-
-**嚴重程度：** 低至中
-
-### 問題描述
-
-以下檔案在 PR #10 重命名後仍有殘留 "slice" 術語或路徑不符合 `<name>.module/` 慣例：
-
-| 檔案 | 問題 |
-|------|------|
-| `.github/prompts/xuanwu-refactor.prompt.md` | argument-hint 範例使用 `src/modules/auth/service.ts`（缺少 `.module` 後綴） |
-| `.github/prompts/xuanwu-architect.prompt.md` | description 使用 "vertical slices"；modes 使用 "slice boundaries"、"Vertical slice design"；argument-hint 使用 "reporting slice" |
-| `.github/prompts/xuanwu-code-review.prompt.md` | argument-hint 使用 `review src/modules/auth`（缺少 `.module` 後綴） |
-| `.github/prompts/ddd-infrastructure-adapter.prompt.md` | "Feature slice domain.*"；輸出路徑 `src/modules/infra.*/`（缺少模組段） |
-| `.github/prompts/ddd-layer-audit.prompt.md` | D24 規則中 `src/modules/infra.*` 路徑無效（缺少模組段） |
-| `.github/prompts/ddd-domain-model.prompt.md` | argument-hint 和 input 使用 `.slice` 後綴 |
-| `.github/prompts/ddd-slice-scaffold.prompt.md` | scaffold 路徑使用 `{slice-name}` 而非 `{module-name}.module` |
-| `AGENTS.md` | "owning slice" → "owning module" |
-| `.github/instructions/xuanwu-ddd-layers.instructions.md` | "live inside the owning slice" |
-| `.github/instructions/xuanwu-repo-structure.instructions.md` | "modules/" 誤導為根層目錄；範例使用 `feature/` 路徑 |
-| `.github/agents/ddd-infrastructure.agent.md` | "owning slice" |
-| `.github/skills/ddd-architecture/SKILL.md` | 引用不存在的 `/ddd-module-scaffold` 提示；Server Action 路徑錯誤（`_actions.ts` 而非 `core/_actions.ts`） |
-| `.github/skills/x-framework-guardian/SKILL.md` | "切片" → "模組"；"cross-slice" → "cross-module" |
-| `README.md` | "DDD slices" 術語 |
-| `src/modules/README.md` | 路徑描述為 `modules/` 而非 `src/modules/` |
-
-### 修正
-
-已批次修正所有上述檔案中的術語和路徑。
-
----
-
----
-
-## Issue 15：`docs/architecture/README.md`、`src/modules/README.md` — `core-logic.mermaid` 中 3 個 Bounded Context 未對應到任何 Domain Module ✅ FIXED
-
-**檔案：** `docs/architecture/README.md`（Domain Modules 章節）、`src/modules/README.md`、`docs/architecture/diagrams/core-logic.mermaid`
-**嚴重程度：** 高
-
-### 問題描述
-
-`core-logic.mermaid` 序列圖定義了下列 participant，但兩份架構文件均未將其對應到任何 Domain Module：
-
-| 邏輯圖 Participant | 所在章節 | 缺失的 Module |
-|--------------------|---------|--------------|
-| `Notify`（通知引擎）、`Inbox`（站內信 / 電子郵件 / 行動推播） | Section G — Event Bus and Notification Delivery | `notification.module` |
-| `Social`（Star/Watch/Follow 圖譜）、`Feed`（儀表板 / 探索） | Section H — SaaS Extensions | `social.module` |
-| `Achv`（成就規則）、`Profile`（使用者檔案） | Section I — Achievement Post-Processing | `achievement.module` |
-
-### 分析：與現有架構的衝突點
-
-1. **`notification.module` 缺失**：Section G 顯示 `EventBus → Notify → Inbox → User` 的完整通知鏈，Notify 負責依訂閱規則路由事件、解析收件者，Inbox 負責多管道投遞。這是獨立的 Bounded Context，但架構文件中完全缺失。
-
-2. **`social.module` 缺失**：Section H 顯示 Social 與 Feed 作為獨立系統——`User->>Social: star or watch workspace`、`Social->>Feed: contribute discovery and ranking signals`、`Feed-->>User: dashboard and recommendation updates`。星號/關注/追蹤是獨立的圖譜資料模型，不屬於 `org.module` 或 `workspace.module`。
-
-3. **`achievement.module` 缺失**：Section I 顯示完整的成就後處理流程——`Assignee->>Achv: complete qualifying WBS task activity`、`Achv->>Profile: unlock and render badge`。Achievement 有自己的規則評估引擎，Profile badge 渲染是獨立的 UI 關切點。
-
-4. **`workspace.module` 描述不完整**：現有描述為 "Workspace · WBS · Issues · CR"，但邏輯圖 Section C 中還有 `QA`（質量檢查）和 `Acceptance`（驗收）兩個獨立的狀態機節點；Section F 還有 `Rules`（基線治理規則）、`Queue`（Merge Queue）、`Main`（Protected Baseline）。
-
-5. **`Sec`（完整性與政策自動化）無 Module 歸屬**：Section H 中 `Sec` 執行 cross-module 一致性與政策檢查，是跨模組的治理關切，目前文件中無任何 Module 聲稱擁有它。此關切點由 `workspace.module` 的 Domain Service 層承接。
-
-6. **`EventBus` 的架構定位未明**：邏輯圖中 EventBus 作為一個 participant 出現，但架構文件說事件應透過 port interfaces 發布。EventBus 應定位為 infrastructure 層關切點（`src/infrastructure/`），而非 Domain Module。
-
-### 修正
-
-已建立三個新 Domain Module 的完整目錄骨架：
-
-```
-src/modules/
-├── notification.module/    ← 新增
-│   ├── index.ts
-│   ├── domain.notification/  (_entity, _value-objects, _ports, _events)
-│   ├── core/                 (_use-cases, _actions, _queries)
-│   ├── infra.firestore/      (_repository, _mapper)
-│   └── _components/
-├── social.module/          ← 新增
-│   ├── index.ts
-│   ├── domain.social/
-│   ├── core/
-│   ├── infra.firestore/
-│   └── _components/
-└── achievement.module/     ← 新增
-    ├── index.ts
-    ├── domain.achievement/
-    ├── core/
-    ├── infra.firestore/
-    └── _components/
-```
-
-已更新 `docs/architecture/README.md` 和 `src/modules/README.md` 的 Domain Modules 表格以反映完整的 8 個模組。
-已更新 `workspace.module` 的描述以包含 QA、Acceptance、Baseline 相關的 bounded context。
-
----
-
-## Issue 16：`org.module` 和 `achievement.module` — `Namespace` 與 `Profile` 應為獨立 Module ✅ FIXED
-
-**檔案：** `docs/architecture/README.md`（Domain Modules 章節）、`src/modules/README.md`、`src/modules/org.module/`、`src/modules/achievement.module/`
-**嚴重程度：** 高
-
-### 問題描述
-
-#### 16-A：`NS`（Namespace）被歸入 `org.module`，但應為獨立模組
-
-`core-logic.mermaid` Section A 顯示 Namespace 同時服務兩個路徑：
-
-| 路徑 | 操作 |
-|------|------|
-| 組織建立路徑 | `Org->>NS: register organization namespace` |
-| 個人工作空間路徑 | `User->>NS: register personal namespace` |
-| 共享行為 | `NS->>WS: bind workspace under [org|personal] namespace` |
-| Section H | `NS->>WS: resolve workspace path and ownership scope` |
-
-`NS` 不是 `org.module` 的子集 — 它是一個**獨立的共享服務**，同時被組織和個人用戶使用。將它歸入 `org.module` 會造成個人工作空間依賴組織模組的錯誤邊界。
-
-#### 16-B：`Profile`（使用者檔案）被歸入 `achievement.module`，但應為獨立模組
-
-`Profile` 在 Section H（`Note over User,Profile: H. SaaS Extensions`）的章節標題中出現，表明它不僅屬於成就系統。多個 bounded context 寫入或讀取 Profile：
-
-| 模組 | 對 Profile 的操作 |
-|------|------------------|
-| `achievement.module` | `Achv->>Profile: unlock and render badge` |
-| `social.module` | 社交圖譜上下文中讀取用戶 Profile 資料 |
-
-`Profile` 是跨領域的讀寫匯聚點，應為獨立模組。
-
-#### 16-C：其他尚未有獨立 Module 的 Participant
-
-| Participant | 所在章節 | 說明 |
-|-------------|---------|------|
-| `Work`（Work Items / Milestones / Dependencies） | Section H | 輕量規劃原語，與 WBS Tasks 不同；`Work->>WBS: attach WBS structured records` |
-| `Forks`（Fork Network） | Section H | 工作空間規劃分支管理；`Forks->>CR: submit merge-back proposal` |
-| `Apps`（Other Workspace Apps） | Section H | 文件、目標、表單、資產等模組 — 定義較模糊，暫歸入 `workspace.module` 待後續細化 |
-
-### 修正
-
-已新增 4 個 Domain Module 的完整目錄骨架（共計 12 個模組）：
-
-```
-src/modules/
-├── namespace.module/   ← 新增（從 org.module 提取）
-│   ├── index.ts
-│   ├── domain.namespace/  (_entity, _value-objects, _ports, _events)
-│   ├── core/              (_use-cases, _actions, _queries)
-│   ├── infra.firestore/   (_repository, _mapper)
-│   └── _components/
-├── profile.module/     ← 新增（從 achievement.module 提取）
-│   ├── index.ts
-│   ├── domain.profile/
-│   ├── core/
-│   ├── infra.firestore/
-│   └── _components/
-├── work.module/        ← 新增
-│   ├── index.ts
-│   ├── domain.work/
-│   ├── core/
-│   ├── infra.firestore/
-│   └── _components/
-└── fork.module/        ← 新增
-    ├── index.ts
-    ├── domain.fork/
-    ├── core/
-    ├── infra.firestore/
-    └── _components/
-```
-
-已更新 `org.module/index.ts` 說明 Namespace 已遷移至 `namespace.module`。
-已更新 `achievement.module/index.ts` 說明 Profile 已遷移至 `profile.module`，並透過 `IProfileBadgeWritePort` 跨模組寫入。
-已更新 `docs/architecture/README.md` 和 `src/modules/README.md` 的 Domain Modules 表格以反映完整的 12 個模組。
-
----
-
-## Issue 17：缺少 `identity.module` 與 `account.module`；`profile.module` 可合併 ✅ FIXED
-
-**檔案：** `docs/architecture/README.md`（Domain Modules 章節）、`src/modules/README.md`、`src/modules/`
-**嚴重程度：** 高
-
-### 問題描述
-
-現有模組架構沒有明確的 **Authentication（身份識別）** 與 **Account（帳戶）** 邊界：
-
-| 缺失點 | 描述 |
-|--------|------|
-| 無 `identity.module` | Firebase Auth 的登入、登出、Session、Token 等操作分散在各處，沒有統一的 DDD 邊界管理 |
-| 無 `account.module` | User 與 Organization 作為兩個不同的「帳戶類型」，但沒有統一的 Account 實體 |
-| `profile.module` 可被吸收 | User Profile 的公開面向（顯示名稱、頭像、Badge）本質上是 Account 的公開資料，不需要獨立 BC |
-
-### 架構設計決策
-
-**`identity.module`** — 認證關切點（Authentication concern）：
-- 管理身份憑證、Provider（Firebase / Google / GitHub / Email）、Session Token、JWT Claims
-- 替代整個代碼庫中直接調用 Firebase Auth SDK 的方式
-- Identity 是「誰通過了身份驗證」，獨立於帳戶類型
-
-**`account.module`** — 帳戶實體（Account entity, unified）：
-- `AccountType: personal | organization` — 統一的帳戶模型
-- 個人帳戶在 Identity 完成註冊後自動建立
-- 組織帳戶在 Org 擁有者建立組織時建立
-- 公開 Profile 資料（顯示名稱、頭像、簡介、徽章）是 Account 的子聚合
-- 替代了分散的 User entity 和 Org account entity 概念
-
-**`profile.module` 被移除（冗餘）**：
-- Profile 是 Account 的公開面向，屬於 account.module 的 AccountProfile 子聚合
-- Achievement badge 寫入改由 `IAccountBadgeWritePort` 跨模組完成
-- Social 讀取改由 `IAccountSocialReadPort` 提供
-
-### 修正
-
-新增 2 個 Domain Module 骨架，移除 1 個冗餘 Module（12 → 13）：
-
-```
-src/modules/
-├── identity.module/   ← 新增
-│   ├── index.ts
-│   ├── domain.identity/  (_entity, _value-objects, _ports, _events)
-│   ├── core/              (_use-cases, _actions, _queries)
-│   ├── infra.firestore/   (_repository, _mapper)
-│   └── _components/
-├── account.module/    ← 新增
-│   ├── index.ts
-│   ├── domain.account/
-│   ├── core/
-│   ├── infra.firestore/
-│   └── _components/
-└── profile.module/    ← 移除（已被 account.module 吸收）
-```
-
-已更新 `org.module/index.ts`：說明 Identity 移至 `identity.module`，Org entity 移至 `account.module`。
-已更新 `achievement.module/index.ts`：Badge 寫入改指向 `account.module` 的 `IAccountBadgeWritePort`。
-已更新 `achievement.module/domain.achievement/_entity.ts`：更新跨模組 Port 引用。
-已更新 `namespace.module/domain.namespace/_entity.ts`：Namespace 擁有者改為 Account（而非 User/Org）。
-已更新 `docs/architecture/README.md` 和 `src/modules/README.md`：Domain Modules 表格 12→13。
-
----
-
-## Issue 18：新增 `collaboration.module`、`search.module`、`audit.module`；移除 `org.module`；補全 `README.md` ✅ FIXED
-
-**檔案：** `src/modules/`、`docs/architecture/README.md`、`src/modules/README.md`  
-**嚴重程度：** 高
-
-### 問題描述
-
-| 缺失點 | 描述 |
-|--------|------|
-| 無 `collaboration.module` | 平台無統一的協作邊界（評論、回應、即時在場、協同編輯） |
-| 無 `search.module` | 跨 BC 的全文/語意搜尋沒有獨立 Bounded Context |
-| 無 `audit.module` | `core-logic.mermaid` 的 `Sec`（完整性與政策自動化）參與者未被分配到任何模組；稽核日誌也缺乏歸屬 |
-| `org.module` 冗餘 | Team/Membership 操作關切點可由 `account.module`（AccountType: organization）的子聚合吸收 |
-| 所有模組缺少 `README.md` | 沒有每個模組的邊界、聚合、跨模組依賴說明文件 |
-
-### 修正
-
-新增 3 個 Domain Module 骨架，移除 1 個冗餘 Module，並為所有 15 個模組新增 `README.md`（13 - 1 + 3 = 15）：
-
-```
-src/modules/
-├── collaboration.module/  ← 新增（評論、回應、在場、協同編輯）
-├── search.module/         ← 新增（全文/語意搜尋索引 + 查詢介面）
-├── audit.module/          ← 新增（不可變稽核日誌、Sec 政策自動化）
-└── org.module/            ← 移除（Team/Membership 吸收至 account.module）
-```
-
-**每個模組均新增 `README.md`（15 個）**，記載：
-- Bounded Context 描述
-- 模組擁有的關切點（表格）
-- 不擁有的關切點（表格）
-- 跨模組依賴（方向 + 原因）
-- 標準 4 層目錄結構
-
-**`account.module` 更新：**
-- `_entity.ts`：加入 `Team` 和 `Membership` 子聚合（僅適用於 AccountType: organization）
-- `_value-objects.ts`：加入 `TeamId`、`TeamName`、`MemberRole`、`MembershipStatus`
-- `_ports.ts`：加入 `ITeamRepository`、`IMembershipRepository`
-- `core/_use-cases.ts`：加入 `CreateTeamUseCase`、`AddTeamMemberUseCase` 等
-- `index.ts`：更新說明，移除對已刪除 `org.module` 的引用
-
-**架構文件更新：**
-- `docs/architecture/README.md`：Domain Modules 表格 13→15，SaaS/Workspace 邊界圖更新
-- `src/modules/README.md`：Domain Modules 表格 13→15，新增 README 說明
-
----
-
-## 摘要表 / Summary
-
-| # | 嚴重程度 | 受影響檔案 | 問題類型 | 狀態 |
-|---|---------|-----------|---------|------|
-| 1 | 中 | `docs/architecture/README.md` | 設計系統層數描述自相矛盾（3層 vs 4層） | ✅ Fixed |
-| 2 | 中 | `docs/architecture/README.md`、`docs/architecture/adr/README.md` | ADR 索引不同步（5筆 vs 7筆） | ✅ Fixed |
-| 3 | 低 | `docs/architecture/README.md`、`src/modules/README.md` | Domain Modules 表格缺少 `workforce.module/` | ✅ Fixed |
-| 4 | 高 | `.github/copilot-instructions.md` | i18n 指示引用不存在的 JSON 檔案路徑 | ✅ Fixed |
-| 5 | 高 | `README.md` | DDD 層次結構圖描述的目錄路徑與實際不符 | ✅ Fixed |
-| 6 | 高 | `.github/README.md`、`.github/instructions/`、`.github/skills/` | 引用不存在的 `docs/copilot/` 目錄 | ✅ Fixed |
-| 7 | 低 | `src/design-system/tokens/README.md`、`src/infrastructure/firebase/README.md` | 文件範例描述尚未實現的組件如同現有功能 | ✅ Fixed |
-| 8 | 中 | `docs/architecture/README.md` | VIs 路徑錯誤（`presentation/` → `_components/`） | ✅ Fixed |
-| 9 | 高 | `.github/agents/xuanwu-ui.agent.md` | i18n 指示引用不存在的 JSON 檔案路徑 | ✅ Fixed |
-| 10 | 中 | `.github/instructions/xuanwu-application-architecture.instructions.md` | 仍使用 Feature Slice 術語而非 Domain Module | ✅ Fixed |
-| 11 | 低 | `.github/copilot-instructions.md` | 仍使用 "slice boundaries" 術語 | ✅ Fixed |
-| 12 | 中 | 多個 DDD 指令/技能/提示檔案 | 引用不存在的 `docs/architecture/models/`、`blueprints/`、`guidelines/` | ✅ Fixed |
-| 13 | 低 | `.github/prompts/ddd-slice-scaffold.prompt.md` | `.serena\memories\*` 幻象本地路徑 | ✅ Fixed |
-| 14 | 低至中 | 14 個 prompt/agent/instruction/skill 檔案 | 殘留 "slice" 術語或路徑慣例不符 `<name>.module/` | ✅ Fixed |
-| 15 | 高 | `docs/architecture/README.md`、`src/modules/README.md`、`src/modules/` | `core-logic.mermaid` 中 3 個 Bounded Context（Notification、Social、Achievement）未對應到任何 Domain Module | ✅ Fixed |
-| 16 | 高 | `org.module/`、`achievement.module/`、`docs/architecture/README.md`、`src/modules/README.md` | `Namespace` 被錯誤歸入 `org.module`；`Profile` 被錯誤歸入 `achievement.module`；`Work`、`Fork` 無獨立 Module | ✅ Fixed |
-| 17 | 高 | `src/modules/`、`docs/architecture/README.md`、`src/modules/README.md` | 缺少 `identity.module`（認證邊界）和 `account.module`（統一帳戶模型）；`profile.module` 冗餘 | ✅ Fixed |
-| 18 | 高 | `src/modules/`、`docs/architecture/README.md`、`src/modules/README.md` | 缺少 `collaboration.module`、`search.module`、`audit.module`；`org.module` 冗餘；所有模組缺少 `README.md` | ✅ Fixed |
+| `src/infrastructure/document-ai/genkit.ts` | Genkit 實例（Gemini 2.5 Flash） |
+| `src/infrastructure/document-ai/schemas/docu-parse.ts` | Zod schema（`OcrDocumentObject`, `ParsedWorkItem`） |
+| `src/infrastructure/document-ai/flows/extract-invoice-items.ts` | AI 流程（Phase 2） |
+| `src/infrastructure/document-ai/index.ts` | 公開桶（server-only） |
+| `src/modules/file.module/domain.file/_parsing-intent.ts` | `ParsedLineItem`, `ParsingIntent`, `ParsingImport` 領域型別 |
+| `src/modules/file.module/domain.file/_ports.ts` | 新增 `IParsingIntentRepository`, `IParsingImportRepository` |
+| `src/modules/file.module/core/_use-cases.ts` | 新增 `saveParsingIntent`, `startParsingImport`, `finishParsingImport` 等用例 |
+| `src/modules/file.module/core/_actions.ts` | `extractDataFromDocument` Server Action（取代空殼轉接） |
+| `src/modules/file.module/infra.firestore/parsing-intent-repository.ts` | Firestore 適配器 |
+| `src/modules/file.module/_components/document-parser-view.tsx` | Document Parser UI 元件 |
+| `functions/src/document-ai/process-document.fn.ts` | Cloud Function（Phase 1） |
+| `functions/src/index.ts` + `functions/package.json` | Cloud Functions 進入點與套件設定 |
+| `docs/architecture/document-ai.md` | 完整架構設計文件 |
+
+### 待完成項目
+
+- [ ] GCP 建立 Document AI Invoice Parser Processor（`asia-east1`）
+- [ ] 設定 `DOCAI_PROCESSOR_NAME` 環境變數並部署 Cloud Function
+- [ ] 設定 `GOOGLE_GENAI_API_KEY` 至 Vercel / Firebase App Hosting 環境
+- [ ] 在工作區 `/document-parser` 路由掛載 `DocumentParserView`
+- [ ] 實作 `startParsingImport` → `work.module` 工作項目物化串接
+- [ ] 考慮 Firebase App Check 保護 `processDocument` 端點

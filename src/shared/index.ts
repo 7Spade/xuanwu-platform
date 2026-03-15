@@ -15,6 +15,7 @@
 //                 FirestoreDocument, VisDateMetadata
 //   i18n        — isSupportedLocale, resolveLocale, useTranslation, getMessages
 //   pipes       — Pipe, schemaPipe, transformPipe, composePipes, trimPipe
+//   ports       — ICachePort, IQueuePort, IVectorIndexPort, IWorkflowPort
 //   types       — NonEmptyString, UuidSchema, IsoDateString, PositiveInt,
 //                 PaginationSchema, PaginatedResponseSchema, LocaleSchema,
 //                 Locale, Success, Failure, Result, ok, fail
@@ -33,5 +34,6 @@ export * from './errors';
 export * from './interfaces';
 export * from './i18n';
 export * from './pipes';
+export * from './ports';
 export * from './types';
 export * from './utils';

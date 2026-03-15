@@ -1,7 +1,7 @@
 /**
  * Firebase Infrastructure — root barrel
  *
- * Re-exports both the client (Web SDK) and functions (Admin SDK) surfaces.
+ * Re-exports both the client (Web SDK) and admin (Admin SDK) surfaces.
  *
  * Prefer importing from the specific sub-path to keep bundles small and
  * to make the runtime context (client vs. server) explicit:
@@ -11,9 +11,9 @@
  * import { getFirebaseAuth } from "@/infrastructure/firebase/client";
  *
  * // Server Actions / Route Handlers — Admin SDK
- * import { getAdminAuth }    from "@/infrastructure/firebase/functions/auth";
- * import { commitBatch }     from "@/infrastructure/firebase/functions/db/batchWrite";
- * import { cacheAside }      from "@/infrastructure/firebase/functions/db/cacheLayer";
+ * import { getAdminAuth }    from "@/infrastructure/firebase/admin/auth";
+ * import { commitBatch }     from "@/infrastructure/firebase/admin/db/batchWrite";
+ * import { cacheAside }      from "@/infrastructure/firebase/admin/db/cacheLayer";
  */
 
 // App init (shared by client adapters)

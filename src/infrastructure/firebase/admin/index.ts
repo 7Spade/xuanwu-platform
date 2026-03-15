@@ -13,7 +13,7 @@
  *   3. Application Default Credentials (ADC) — used automatically in
  *      Cloud Run, Cloud Functions, and other GCP-hosted environments.
  *
- * @module infrastructure/firebase/functions
+ * @module infrastructure/firebase/admin
  */
 
 import admin from "firebase-admin";

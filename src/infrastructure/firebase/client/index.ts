@@ -3,7 +3,7 @@
  *
  * Web SDK adapters for use in Client Components and browser-side code.
  * Do NOT import from this module in Server Actions or Route Handlers —
- * use `@/infrastructure/firebase/functions` for server-side operations.
+ * use `@/infrastructure/firebase/admin` for server-side operations.
  *
  * @example
  * import { getFirebaseAuth }        from "@/infrastructure/firebase/client";

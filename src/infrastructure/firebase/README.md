@@ -26,18 +26,30 @@ src/
 │       │   ├─ remoteConfig.ts       # Remote Config 動態配置
 │       │   └─ index.ts              # 前端公開 barrel
 │       │
-│       └─ functions/                # 後端 Server Actions（firebase-admin）
+│       └─ admin/                    # 後端 Server Actions（firebase-admin）
 │           ├─ index.ts              # Admin App 初始化
 │           ├─ auth/
 │           │   └─ index.ts          # 後端認證邏輯（token 驗證、custom claims）
 │           ├─ db/
 │           │   ├─ batchWrite.ts     # 批次寫入（降低 Firestore 寫入成本）
-│           │   └─ cacheLayer.ts     # 快取層（memory / 可升級 Redis）
+│           │   └─ cacheLayer.ts     # 快取層（memory / 可升級 Redis via ICachePort）
 │           ├─ storage/
 │           │   └─ index.ts          # 後端檔案處理（signed URL、刪除、複製）
 │           └─ utils/
 │               └─ index.ts          # 公共工具函數
 ```
+
+> **Note:** `functions/` has been renamed to `admin/` to avoid confusion with Firebase Cloud Functions (which live at the repo root in `functions/`). All imports should use `@/infrastructure/firebase/admin`.
+
+### Dependency direction
+
+```
+src/shared/  →  src/infrastructure/firebase/  →  src/modules/
+```
+
+- `src/shared/` defines port interfaces (e.g. `ICachePort`, `IQueuePort`) that infrastructure adapters implement.
+- Infrastructure adapters (`admin/`, `client/`, `upstash/`, `document-ai/`) depend on `src/shared/` for shared types but have **no dependency** on `src/modules/`.
+- Domain Modules depend on both `src/shared/` and, indirectly, infrastructure through port interfaces.
 
 ---
 
@@ -50,10 +62,10 @@ src/
 | `client/` | `firebaseStorage` | 檔案上傳 / 下載 | `client/storage.ts` | 大檔案使用 resumable upload，避免重試成本 |
 | `client/` | `cloudMessaging` | FCM / In-App Messaging | `client/messaging.ts` | 控制推播頻率，使用主題訂閱 |
 | `client/` | `remoteConfig` | 動態配置讀取 | `client/remoteConfig.ts` | 降低更新頻率（預設 12h），批量拉取 |
-| `functions/` | `firebase-admin` | 後端管理寫入 / 批次操作 | `functions/db/batchWrite.ts` | 批次寫入 + 快取層，降低每筆寫入成本 |
-| `functions/` | `auth` | 後端認證操作 | `functions/auth/` | 高敏感操作集中後端處理 |
-| `functions/` | `storage` | 後端檔案處理 | `functions/storage/` | 批量處理檔案或壓縮後再寫入 Storage |
-| `functions/` | `cacheLayer` | 快取層（memory / Redis） | `functions/db/cacheLayer.ts` | 讀寫分離 + 彙整寫入降低 DB 次數 |
+| `admin/` | `firebase-admin` | 後端管理寫入 / 批次操作 | `admin/db/batchWrite.ts` | 批次寫入 + 快取層，降低每筆寫入成本 |
+| `admin/` | `auth` | 後端認證操作 | `admin/auth/` | 高敏感操作集中後端處理 |
+| `admin/` | `storage` | 後端檔案處理 | `admin/storage/` | 批量處理檔案或壓縮後再寫入 Storage |
+| `admin/` | `cacheLayer` | 快取層（memory / Redis） | `admin/db/cacheLayer.ts` | 讀寫分離 + 彙整寫入降低 DB 次數 |
 | `shared/` | `constants/types/interfaces` | 前後端共用契約、collection 名稱 | `src/shared/` | 前後端統一接口，避免重複查詢 |
 
 ---
@@ -66,11 +78,11 @@ src/
 - 普通讀取、簡單寫入
 - 使用快取層減少直接 Firestore 呼叫
 
-**後端（`functions/`，在 Next.js Server Actions / Route Handlers 執行）：**
+**後端（`admin/`，在 Next.js Server Actions / Route Handlers 執行）：**
 - 敏感寫入、批次寫入、聚合操作
 - 快取層彙整後再批次寫入，降低成本
 
-### 快取層設計（`functions/db/cacheLayer.ts`）
+### 快取層設計（`admin/db/cacheLayer.ts`）
 
 ```typescript
 // Cache-aside 讀取模式
@@ -85,9 +97,9 @@ await commitBatch([{ type: "update", ref: userRef, data: { name } }]);
 await invalidateCache(cacheKey("users", uid));
 ```
 
-升級路徑：將 `MemoryCacheStore` 替換為 Redis（`ioredis`）以支援水平擴展。
+升級路徑：將 `MemoryCacheStore` 替換為 `ICachePort` + `src/infrastructure/upstash/redis.ts` 以支援水平擴展。
 
-### 批次寫入（`functions/db/batchWrite.ts`）
+### 批次寫入（`admin/db/batchWrite.ts`）
 
 ```typescript
 const ops: WriteOperation[] = documents.map((doc) => ({
@@ -128,9 +140,9 @@ const db = getFirestoreDb();
 
 ```typescript
 "use server";
-import { verifyIdToken }  from "@/infrastructure/firebase/functions/auth";
-import { cacheAside }     from "@/infrastructure/firebase/functions/db/cacheLayer";
-import { commitBatch }    from "@/infrastructure/firebase/functions/db/batchWrite";
+import { verifyIdToken }  from "@/infrastructure/firebase/admin/auth";
+import { cacheAside }     from "@/infrastructure/firebase/admin/db/cacheLayer";
+import { commitBatch }    from "@/infrastructure/firebase/admin/db/batchWrite";
 
 export async function getUser(idToken: string) {
   const claims = await verifyIdToken(idToken);
@@ -163,29 +175,3 @@ export async function getUser(idToken: string) {
 > ⚠️ `FIREBASE_SERVICE_ACCOUNT_JSON` is server-only and must **never** be prefixed with `NEXT_PUBLIC_`.
 > Client-side config values (`NEXT_PUBLIC_*`) are intentionally public — Firebase security is enforced via Security Rules and App Check.
 
----
-
-## 6️⃣ 與模組 Presentation 層整合（Vis + PDnD）
-
-> ⚠️ **以下內容為規劃中的整合模式。** `VisNetwork`、`VisTimeline`、`DragDropBoard` 組件尚未實現（目前為佔位符）。待相關依賴安裝並實現組件後，以下範例才可使用。
-
-Firebase 資料供應給各 Domain Module 的 `_components/`（Presentation 層）中的 Vis.js 和 PDnD 組件。
-
-**資料流摘要：**
-
-```
-Firestore / RealtimeDB
-  └→ Server Action（cacheAside from functions/db/cacheLayer）
-      └→ serialised props（networkNodes / timelineItems / VisDateMetadata）
-          └→ VisNetwork / VisTimeline / DragDropBoard（module _components/ 渲染）
-              └→ 用戶操作 → commitBatch（回寫 Firestore）
-```
-
-**`_components/`（Presentation 層）用到的關鍵 Firebase 模組：**
-
-| 模組 | 用途 |
-|------|------|
-| `functions/db/cacheLayer.ts` — `cacheAside` | Server Action 讀取 networkNodes / timelineItems |
-| `functions/db/batchWrite.ts` — `commitBatch` | 拖拽 / 節點變更後批次回寫 |
-| `client/firestore.ts` — `getFirestoreDb` | 客戶端低頻 `onSnapshot`（選擇性） |
-| `shared/interfaces` — `VisDateMetadata` | vis-date 時間位置契約 |

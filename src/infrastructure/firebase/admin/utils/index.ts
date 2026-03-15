@@ -1,7 +1,7 @@
 /**
  * Shared server-side utility helpers.
  *
- * Lightweight pure utilities for use across functions/ modules.
+ * Lightweight pure utilities for use across admin/ modules.
  * These have no Firebase dependency and can also be imported by other
  * server-side code.
  */

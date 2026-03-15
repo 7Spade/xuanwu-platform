@@ -14,6 +14,8 @@
  *   - Replace the in-process `Map` with Redis (`ioredis`) for multi-instance
  *     deployments where the Next.js server scales horizontally.
  *   - Swap `MemoryCacheStore` for `RedisCacheStore` without changing callers.
+ *   - For Redis-backed caching, wire the `ICachePort` from `@/shared/ports`
+ *     to `src/infrastructure/upstash/redis.ts`.
  *
  * Only use this module in Server Actions or Route Handlers.
  */

@@ -1,11 +1,6 @@
-'use server';
-// Identity server actions — thin 'use server' wrappers over application use cases.
-// These are the entry points called from React Server Components and form handlers.
-// They wire the port interfaces to real infrastructure adapters.
-//
-// Adapters are injected here so that the use-case layer stays infrastructure-free.
-// Replace the placeholder `getAuthAdapter()` calls with real adapter imports
-// once the infra.firestore adapter is implemented.
+// Identity actions — re-export barrel for application use cases.
+// Components import mutation functions from here; all Firebase operations run
+// client-side via the Web SDK (repos injected at the call site).
 
 export type { IdentityDTO, SessionStatusDTO } from "./_use-cases";
 export {
