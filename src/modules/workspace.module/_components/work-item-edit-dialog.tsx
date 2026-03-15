@@ -47,7 +47,7 @@ function getRepo() {
   return _repo;
 }
 
-const STATUSES: WorkItemStatus[] = ["open", "in-progress", "blocked", "closed"];
+const STATUSES: WorkItemStatus[] = ["open", "in-progress", "blocked", "closed", "completed"];
 const PRIORITIES: WorkItemPriority[] = ["critical", "high", "medium", "low"];
 
 export function WorkItemEditDialog({
