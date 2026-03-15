@@ -17,6 +17,7 @@ export {
   updateAccountProfile,
   getAccountById,
   getPublicProfile,
+  getOrganizationsByOwnerId,
 } from "./core/_use-cases";
 
 // Port interfaces (for infrastructure adapter implementors)

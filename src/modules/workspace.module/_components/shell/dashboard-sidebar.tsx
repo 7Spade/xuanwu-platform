@@ -3,11 +3,9 @@
  * DashboardSidebar — Main sidebar for authenticated pages.
  *
  * Assembles the sidebar structure using SidebarProvider + Sidebar components
- * from the design system. Uses NavMain for navigation and NavUser for user menu.
+ * from the design system. Uses AccountSwitcher for the top-left account context,
+ * NavMain for navigation and NavUser for user menu.
  */
-
-import { ShieldCheck } from "lucide-react";
-import Link from "next/link";
 
 import { useTranslation } from "@/shared/i18n";
 import {
@@ -21,6 +19,7 @@ import {
   SidebarRail,
 } from "@/design-system/primitives/ui/sidebar";
 
+import { AccountSwitcher } from "./account-switcher";
 import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
 
@@ -29,16 +28,8 @@ export function DashboardSidebar() {
 
   return (
     <Sidebar className="border-r border-border/50">
-      <SidebarHeader className="p-3">
-        <Link
-          href="/"
-          className="flex items-center gap-2 px-1 py-1 text-sm font-bold tracking-tight"
-        >
-          <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10 ring-1 ring-primary/20">
-            <ShieldCheck className="size-4 text-primary" />
-          </div>
-          <span>{t("app.name")}</span>
-        </Link>
+      <SidebarHeader className="p-2">
+        <AccountSwitcher />
       </SidebarHeader>
 
       <SidebarContent>
@@ -60,3 +51,4 @@ export function DashboardSidebar() {
     </Sidebar>
   );
 }
+

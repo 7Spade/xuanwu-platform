@@ -14,6 +14,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -22,7 +23,11 @@ import {
 import { getAuth, onAuthStateChanged, type User } from "firebase/auth";
 
 import { getFirebaseApp } from "@/infrastructure/firebase/app";
-import { getAccountById, type AccountDTO } from "@/modules/account.module/core/_use-cases";
+import {
+  getAccountById,
+  getOrganizationsByOwnerId,
+  type AccountDTO,
+} from "@/modules/account.module/core/_use-cases";
 import { FirestoreAccountRepository } from "@/modules/account.module/infra.firestore/_repository";
 
 // ---------------------------------------------------------------------------
@@ -34,8 +39,19 @@ export interface AccountContextValue {
   user: User | null;
   /** The Firestore AccountDTO for the current user (null until loaded or if missing). */
   account: AccountDTO | null;
+  /** Organization accounts owned by the current user. */
+  organizations: AccountDTO[];
   /** True while the initial auth + account fetch is in-flight. */
   loading: boolean;
+  /** True while organizations are being fetched after account resolves. */
+  orgsLoading: boolean;
+  /**
+   * The currently active account context (personal or one of the organizations).
+   * Defaults to the personal account once loaded.
+   */
+  activeAccount: AccountDTO | null;
+  /** Switch the active account context. Pass null to reset to personal. */
+  setActiveAccount: (account: AccountDTO | null) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -45,7 +61,11 @@ export interface AccountContextValue {
 const AccountContext = createContext<AccountContextValue>({
   user: null,
   account: null,
+  organizations: [],
   loading: true,
+  orgsLoading: false,
+  activeAccount: null,
+  setActiveAccount: () => undefined,
 });
 
 // ---------------------------------------------------------------------------
@@ -55,7 +75,14 @@ const AccountContext = createContext<AccountContextValue>({
 export function AccountProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [account, setAccount] = useState<AccountDTO | null>(null);
+  const [organizations, setOrganizations] = useState<AccountDTO[]>([]);
   const [loading, setLoading] = useState(true);
+  const [orgsLoading, setOrgsLoading] = useState(false);
+  const [activeAccount, setActiveAccountState] = useState<AccountDTO | null>(null);
+
+  const setActiveAccount = useCallback((next: AccountDTO | null) => {
+    setActiveAccountState(next);
+  }, []);
 
   useEffect(() => {
     const auth = getAuth(getFirebaseApp());
@@ -65,16 +92,35 @@ export function AccountProvider({ children }: { children: ReactNode }) {
 
       if (!firebaseUser) {
         setAccount(null);
+        setOrganizations([]);
+        setActiveAccountState(null);
         setLoading(false);
         return;
       }
 
       try {
         const repo = new FirestoreAccountRepository();
+
+        // Load personal account
         const result = await getAccountById(repo, firebaseUser.uid);
-        setAccount(result.ok ? result.value : null);
+        const personalAccount = result.ok ? result.value : null;
+        setAccount(personalAccount);
+
+        // Always reset to personal account when auth state changes (new sign-in)
+        setActiveAccountState(personalAccount);
+
+        // Load owned organizations
+        setOrgsLoading(true);
+        try {
+          const orgsResult = await getOrganizationsByOwnerId(repo, firebaseUser.uid);
+          setOrganizations(orgsResult.ok ? orgsResult.value : []);
+        } finally {
+          setOrgsLoading(false);
+        }
       } catch {
         setAccount(null);
+        setOrganizations([]);
+        setActiveAccountState(null);
       }
 
       setLoading(false);
@@ -84,7 +130,17 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AccountContext.Provider value={{ user, account, loading }}>
+    <AccountContext.Provider
+      value={{
+        user,
+        account,
+        organizations,
+        loading,
+        orgsLoading,
+        activeAccount,
+        setActiveAccount,
+      }}
+    >
       {children}
     </AccountContext.Provider>
   );
@@ -98,8 +154,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
  * useCurrentAccount — returns the current user's Firebase Auth user + AccountDTO.
  *
  * Must be called inside <AccountProvider>.
- * Returns { user, account, loading } where `loading` is true during the
- * initial auth state resolution.
+ * Returns { user, account, loading, organizations, orgsLoading, activeAccount, setActiveAccount }.
  */
 export function useCurrentAccount(): AccountContextValue {
   return useContext(AccountContext);

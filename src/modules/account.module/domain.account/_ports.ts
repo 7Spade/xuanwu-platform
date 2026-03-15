@@ -12,6 +12,7 @@ import type { AccountId, AccountHandle, MemberRole } from "./_value-objects";
 export interface IAccountRepository {
   findById(id: AccountId): Promise<AccountEntity | null>;
   findByHandle(handle: AccountHandle): Promise<AccountEntity | null>;
+  findOrganizationsByOwnerId(ownerId: AccountId): Promise<AccountEntity[]>;
   save(account: AccountEntity): Promise<void>;
   deleteById(id: AccountId): Promise<void>;
 }
