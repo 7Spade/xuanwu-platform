@@ -16,13 +16,14 @@ import {
   getDoc,
   getDocs,
   setDoc,
+  updateDoc,
   deleteDoc,
   query,
   where,
 } from "firebase/firestore";
 import type { IFileRepository } from "../domain.file/_ports";
 import type { FileEntity } from "../domain.file/_entity";
-import type { FileId } from "../domain.file/_value-objects";
+import type { FileId, ParseStatus } from "../domain.file/_value-objects";
 import {
   fileEntityDocToEntity,
   fileEntityToDoc,
@@ -64,5 +65,10 @@ export class FirestoreFileRepository implements IFileRepository {
   async deleteById(id: FileId): Promise<void> {
     const ref = doc(this.db, FILES_COLLECTION, id);
     await deleteDoc(ref);
+  }
+
+  async updateParseStatus(id: FileId, status: ParseStatus): Promise<void> {
+    const ref = doc(this.db, FILES_COLLECTION, id);
+    await updateDoc(ref, { parseStatus: status, updatedAt: new Date().toISOString() });
   }
 }

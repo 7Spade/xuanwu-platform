@@ -385,3 +385,57 @@ export { createWorkspace, getWorkspaceById, ... } from "./_use-cases"; // re-exp
 | 24 | 中（🟡）| 跨模組 Presentation Layer 元件直接依賴 | 3 個元件，3 個模組 | ❌ Open |
 | 25 | 中（🟡）| `useCurrentAccount` 跨模組 Presentation Hook 耦合（壞味道） | 11 個元件，7 個模組 | ❌ Open |
 | 26 | 高（🔴）| 全部 16 個 `core/_actions.ts` 錯誤使用 `'use server'`（僅含 re-export） | 16 個模組 | ✅ Fixed |
+| 27 | 新功能（🔵）| Document AI 基礎設施設計與腳手架（見 `docs/architecture/document-ai.md`） | `file.module`, `src/infrastructure/document-ai/`, `functions/` | ✅ Scaffolded |
+
+---
+
+## Issue 27 — Document AI 基礎設施 🔵 Scaffolded
+
+### 背景
+
+本 Issue 記錄根據 `7Spade/xuanwu` 參考專案的 Document AI 實作（`src/app-runtime/ai/` + `src/shared-infra/firebase-admin/functions/src/document-ai/`），為本專案設計並搭建的 Document AI 基礎設施。
+
+### 兩段式解析流程
+
+```
+上傳文件 (Firebase Storage)
+    ↓
+Phase 1 — processDocument Cloud Function
+  Google Cloud Document AI → OcrDocumentObject + .document-ai.json sidecar
+    ↓
+Phase 2 — extractInvoiceItems (Genkit / Gemini 2.5 Flash)
+  OcrDocumentObject → ParsedWorkItem[] (含 semanticTagSlug)
+    ↓
+saveParsingIntent (file.module use case)
+  ParsingIntent 數位雙胞胎 → Firestore (含 SHA-256 語義雜湊去重)
+    ↓
+startParsingImport / finishParsingImport
+  冪等性作業日誌 → 工作項目物化
+```
+
+### 建立的檔案
+
+| 路徑 | 說明 |
+|------|------|
+| `src/infrastructure/document-ai/genkit.ts` | Genkit 實例（Gemini 2.5 Flash） |
+| `src/infrastructure/document-ai/schemas/docu-parse.ts` | Zod schema（`OcrDocumentObject`, `ParsedWorkItem`） |
+| `src/infrastructure/document-ai/flows/extract-invoice-items.ts` | AI 流程（Phase 2） |
+| `src/infrastructure/document-ai/index.ts` | 公開桶（server-only） |
+| `src/modules/file.module/domain.file/_parsing-intent.ts` | `ParsedLineItem`, `ParsingIntent`, `ParsingImport` 領域型別 |
+| `src/modules/file.module/domain.file/_ports.ts` | 新增 `IParsingIntentRepository`, `IParsingImportRepository` |
+| `src/modules/file.module/core/_use-cases.ts` | 新增 `saveParsingIntent`, `startParsingImport`, `finishParsingImport` 等用例 |
+| `src/modules/file.module/core/_actions.ts` | `extractDataFromDocument` Server Action（取代空殼轉接） |
+| `src/modules/file.module/infra.firestore/parsing-intent-repository.ts` | Firestore 適配器 |
+| `src/modules/file.module/_components/document-parser-view.tsx` | Document Parser UI 元件 |
+| `functions/src/document-ai/process-document.fn.ts` | Cloud Function（Phase 1） |
+| `functions/src/index.ts` + `functions/package.json` | Cloud Functions 進入點與套件設定 |
+| `docs/architecture/document-ai.md` | 完整架構設計文件 |
+
+### 待完成項目
+
+- [ ] GCP 建立 Document AI Invoice Parser Processor（`asia-east1`）
+- [ ] 設定 `DOCAI_PROCESSOR_NAME` 環境變數並部署 Cloud Function
+- [ ] 設定 `GOOGLE_GENAI_API_KEY` 至 Vercel / Firebase App Hosting 環境
+- [ ] 在工作區 `/document-parser` 路由掛載 `DocumentParserView`
+- [ ] 實作 `startParsingImport` → `work.module` 工作項目物化串接
+- [ ] 考慮 Firebase App Check 保護 `processDocument` 端點
