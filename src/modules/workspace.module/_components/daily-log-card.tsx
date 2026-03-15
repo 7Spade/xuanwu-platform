@@ -1,7 +1,8 @@
 "use client";
 /**
  * DailyLogCard — shows a single daily log entry with edit/delete actions.
- * Wave 45.
+ * Wave 45: core card. Wave 52: social reactions (like + bookmark).
+ * Wave 55: comment thread (collaboration.module).
  */
 
 import { useState } from "react";
@@ -20,6 +21,9 @@ import { useTranslation } from "@/shared/i18n";
 import { FirestoreDailyLogRepository } from "@/modules/workspace.module/infra.firestore/_daily-log-repository";
 import { deleteDailyLog } from "@/modules/workspace.module/core/_daily-log-use-cases";
 import type { DailyLogDTO } from "@/modules/workspace.module/core/_daily-log-use-cases";
+import { useCurrentAccount } from "@/modules/account.module/_components/account-provider";
+import { SocialActionsBar } from "@/modules/social.module/_components/social-actions-bar";
+import { CommentThread } from "@/modules/collaboration.module/_components/comment-thread";
 
 let _repo: FirestoreDailyLogRepository | null = null;
 function getRepo() {
@@ -35,6 +39,7 @@ interface DailyLogCardProps {
 
 export function DailyLogCard({ log, onEdit, onDeleted }: DailyLogCardProps) {
   const t = useTranslation("zh-TW");
+  const { account } = useCurrentAccount();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -93,6 +98,22 @@ export function DailyLogCard({ log, onEdit, onDeleted }: DailyLogCardProps) {
             ))}
           </div>
         )}
+
+        {/* Social reactions — Wave 52 */}
+        <div className="mt-3 flex items-center justify-between border-t border-border/30 pt-3">
+          <SocialActionsBar
+            targetId={log.id}
+            targetType="daily-log"
+            currentAccountId={account?.id}
+          />
+        </div>
+
+        {/* Comment thread — Wave 55 */}
+        <CommentThread
+          artifactType="daily-log"
+          artifactId={log.id}
+          defaultCollapsed
+        />
       </div>
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>

@@ -7,7 +7,7 @@
  * shared from the single subscription in the layout root.
  */
 
-import { UserCircle, LogOut, ChevronsUpDown } from "lucide-react";
+import { UserCircle, LogOut, ChevronsUpDown, Bell, Building2, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -93,6 +93,24 @@ export function NavUser() {
                 <span className="text-xs font-medium">
                   {t("nav.profileSettings")}
                 </span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/notifications" className="flex cursor-pointer items-center gap-2 py-2">
+                <Bell className="size-4 text-muted-foreground" />
+                <span className="text-xs font-medium">{t("nav.notifications")}</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/organizations" className="flex cursor-pointer items-center gap-2 py-2">
+                <Building2 className="size-4 text-muted-foreground" />
+                <span className="text-xs font-medium">{t("nav.organizations")}</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/security" className="flex cursor-pointer items-center gap-2 py-2">
+                <ShieldCheck className="size-4 text-muted-foreground" />
+                <span className="text-xs font-medium">{t("nav.security")}</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />

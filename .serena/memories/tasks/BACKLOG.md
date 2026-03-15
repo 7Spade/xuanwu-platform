@@ -30,8 +30,9 @@
 | `workspace.slice/core` (create-workspace-dialog) | `workspace.module` | ✅ Wave 44 |
 | `workspace.slice/domain.daily` | `workspace.module` | ✅ Wave 45 |
 | `workspace.slice/domain.issues` | `workspace.module` | ✅ Wave 46 |
+| Waves 47–62 (schedule, files, QA, acceptance, finance, audit, members, capabilities, editor, workforce, causal-graph, forks, search, notifications, security, organizations) | various modules | ✅ Waves 47–62 |
 
-### Parity Status (Waves 30–42 complete)
+### Parity Status (Waves 30–62 complete)
 
 | Wave | Scope | Status |
 |------|-------|--------|
@@ -48,10 +49,26 @@
 | 40 | Workspace photo URL | ✅ |
 | 41 | Work item delete + description display | ✅ |
 | 42 | Workspace sub-locations panel | ✅ |
-| **43** | **Advanced WBS task tree engine** | **⬜ NEXT** |
-| 44 | Create Workspace dialog | ⬜ |
-| 45 | Daily Log View (capability-gated) | ⬜ |
-| 46 | Issues View (capability-gated) | ⬜ |
+| 43 | Advanced WBS task tree engine | ✅ |
+| 44 | Create Workspace dialog | ✅ |
+| 45 | Daily Log View (capability-gated) | ✅ |
+| 46 | Issues View (capability-gated) | ✅ |
+| 47 | Schedule view | ✅ |
+| 48 | Files view | ✅ |
+| 49 | QA view | ✅ |
+| 50 | Acceptance view | ✅ |
+| 51 | Finance / Settlement view | ✅ |
+| 52 | Audit view (workspace-scoped) | ✅ |
+| 53 | Members view | ✅ |
+| 54 | Capabilities view | ✅ |
+| 55 | Editor / Documents view | ✅ |
+| 56 | Workforce / Scheduling view | ✅ |
+| 57 | Causal Graph view | ✅ |
+| 58 | Forks view | ✅ |
+| 59 | Search module UI | ✅ |
+| 60 | Notifications page | ✅ |
+| 61 | Security page | ✅ |
+| 62 | Organizations page | ✅ |
 
 ---
 

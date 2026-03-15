@@ -19,6 +19,7 @@ import {
 } from "firebase/firestore";
 import type { ISocialGraphRepository } from "../domain.social/_ports";
 import type { SocialRelation } from "../domain.social/_entity";
+import type { SocialRelationType } from "../domain.social/_value-objects";
 import {
   socialRelationDocToEntity,
   socialRelationEntityToDoc,
@@ -26,10 +27,6 @@ import {
 } from "./_mapper";
 
 const SOCIAL_RELATIONS_COLLECTION = "socialRelations";
-
-// ---------------------------------------------------------------------------
-// FirestoreSocialGraphRepository
-// ---------------------------------------------------------------------------
 
 export class FirestoreSocialGraphRepository implements ISocialGraphRepository {
   private get db() {
@@ -54,17 +51,49 @@ export class FirestoreSocialGraphRepository implements ISocialGraphRepository {
     );
   }
 
+  async findByTargetAndType(
+    targetId: string,
+    relationType: SocialRelationType,
+  ): Promise<SocialRelation[]> {
+    const col = collection(this.db, SOCIAL_RELATIONS_COLLECTION);
+    const q = query(
+      col,
+      where("targetId", "==", targetId),
+      where("relationType", "==", relationType),
+    );
+    const snaps = await getDocs(q);
+    return snaps.docs.map((d) =>
+      socialRelationDocToEntity(d.data() as SocialRelationDoc),
+    );
+  }
+
   async findBySubjectAndTarget(
     subjectAccountId: string,
     targetId: string,
   ): Promise<SocialRelation | null> {
     const col = collection(this.db, SOCIAL_RELATIONS_COLLECTION);
-    // A subject can have at most one relation per (targetId, relationType) tuple;
-    // limit(1) avoids unnecessary data transfer and makes uniqueness explicit.
     const q = query(
       col,
       where("subjectAccountId", "==", subjectAccountId),
       where("targetId", "==", targetId),
+      limit(1),
+    );
+    const snaps = await getDocs(q);
+    if (snaps.empty) return null;
+    return socialRelationDocToEntity(snaps.docs[0].data() as SocialRelationDoc);
+  }
+
+  async findBySubjectTargetAndType(
+    subjectAccountId: string,
+    targetId: string,
+    relationType: SocialRelationType,
+  ): Promise<SocialRelation | null> {
+    const col = collection(this.db, SOCIAL_RELATIONS_COLLECTION);
+    const q = query(
+      col,
+      where("subjectAccountId", "==", subjectAccountId),
+      where("targetId", "==", targetId),
+      where("relationType", "==", relationType),
       limit(1),
     );
     const snaps = await getDocs(q);

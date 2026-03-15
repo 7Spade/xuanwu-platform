@@ -6,6 +6,7 @@
 import {
   LayoutDashboard,
   Layers,
+  Search,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -20,6 +21,7 @@ import {
 const NAV_ITEMS = [
   { href: "/", icon: LayoutDashboard, labelKey: "nav.home" },
   { href: "/workspaces", icon: Layers, labelKey: "nav.workspaces" },
+  { href: "/search", icon: Search, labelKey: "nav.search" },
 ] as const;
 
 export function NavMain() {

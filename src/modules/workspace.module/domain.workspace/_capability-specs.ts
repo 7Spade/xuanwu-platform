@@ -81,4 +81,25 @@ export const CAPABILITY_SPECS: readonly WorkspaceCapability[] = [
     status: "stable",
     description: "Budget tracking, cost accounting, and financial reporting.",
   },
+  {
+    id: "causal-graph",
+    name: "Causal Graph",
+    type: "ui",
+    status: "beta",
+    description: "Visualise cause-and-effect relationships between workspace events.",
+  },
+  {
+    id: "workforce",
+    name: "Workforce",
+    type: "ui",
+    status: "stable",
+    description: "Staff scheduling, shift assignment, and capacity planning.",
+  },
+  {
+    id: "forks",
+    name: "Forks",
+    type: "ui",
+    status: "beta",
+    description: "Branch the workspace for isolated experimentation and divergent analysis.",
+  },
 ];

@@ -7,6 +7,7 @@
 
 import type { SocialRelation } from "../domain.social/_entity";
 import type { SocialRelationType } from "../domain.social/_value-objects";
+import { SocialTargetTypeSchema } from "../domain.social/_value-objects";
 
 // ---------------------------------------------------------------------------
 // Firestore document shape (raw, unvalidated)
@@ -30,11 +31,13 @@ export interface SocialRelationDoc {
  * Maps a raw Firestore SocialRelationDoc to a typed SocialRelation.
  */
 export function socialRelationDocToEntity(d: SocialRelationDoc): SocialRelation {
+  // Validate targetType with Zod, fall back to "account" for unknown legacy values
+  const targetTypeParsed = SocialTargetTypeSchema.safeParse(d.targetType);
   return {
     id: d.id,
     subjectAccountId: d.subjectAccountId,
     targetId: d.targetId,
-    targetType: d.targetType as "workspace" | "account",
+    targetType: targetTypeParsed.success ? targetTypeParsed.data : "account",
     relationType: d.relationType as SocialRelationType,
     createdAt: d.createdAt,
   };

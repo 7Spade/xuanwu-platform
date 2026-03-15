@@ -11,9 +11,14 @@ import { Settings } from "lucide-react";
 import { useTranslation } from "@/shared/i18n";
 
 import { ProfileCard } from "./profile-card";
+import { useCurrentAccount } from "./account-provider";
+import { AchievementsPanel } from "@/modules/achievement.module/_components/achievements-panel";
+import { FollowersPanel } from "@/modules/social.module/_components/followers-panel";
+import { SocialFeedView } from "@/modules/social.module/_components/social-feed-view";
 
 export function UserSettingsView() {
   const t = useTranslation("zh-TW");
+  const { account } = useCurrentAccount();
 
   return (
     <div className="mx-auto max-w-3xl space-y-8 duration-500 animate-in fade-in">
@@ -26,6 +31,15 @@ export function UserSettingsView() {
       </div>
 
       <ProfileCard />
+
+      {/* Achievements — Wave 56 */}
+      <AchievementsPanel accountId={account?.id} />
+
+      {/* Following list — Wave 60 */}
+      <FollowersPanel accountId={account?.id} />
+
+      {/* Social feed — Wave 60 */}
+      <SocialFeedView accountId={account?.id} />
     </div>
   );
 }

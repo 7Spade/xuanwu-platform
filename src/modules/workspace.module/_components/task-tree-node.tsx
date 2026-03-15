@@ -17,7 +17,6 @@ import {
   MapPin,
   Paperclip,
   AlertCircle,
-  X,
 } from "lucide-react";
 import { Badge } from "@/design-system/primitives/ui/badge";
 import {
@@ -35,7 +34,6 @@ import type { TaskWithChildren } from "@/modules/work.module/domain.work/_task-t
 import {
   deleteWorkItem,
   updateWorkItem,
-  createChildWorkItem,
 } from "@/modules/work.module/core/_use-cases";
 import { FirestoreWorkItemRepository } from "@/modules/work.module/infra.firestore/_repository";
 import { TaskEditorDialog } from "./task-editor-dialog";
@@ -55,15 +53,6 @@ function statusVariant(status: string): "default" | "secondary" | "destructive" 
     case "in-progress": return "default";
     case "blocked": return "destructive";
     default: return "outline";
-  }
-}
-
-function priorityColor(priority: string): string {
-  switch (priority) {
-    case "critical": return "text-destructive";
-    case "high": return "text-orange-500";
-    case "medium": return "text-yellow-500";
-    default: return "text-muted-foreground";
   }
 }
 
