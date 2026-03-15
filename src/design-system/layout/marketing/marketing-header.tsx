@@ -5,12 +5,25 @@ import { useTranslation } from "@/shared/i18n";
 import type { Locale } from "@/shared/types";
 import { APP_NAME } from "@/shared/constants";
 
-interface HomeHeaderProps {
+export interface MarketingHeaderProps {
+  /** Active locale — controlled by the parent page. */
   locale: Locale;
+  /** Called when the user requests a locale change. */
   onLocaleChange: (locale: Locale) => void;
 }
 
-export function HomeHeader({ locale, onLocaleChange }: HomeHeaderProps) {
+/**
+ * MarketingHeader — sticky top navigation for marketing / landing pages.
+ *
+ * Presentational: receives locale via props and delegates persistence to
+ * the parent (typically via the `useLocale` directive from
+ * `@/shared/directives`).
+ *
+ * Slots:
+ *   - App name / brand (left)
+ *   - Language toggle + Login CTA (right)
+ */
+export function MarketingHeader({ locale, onLocaleChange }: MarketingHeaderProps) {
   const t = useTranslation(locale);
 
   function toggleLocale() {
