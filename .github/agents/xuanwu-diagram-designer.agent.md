@@ -2,6 +2,7 @@
 name: 'xuanwu-diagram-designer'
 description: 'Specialized agent for refining and standardizing architecture diagrams using Mermaid.'
 tools: ['codebase', 'search', 'editFiles', 'filesystem/*', 'serena/*']
+user-invocable: false
 handoffs:
   - label: 'Escalate to architecture chief'
     agent: xuanwu-architecture-chief

@@ -1,6 +1,7 @@
 ---
 name: web-design-reviewer
 description: 'Visual inspection and fix of websites for design issues including responsive breakage, accessibility problems, visual inconsistency, and layout errors. Use when asked to review UI design, check layout, or fix design problems. Triggers: "review website design", "check the UI", "fix the layout", "find design problems", "UI review", "design audit".'
+argument-hint: '[URL or component path] [specific design concern, e.g. mobile layout, dark mode, accessibility]'
 ---
 
 # Web Design Reviewer
