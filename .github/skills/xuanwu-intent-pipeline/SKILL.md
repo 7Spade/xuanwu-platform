@@ -1,5 +1,6 @@
 ---
 name: xuanwu-intent-pipeline
+user-invocable: false
 description: >
   Xuanwu 六步驟智能理解管道（Six-Step Intent Pipeline）。
   在執行任何代理任務之前，透過結構化步驟完整理解用戶意圖。

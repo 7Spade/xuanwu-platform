@@ -3,12 +3,12 @@
 **層次**: 基礎設施層 / Infrastructure Layer
 **職責**: 封裝所有外部 I/O：Firebase Web SDK（Client 端）、Firebase Admin SDK（Server 端）。
 **不包含**: 業務邏輯（由 Domain Modules 負責）、UI 元件（由 design-system 負責）。
-**安全提示**: `functions/`（Admin SDK）只能在 Server Actions 或 Route Handlers 中使用，**絕不**匯入到 Client Components 或瀏覽器 bundle。
+**安全提示**: `admin/`（Admin SDK）只能在 Server Actions 或 Route Handlers 中使用，**絕不**匯入到 Client Components 或瀏覽器 bundle。
 
 ---
 
 ## `src/infrastructure/firebase/index.ts`
-**描述**: Firebase 基礎設施根 barrel，重新匯出 `app` 初始化與完整 `client` 子層。Server 端請使用 `functions/` 子路徑。
+**描述**: Firebase 基礎設施根 barrel，重新匯出 `app` 初始化與完整 `client` 子層。Server 端請使用 `admin/` 子路徑。
 **函數清單**:
 - `export { getFirebaseApp, resolvedFirebaseConfig }` — Firebase App 初始化（來自 `./app`）
 - `export * from './client'` — 完整 Web SDK Client 子層
@@ -108,7 +108,7 @@
 
 ---
 
-## `src/infrastructure/firebase/functions/index.ts`
+## `src/infrastructure/firebase/admin/index.ts`
 **描述**: Firebase Admin SDK 伺服器端入口 — 管理 firebase-admin App 單例，支援三種認證方式（Service Account JSON、GOOGLE_APPLICATION_CREDENTIALS、ADC）。
 **只可用於**: Server Actions、Route Handlers — **禁止**匯入 Client Components。
 **函數清單**:
@@ -116,7 +116,7 @@
 
 ---
 
-## `src/infrastructure/firebase/functions/auth/index.ts`
+## `src/infrastructure/firebase/admin/auth/index.ts`
 **描述**: 伺服器端 Firebase Auth helpers — 使用 firebase-admin Auth 進行特權操作（自訂 token 建立、session 驗證、使用者管理）。
 **函數清單**:
 - `function getAdminAuth(): Auth` — 取得 firebase-admin Auth 單例
@@ -126,7 +126,7 @@
 
 ---
 
-## `src/infrastructure/firebase/functions/db/batchWrite.ts`
+## `src/infrastructure/firebase/admin/db/batchWrite.ts`
 **描述**: 伺服器端 Firestore 批次寫入器 — 緩衝寫入操作並原子性沖刷（支援超過 500 操作限制的自動分批）。減少 Firestore 寫入成本。
 **函數清單**:
 - `type WriteOperation` — 批次操作 union type（set、update、delete）
@@ -138,7 +138,7 @@
 
 ---
 
-## `src/infrastructure/firebase/functions/db/cacheLayer.ts`
+## `src/infrastructure/firebase/admin/db/cacheLayer.ts`
 **描述**: 伺服器端快取層 — 輕量級記憶體快取（in-process Map），減少 Firestore 讀取操作與成本。可升級為 Redis 多實例快取。
 **函數清單**:
 - `interface CacheStore` — 快取儲存抽象介面（get, set, delete, clear）
@@ -147,7 +147,7 @@
 
 ---
 
-## `src/infrastructure/firebase/functions/storage/index.ts`
+## `src/infrastructure/firebase/admin/storage/index.ts`
 **描述**: 伺服器端 Firebase Storage helpers — 使用 firebase-admin Storage 進行特權檔案操作（生成簽名 URL、處理上傳、原子移動/複製）。
 **函數清單**:
 - `function getAdminBucket()` — 取得預設 Storage bucket
@@ -155,8 +155,8 @@
 
 ---
 
-## `src/infrastructure/firebase/functions/utils/index.ts`
-**描述**: 共用伺服器端純函數工具 — 無 Firebase 依賴，可由其他 functions/ 模組匯入。
+## `src/infrastructure/firebase/admin/utils/index.ts`
+**描述**: 共用伺服器端純函數工具 — 無 Firebase 依賴，可由其他 admin/ 模組匯入。
 **函數清單**:
 - `function toDate(value: unknown): Date | null` — 將 Firestore Timestamp/Date/number/string 轉為 Date（安全型別轉換）
 - `function toIsoString(value: unknown): string | null` — 將 Timestamp/Date 轉為 ISO-8601 字串

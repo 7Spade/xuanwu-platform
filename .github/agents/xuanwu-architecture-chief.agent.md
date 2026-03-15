@@ -5,7 +5,7 @@ tools: ['codebase', 'search', 'editFiles', 'repomix/*', 'filesystem/*', 'serena/
 handoffs:
   - label: 'Delegate diagram work'
     agent: xuanwu-diagram-designer
-    prompt: 'Refine and standardize the architecture diagrams using Mermaid and the VS8 visual system.'
+    prompt: 'Refine and standardize the architecture diagrams using Mermaid.'
   - label: 'Delegate doc restructuring'
     agent: xuanwu-architecture-refactor
     prompt: 'Restructure the architecture documentation based on the direction established above.'
@@ -81,18 +81,7 @@ Characteristics:
 
 # Diagram Requirements
 
-Use **Mermaid diagrams**.
-
-Apply **VS8 architecture color system** for layers:
-
-1 Identity  
-2 Governance  
-3 Semantic  
-4 Task / Skill  
-5 Data Lifecycle  
-6 Matching / AI  
-7 Infrastructure  
-8 Observability
+For diagram standards, architecture layer color system, layout principles, and Mermaid guidelines, follow `.github/skills/xuanwu-diagram-standards/SKILL.md`.
 
 ---
 

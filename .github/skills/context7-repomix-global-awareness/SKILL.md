@@ -1,5 +1,6 @@
 ---
 name: context7-repomix-global-awareness
+user-invocable: false
 description: >
   Two-pillar global awareness workflow combining Repomix (codebase snapshot) and
   Context7 (version-accurate framework docs) to give agents comprehensive project context.

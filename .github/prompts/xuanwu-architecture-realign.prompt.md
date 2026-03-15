@@ -47,25 +47,16 @@ For each target document:
 2. Align structure and headings to match the baseline.
 3. Unify terminology with the baseline documents.
 4. Refactor Mermaid diagrams:
-   - Must reflect VS8 architecture layer system
+   - Must reflect architecture layer system
    - Maintain clear directional flows and visible lines
    - Simplify node layout without losing meaning
 5. Preserve essential content, flows, and architecture semantics.
 
 ---
 
-### VS8 Architecture Layer System
+### Architecture Layer System
 
-Ensure all diagrams and references are aligned with these layers:
-
-1. Identity Layer
-2. Governance Layer
-3. Semantic Layer
-4. Task / Skill Layer
-5. Data Lifecycle Layer
-6. Matching / AI Layer
-7. Infrastructure Layer
-8. Observability Layer
+Ensure all diagrams and references follow the architecture layer color system defined in `.github/skills/xuanwu-diagram-standards/SKILL.md`.
 
 ---
 
@@ -85,7 +76,7 @@ After refinement:
 - Target documents are fully aligned with the Protocol SSOT (`Xuanwu-Semantic-Kernel-and-Matchmaking-Protocol.md`) and the topology SSOT (`docs/architecture/README.md`)
 - Redundant or bloated sections are shrunk
 - Terminology is consistent across all documents
-- Mermaid diagrams are clean, readable, and VS8-aligned
+- Mermaid diagrams are clean, readable, and aligned with the architecture layer system
 - Documents reflect a lean, professional system architecture blueprint
 
 ---

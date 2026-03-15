@@ -1,6 +1,7 @@
 ---
 name: refactor
 description: 'Surgical code refactoring and quality review to improve maintainability without changing behavior. Use when extracting functions, reducing method cognitive complexity, renaming variables, breaking down god functions, improving type safety, eliminating code smells, reviewing code quality before merge, or applying design patterns. Triggers: "refactor", "clean up code", "extract method", "reduce complexity", "simplify method", "extract helpers", "cognitive complexity", "code smell", "improve maintainability", "review and refactor", "code quality", "fix smells", "improve readability".'
+argument-hint: '[file or symbol to refactor] [goal, e.g. extract method, reduce complexity, improve types]'
 ---
 
 # Refactor

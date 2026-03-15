@@ -42,7 +42,7 @@ handoffs:
     prompt: 'Restructure the architecture documentation for clarity and consistency.'
   - label: 'Refine architecture diagrams'
     agent: xuanwu-diagram-designer
-    prompt: 'Refine the architecture diagrams using Mermaid and the VS8 visual system.'
+    prompt: 'Refine the architecture diagrams using Mermaid.'
   - label: 'Read-only architecture analysis'
     agent: xuanwu-repo-browser
     prompt: 'Analyze the architecture documentation for the task above without making changes.'
@@ -83,71 +83,7 @@ Your job is to fully understand the user's request through the **Six-Step Intent
 
 Full pipeline reference: `.github/skills/xuanwu-intent-pipeline/SKILL.md`
 
----
-
-## Six-Step Intent Pipeline
-
-Execute these steps in order before every dispatch. Do not skip steps.
-
-### ① 接收原始輸入（Raw Input）
-
-Capture the user's complete, unmodified request.
-
-- Preserve all code snippets, error messages, file paths, and foreign-language text verbatim.
-- Identify input language (Chinese / English / mixed).
-- Output: `verbatim_request = "<full user text>"`
-
-### ② 語意分析（Intent Detection）
-
-Determine the user's goal and behavioral intent.
-
-- **Action type**: `create` | `audit` | `fix` | `refactor` | `document` | `optimize` | `research` | `configure`
-- **Domain area**: `architecture` | `code` | `ui` | `ci-cd` | `docs` | `security` | `performance` | `testing`
-- **Urgency**: `blocking` | `high` | `normal` | `low`
-- Ask: Is this cross-functional (needs orchestrator) or single-function (direct dispatch)?
-
-### ③ 上下文抓取（Context Extraction）
-
-Collect background context from the repository using Serena first.
-
-```
-1. serena-check_onboarding_performed → verify project initialized
-2. serena-list_memories → list available memories
-3. serena-read_memory(project/architecture) → current architecture state
-4. serena-find_symbol / serena-search_for_pattern → specific code locations
-```
-
-Focus on: relevant modules, layer ownership, existing patterns, ADR constraints.
-
-### ④ 關鍵資訊標記（Entity & Parameter Extraction）
-
-Parse the request into structured entities:
-
-- **Modules** (`src/modules/<name>.module/`)
-- **Layers** (Presentation / Application / Domain / Infrastructure)
-- **Files** (specific paths, if mentioned)
-- **Operation** (what must change or be created)
-- **Constraints** (must not break X; must follow Y pattern)
-- **Dependencies** (Firebase, third-party APIs, shared layer)
-
-### ⑤ 依賴與優先級分析（Dependency & Priority Analysis）
-
-Determine task execution order and agent assignment:
-
-1. Which tasks have hard technical dependencies (B needs A's interface)?
-2. Which tasks can run in parallel?
-3. Which agent best fits each step?
-4. What is the minimum viable first step?
-
-### ⑥ 生成任務指令（Task Instruction Generation）
-
-Produce a clear, actionable dispatch plan:
-
-- **Problem summary** — one-sentence restatement
-- **Recommended agent** — which `xuanwu-*` agent
-- **Recommended prompt** — slash command if applicable
-- **Execution sequence** — ordered phases with agent assignments
-- **Suggested handoff** — use the appropriate button below
+Execute the complete Six-Step Intent Pipeline from that skill before every dispatch. Do not skip any step.
 
 ---
 

@@ -1,6 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { getAuth, onAuthStateChanged, type User } from "firebase/auth";
+import { getFirebaseApp } from "@/infrastructure/firebase/app";
+import { DEFAULT_LOCALE } from "@/shared/constants";
+import { resolveLocale } from "@/shared/i18n";
+import type { Locale } from "@/shared/types";
 
 // ---------------------------------------------------------------------------
 // useToggle
@@ -122,4 +127,85 @@ export function useIsMounted(): boolean {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   return mounted;
+}
+
+// ---------------------------------------------------------------------------
+// useLocale
+// ---------------------------------------------------------------------------
+
+/** localStorage key used to persist the user's locale preference. */
+export const LOCALE_STORAGE_KEY = "xuanwu-locale";
+
+/**
+ * Locale persistence directive — implements `ILocalePort` for client components.
+ *
+ * Reads the user's locale preference from `localStorage` (via `useLocalStorage`),
+ * falling back to `DEFAULT_LOCALE`. Automatically keeps `html[lang]` in sync
+ * for accessibility and search engine crawlers.
+ *
+ * Satisfies the `ILocalePort` contract from `@/shared/ports`.
+ *
+ * @example
+ * const [locale, setLocale] = useLocale();
+ * // locale === "zh-TW" | "en"
+ * // setLocale("en") → persists to localStorage + updates html[lang]
+ */
+export function useLocale(): [Locale, (locale: Locale) => void] {
+  const [raw, setRaw] = useLocalStorage<string>(LOCALE_STORAGE_KEY, DEFAULT_LOCALE);
+  const locale = resolveLocale(raw);
+
+  // Keep html[lang] attribute in sync whenever the locale changes
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
+
+  const setLocale = useCallback(
+    (next: Locale) => {
+      setRaw(next);
+    },
+    [setRaw],
+  );
+
+  return [locale, setLocale];
+}
+
+// ---------------------------------------------------------------------------
+// useAuthState
+// ---------------------------------------------------------------------------
+
+/** Return value of `useAuthState`. */
+export interface AuthState {
+  /** Firebase Auth user, or `null` when signed out. */
+  user: User | null;
+  /** `true` while the initial auth-state resolution is in-flight. */
+  loading: boolean;
+}
+
+/**
+ * Lightweight auth-state directive — implements `IAuthPort` observation for
+ * client components that are outside the `<AccountProvider>` tree (e.g. the
+ * marketing homepage).
+ *
+ * Listens to `onAuthStateChanged` and surfaces the current `User` object.
+ * Avoids loading the full `AccountDTO`; use `useCurrentAccount` inside
+ * `(main)` routes when the full profile is needed.
+ *
+ * @example
+ * const { user, loading } = useAuthState();
+ * if (!loading && user) { ... }
+ */
+export function useAuthState(): AuthState {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const auth = getAuth(getFirebaseApp());
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
+  return { user, loading };
 }

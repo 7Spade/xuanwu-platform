@@ -16,10 +16,10 @@ argument-hint: 'Target scope, e.g.: full sync | check Phase 2 alignment | verify
 
 | Phase | 名稱 | 關鍵治理規則 |
 |-------|------|-------------|
-| **Phase 0** | 核心初始化（Kernel Bootstrap & Tag Ontology） | VS0 → D3 types；Admin → L8 Ontology |
+| **Phase 0** | 核心初始化（Kernel Bootstrap & Tag Ontology） | D3 types；Admin → L8 Ontology |
 | **Phase 1** | 寫入鏈（Write Chain & Data Ingestion） | FI-002（Firestore 單一事務）；LANE 分流 |
 | **Phase 2** | 語義智慧匹配（Intelligent Matching） | E8 fail-closed（tenantId）；GT-2 fail-closed（certs）；L4A（Who/Why/Evidence/Version/Tenant）；工具順序不可倒置 |
-| **Phase 3** | 讀取鏈（Output & Query Chain） | D27 Read Model；VS6 排班視圖 |
+| **Phase 3** | 讀取鏈（Output & Query Chain） | D27 Read Model |
 
 ---
 

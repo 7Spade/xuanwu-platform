@@ -15,7 +15,8 @@
 //                 FirestoreDocument, VisDateMetadata
 //   i18n        — isSupportedLocale, resolveLocale, useTranslation, getMessages
 //   pipes       — Pipe, schemaPipe, transformPipe, composePipes, trimPipe
-//   ports       — ICachePort, IQueuePort, IVectorIndexPort, IWorkflowPort
+//   ports       — ICachePort, IQueuePort, IVectorIndexPort, IWorkflowPort,
+//                 IStoragePort, ILocalePort, ILoggerPort, IAnalyticsPort, IAuthPort
 //   types       — NonEmptyString, UuidSchema, IsoDateString, PositiveInt,
 //                 PaginationSchema, PaginatedResponseSchema, LocaleSchema,
 //                 Locale, Success, Failure, Result, ok, fail
@@ -23,11 +24,11 @@
 //                 omit, pick, unique, chunk
 //
 // NOTE: Client-side React hooks (useToggle, useDebounce, useLocalStorage,
-//       usePrevious, useIsMounted) are in @/shared/directives.
+//       usePrevious, useIsMounted, useLocale) are in @/shared/directives.
 //       They carry a "use client" directive and must be imported separately
 //       from within Client Components only:
 //
-//   import { useToggle, useDebounce } from "@/shared/directives"
+//   import { useToggle, useDebounce, useLocale } from "@/shared/directives"
 
 export * from './constants';
 export * from './errors';

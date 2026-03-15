@@ -171,7 +171,7 @@ Drag-and-drop interactions use **`@atlaskit/pragmatic-drag-and-drop`** (Atlassia
 
 ```
 Firestore (source of truth)
-  └→ Server Action (cacheAside read from @/infrastructure/firebase/functions/db/cacheLayer)
+  └→ Server Action (cacheAside read from @/infrastructure/firebase/admin/db/cacheLayer)
       └→ serialised VisDateMetadata props
           └→ Presentation layer renders <DateDropIndicator> at correct date position
 ```
@@ -244,16 +244,16 @@ Firebase adapters live in **`src/infrastructure/firebase/`**, split into two sub
 | Sub-path | SDK | Runtime | Use in |
 |----------|-----|---------|--------|
 | `src/infrastructure/firebase/client/` | Firebase Web SDK | Browser | Client Components |
-| `src/infrastructure/firebase/functions/` | Firebase Admin SDK | Node.js | Server Actions, Route Handlers |
+| `src/infrastructure/firebase/admin/` | Firebase Admin SDK | Node.js | Server Actions, Route Handlers |
 
 ```typescript
 // Client Component — Web SDK
 import { getFirebaseAuth } from "@/infrastructure/firebase/client";
 
 // Server Action — Admin SDK
-import { verifyIdToken }   from "@/infrastructure/firebase/functions/auth";
-import { cacheAside }      from "@/infrastructure/firebase/functions/db/cacheLayer";
-import { commitBatch }     from "@/infrastructure/firebase/functions/db/batchWrite";
+import { verifyIdToken }   from "@/infrastructure/firebase/admin/auth";
+import { cacheAside }      from "@/infrastructure/firebase/admin/db/cacheLayer";
+import { commitBatch }     from "@/infrastructure/firebase/admin/db/batchWrite";
 ```
 
 ### Cost Control Strategy

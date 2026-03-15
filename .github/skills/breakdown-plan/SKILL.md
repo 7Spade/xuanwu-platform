@@ -1,6 +1,7 @@
 ---
 name: breakdown-plan
 description: 'Generate a comprehensive project plan with Epic > Feature > Story/Enabler > Test hierarchy, dependencies, priorities, and automated tracking. Use when decomposing a large initiative into actionable issues, planning a sprint, or creating a GitHub project backlog. Triggers: "breakdown plan", "project plan", "issue planning", "task decomposition", "sprint planning".'
+argument-hint: '[initiative or epic title] [scope and key constraints]'
 ---
 
 # Breakdown Plan

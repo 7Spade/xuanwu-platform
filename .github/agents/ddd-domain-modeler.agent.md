@@ -2,6 +2,7 @@
 name: 'ddd-domain-modeler'
 description: 'Design and implement the Domain layer for progressive DDD migration: aggregates, entities, value objects, domain services, and invariants.'
 tools: ['codebase', 'search', 'editFiles', 'filesystem/*', 'serena/*']
+skills: ['ddd-architecture']
 user-invocable: false
 handoffs:
   - label: 'Continue with application layer'
