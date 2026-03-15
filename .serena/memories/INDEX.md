@@ -9,8 +9,8 @@ Xuanwu Platform 所有 Serena 記憶檔案的主索引。
 | 分類 | 記憶檔案 | 說明 |
 |------|----------|------|
 | **App 路由** | [app/INDEX.md](./app/INDEX.md) | Next.js App Router 所有 page.tsx / layout.tsx / default.tsx |
-| **Shared 層** | [shared.md](./shared.md) | `src/shared/` 所有共用工具、類型、錯誤、i18n、Pipe、常數、directives |
-| **Design System** | [design-system.md](./design-system.md) | `src/design-system/` 四層設計系統（primitives/components/patterns/tokens） |
+| **Shared 層** | [shared.md](./shared.md) | `src/shared/` 所有共用工具、類型、錯誤、i18n、Pipe、常數、directives、ports |
+| **Design System** | [design-system.md](./design-system.md) | `src/design-system/` 五層設計系統（primitives/components/patterns/tokens/layout）+ providers |
 | **Infrastructure** | [infrastructure.md](./infrastructure.md) | `src/infrastructure/firebase/` Firebase Web SDK + Admin SDK |
 | **Domain Modules** | [modules/INDEX.md](./modules/INDEX.md) | `src/modules/` 全部 16 個 Domain Module 的 .ts 檔案索引 |
 | **MCP 工具** | [mcp/INDEX.md](./mcp/INDEX.md) | 已配置的 MCP servers 使用指南 |
@@ -44,13 +44,13 @@ Xuanwu Platform 所有 Serena 記憶檔案的主索引。
 | 區域 | 已索引 | 總計 |
 |------|--------|------|
 | `src/app/` | ✅ 38 檔 | 38 |
-| `src/shared/` | ✅ 9 檔 | 9 |
-| `src/design-system/` | ✅ 63 檔 | 63 |
+| `src/shared/` | ✅ 10 檔 | 10 |
+| `src/design-system/` | ✅ 72 檔 | 72 |
 | `src/infrastructure/` | ✅ 17 檔 | 17 |
 | `src/modules/` (×16) | ✅ 253 檔 | 253 |
-| **總計** | **✅ 405 檔** | **405** |
+| **總計** | **✅ 415 檔** | **415** |
 
-> *Last updated: Waves 43–62 complete. Full feature/UX parity with 7Spade/xuanwu achieved. All 16 modules have full UI. 0 lint errors, 0 tsc errors, 255/255 tests, 0 CodeQL alerts.*
+> *Last updated: PR copilot/update-file-consistency. Added: `src/design-system/layout/` tier (base/root-shell + marketing/home-layout/marketing-header/mode-toggle), `src/design-system/providers/theme-provider.tsx`, `src/shared/ports/index.ts` (9 ACL port interfaces), `useLocale` + `useAuthState` in `src/shared/directives/index.ts`. 0 lint errors, 0 tsc errors, 255/255 tests, 0 CodeQL alerts.*
 
 ---
 

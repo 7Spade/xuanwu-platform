@@ -8,12 +8,13 @@
 ---
 
 ## `src/design-system/index.ts`
-**描述**: 設計系統公開 API barrel，四層全匯出入口。
+**描述**: 設計系統公開 API barrel，五層全匯出入口（primitives / components / patterns / tokens / layout）。
 **函數清單**:
 - `export * from './primitives'` — raw shadcn/ui 元件層
 - `export * from './components'` — 專案特定包裝元件層
 - `export * from './patterns'` — 高階 UI 複合體層
 - `export * from './tokens'` — 設計 token 常數層
+- `export * from './layout'` — Layout 層（base shell + page-specific layouts）
 
 ---
 
@@ -236,3 +237,55 @@
 **描述**: Tokens 層 barrel — 設計 token 常數（色彩、間距、字體、圓角、陰影、z-index、動畫時長）。這些值與 `globals.css`/`tailwind.config.ts` 的 CSS custom properties 同步。目前尚未定義 token（`export {}`）。
 **函數清單**:
 - *(目前為空，待擴充；預計匯出 colorBrand、spacingBase 等常數)*
+
+---
+
+## Layout 層（`src/design-system/layout/`）
+
+**職責**: 頁面結構 chrome（header slot + `<main>` + footer slot）與頁面專用 Layout 組合。按 `base/`（全局共用）+ `[page]/`（頁面專用）子目錄結構組織。
+**設計原則**: `src/app/` 只做路由對應與頁面組裝，不持有 Layout 結構；Layout 狀態（locale、auth）由頁面 Layout 元件擁有，不下沉到 `app/`。
+
+### `src/design-system/layout/index.ts`
+**描述**: Layout 層 barrel — 統一匯出 base/ 和所有頁面 Layout。
+
+### `src/design-system/layout/base/index.ts`
+**描述**: Base 層 barrel — 匯出全局共用結構元件。
+
+### `src/design-system/layout/base/root-shell.tsx`
+**描述**: 全局頁面結構 chrome（Client Component）。接受可選的 `header` 和 `footer` slot，以 flexbox 垂直排列 header/main/footer。讓頁面專用 Layout 注入特定 header，避免重複 HTML 結構。
+**函數清單**:
+- `function RootShell({ children, header?, footer? }): JSX.Element` — 全局結構 chrome；header/footer 為可選 ReactNode slot
+
+### `src/design-system/layout/marketing/index.ts`
+**描述**: Marketing Layout 層 barrel — 匯出首頁 Layout 和 Header 元件。
+**函數清單**:
+- `export * from './home-layout'`
+- `export * from './marketing-header'`
+- `export * from './mode-toggle'`
+
+### `src/design-system/layout/marketing/home-layout.tsx`
+**描述**: 首頁（`/`）頁面專用 Layout（Client Component）。擁有 `useLocale`（語系狀態）和 `useAuthState`（認證狀態），並將它們作為 props 傳入 `MarketingHeader`。組合 `RootShell` + `MarketingHeader`。
+**函數清單**:
+- `function HomeLayout({ children }): JSX.Element` — 首頁 Layout；擁有 locale + auth 狀態，傳入 MarketingHeader
+
+### `src/design-system/layout/marketing/marketing-header.tsx`
+**描述**: 首頁黏性行銷 Header（純展示元件，狀態由 props 注入）。包含：品牌 logo、語系下拉選單（Globe 圖示）、深色模式切換（`ModeToggle`）、認證感知 CTA 按鈕（未登入→「登入」`/login?callbackUrl=/`，已登入→「進入平台」`/workspaces`）。
+**函數清單**:
+- `interface MarketingHeaderProps` — `{ locale, onLocaleChange, isAuthenticated? }`
+- `function MarketingHeader({ locale, onLocaleChange, isAuthenticated }): JSX.Element` — 純展示黏性 header
+
+### `src/design-system/layout/marketing/mode-toggle.tsx`
+**描述**: 深色模式切換按鈕（Client Component）。使用 `next-themes` 的 `useTheme` + shadcn/ui `DropdownMenu`，提供 Light / Dark / System 三種選項。
+**函數清單**:
+- `function ModeToggle({ locale? }): JSX.Element` — 主題切換下拉按鈕（Sun/Moon 圖示）
+
+---
+
+## Providers 層（`src/design-system/providers/`）
+
+**職責**: React Context Provider 包裝，供 `src/app/layout.tsx` 在根節點掛載。
+
+### `src/design-system/providers/theme-provider.tsx`
+**描述**: `next-themes` ThemeProvider 包裝（Client Component）。遵循 shadcn/ui 深色模式指南配置。掛載在 `src/app/layout.tsx` 根 layout 中，讓所有頁面共享主題支援。配置：`attribute="class"`、`defaultTheme="system"`、`enableSystem`。
+**函數清單**:
+- `function ThemeProvider({ children, ...props }: ThemeProviderProps): JSX.Element` — next-themes Provider 包裝；於根 layout 使用

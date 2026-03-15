@@ -120,3 +120,22 @@
 - `function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((prev: T) => T)) => void]` — localStorage 持久化 hook（支援 updater 函數）
 - `function usePrevious<T>(value: T): T | undefined` — 取得前一個值 hook
 - `function useIsMounted(): boolean` — 判斷元件是否已 mount hook
+- `const LOCALE_STORAGE_KEY = "xuanwu-locale"` — localStorage key 常數
+- `function useLocale(): [Locale, (locale: Locale) => void]` — 語系持久化 hook；實作 `ILocalePort`；在 `useLocalStorage` 之上處理語系解析與 `html[lang]` 同步
+- `function useAuthState(): { user: User | null; loading: boolean }` — 輕量 Firebase Auth 狀態監聽 hook；在 `AccountProvider` 之外使用；回傳 `{ user, loading }`
+
+---
+
+## `src/shared/ports/index.ts`
+**描述**: 防腐層（ACL）跨模組 Port 介面集。供 Application 層以穩定合約取代直接依賴基礎設施。按介面類型（Cache、Queue、Vector、Workflow、Storage、Locale、Logger、Analytics、Auth）分組。
+**匯入規則**: `import type { ICachePort } from "@/shared/ports"` 或透過 barrel `import type { ICachePort } from "@/shared"`。
+**函數清單**:
+- `interface ICachePort` — Cache 抽象（get/set/del/exists/incr/ttl）；具體實作：`src/infrastructure/upstash/redis.ts`
+- `interface IQueuePort` — Queue 抽象（publish/publishJSON/publishDelayed）；具體實作：`src/infrastructure/upstash/qstash.ts`
+- `interface IVectorIndexPort<TMetadata>` — 向量索引抽象（upsert/query/fetch/delete）；具體實作：`src/infrastructure/upstash/vector.ts`
+- `interface IWorkflowPort` — Workflow 抽象（trigger/cancel/getState）；具體實作：`src/infrastructure/upstash/workflow.ts`
+- `interface IStoragePort` — 瀏覽器同步鍵值儲存抽象（getItem/setItem/removeItem）；具體實作：`window.localStorage`（via `useLocalStorage`）
+- `interface ILocalePort` — Locale 持久化與 `html[lang]` 同步抽象（locale/setLocale/supported）；具體實作：`useLocale` directive
+- `interface ILoggerPort` — 結構化日誌抽象（debug/info/warn/error）；具體實作：ConsoleLoggerAdapter / Cloud Logging
+- `interface IAnalyticsPort` — 事件追蹤抽象（track/identify/page）；具體實作：Firebase Analytics / Mixpanel
+- `interface IAuthPort` — Auth 狀態與 ID token 抽象（getUser/getIdToken/signOut）；具體實作：`src/infrastructure/firebase/admin/auth`

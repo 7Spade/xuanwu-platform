@@ -2,6 +2,7 @@
 name: 'ddd-orchestrator'
 description: 'Coordinate progressive migration of existing Xuanwu code toward Layered Architecture in Domain-Driven Design using the smallest safe Domain -> Application -> Infrastructure -> Presentation sequence.'
 tools: ['agent', 'codebase', 'search', 'editFiles', 'filesystem/*', 'serena/*', 'sequential-thinking/*']
+skills: ['ddd-architecture', 'ddd-progressive-layering']
 agents:
   - ddd-domain-modeler
   - ddd-application-layer
