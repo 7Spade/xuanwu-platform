@@ -5,8 +5,6 @@ import { useTranslation } from "@/shared/i18n";
 import type { Locale } from "@/shared/types";
 import { APP_NAME } from "@/shared/constants";
 
-const LOCALE_STORAGE_KEY = "xuanwu-locale";
-
 interface HomeHeaderProps {
   locale: Locale;
   onLocaleChange: (locale: Locale) => void;
@@ -17,8 +15,6 @@ export function HomeHeader({ locale, onLocaleChange }: HomeHeaderProps) {
 
   function toggleLocale() {
     const next: Locale = locale === "zh-TW" ? "en" : "zh-TW";
-    localStorage.setItem(LOCALE_STORAGE_KEY, next);
-    document.documentElement.lang = next;
     onLocaleChange(next);
   }
 
@@ -46,5 +42,3 @@ export function HomeHeader({ locale, onLocaleChange }: HomeHeaderProps) {
     </header>
   );
 }
-
-export { LOCALE_STORAGE_KEY };

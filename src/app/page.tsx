@@ -1,27 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { APP_NAME, APP_VERSION } from "@/shared/constants";
 import { formatDate } from "@/shared/utils";
-import { resolveLocale, useTranslation } from "@/shared/i18n";
-import type { Locale } from "@/shared/types";
-import { HomeHeader, LOCALE_STORAGE_KEY } from "./_components/home-header";
+import { useTranslation } from "@/shared/i18n";
+import { useLocale, useIsMounted } from "@/shared/directives";
+import { HomeHeader } from "./_components/home-header";
 
 export default function HomePage() {
-  const [locale, setLocale] = useState<Locale>("zh-TW");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
-    const resolved = resolveLocale(stored);
-    setLocale(resolved);
-    document.documentElement.lang = resolved;
-    setMounted(true);
-  }, []);
-
+  const isMounted = useIsMounted();
+  const [locale, setLocale] = useLocale();
   const t = useTranslation(locale);
 
-  if (!mounted) {
+  if (!isMounted) {
     return <div className="min-h-screen" />;
   }
 

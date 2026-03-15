@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { DEFAULT_LOCALE } from "@/shared/constants";
+import { resolveLocale } from "@/shared/i18n";
+import type { Locale } from "@/shared/types";
 
 // ---------------------------------------------------------------------------
 // useToggle
@@ -122,4 +125,44 @@ export function useIsMounted(): boolean {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   return mounted;
+}
+
+// ---------------------------------------------------------------------------
+// useLocale
+// ---------------------------------------------------------------------------
+
+/** localStorage key used to persist the user's locale preference. */
+export const LOCALE_STORAGE_KEY = "xuanwu-locale";
+
+/**
+ * Locale persistence directive — implements `ILocalePort` for client components.
+ *
+ * Reads the user's locale preference from `localStorage` (via `useLocalStorage`),
+ * falling back to `DEFAULT_LOCALE`. Automatically keeps `html[lang]` in sync
+ * for accessibility and search engine crawlers.
+ *
+ * Satisfies the `ILocalePort` contract from `@/shared/ports`.
+ *
+ * @example
+ * const [locale, setLocale] = useLocale();
+ * // locale === "zh-TW" | "en"
+ * // setLocale("en") → persists to localStorage + updates html[lang]
+ */
+export function useLocale(): [Locale, (locale: Locale) => void] {
+  const [raw, setRaw] = useLocalStorage<string>(LOCALE_STORAGE_KEY, DEFAULT_LOCALE);
+  const locale = resolveLocale(raw);
+
+  // Keep html[lang] attribute in sync whenever the locale changes
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
+
+  const setLocale = useCallback(
+    (next: Locale) => {
+      setRaw(next);
+    },
+    [setRaw],
+  );
+
+  return [locale, setLocale];
 }
