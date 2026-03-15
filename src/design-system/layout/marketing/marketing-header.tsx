@@ -1,9 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { Globe } from "lucide-react";
 import { useTranslation } from "@/shared/i18n";
 import type { Locale } from "@/shared/types";
 import { APP_NAME } from "@/shared/constants";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/design-system/primitives/ui/dropdown-menu";
+import { Button } from "@/design-system/primitives/ui/button";
+import { ModeToggle } from "./mode-toggle";
 
 export interface MarketingHeaderProps {
   /** Active locale — controlled by the parent page. */
@@ -21,33 +30,45 @@ export interface MarketingHeaderProps {
  *
  * Slots:
  *   - App name / brand (left)
- *   - Language toggle + Login CTA (right)
+ *   - Language dropdown + theme toggle + Login CTA (right)
  */
 export function MarketingHeader({ locale, onLocaleChange }: MarketingHeaderProps) {
   const t = useTranslation(locale);
 
-  function toggleLocale() {
-    const next: Locale = locale === "zh-TW" ? "en" : "zh-TW";
-    onLocaleChange(next);
-  }
-
   return (
-    <header className="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between border-b bg-white/80 px-6 backdrop-blur">
+    <header className="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between border-b bg-background/80 px-6 backdrop-blur">
       <span className="text-sm font-semibold tracking-tight">{APP_NAME}</span>
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={toggleLocale}
-          aria-label={t("home.langToggle")}
-          title={t("home.langToggle")}
-          className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400"
-        >
-          <span aria-hidden>🌐</span>
-          {locale === "zh-TW" ? t("home.langEn") : t("home.langZhTW")}
-        </button>
+      <div className="flex items-center gap-2">
+        {/* Language selector dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              aria-label={t("home.langToggle")}
+              className="gap-1.5 text-xs"
+            >
+              <Globe className="size-3.5" />
+              {locale === "zh-TW" ? t("home.langZhTW") : t("home.langEn")}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onLocaleChange("zh-TW")}>
+              {t("home.langZhTW")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onLocaleChange("en")}>
+              {t("home.langEn")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Dark / light / system theme toggle */}
+        <ModeToggle locale={locale} />
+
+        {/* Login CTA */}
         <Link
           href="/login?callbackUrl=/"
-          className="inline-flex items-center rounded-md bg-gray-900 px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400"
+          className="inline-flex items-center rounded-md bg-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {t("home.login")}
         </Link>

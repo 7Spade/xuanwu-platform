@@ -4,3 +4,4 @@
 export { MarketingHeader } from "./marketing-header";
 export type { MarketingHeaderProps } from "./marketing-header";
 export { HomeLayout } from "./home-layout";
+export { ModeToggle } from "./mode-toggle";
