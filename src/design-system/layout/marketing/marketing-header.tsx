@@ -46,7 +46,7 @@ export function MarketingHeader({ locale, onLocaleChange }: MarketingHeaderProps
           {locale === "zh-TW" ? t("home.langEn") : t("home.langZhTW")}
         </button>
         <Link
-          href="/login"
+          href="/login?callbackUrl=/"
           className="inline-flex items-center rounded-md bg-gray-900 px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400"
         >
           {t("home.login")}

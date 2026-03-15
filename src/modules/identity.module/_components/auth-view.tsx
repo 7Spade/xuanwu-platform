@@ -7,7 +7,7 @@
  */
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { useTranslation } from "@/shared/i18n";
 import {
@@ -25,8 +25,39 @@ import {
 import { AuthTabsRoot } from "./auth-tabs-root";
 import { ResetPasswordForm } from "./reset-password-form";
 
+/**
+ * Resolves the post-login destination from the `callbackUrl` search parameter.
+ *
+ * Security: uses the URL constructor with a dummy base to fully parse the
+ * value. Only paths whose resolved origin matches the dummy base (i.e. purely
+ * relative paths with no host) are accepted. This prevents open-redirect
+ * attacks including encoded sequences like `/%2f` or protocol-relative URLs.
+ *
+ * Falls back to `fallback` (default `/onboarding`) when no safe URL is found.
+ */
+function resolvePostLoginUrl(
+  searchParams: ReturnType<typeof useSearchParams>,
+  fallback = "/onboarding",
+): string {
+  const raw = searchParams.get("callbackUrl");
+  if (raw) {
+    try {
+      const base = "https://placeholder.invalid";
+      const resolved = new URL(raw, base);
+      // Accept only if the URL stayed within our dummy base (no external host).
+      if (resolved.origin === base) {
+        return resolved.pathname + resolved.search + resolved.hash;
+      }
+    } catch {
+      // Malformed URL — fall through to default.
+    }
+  }
+  return fallback;
+}
+
 export function AuthView() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const t = useTranslation("zh-TW");
 
   const [isLoading, setIsLoading] = useState(false);
@@ -54,7 +85,11 @@ export function AuthView() {
         setAuthError(result.error.message);
         return;
       }
-      router.push("/");
+      // New users (register) always go through onboarding.
+      // Returning users (login) honour ?callbackUrl, defaulting to /onboarding.
+      router.push(
+        type === "register" ? "/onboarding" : resolvePostLoginUrl(searchParams),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -69,7 +104,7 @@ export function AuthView() {
         setAuthError(result.error.message);
         return;
       }
-      router.push("/");
+      router.push(resolvePostLoginUrl(searchParams));
     } finally {
       setIsLoading(false);
     }
