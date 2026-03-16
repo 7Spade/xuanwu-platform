@@ -2,6 +2,7 @@
 
 > **範圍**：全域 `*.md` 文件治理，定義 SSOT、分類結構、重複檢查規則，以及各文件的唯一職責。
 > **維護者**：`xuanwu-docs` 代理 + 文件貢獻者
+> **文件層次索引**：[`docs/README.md`](../README.md)
 
 ---
 
@@ -42,9 +43,8 @@
 |------|------|------|
 | **Copilot SSOT** | `docs/copilot/README.md` | 代理架構、工具指派、指令速查（唯一定義） |
 | **MCP 設定** | `docs/copilot/mcp.md` | GitHub Coding Agent 完整 MCP JSON 設定 |
-| **VS Code 官方參考** | `docs/copilot/**/*.md`（除 README.md 與 mcp.md） | 官方文件鏡像（唯讀參考，不得重寫） |
 
-> **注意**：`docs/copilot/` 下除 `README.md` 與 `mcp.md` 以外的所有文件均為 VS Code 官方文件鏡像（帶有 `ContentId`/`DateApproved` 前置 YAML）。這些文件僅供參考，不在本專案維護範圍內。
+> **VS Code 官方文件**（客製化類型規格等）請直接參考 https://code.visualstudio.com/docs/copilot/customization，不在本倉庫維護。
 
 ### 3. Management / 問題管理
 

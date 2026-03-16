@@ -34,6 +34,7 @@ Xuanwu Platform 所有 Serena 記憶檔案的主索引。
 - 架構 SSOT：`docs/architecture/notes/model-driven-hexagonal-architecture.md`
 - Domain 路由表：[project/domain-lookup.md](./project/domain-lookup.md)
 - ADR 索引：`docs/architecture/adr/README.md`
+- 文件層次索引：`docs/README.md`（四層結構總覽）
 - 文件治理索引：`docs/management/documentation-index.md`
 - 問題追蹤：`docs/management/issues.md`（架構問題）、`docs/management/doc-issues.md`（文件缺陷）
 
