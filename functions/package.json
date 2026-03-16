@@ -4,6 +4,7 @@
   "private": true,
   "main": "lib/index.js",
   "scripts": {
+    "lint": "tsc --project tsconfig.json --noEmit",
     "build": "tsc --project tsconfig.json",
     "build:watch": "tsc --project tsconfig.json --watch",
     "serve": "npm run build && firebase emulators:start --only functions",
