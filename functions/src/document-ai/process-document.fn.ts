@@ -42,12 +42,16 @@ if (getApps().length === 0) {
 const DOCAI_ENDPOINT =
   process.env["DOCAI_ENDPOINT"] ?? "asia-east1-documentai.googleapis.com";
 
-const DOCAI_PROCESSOR_NAME = process.env["DOCAI_PROCESSOR_NAME"] ?? (() => {
-  throw new Error(
-    "DOCAI_PROCESSOR_NAME env var is required. " +
-    "Set it to: projects/{id}/locations/{loc}/processors/{id}",
-  );
-})();
+function getDocAiProcessorName(): string {
+  const processorName = process.env["DOCAI_PROCESSOR_NAME"];
+  if (!processorName) {
+    throw new Error(
+      "DOCAI_PROCESSOR_NAME env var is required. " +
+      "Set it to: projects/{id}/locations/{loc}/processors/{id}",
+    );
+  }
+  return processorName;
+}
 
 const documentAiClient = new DocumentProcessorServiceClient({
   apiEndpoint: DOCAI_ENDPOINT,
@@ -306,12 +310,13 @@ export const processDocument = onRequest(
     }
 
     try {
+      const docAiProcessorName = getDocAiProcessorName();
       const resolvedGcsUri = body?.gcsUri?.startsWith("gs://")
         ? body.gcsUri
         : await resolveGcsUri(body);
 
       const [response] = (await documentAiClient.processDocument({
-        name: DOCAI_PROCESSOR_NAME,
+        name: docAiProcessorName,
         gcsDocument: { gcsUri: resolvedGcsUri, mimeType },
         fieldMask: { paths: ["text", "entities", "pages.pageNumber"] },
       })) as [
@@ -354,7 +359,7 @@ export const processDocument = onRequest(
         ok: true,
         traceId,
         extractedAt: new Date().toISOString(),
-        processor: DOCAI_PROCESSOR_NAME,
+        processor: docAiProcessorName,
         mimeType,
         gcsUri: resolvedGcsUri,
         text: response.document?.text ?? "",
