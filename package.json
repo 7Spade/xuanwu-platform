@@ -9,9 +9,19 @@
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "repomix:skill": "repomix --skill-generate xuanwu-skill --skill-output .github/skills/xuanwu-platform-skill --force",
+    "deploy:firebase": "firebase deploy --except apphosting --config ./firebase.json && npm run deploy:apphosting",
+    "deploy:apphosting": "firebase deploy --only apphosting --project xuanwu-i-00708880-4e2d8 --config ./firebase.json",
+    "deploy:functions": "firebase deploy --only functions --config ./firebase.json",
+    "deploy:indexes": "firebase deploy --only firestore:indexes --config ./firebase.json",
+    "deploy:firestore-rules": "firebase deploy --only firestore:rules --config ./firebase.json",
+    "deploy:storage-rules": "firebase deploy --only storage --config ./firebase.json"
   },
   "dependencies": {
+    "@atlaskit/pragmatic-drag-and-drop": "^1.7.9",
+    "@atlaskit/pragmatic-drag-and-drop-hitbox": "^1.1.0",
+    "@atlaskit/pragmatic-drag-and-drop-react-drop-indicator": "^3.2.12",
     "@base-ui/react": "^1.3.0",
     "@genkit-ai/google-genai": "^1.30.1",
     "@hookform/resolvers": "^5.2.2",
@@ -40,6 +50,7 @@
     "@upstash/redis": "^1.37.0",
     "@upstash/vector": "^1.2.3",
     "@upstash/workflow": "^1.1.1",
+    "@xstate/react": "^6.1.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -63,6 +74,7 @@
     "tailwind-merge": "^3.5.0",
     "tw-animate-css": "^1.4.0",
     "vaul": "^1.1.2",
+    "xstate": "^5.28.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
@@ -73,6 +85,7 @@
     "@vitest/coverage-v8": "^4.1.0",
     "eslint": "^9",
     "eslint-config-next": "15.5.12",
+    "repomix": "^1.12.0",
     "tailwindcss": "^4",
     "typescript": "5.9.3",
     "vitest": "^4.1.0"
