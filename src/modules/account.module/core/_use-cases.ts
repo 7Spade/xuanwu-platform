@@ -215,7 +215,10 @@ export async function getOrganizationsByOwnerId(
 ): Promise<Result<AccountDTO[]>> {
   try {
     const entities = await repo.findOrganizationsByOwnerId(ownerId as AccountId);
-    return ok(entities.map(entityToDTO));
+    const organizations = entities
+      .filter((entity) => entity.accountType === "organization")
+      .map(entityToDTO);
+    return ok(organizations);
   } catch (err) {
     return fail(err instanceof Error ? err : new Error(String(err)));
   }
