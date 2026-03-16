@@ -114,6 +114,8 @@ The application core never imports from adapters. It defines **interfaces** (por
 **In Xuanwu**:
 - Canonical vocabulary is in [`docs/architecture/glossary/`](../glossary/).
 - Domain events follow the naming convention `{domain}.{entity}.{verb}` (e.g. `wbs.task.state_changed`).
+
+  > **⚠️ Implementation gap**: Current TypeScript code (`_events.ts` files across all modules) uses **colon-separated** event type strings at runtime (e.g., `workspace:task:state:changed`, `account:personal:created`, `settlement:created`). The dot-format names above are the **canonical target**. The colon-separated format is the current runtime reality and is a known deviation from this convention. A dedicated code migration task is required to align runtime event type strings with the `{domain}.{entity}.{verb}` format. Until that migration is complete, both formats must be considered in any cross-module event subscription logic.
 - Entity field names match the glossary terms (e.g. `assigneeId`, not `userId` or `executorId`).
 
 **Diagnostic question**: *"If a business person says 'the assignee submitted a change request', does that sentence map 1:1 to code entities without translation?"*  

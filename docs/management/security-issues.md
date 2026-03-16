@@ -132,5 +132,30 @@ export type ContractAmount = z.infer<typeof ContractAmountSchema>;
 並在 `buildSettlementRecord` 工廠函數中使用此 schema 驗證。
 ---
 
+## SEC-007 Firestore Security Rules 未覆蓋實際使用的 Collections
+
+| 屬性 | 值 |
+|------|-----|
+| **嚴重程度** | 高（🔴） |
+| **受影響模組** | `identity.module`, `account.module`, all modules writing to Firestore |
+| **受影響檔案** | `firestore.rules` |
+
+**問題描述**
+`firestore.rules` 目前僅允許 `/users/{userId}` 路徑的讀寫（用於自身資料），其他所有 Collection 均被 catch-all deny 規則拒絕。
+
+但程式碼實際使用的 Collections 包括：
+- `identities`（`identity.module`）
+- `accounts`（`account.module`）
+- `workspaces`, `wbs_tasks`, `issues`, `change_requests`（`workspace.module`）
+- `namespaces`, `teams`, `settlements`, `audit_log` 等
+
+**安全風險**
+若目前依賴 Firebase Admin SDK（不受 Security Rules 限制）進行所有後端寫入，則 Rules 寬鬆並不直接導致資料外洩。但若任何客戶端 SDK 路徑繞過了 Admin SDK，這些 Collections 的所有操作均會被 deny，且無細粒度的權限控制。
+
+**建議修正方向**
+參照 `docs/architecture/catalog/service-boundary.md` §「Firestore Security Rules Strategy」中的目標規則表，為每個 Collection 實作對應的 Firestore Security Rules。
+
+---
+
 > **已轉譯為 ADR 的問題** / Issues translated to ADRs:
 > - SEC-001 → [ADR-011](../architecture/adr/20260316-workspace-grant-expiry-invariant.md): WorkspaceGrant expiry domain invariant enforcement

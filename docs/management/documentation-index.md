@@ -1,8 +1,50 @@
 # Documentation Governance Index / 文件治理索引
 
+> Tags: `governance` `taxonomy` `ssot` `docs-index` `navigation`
 > **範圍**：全域 `*.md` 文件治理，定義 SSOT、分類結構、重複檢查規則，以及各文件的唯一職責。
 > **維護者**：`xuanwu-docs` 代理 + 文件貢獻者
 > **文件層次索引**：[`docs/README.md`](../README.md)
+
+---
+
+## Governance Map / 治理地圖
+
+```mermaid
+graph LR
+    subgraph SSOT["⭐ SSOT 層（不可重複定義）"]
+        A["Architecture SSOT<br/>architecture/notes/model-driven-hexagonal-architecture.md"]
+        C["Copilot SSOT<br/>copilot/README.md"]
+    end
+
+    subgraph CORE["📚 核心知識層（L1）"]
+        ENT["業務實體目錄"]
+        EVT["事件目錄"]
+        SVC["服務邊界"]
+        GLO["術語詞彙表"]
+        ADR["ADR 記錄"]
+    end
+
+    subgraph REF["🗺 參考層（L2）"]
+        NAV["架構導覽 README"]
+        OVW["架構概覽 overview.md"]
+        MCP["MCP 設定"]
+    end
+
+    subgraph MGMT["🔧 管理層（L3）"]
+        THIS["本文件（治理索引）"]
+        ISS["issues.md"]
+        CATS["分類問題報告"]
+    end
+
+    CORE -->|"references"| SSOT
+    REF  -->|"references"| SSOT
+    REF  -->|"references"| CORE
+    MGMT -->|"governs"| SSOT
+    MGMT -->|"governs"| CORE
+
+    style A fill:#f9f,stroke:#c0c
+    style C fill:#bbf,stroke:#88f
+```
 
 ---
 
@@ -136,3 +178,4 @@
 | 日期 | 變更 | 作者 |
 |------|------|------|
 | 2026-03-16 | 初始建立；定義 SSOT 範圍、分類結構、重複規則 | `xuanwu-docs` |
+| 2025-07-10 | 新增 Governance Map Mermaid 圖表；補充標籤欄位 | `xuanwu-librarian` |

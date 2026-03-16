@@ -4,6 +4,17 @@ title: Firestore Entity Relationship Model / Firestore 實體關係模型
 ---
 erDiagram
 
+    %% ── ⚠️ STALE MODEL NOTICE ──────────────────────────────────────────────
+    %% This ERD reflects the PRE-ADR-013 schema (USER + ORGANIZATION as
+    %% separate top-level entities). Per ADR-013 (Accepted 2026-03-17):
+    %%   • USER entity      → Account
+    %%   • ORGANIZATION     → Account(accountType=organization); not a separate entity
+    %%   • orgId fields     → ownerAccountId or accountId
+    %%   • userId fields    → accountId
+    %% This diagram is STALE and MUST NOT be used as the canonical entity reference.
+    %% Authoritative entity definitions: docs/architecture/catalog/business-entities.md
+    %% ────────────────────────────────────────────────────────────────────────
+
     %% ── SaaS Layer ──────────────────────────────────────────────
 
     USER {

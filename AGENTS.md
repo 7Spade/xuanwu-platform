@@ -1,6 +1,9 @@
 # Shared Multi-Agent Conventions
 
-Conventions shared across all GitHub Copilot agents in this repository.
+> Tags: `agents` `conventions` `handoff` `architecture-constraints` `safety`
+
+Conventions shared across all GitHub Copilot agents in this repository.  
+For the full intent pipeline, MCP tool matrix, and slash command catalog → [`docs/copilot/README.md`](docs/copilot/README.md).
 
 ## Tool Selection
 
@@ -74,5 +77,7 @@ Sub-agents have `user-invocable: false` — they do **not** appear in the VS Cod
 ## References
 
 - Customization guide: `.github/README.md`
-- Architecture SSOT: `docs/architecture/README.md`
+- **Architecture SSOT**: `docs/architecture/notes/model-driven-hexagonal-architecture.md` ← canonical source for all DDD/layer rules
+- Architecture navigation hub: `docs/architecture/README.md`
 - Always-on rules: `.github/copilot-instructions.md`
+- Full agent catalog with intent pipeline & MCP matrix: `docs/copilot/README.md`

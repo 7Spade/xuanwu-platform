@@ -1,5 +1,7 @@
 # xuanwu-platform
 
+> Tags: `quickstart` `overview` `mcp` `agents` `architecture` `design-system`
+
 A Next.js 15 platform with **parallel routing** and **Modular Domain-Driven Design (Modular DDD)** architecture, fully configured for GitHub Copilot Coding Agent browser-environment development.
 
 ---
@@ -249,6 +251,18 @@ src/
 | Validation | Zod |
 | Backend / DB | Firebase (Firestore, Auth, Storage, App Check) |
 | Testing | (to be configured) |
+
+---
+
+## 📖 Documentation
+
+| 層次 / Level | 文件 / Document | 職責 / Role |
+|---|---|---|
+| ⭐ Architecture SSOT | [`docs/architecture/notes/model-driven-hexagonal-architecture.md`](./docs/architecture/notes/model-driven-hexagonal-architecture.md) | MDDD 設計哲學、Hexagonal Architecture、DDD 詞彙、層次定義、Port/Adapter 目錄、開發指南 |
+| ⭐ Copilot SSOT | [`docs/copilot/README.md`](./docs/copilot/README.md) | 代理架構、六步驟意圖管道、MCP 工具矩陣、Slash 指令速查 |
+| 📚 核心知識 | [`docs/architecture/`](./docs/architecture/) | 業務實體、事件目錄、服務邊界、術語表、ADR |
+| 🔧 問題管理 | [`docs/management/`](./docs/management/) | 架構問題追蹤、文件治理索引 |
+| 🗂 文件總索引 | [`docs/README.md`](./docs/README.md) | 4 層文件階層導覽 |
 
 ---
 

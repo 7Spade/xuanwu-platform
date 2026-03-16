@@ -137,6 +137,8 @@ After Phase 2, all further mutation uses the Event Bus.
 
 ## Settlement Trigger Contract / 結算觸發契約
 
+> **⚠️ Implementation gap**: The event names below use the canonical dot format (`wbs.task.state_changed`). Current code emits `workspace:task:state:changed` (colon format). See the event naming note in [`event-catalog.md`](./event-catalog.md#event-naming-convention--事件命名規範) for context.
+
 ```
 Workspace Layer emits:
   wbs.task.state_changed {
@@ -148,7 +150,7 @@ Workspace Layer emits:
   }
 
 SaaS Layer (Settlement) reacts:
-  1. Create SettlementRecord { taskId, workspaceId, orgId }
+  1. Create SettlementRecord { taskId, workspaceId, ownerAccountId }
   2. Evaluate billing rules → create ARRecord if billable
   3. Evaluate pay rules    → create APRecord if assignee payable
   4. Emit settlement.ar_record.issued
@@ -160,6 +162,8 @@ The Workspace Layer does not know whether AR or AP records were created.
 ---
 
 ## Firestore Security Rules Strategy / Firestore 安全規則策略
+
+> **⚠️ Implementation status**: The table below describes the **intended / target** security rules for each collection. The current `firestore.rules` file is minimal — it only covers the legacy `/users/{userId}` path with a catch-all deny rule. Full multi-collection rules implementation is a pending security task. See `docs/management/security-issues.md` for tracked gaps. Do **not** treat this table as reflecting the live production rules.
 
 | Collection | Owner layer | Rule summary |
 |------------|-------------|--------------|
