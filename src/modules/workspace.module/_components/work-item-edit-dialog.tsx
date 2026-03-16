@@ -28,7 +28,6 @@ import {
 } from "@/design-system/primitives/ui/select";
 import { Textarea } from "@/design-system/primitives/ui/textarea";
 import { useTranslation } from "@/shared/i18n";
-import { FirestoreWorkItemRepository } from "@/modules/work.module/infra.firestore/_repository";
 import { updateWorkItem } from "@/modules/work.module";
 import type { WorkItemDTO, WorkItemStatus, WorkItemPriority } from "@/modules/work.module";
 
@@ -37,13 +36,6 @@ export interface WorkItemEditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdated: () => void;
-}
-
-// Module-level singleton.
-let _repo: FirestoreWorkItemRepository | null = null;
-function getRepo() {
-  if (!_repo) _repo = new FirestoreWorkItemRepository();
-  return _repo;
 }
 
 const STATUSES: WorkItemStatus[] = ["open", "in-progress", "blocked", "closed", "completed"];

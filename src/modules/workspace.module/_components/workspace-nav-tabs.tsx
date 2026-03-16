@@ -16,7 +16,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 import { useTranslation } from "@/shared/i18n";
-import type { WorkspaceCapability } from "@/modules/workspace.module/domain.workspace/_value-objects";
+import type { WorkspaceCapability } from "@/modules/workspace.module";
 
 // ---------------------------------------------------------------------------
 // Capability registry  — known cap IDs → i18n keys (or fallback label)

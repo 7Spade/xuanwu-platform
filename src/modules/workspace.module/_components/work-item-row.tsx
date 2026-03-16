@@ -13,9 +13,7 @@ import {
   AlertDialogTitle,
 } from "@/design-system/primitives/ui/alert-dialog";
 import { useTranslation } from "@/shared/i18n";
-import type { WorkItemDTO } from "@/modules/work.module";
-import { deleteWorkItem } from "@/modules/work.module";
-import { FirestoreWorkItemRepository } from "@/modules/work.module/infra.firestore/_repository";
+import { deleteWorkItem, type WorkItemDTO } from "@/modules/work.module";
 import { WorkItemEditDialog } from "./work-item-edit-dialog";
 
 interface WorkItemRowProps {
@@ -40,13 +38,6 @@ function priorityColor(priority: WorkItemDTO["priority"]): string {
     case "medium": return "text-yellow-500";
     default: return "text-muted-foreground";
   }
-}
-
-// Module-level singleton — same pattern as work-item-edit-dialog.tsx
-let _repo: FirestoreWorkItemRepository | null = null;
-function getRepo() {
-  if (!_repo) _repo = new FirestoreWorkItemRepository();
-  return _repo;
 }
 
 export function WorkItemRow({ item, onUpdated, onDeleted }: WorkItemRowProps) {

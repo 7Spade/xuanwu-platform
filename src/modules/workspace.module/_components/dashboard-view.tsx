@@ -21,10 +21,8 @@ import Link from "next/link";
 import { useTranslation } from "@/shared/i18n";
 import { Badge } from "@/design-system/primitives/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/design-system/primitives/ui/card";
-import { useCurrentAccount } from "@/modules/account.module";
-import type { AccountDTO } from "@/modules/account.module/core/_use-cases";
-import { AuditLogView } from "@/modules/audit.module/_components/audit-log-view";
-import { useResourceAuditLog } from "@/modules/audit.module/_components/use-audit-log";
+import { useCurrentAccount, type AccountDTO } from "@/modules/account.module";
+import { AuditLogView, useResourceAuditLog } from "@/modules/audit.module";
 
 import { useWorkspaces } from "./use-workspaces";
 import { WorkspaceCard } from "./workspace-card";

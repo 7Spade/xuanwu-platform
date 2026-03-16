@@ -11,7 +11,7 @@
 import { User } from "lucide-react";
 import { Badge } from "@/design-system/primitives/ui/badge";
 import { useTranslation } from "@/shared/i18n";
-import type { MemberDTO } from "@/modules/account.module/core/_use-cases";
+import type { MemberDTO } from "@/modules/account.module";
 
 interface MemberRowProps {
   member: MemberDTO;

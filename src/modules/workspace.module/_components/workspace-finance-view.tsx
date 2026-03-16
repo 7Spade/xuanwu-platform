@@ -36,16 +36,8 @@ import {
   SelectValue,
 } from "@/design-system/primitives/ui/select";
 import { useTranslation } from "@/shared/i18n";
+import { updateWorkItem, type WorkItemDTO } from "@/modules/work.module";
 import { useWorkItems } from "./use-work-items";
-import { FirestoreWorkItemRepository } from "@/modules/work.module/infra.firestore/_repository";
-import { updateWorkItem } from "@/modules/work.module";
-import type { WorkItemDTO } from "@/modules/work.module";
-
-let _repo: FirestoreWorkItemRepository | null = null;
-function getRepo() {
-  if (!_repo) _repo = new FirestoreWorkItemRepository();
-  return _repo;
-}
 
 // ---------------------------------------------------------------------------
 // Finance lifecycle constants

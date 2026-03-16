@@ -17,7 +17,7 @@ import { useState } from "react";
 
 import { Badge } from "@/design-system/primitives/ui/badge";
 import { Button } from "@/design-system/primitives/ui/button";
-import type { WorkspaceAddress } from "@/modules/workspace.module/domain.workspace/_entity";
+import type { WorkspaceDTO } from "@/modules/workspace.module";
 
 import { useWorkspace } from "./use-workspace";
 import { WorkspaceNavTabs } from "./workspace-nav-tabs";
@@ -27,6 +27,8 @@ import { WorkspaceSettingsDialog } from "./workspace-settings-dialog";
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+type WorkspaceAddress = NonNullable<WorkspaceDTO["address"]>;
 
 function formatWorkspaceAddress(address: WorkspaceAddress): string {
   return [
