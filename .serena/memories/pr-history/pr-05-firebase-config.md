@@ -28,7 +28,7 @@ Wired Firebase project credentials into the infrastructure layer to verify all s
 - Tests Firestore, Realtime DB, App Check, Analytics connectivity
 
 ### firebase-mcp-server integration
-- Configured firebase-mcp-server with project credentials
+- Configured Firebase MCP integration for project inspection
 
 ## Architecture note
 At this point the project used `src/shared-infra/` (later deleted in PR #6 and replaced by `src/infrastructure/firebase/`).

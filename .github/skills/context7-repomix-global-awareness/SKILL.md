@@ -201,7 +201,6 @@ configuration.
   |-------------|---------|
   | `COPILOT_MCP_REDIS_URL` | `agent-memory` cross-session recall |
   | `COPILOT_MCP_OPENAI_API_KEY` | `agent-memory` embeddings/generation |
-  | `COPILOT_MCP_FIREBASE_SERVICE_ACCOUNT_KEY_PATH` | Firebase inspection |
 
 - [ ] Confirm `.github/workflows/copilot-setup-steps.yml` has the `copilot-setup-steps` job
   that installs `uv` via `astral-sh/setup-uv@v5` (required for `serena`, `markitdown`,

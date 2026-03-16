@@ -5,18 +5,17 @@
 | 項目 | 值 |
 |------|----|
 | Server key | `firebase-mcp-server` |
-| Package | `firebase-mcp-server` (npm) |
+| Entrypoint | `firebase-tools@latest mcp` |
 | Runtime | `npx` |
-| Project ID | `xuanwu-i-00708880-4e2d8` |
-| 必要 secret | `COPILOT_MCP_FIREBASE_SERVICE_ACCOUNT_KEY_PATH` |
+| 預設 MCP JSON env | 無 |
 | Docs | https://firebase.google.com/docs |
 
 ## 功能特性
 
-- **預設配置**：已綁定 `xuanwu-i-00708880-4e2d8` 專案，無需額外設定
+- **CLI 入口**：透過 `npx -y firebase-tools@latest mcp` 啟動 Firebase MCP
 - **多服務覆蓋**：Firestore、Auth、Storage、Hosting、Realtime Database、Security Rules
 - **免寫程式碼**：直接以 MCP 工具查詢 Firebase 資源，不需寫 Admin SDK 程式碼
-- **安全性**：使用 Service Account Key（路徑從環境變數讀取，不硬編碼）
+- **環境相依**：專案選擇與驗證方式由 Firebase CLI 執行環境決定
 - **Read-first**：最適合查詢和驗證，寫入操作建議繼續使用 Server Actions 中的 Admin SDK
 
 ## 工具列表（按服務分類）
@@ -94,6 +93,6 @@ firebase-mcp-server/* (查詢/管理)
 
 ## 注意事項
 
-- Coding Agent 環境需要 `COPILOT_MCP_FIREBASE_SERVICE_ACCOUNT_KEY_PATH` secret
-- 本地開發：Service Account Key JSON 路徑設在環境變數中
-- 不要將 Service Account Key 硬編碼進程式碼或設定檔
+- 此倉庫目前使用 `npx -y firebase-tools@latest mcp` 作為 Firebase MCP 啟動方式
+- MCP JSON 未內嵌 `FIREBASE_PROJECT_ID` 或 Service Account 路徑
+- 不要將 Firebase 憑證或專案設定硬編碼進程式碼或設定檔
