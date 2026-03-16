@@ -13,6 +13,12 @@ export interface IAccountRepository {
   findById(id: AccountId): Promise<AccountEntity | null>;
   findByHandle(handle: AccountHandle): Promise<AccountEntity | null>;
   findOrganizationsByOwnerId(ownerId: AccountId): Promise<AccountEntity[]>;
+  /**
+   * Returns all organization accounts in which `memberId` holds an active
+   * (non-owner) membership.  Does NOT include organizations the user owns —
+   * use findOrganizationsByOwnerId for those.
+   */
+  findOrganizationsByMemberId(memberId: AccountId): Promise<AccountEntity[]>;
   save(account: AccountEntity): Promise<void>;
   deleteById(id: AccountId): Promise<void>;
 }

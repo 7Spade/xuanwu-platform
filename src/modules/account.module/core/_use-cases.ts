@@ -224,9 +224,9 @@ export async function getOrganizationsByOwnerId(
 /**
  * GetUserRoleInOrganizationUseCase
  * Returns the MemberRole of a user within a specific organization.
+ * Returns "owner" when the user is the org owner.
+ * Returns the membership role when the user is an active non-owner member.
  * Returns null when the user is not a member or the organization doesn't exist.
- * Note: This is for looking up a user's role in an org they are a member of,
- * not for checking if they own it.
  */
 export async function getUserRoleInOrganization(
   repo: IAccountRepository,
@@ -236,8 +236,67 @@ export async function getUserRoleInOrganization(
   try {
     const org = await repo.findById(orgId as AccountId);
     if (!org || org.accountType !== "organization") return ok(null);
-    const member = org.members?.find((m) => m.accountId === userId);
+    // Check ownership first — owner is not stored in the members array.
+    if (org.ownerId === userId) return ok("owner");
+    const member = org.members?.find((m) => m.accountId === userId && m.status === "active");
     return ok(member?.role ?? null);
+  } catch (err) {
+    return fail(err instanceof Error ? err : new Error(String(err)));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// UserOrganizationDTO — org + the calling user's role in that org
+// ---------------------------------------------------------------------------
+
+/** An organization account together with the querying user's role. */
+export interface UserOrganizationDTO {
+  readonly org: AccountDTO;
+  readonly userRole: MemberRole;
+}
+
+/**
+ * GetUserOrganizationsUseCase
+ * Returns all organization accounts the user is associated with, together with
+ * their role in each one:
+ *   - Orgs they own → role "owner"
+ *   - Orgs where they hold an active membership → that membership role
+ *
+ * Deduplicates by org ID so the same org is never returned twice.
+ */
+export async function getUserOrganizations(
+  repo: IAccountRepository,
+  userId: string,
+): Promise<Result<UserOrganizationDTO[]>> {
+  try {
+    const [ownedEntities, memberEntities] = await Promise.all([
+      repo.findOrganizationsByOwnerId(userId as AccountId),
+      repo.findOrganizationsByMemberId(userId as AccountId),
+    ]);
+
+    const seen = new Set<string>();
+    const result: UserOrganizationDTO[] = [];
+
+    for (const entity of ownedEntities) {
+      if (!seen.has(entity.id)) {
+        seen.add(entity.id);
+        result.push({ org: entityToDTO(entity), userRole: "owner" });
+      }
+    }
+
+    for (const entity of memberEntities) {
+      if (!seen.has(entity.id)) {
+        seen.add(entity.id);
+        const member = entity.members?.find(
+          (m) => m.accountId === userId && m.status === "active",
+        );
+        if (member) {
+          result.push({ org: entityToDTO(entity), userRole: member.role });
+        }
+      }
+    }
+
+    return ok(result);
   } catch (err) {
     return fail(err instanceof Error ? err : new Error(String(err)));
   }

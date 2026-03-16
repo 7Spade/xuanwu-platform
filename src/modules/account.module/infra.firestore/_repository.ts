@@ -60,6 +60,20 @@ export class FirestoreAccountRepository
     });
   }
 
+  async findOrganizationsByMemberId(memberId: AccountId): Promise<AccountEntity[]> {
+    const col = collection(this.db, ACCOUNTS_COLLECTION);
+    const q = query(
+      col,
+      where("accountType", "==", "organization"),
+      where("memberAccountIds", "array-contains", memberId),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => {
+      const raw = { id: d.id, ...d.data() } as AccountDoc;
+      return accountDocToEntity(raw);
+    });
+  }
+
   async save(account: AccountEntity): Promise<void> {
     const ref = doc(this.db, ACCOUNTS_COLLECTION, account.id);
     const data = accountEntityToDoc(account);

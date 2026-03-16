@@ -18,12 +18,27 @@ import {
   DropdownMenuTrigger,
 } from "@/design-system/primitives/ui/dropdown-menu";
 import { useTranslation } from "@/shared/i18n";
+import type { MemberRole } from "@/modules/account.module";
 import { useCurrentAccount, type AccountContextValue } from "./account-provider";
+
+/** Capitalizes the first letter of a MemberRole for display. */
+function capitalizeRole(role: MemberRole | null | undefined): string {
+  if (!role) return "";
+  return role.charAt(0).toUpperCase() + role.slice(1);
+}
+
+/** Formats the sub-label shown below the org name: "Role • handle" or just "Role". */
+function orgSubLabel(role: MemberRole | null | undefined, handle: string | null): string {
+  const parts: string[] = [];
+  if (role) parts.push(capitalizeRole(role));
+  if (handle) parts.push(handle);
+  return parts.join(" • ");
+}
 
 interface AccountMenuItemProps {
   account: AccountContextValue["account"] | AccountContextValue["organizations"][number];
   isActive: boolean;
-  userRole?: AccountContextValue["activeAccountRole"];
+  userRole?: MemberRole | null;
   onClick: () => void;
 }
 
@@ -45,9 +60,7 @@ function AccountMenuItem({ account, isActive, userRole, onClick }: AccountMenuIt
           {account.accountType === "personal" ? (
             <span className="opacity-60">Personal</span>
           ) : (
-            <span>
-              {userRole?.charAt(0).toUpperCase() + (userRole?.slice(1) || "")} • {account.handle || "Org"}
-            </span>
+            <span>{orgSubLabel(userRole, account.handle)}</span>
           )}
         </p>
       </div>
@@ -58,7 +71,7 @@ function AccountMenuItem({ account, isActive, userRole, onClick }: AccountMenuIt
 
 export function AccountSwitcher() {
   const t = useTranslation("zh-TW");
-  const { account, activeAccount, organizations, setActiveAccount, activeAccountRole } = useCurrentAccount();
+  const { account, activeAccount, organizations, orgRoles, setActiveAccount, activeAccountRole } = useCurrentAccount();
 
   if (!account) return null;
 
@@ -84,9 +97,7 @@ export function AccountSwitcher() {
               {activeAccount?.accountType === "personal" || !activeAccount ? (
                 <span className="opacity-60">Personal</span>
               ) : (
-                <span>
-                  {activeAccountRole?.charAt(0).toUpperCase() + (activeAccountRole?.slice(1) || "")}
-                </span>
+                <span>{capitalizeRole(activeAccountRole)}</span>
               )}
             </p>
           </div>
@@ -117,7 +128,7 @@ export function AccountSwitcher() {
                 key={org.id}
                 account={org}
                 isActive={activeAccount?.id === org.id}
-                userRole={activeAccount?.id === org.id ? activeAccountRole : undefined}
+                userRole={orgRoles[org.id]}
                 onClick={() => setActiveAccount(org)}
               />
             ))}
