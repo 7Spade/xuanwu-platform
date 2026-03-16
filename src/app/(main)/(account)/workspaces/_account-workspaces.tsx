@@ -26,6 +26,9 @@ export function AccountWorkspacesPage() {
   // Slug is the account handle (org handle or personal handle).
   // Falls back to the Firestore document ID so WorkspaceCard hrefs are always valid.
   const slug = effectiveAccount?.handle ?? effectiveAccount?.id ?? "";
+  // Pass the effective account ID as dimensionId so WorkspacesView fetches
+  // workspaces for the active org (not always the personal account).
+  const dimensionId = effectiveAccount?.id ?? "";
 
-  return <WorkspacesView slug={slug} />;
+  return <WorkspacesView slug={slug} dimensionId={dimensionId} />;
 }

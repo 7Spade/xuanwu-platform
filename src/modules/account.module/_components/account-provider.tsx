@@ -52,6 +52,8 @@ export interface AccountContextValue {
   activeAccount: AccountDTO | null;
   /** Switch the active account context. Pass null to reset to personal. */
   setActiveAccount: (account: AccountDTO | null) => void;
+  /** Re-fetch the list of organizations for the current user. */
+  refreshOrganizations: () => Promise<void>;
 }
 
 // ---------------------------------------------------------------------------
@@ -66,6 +68,7 @@ const AccountContext = createContext<AccountContextValue>({
   orgsLoading: false,
   activeAccount: null,
   setActiveAccount: () => undefined,
+  refreshOrganizations: () => Promise.resolve(),
 });
 
 // ---------------------------------------------------------------------------
@@ -83,6 +86,18 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const setActiveAccount = useCallback((next: AccountDTO | null) => {
     setActiveAccountState(next);
   }, []);
+
+  const refreshOrganizations = useCallback(async () => {
+    if (!user) return;
+    setOrgsLoading(true);
+    try {
+      const repo = new FirestoreAccountRepository();
+      const orgsResult = await getOrganizationsByOwnerId(repo, user.uid);
+      setOrganizations(orgsResult.ok ? orgsResult.value : []);
+    } finally {
+      setOrgsLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
     const auth = getAuth(getFirebaseApp());
@@ -139,6 +154,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         orgsLoading,
         activeAccount,
         setActiveAccount,
+        refreshOrganizations,
       }}
     >
       {children}

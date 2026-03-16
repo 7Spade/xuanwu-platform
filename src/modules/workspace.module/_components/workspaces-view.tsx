@@ -25,6 +25,13 @@ import { CreateWorkspaceDialog } from "./create-workspace-dialog";
 interface WorkspacesViewProps {
   /** The namespace slug, e.g. "my-org". Used to build workspace hrefs. */
   slug: string;
+  /**
+   * The account (dimension) ID whose workspaces to fetch.
+   * When omitted, defaults to the currently active account (org or personal).
+   * Pass this explicitly from AccountWorkspacesPage to respect the active
+   * account context rather than always falling back to the personal account.
+   */
+  dimensionId?: string;
 }
 
 function filterWorkspaces(workspaces: WorkspaceDTO[], query: string): WorkspaceDTO[] {
@@ -37,10 +44,13 @@ function filterWorkspaces(workspaces: WorkspaceDTO[], query: string): WorkspaceD
   );
 }
 
-export function WorkspacesView({ slug }: WorkspacesViewProps) {
+export function WorkspacesView({ slug, dimensionId }: WorkspacesViewProps) {
   const t = useTranslation("zh-TW");
-  const { account } = useCurrentAccount();
-  const { workspaces, loading, error, refresh } = useWorkspaces(account?.id ?? null);
+  const { account, activeAccount } = useCurrentAccount();
+  // Use the explicitly provided dimensionId, or fall back to the active account
+  // (org or personal), so switching accounts immediately shows the right workspaces.
+  const effectiveDimensionId = dimensionId ?? activeAccount?.id ?? account?.id ?? null;
+  const { workspaces, loading, error, refresh } = useWorkspaces(effectiveDimensionId);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
