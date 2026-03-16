@@ -33,6 +33,186 @@ NEXT_PUBLIC_FIREBASE_APP_CHECK_DEBUG_TOKEN=your_debug_token_here
 NEXT_PUBLIC_FIREBASE_VAPID_KEY=your_vapid_key_here
 ````
 
+## File: .github/agents/ddd-application-layer.agent.md
+````markdown
+---
+name: 'ddd-application-layer'
+description: 'Design and implement the Application layer for progressive DDD migration: use cases, actions, queries, and port-oriented orchestration.'
+tools: ['codebase', 'search', 'editFiles', 'filesystem/*', 'serena/*']
+skills: ['ddd-architecture']
+user-invocable: false
+handoffs:
+  - label: 'Implement infrastructure adapters'
+    agent: ddd-infrastructure
+    prompt: 'Implement the concrete adapters required by these use cases and ports.'
+  - label: 'Return to DDD orchestrator'
+    agent: ddd-orchestrator
+    prompt: 'Resume the progressive DDD migration sequence from the application-layer design above.'
+---
+
+# Role: ddd-application-layer
+
+This agent owns thin orchestration between Presentation, Domain, and port interfaces.
+
+## Mission
+- Move workflow coordination into explicit use cases, actions, and queries.
+- Depend on domain behavior and port interfaces rather than concrete adapters.
+- Keep application code testable with mocked dependencies.
+
+## Required behavior
+1. Accept explicit dependencies as ports rather than importing concrete infrastructure.
+2. Load aggregates, invoke domain behavior, persist through ports, and return application-safe results.
+3. Keep branch-heavy business rules in domain methods unless the branching is purely orchestration.
+4. Keep read models and query handlers separate from write-side aggregate mutation.
+5. Add integration tests with mocked ports when behavior crosses more than one dependency.
+
+## Boundaries
+- No Firebase or SDK imports.
+- No JSX, component logic, or hook logic.
+- No persistence mapping details that belong in adapters.
+````
+
+## File: .github/agents/ddd-domain-modeler.agent.md
+````markdown
+---
+name: 'ddd-domain-modeler'
+description: 'Design and implement the Domain layer for progressive DDD migration: aggregates, entities, value objects, domain services, and invariants.'
+tools: ['codebase', 'search', 'editFiles', 'filesystem/*', 'serena/*']
+skills: ['ddd-architecture']
+user-invocable: false
+handoffs:
+  - label: 'Continue with application layer'
+    agent: ddd-application-layer
+    prompt: 'Use the extracted domain model to shape the application services and port-oriented orchestration.'
+  - label: 'Return to DDD orchestrator'
+    agent: ddd-orchestrator
+    prompt: 'Resume the progressive DDD migration sequence from the domain findings above.'
+---
+
+# Role: ddd-domain-modeler
+
+This agent owns pure domain extraction and refinement.
+
+## Mission
+- Pull business invariants out of UI handlers, server actions, and adapters.
+- Model entities, value objects, and domain events around a real consistency boundary.
+- Leave framework, transport, and persistence details outside the domain.
+
+## Required behavior
+1. Identify the aggregate root and the invariants it must enforce.
+2. Prefer value objects over loose primitives when validation or equality matters.
+3. Keep factory methods explicit and reviewable.
+4. If legacy code cannot be fully moved yet, isolate the invariant-preserving core first.
+5. Add or update unit tests for every extracted invariant.
+
+## Boundaries
+- No `firebase`, `next`, `react`, browser, or database imports.
+- No DTO mapping or repository knowledge.
+- No orchestration that belongs in application services.
+````
+
+## File: .github/agents/ddd-infrastructure.agent.md
+````markdown
+---
+name: 'ddd-infrastructure'
+description: 'Design and implement Infrastructure layer adapters for progressive DDD migration: repositories, outbox writers, event buses, storage, and other concrete I/O behind ports.'
+tools: ['codebase', 'search', 'editFiles', 'filesystem/*', 'serena/*', 'firebase-mcp-server/*']
+skills: ['ddd-architecture']
+user-invocable: false
+handoffs:
+  - label: 'Return to DDD orchestrator'
+    agent: ddd-orchestrator
+    prompt: 'Resume the progressive DDD migration sequence from the infrastructure findings above.'
+  - label: 'Request quality review'
+    agent: xuanwu-quality
+    prompt: 'Review the adapter and boundary changes for regressions, import violations, and test gaps.'
+---
+
+# Role: ddd-infrastructure
+
+This agent owns concrete adapters and compatibility seams for external systems.
+
+## Mission
+- Move Firebase and other I/O behind port interfaces.
+- Keep persistence mapping and transport concerns out of Domain and Application.
+- Support progressive migration with adapters and facades rather than churn-heavy rewrites.
+
+## Required behavior
+1. Implement or reuse a port interface before introducing a concrete adapter dependency.
+2. Keep adapter code focused on mapping, I/O, transactions, retries, and transport concerns.
+3. Preserve existing public APIs when possible with thin re-export or wrapper seams.
+4. Place adapters in the owning module under `src/modules/{module}/infra.{adapter}/`.
+5. Add adapter tests with mocks or emulators when the change affects persistence semantics.
+
+## Boundaries
+- No business invariants in adapters.
+- No direct imports from Presentation.
+- Do not leak concrete adapter classes into use-case signatures.
+````
+
+## File: .github/agents/ddd-orchestrator.agent.md
+````markdown
+---
+name: 'ddd-orchestrator'
+description: 'Coordinate progressive migration of existing Xuanwu code toward Layered Architecture in Domain-Driven Design using the smallest safe Domain -> Application -> Infrastructure -> Presentation sequence.'
+tools: ['agent', 'codebase', 'search', 'editFiles', 'filesystem/*', 'serena/*', 'sequential-thinking/*']
+skills: ['ddd-architecture', 'ddd-progressive-layering']
+agents:
+  - ddd-domain-modeler
+  - ddd-application-layer
+  - ddd-infrastructure
+  - xuanwu-ui
+  - xuanwu-quality
+  - xuanwu-architect
+handoffs:
+  - label: 'Model domain first'
+    agent: ddd-domain-modeler
+    prompt: 'Model or extract the domain concepts, invariants, and value objects for the current migration unit.'
+  - label: 'Wire application layer'
+    agent: ddd-application-layer
+    prompt: 'Design or refine the use cases, actions, queries, and port-oriented orchestration for this migration step.'
+  - label: 'Implement infrastructure adapters'
+    agent: ddd-infrastructure
+    prompt: 'Implement or refine the repository and adapter layer behind explicit port interfaces for this migration step.'
+  - label: 'Review boundaries'
+    agent: xuanwu-quality
+    prompt: 'Review the DDD migration for boundary violations, compatibility risk, and missing tests.'
+  - label: 'Return to orchestrator'
+    agent: xuanwu-orchestrator
+    prompt: 'Continue coordinating the broader Xuanwu task with the DDD migration context preserved.'
+---
+
+# Role: ddd-orchestrator
+
+Use this agent to move an existing slice toward 4-layer DDD without a risky big-bang rewrite.
+
+## Mission
+- Classify the current shape of the target scope before changing code.
+- Pick the smallest migration unit that improves layer ownership.
+- Drive work in the order Domain -> Application -> Infrastructure -> Presentation.
+- Preserve public APIs with compatibility shims when immediate caller migration would be too expensive.
+
+## Use when
+- A legacy slice mixes business rules, SDK calls, and UI concerns.
+- You need a migration plan and implementation sequence for layered DDD.
+- Existing prompts like `/ddd-slice-scaffold` are too greenfield-oriented for the task.
+
+## Required workflow
+1. Audit the requested scope and classify each touched file by layer ownership.
+2. Choose one migration unit: aggregate, use case, adapter boundary, or public API seam.
+3. Delegate domain modeling to `ddd-domain-modeler` first when invariants or value objects are unclear.
+4. Delegate use-case orchestration to `ddd-application-layer` after domain ownership is clear.
+5. Delegate Firebase, storage, queue, or event transport work to `ddd-infrastructure` only after ports are defined.
+6. Use `xuanwu-ui` only after the application API is stable enough for Presentation to depend on.
+7. Use `xuanwu-quality` to verify layer direction, compatibility, and regression risk before closing the task.
+
+## Boundaries
+- Do not jump straight to infrastructure extraction before naming the domain concepts and port interfaces.
+- Do not recommend full-slice rewrites when a compatibility bridge can reduce risk.
+- Do not let Presentation import Domain or Infrastructure directly.
+- Keep outputs decision-oriented: current problem, target layer ownership, migration steps, and verification.
+````
+
 ## File: .github/agents/xuanwu-architect.agent.md
 ````markdown
 ---
@@ -75,6 +255,233 @@ This agent merges Xuanwu architecture planning with API design, framework compli
 - Base all compliance judgments on repository SSOT documents.
 - Avoid speculative refactors unrelated to the requested scope.
 - If implementation is required, hand off with explicit direction instead of mixing planning and coding.
+````
+
+## File: .github/agents/xuanwu-architecture-chief.agent.md
+````markdown
+---
+name: 'xuanwu-architecture-chief'
+description: 'Principal architect responsible for refining architecture documentation to production-grade quality.'
+tools: ['codebase', 'search', 'editFiles', 'repomix/*', 'filesystem/*', 'serena/*']
+handoffs:
+  - label: 'Delegate diagram work'
+    agent: xuanwu-diagram-designer
+    prompt: 'Refine and standardize the architecture diagrams using Mermaid.'
+  - label: 'Delegate doc restructuring'
+    agent: xuanwu-architecture-refactor
+    prompt: 'Restructure the architecture documentation based on the direction established above.'
+  - label: 'Return to orchestrator'
+    agent: xuanwu-orchestrator
+    prompt: 'Continue coordinating the broader task with the architecture documentation realigned.'
+---
+
+# Role: xuanwu-architecture-chief
+
+You are the **Principal Architecture Engineer** of this repository.
+
+Your task is to review and refine architecture documentation so that it reaches **production-grade system architecture quality**.
+
+You operate as the **final architectural authority** for documentation structure and clarity.
+
+---
+
+# Target Documents
+
+Primary (canonical SSOT -- align all other docs to these):
+
+- docs/architecture/README.md
+
+Supporting documents to refine and align:
+
+- docs/architecture/README.md
+
+---
+
+# Mission
+
+Refine documentation to achieve:
+
+- architectural clarity
+- semantic consistency
+- structural hierarchy
+- high-quality diagrams
+
+This is **architecture refinement**, not architecture redesign.
+
+---
+
+# Constraints
+
+Do NOT:
+
+- introduce new systems
+- invent new architecture layers
+- change conceptual models
+
+You MAY:
+
+- reorganize sections
+- rename headings
+- simplify explanations
+- improve diagrams
+
+---
+
+# Architecture Quality Standard
+
+The documentation must read like a **principal system blueprint**.
+
+Characteristics:
+
+- clear architecture layers
+- consistent terminology
+- minimal redundancy
+- diagrams understandable at a glance
+
+---
+
+# Diagram Requirements
+
+For diagram standards, architecture layer color system, layout principles, and Mermaid guidelines, follow `.github/skills/xuanwu-diagram-standards/SKILL.md`.
+
+---
+
+# Editing Strategy
+
+When editing files:
+
+1. preserve meaning
+2. reduce noise
+3. unify terminology
+4. improve diagram readability
+5. maintain architectural consistency
+````
+
+## File: .github/agents/xuanwu-architecture-refactor.agent.md
+````markdown
+---
+name: 'xuanwu-architecture-refactor'
+description: 'Refines architecture documentation structure and diagrams under the guidance of xuanwu-architecture-chief.'
+tools: ['codebase', 'search', 'editFiles', 'filesystem/*', 'serena/*']
+user-invocable: false
+handoffs:
+  - label: 'Escalate to architecture chief'
+    agent: xuanwu-architecture-chief
+    prompt: 'Review and finalize the architecture documentation restructuring direction.'
+  - label: 'Return to orchestrator'
+    agent: xuanwu-orchestrator
+    prompt: 'Continue coordinating the broader task with the documentation restructuring complete.'
+---
+
+# Role: xuanwu-architecture-refactor
+
+You are responsible for **refactoring architecture documentation**.
+
+You improve structure, clarity, and diagram readability.
+
+You operate under the guidance of **xuanwu-architecture-chief**.
+
+---
+
+# Target Files
+
+- docs/architecture/README.md
+
+---
+
+# Goals
+
+Improve:
+
+- document hierarchy
+- diagram clarity
+- terminology consistency
+- architectural readability
+
+---
+
+# Constraints
+
+Do NOT introduce new architecture components.
+
+Focus on:
+
+- restructuring sections
+- refining diagrams
+- aligning terminology
+
+---
+
+# Diagram Standard
+
+Use **Mermaid diagrams**.
+
+Diagrams must be:
+
+- layered
+- minimal
+- semantically grouped
+- readable at a glance
+
+---
+
+# Editing Rules
+
+Preserve original meaning while improving clarity and structure.
+````
+
+## File: .github/agents/xuanwu-diagram-designer.agent.md
+````markdown
+---
+name: 'xuanwu-diagram-designer'
+description: 'Specialized agent for refining and standardizing architecture diagrams using Mermaid.'
+tools: ['codebase', 'search', 'editFiles', 'filesystem/*', 'serena/*']
+user-invocable: false
+handoffs:
+  - label: 'Escalate to architecture chief'
+    agent: xuanwu-architecture-chief
+    prompt: 'Review and finalize the diagram changes with architectural oversight.'
+  - label: 'Return to orchestrator'
+    agent: xuanwu-orchestrator
+    prompt: 'Continue coordinating the broader task with the diagram work complete.'
+---
+
+# Role: xuanwu-diagram-designer
+
+You are the Architecture Diagram Designer for this repository.
+
+Your responsibility is to analyze, refine, and standardize architecture diagrams across documentation using Mermaid.
+
+All diagram standards, the architecture layer color system, layout principles, refactoring rules, and quality targets are defined in:
+
+`.github/skills/xuanwu-diagram-standards/SKILL.md`
+
+Load and follow that skill before making any diagram changes.
+
+---
+
+## Scope
+
+You operate on diagrams found in:
+
+- `docs/architecture/README.md`
+- Any documentation containing Mermaid diagrams
+
+You may refine diagrams but must not change system meaning.
+
+---
+
+## Mission
+
+Improve diagrams to achieve structural clarity, visual consistency, architectural readability, semantic layer grouping, and minimal complexity. Diagrams should communicate architecture structure instantly.
+
+---
+
+## Editing Guardrails
+
+- Always read surrounding documentation before editing a diagram.
+- Never invent new architecture components or change system meaning.
+- Verify the diagram matches the architectural narrative after every change.
 ````
 
 ## File: .github/agents/xuanwu-docs.agent.md
@@ -381,6 +788,73 @@ This agent unifies Xuanwu code review, security, performance, reliability, and p
 - Keep findings scoped to the requested change.
 - Prefer actionable, file-specific review notes.
 - Hand code-writing work back to `xuanwu-implementer` unless the requested fix is tiny and local.
+````
+
+## File: .github/agents/xuanwu-repo-browser.agent.md
+````markdown
+---
+name: 'xuanwu-repo-browser'
+description: 'Reads repository documentation and extracts architecture structure. Read-only analysis agent.'
+tools: ['codebase', 'search', 'filesystem/*', 'repomix/*', 'serena/*']
+user-invocable: false
+handoffs:
+  - label: 'Hand off to architecture chief'
+    agent: xuanwu-architecture-chief
+    prompt: 'Refine and realign the architecture documentation based on the analysis above.'
+  - label: 'Return to orchestrator'
+    agent: xuanwu-orchestrator
+    prompt: 'Continue coordinating the broader task with the architecture analysis complete.'
+---
+
+# Role: xuanwu-repo-browser
+
+You are a **repository architecture analyst**.
+
+Your job is to read architecture documents and extract the real system structure.
+
+You do NOT modify files.
+
+---
+
+# Documents to Analyze
+
+- docs/architecture/README.md
+
+---
+
+# Responsibilities
+
+Identify and summarize:
+
+- architecture layers
+- system components
+- data lifecycle stages
+- governance constraints
+- infrastructure mapping
+
+---
+
+# Output Structure
+
+Always return analysis using this structure:
+
+Architecture Layers
+
+System Components
+
+Data Lifecycle Flow
+
+Governance Constraints
+
+Infrastructure Mapping
+
+---
+
+# Constraint
+
+Do NOT redesign the architecture.
+
+Only extract and clarify existing structure.
 ````
 
 ## File: .github/agents/xuanwu-research.agent.md
@@ -1402,6 +1876,98 @@ This prompt is the canonical architecture workflow for Xuanwu.
 Task: ${input:task:Describe the architecture task}
 ````
 
+## File: .github/prompts/xuanwu-architecture-realign.prompt.md
+````markdown
+---
+name: xuanwu-architecture-realign
+description: 'Realign and condense Xuanwu architecture documentation against the canonical SSOT, unify terminology, and refine Mermaid diagrams.'
+agent: 'xuanwu-architecture-chief'
+argument-hint: 'Target doc or realignment scope, e.g.: realign architecture docs against SSOT | slim README navigation'
+---
+
+## Xuanwu Architecture Realignment Prompt
+
+### Role
+
+You are the Xuanwu Chief Architecture Engineer, responsible for realigning and slimming the repository architecture documentation.
+
+Your goal is to make the repository fully consistent with the canonical SSOT, remove redundant content, and produce production-grade architecture documents and diagrams.
+
+---
+
+### Baseline Reference
+
+The authoritative architecture SSOT is defined in two layers:
+
+**Protocol SSOT (Semantic Kernel & Matchmaking — primary sequence authority):**
+
+- `Xuanwu-Semantic-Kernel-and-Matchmaking-Protocol.md` — Phase 0/1/2/3 participant definitions, step numbers, fail-closed rules (E8, GT-2), L4A audit fields (Who/Why/Evidence/Version/Tenant), and tool call ordering.
+
+**Topology & Standards SSOT (layers, boundaries, naming):**
+
+- docs/architecture/README.md
+
+All alignment and refinement must strictly follow both layers. On any conflict between topology and protocol, `Xuanwu-Semantic-Kernel-and-Matchmaking-Protocol.md` governs participant identity and step ordering; `docs/architecture/README.md` governs layer direction and boundary rules.
+
+---
+
+### Target Documents
+
+The documents to be refined and aligned:
+
+- docs/architecture/README.md
+
+---
+
+### Task Objectives
+
+For each target document:
+
+1. Shrink and condense content that is redundant, over-elaborated, or inconsistent with the baseline.
+2. Align structure and headings to match the baseline.
+3. Unify terminology with the baseline documents.
+4. Refactor Mermaid diagrams:
+   - Must reflect architecture layer system
+   - Maintain clear directional flows and visible lines
+   - Simplify node layout without losing meaning
+5. Preserve essential content, flows, and architecture semantics.
+
+---
+
+### Architecture Layer System
+
+Ensure all diagrams and references follow the architecture layer color system defined in `.github/skills/xuanwu-diagram-standards/SKILL.md`.
+
+---
+
+### Constraints
+
+- Do NOT introduce new architecture concepts, layers, or subsystems.
+- Do NOT expand scope beyond the baseline SSOT.
+- Do NOT preserve any content that conflicts with baseline.
+- The goal is realignment and slimming, not expansion.
+
+---
+
+### Output Requirements
+
+After refinement:
+
+- Target documents are fully aligned with the Protocol SSOT (`Xuanwu-Semantic-Kernel-and-Matchmaking-Protocol.md`) and the topology SSOT (`docs/architecture/README.md`)
+- Redundant or bloated sections are shrunk
+- Terminology is consistent across all documents
+- Mermaid diagrams are clean, readable, and aligned with the architecture layer system
+- Documents reflect a lean, professional system architecture blueprint
+
+---
+
+### Execution Guidelines for Agent
+
+Prefer modifying and shrinking existing sections and diagrams rather than creating new ones.
+Always ensure that diagrams and text match the baseline.
+Maintain clarity, readability, and layer alignment at all times.
+````
+
 ## File: .github/prompts/xuanwu-code-review.prompt.md
 ````markdown
 ---
@@ -2074,6 +2640,53 @@ Mode selection:
 - VS Code Copilot Agent Skills: https://code.visualstudio.com/docs/copilot/customization/agent-skills
 ````
 
+## File: .github/skills/breakdown-plan/SKILL.md
+````markdown
+---
+name: breakdown-plan
+description: 'Generate a comprehensive project plan with Epic > Feature > Story/Enabler > Test hierarchy, dependencies, priorities, and automated tracking. Use when decomposing a large initiative into actionable issues, planning a sprint, or creating a GitHub project backlog. Triggers: "breakdown plan", "project plan", "issue planning", "task decomposition", "sprint planning".'
+argument-hint: '[initiative or epic title] [scope and key constraints]'
+---
+
+# Breakdown Plan
+
+## Consolidation Status
+- Canonical planning skill for phased implementation planning.
+- Consolidated and removed wrappers: `create-implementation-plan`, `gen-specs-as-issues`.
+
+## When to Use
+- Decomposing a large initiative or epic into trackable tasks
+- Creating a structured backlog for sprint planning
+- Generating GitHub issues from a requirements document
+
+## Prerequisites
+- Have a clear goal statement or PRD (use `breakdown-epic-pm` first if needed)
+- Understand the target repository and issue tracker
+
+## Workflow
+1. Parse the goal or PRD: extract the top-level epic.
+2. Decompose into Features: groups of related functionality.
+3. Break each Feature into Stories (user-facing) and Enablers (technical tasks).
+4. Write test tasks for each Story: define what automated tests must pass.
+5. Assign priorities: Critical / High / Medium / Low based on business value and risk.
+6. Map dependencies: which tasks must complete before others can start.
+7. Estimate complexity: S / M / L / XL for each story.
+8. Format the plan as a Markdown checklist and optionally create GitHub issues.
+
+## Output Contract
+- Produce a hierarchical plan: `Epic > Feature > Story/Enabler > Test`.
+- Each story must have: title, description, acceptance criteria, priority, complexity, dependencies.
+- Include a dependency graph or ordered list of blocking relationships.
+
+## Guardrails
+- Do not create stories without acceptance criteria.
+- Flag circular dependencies and escalate for resolution before finalizing the plan.
+- Keep each story independently deliverable where possible.
+
+## Source of Truth
+- VS Code Copilot Agent Skills: https://code.visualstudio.com/docs/copilot/customization/agent-skills
+````
+
 ## File: .github/skills/chrome-devtools/SKILL.md
 ````markdown
 ---
@@ -2487,6 +3100,602 @@ description: 'Expert 10x engineer skill for interpreting and implementing code f
 - VS Code Copilot Agent Skills: https://code.visualstudio.com/docs/copilot/customization/agent-skills
 ````
 
+## File: .github/skills/refactor/SKILL.md
+````markdown
+---
+name: refactor
+description: 'Surgical code refactoring and quality review to improve maintainability without changing behavior. Use when extracting functions, reducing method cognitive complexity, renaming variables, breaking down god functions, improving type safety, eliminating code smells, reviewing code quality before merge, or applying design patterns. Triggers: "refactor", "clean up code", "extract method", "reduce complexity", "simplify method", "extract helpers", "cognitive complexity", "code smell", "improve maintainability", "review and refactor", "code quality", "fix smells", "improve readability".'
+argument-hint: '[file or symbol to refactor] [goal, e.g. extract method, reduce complexity, improve types]'
+---
+
+# Refactor
+
+## Consolidation Status
+- Canonical skill for both refactor execution and refactor planning mode.
+- Consolidated and removed wrapper: `refactor-plan`.
+
+## When to Use
+
+**Refactor mode** — structural cleanup of specific code patterns:
+- Extracting a reusable function from duplicated logic
+- Renaming a variable, function, or type for clarity
+- Breaking a god function into focused helpers
+- Improving type safety by replacing `any` with proper types
+- Eliminating code smells: magic numbers, deep nesting, feature envy
+
+**Review & Refactor mode** — broader quality pass before merge:
+- A file or module has grown complex and needs cleanup before a PR merge
+- Code review identified structural problems that need fixing
+- Asked to "clean up" or "improve" a set of files
+
+**Method Complexity Reduce mode** — targeted cognitive complexity reduction:
+- A linter or review flags a method as exceeding complexity threshold
+- A function has deep nesting or mixed concerns that hurt readability/testability
+- Asked to "simplify this method" while preserving behavior
+
+## Prerequisites
+- Identify the target file(s) and the specific code to refactor
+- Confirm tests exist to verify behavior before and after
+- Understand the public API surface that must not change
+- In review mode: read `.github/copilot-instructions.md` for project conventions and run existing lint checks to baseline current issues
+
+## Workflow
+
+### Focused Refactor
+1. Read the full target file to understand context before changing anything.
+2. Identify the specific code smell or improvement opportunity.
+3. Apply one refactoring operation at a time:
+   - **Extract**: move logic into a named function or variable
+   - **Rename**: update symbol to communicate intent clearly
+   - **Inline**: remove unnecessary indirection if it obscures intent
+   - **Simplify**: replace complex conditionals with guard clauses or early returns
+4. Run tests and type-check after each operation — do not batch unverified changes.
+5. Review that the public API, types, and exports are unchanged.
+6. Summarize every change with its category and rationale.
+
+### Review & Refactor Pass
+1. Read and understand each target file in full before changing anything.
+2. Identify issues: dead code, magic literals, oversized functions, duplicated logic, unclear naming.
+3. Apply changes incrementally: rename → extract → simplify → remove dead code.
+4. Preserve all existing behavior; do not add new features.
+5. Run `npm run check` (or equivalent) after changes to verify no regressions.
+6. Summarize every change made and the reason for each.
+
+### Method Complexity Reduce Pass
+1. Identify the method name, current complexity score, and target threshold.
+2. Read the full method and split it into logical sub-tasks.
+3. Extract candidates incrementally (guard clauses, branch blocks, repeated logic) into named helpers.
+4. Re-score complexity after each extraction and stop when the threshold is met.
+5. Run targeted tests and type-check to verify behavior remains unchanged.
+6. Report before/after complexity scores and any follow-up extraction needed.
+
+## Output Contract
+- Each change must be labeled with its refactoring type (Extract / Rename / Inline / Simplify / Remove).
+- Behavioral equivalence must be verifiable by existing tests.
+- Output a summary table: file → change type → rationale.
+- Include a diff summary grouped by change type for review passes.
+- For complexity-reduction tasks, include before/after cognitive complexity scores.
+
+## Guardrails
+- Do not change behavior — pure structural changes only.
+- Do not rename public API symbols without explicit approval.
+- Do not introduce new dependencies during refactoring.
+- Do not remove error handling, even if it looks redundant.
+- Stop and report if any change cannot be verified by an existing test or would require architecture changes.
+
+## Source of Truth
+- VS Code Copilot Agent Skills: https://code.visualstudio.com/docs/copilot/customization/agent-skills
+````
+
+## File: .github/skills/shadcn/SKILL.md
+````markdown
+---
+name: shadcn
+description: >
+  Project-aware shadcn/ui skill for Xuanwu. Knows the project's component aliases,
+  registry configuration, installed components, Tailwind setup, and correct import paths.
+  Use when adding, customizing, or troubleshooting shadcn/ui components in this project.
+  Triggers: "shadcn", "ui component", "add component", "button", "dialog", "dropdown",
+  "form", "table", "card", "shadcn/ui", "radix", "component registry".
+user-invocable: false
+---
+
+# shadcn/ui Project Skill for Xuanwu
+
+Project-aware guidance for shadcn/ui in the Xuanwu platform.
+Source: [ui.shadcn.com/docs/skills](https://ui.shadcn.com/docs/skills)
+
+## Project Configuration (`components.json`)
+
+| Setting | Value |
+|---------|-------|
+| Style | `new-york` |
+| RSC | `true` |
+| TypeScript | `true` |
+| Tailwind CSS | `src/app/globals.css` |
+| Base color | `neutral` |
+| CSS variables | `true` |
+| Icon library | `lucide-react` |
+
+## Alias Map
+
+All component imports use project-specific path aliases — **never** use relative paths from `components/ui`:
+
+| Alias | Resolves to |
+|-------|-------------|
+| `@/design-system/primitives` | All shadcn/ui components |
+| `@/design-system/primitives/ui` | Raw UI primitives (Button, Input, Dialog…) |
+| `@/design-system/primitives/lib/utils` | `cn()` utility |
+| `@/design-system/primitives/hooks` | shadcn/ui hooks |
+
+```tsx
+// ✅ Correct import
+import { Button } from "@/design-system/primitives/ui/button";
+import { cn } from "@/design-system/primitives/lib/utils";
+
+// ❌ Wrong — do not use default shadcn paths
+import { Button } from "@/components/ui/button";
+```
+
+## Adding Components
+
+Use the shadcn CLI with the project's component alias:
+
+```bash
+npx shadcn add <component>
+```
+
+The CLI reads `components.json` and places files in `src/design-system/primitives/ui/`.
+
+To browse available components:
+```bash
+npx shadcn search <keyword>
+```
+
+Or use the shadcn MCP server (already configured in `.vscode/mcp.json`):
+- `shadcn-list_items_in_registries` — list all components
+- `shadcn-search_items_in_registries` — fuzzy search
+- `shadcn-view_items_in_registries` — inspect component source
+- `shadcn-get_item_examples_from_registries` — find usage examples
+- `shadcn-get_add_command_for_items` — get the correct CLI install command
+
+## Composition Rules
+
+- Use `DropdownMenu` for action menus with 3+ options.
+- Use `Dialog` + `DialogContent` for modal workflows.
+- Use `Sheet` for side panels and mobile drawers.
+- Use `Form` + `FormField` + `FormMessage` (react-hook-form integration) for all user input.
+- Use `Table` + `DataTable` pattern for tabular data.
+- Use semantic `variant` prop rather than boolean flags (`variant="destructive"`, `variant="outline"`).
+- Use `cn()` from `@/design-system/primitives/lib/utils` to merge Tailwind classes.
+
+## Dark Mode
+
+Dark mode is enabled via `next-themes` `ThemeProvider` in `src/app/layout.tsx`.
+All CSS variables in `src/app/globals.css` have `.dark` overrides.
+Use `bg-background`, `text-foreground`, `border-border` etc. — these auto-adapt.
+
+## Theming
+
+The project uses **CSS variables** (not Tailwind color utilities directly) for theming:
+- `--background`, `--foreground` — page background/text
+- `--primary`, `--primary-foreground` — primary interactive color
+- `--secondary`, `--secondary-foreground` — secondary elements
+- `--muted`, `--muted-foreground` — muted/placeholder text
+- `--destructive`, `--destructive-foreground` — error/danger states
+- `--border`, `--ring` — borders and focus rings
+
+Override in `src/app/globals.css` under `:root` and `.dark`.
+
+## Key Components in This Project
+
+| Component | Location | Notes |
+|-----------|----------|-------|
+| `Button` | `@/design-system/primitives/ui/button` | Variants: default, destructive, outline, secondary, ghost, link |
+| `DropdownMenu` | `@/design-system/primitives/ui/dropdown-menu` | Used in `ModeToggle`, `MarketingHeader` locale selector |
+| `Dialog` | `@/design-system/primitives/ui/dialog` | Used in workspace dialogs |
+| `Form` | `@/design-system/primitives/ui/form` | react-hook-form integration |
+| `Card` | `@/design-system/primitives/ui/card` | Used in dashboard cards |
+| `Sidebar` | `@/design-system/primitives/ui/sidebar` | App shell sidebar |
+| `Avatar` | `@/design-system/primitives/ui/avatar` | User avatars in nav |
+
+## MCP Server
+
+The shadcn MCP server is pre-configured in `.vscode/mcp.json`.
+Use `shadcn-search_items_in_registries` and `shadcn-view_items_in_registries` before
+implementing any new shadcn/ui component to verify its API and usage patterns.
+
+## Related
+
+- [vercel-react-best-practices](./../vercel-react-best-practices/SKILL.md) — React performance
+- [vercel-composition-patterns](./../vercel-composition-patterns/SKILL.md) — Composition APIs
+- [next-best-practices](./../next-best-practices/SKILL.md) — Server/client boundaries
+- Project `components.json`: `/components.json`
+- shadcn/ui docs: https://ui.shadcn.com
+- shadcn MCP: https://ui.shadcn.com/docs/mcp
+````
+
+## File: .github/skills/vercel-composition-patterns/SKILL.md
+````markdown
+---
+name: vercel-composition-patterns
+description: >
+  React composition patterns that scale — avoiding boolean prop proliferation, compound
+  components, render props, and slot-based composition. Use when designing reusable
+  component APIs, reviewing component interfaces, or refactoring components that have
+  grown too many boolean flags or conditional branches.
+  Triggers: "composition patterns", "compound component", "boolean prop proliferation",
+  "render prop", "slot pattern", "component API design".
+user-invocable: false
+---
+
+# Vercel Composition Patterns
+
+React composition patterns for building scalable, maintainable component APIs.
+Source: [vercel.com/docs/agent-resources/skills](https://vercel.com/docs/agent-resources/skills)
+
+## When to use this skill
+
+- Designing a reusable component that is getting too many boolean props
+- Reviewing a component API for maintainability
+- Refactoring tightly coupled parent/child rendering logic
+- Building design-system components that need to be composable
+
+---
+
+## 1. Avoid Boolean Prop Proliferation
+
+When a component accumulates many boolean flags (`isLoading`, `isError`, `isDisabled`, `isPrimary`, `isLarge`…), it is a sign that composition should replace configuration.
+
+```tsx
+// ❌ Boolean prop explosion
+<Button isPrimary isLarge isLoading isDisabled>Save</Button>
+
+// ✅ Composition via variant + slot
+<Button variant="primary" size="lg" asChild>
+  <Link href="/save">Save</Link>
+</Button>
+```
+
+**Rule of thumb:** If you need more than 2–3 boolean props to describe visual or behavioral variants, reach for composition or a `variant` prop with a discriminated union type.
+
+---
+
+## 2. Compound Components
+
+Expose a family of components that share implicit state through context, giving callers flexible control over structure.
+
+```tsx
+// Context
+const AccordionContext = createContext<AccordionContextValue | null>(null);
+
+// Root
+function Accordion({ children }: { children: ReactNode }) {
+  const [open, setOpen] = useState<string | null>(null);
+  return (
+    <AccordionContext.Provider value={{ open, setOpen }}>
+      <div>{children}</div>
+    </AccordionContext.Provider>
+  );
+}
+
+// Sub-components
+Accordion.Item = function AccordionItem({ id, children }: AccordionItemProps) { /* ... */ };
+Accordion.Trigger = function AccordionTrigger({ id, children }: AccordionTriggerProps) { /* ... */ };
+Accordion.Content = function AccordionContent({ id, children }: AccordionContentProps) { /* ... */ };
+
+// Usage — caller controls structure
+<Accordion>
+  <Accordion.Item id="q1">
+    <Accordion.Trigger id="q1">What is Xuanwu?</Accordion.Trigger>
+    <Accordion.Content id="q1">A platform for...</Accordion.Content>
+  </Accordion.Item>
+</Accordion>
+```
+
+> **Note:** shadcn/ui components (e.g. `Accordion`, `Dialog`, `DropdownMenu`) already use this pattern — follow their lead.
+
+---
+
+## 3. Slot-Based Composition (Children as Flexible Slots)
+
+Accept `ReactNode` props for named regions instead of hardcoding structure. Used in `RootShell` and layout components in this project.
+
+```tsx
+// ✅ Slot-based layout shell
+interface PageLayoutProps {
+  header?: ReactNode;
+  footer?: ReactNode;
+  children: ReactNode;
+}
+
+export function PageLayout({ header, footer, children }: PageLayoutProps) {
+  return (
+    <>
+      {header && <header className="sticky top-0 z-50">{header}</header>}
+      <main className="flex-1">{children}</main>
+      {footer && <footer>{footer}</footer>}
+    </>
+  );
+}
+```
+
+---
+
+## 4. `asChild` / Polymorphic Components
+
+Allow a component to render as a different HTML element or React component without duplicating its logic. Radix UI's `asChild` prop is the standard approach.
+
+```tsx
+import { Slot } from '@radix-ui/react-slot';
+
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  asChild?: boolean;
+}
+
+export function Button({ asChild, ...props }: ButtonProps) {
+  const Comp = asChild ? Slot : 'button';
+  return <Comp {...props} />;
+}
+
+// Renders as an anchor, but with Button styles
+<Button asChild>
+  <a href="/dashboard">Go to Dashboard</a>
+</Button>
+```
+
+---
+
+## 5. Render Props (Inversion of Control)
+
+When a parent needs to delegate rendering to the caller, use render props or children-as-function.
+
+```tsx
+// ✅ Render prop for flexible list items
+interface ListProps<T> {
+  items: T[];
+  renderItem: (item: T, index: number) => ReactNode;
+  emptyState?: ReactNode;
+}
+
+function List<T>({ items, renderItem, emptyState }: ListProps<T>) {
+  if (items.length === 0) return <>{emptyState ?? <p>No items.</p>}</>;
+  return <ul>{items.map((item, i) => <li key={i}>{renderItem(item, i)}</li>)}</ul>;
+}
+
+// Caller owns the rendering
+<List
+  items={workspaces}
+  renderItem={(ws) => <WorkspaceCard workspace={ws} />}
+  emptyState={<EmptyWorkspaces />}
+/>
+```
+
+---
+
+## 6. Controlled vs. Uncontrolled Components
+
+Design reusable components to support both modes:
+- **Uncontrolled** — manages state internally; good for simple cases.
+- **Controlled** — caller owns state via `value` + `onChange`; required for forms and complex UIs.
+
+```tsx
+interface ToggleProps {
+  defaultChecked?: boolean; // uncontrolled
+  checked?: boolean;        // controlled
+  onChange?: (checked: boolean) => void;
+}
+```
+
+---
+
+## Related
+
+- [vercel-react-best-practices](./../vercel-react-best-practices/SKILL.md) — Performance and memoization
+- [next-best-practices](./../next-best-practices/SKILL.md) — Server vs. client boundaries
+- [ddd-architecture](./../ddd-architecture/SKILL.md) — Application layer composition patterns
+- Radix UI primitives: https://www.radix-ui.com/primitives
+````
+
+## File: .github/skills/vercel-react-best-practices/SKILL.md
+````markdown
+---
+name: vercel-react-best-practices
+description: >
+  React and Next.js performance optimization guidelines. Use when reviewing or implementing
+  React components, optimizing rendering performance, auditing bundle size, or following
+  Vercel-recommended patterns for production Next.js applications.
+  Triggers: "React performance", "memo", "bundle size", "rendering optimization",
+  "avoid re-render", "lazy load", "code splitting".
+user-invocable: false
+---
+
+# Vercel React Best Practices
+
+React and Next.js performance optimization guidelines from Vercel's production experience.
+Source: [vercel.com/docs/agent-resources/skills](https://vercel.com/docs/agent-resources/skills)
+
+## When to use this skill
+
+- Reviewing React component performance
+- Optimizing bundle size and code splitting
+- Preventing unnecessary re-renders
+- Auditing server vs. client component decisions in Next.js
+
+---
+
+## 1. Server Components First (Next.js App Router)
+
+- **Default to Server Components.** Add `"use client"` only when you need browser APIs, event handlers, or stateful interactivity.
+- Every `"use client"` boundary creates a new client bundle entry — keep boundaries as far down the tree as possible.
+- Compose: wrap a small interactive island in `"use client"` while keeping the surrounding layout server-rendered.
+
+```tsx
+// ✅ Server Component (no directive needed)
+export async function ProductList() {
+  const products = await fetchProducts();
+  return <ul>{products.map(p => <ProductItem key={p.id} product={p} />)}</ul>;
+}
+
+// ✅ Isolated client leaf
+"use client";
+export function AddToCartButton({ productId }: { productId: string }) {
+  const [loading, setLoading] = useState(false);
+  // ...
+}
+```
+
+---
+
+## 2. Memoization
+
+Use `React.memo`, `useMemo`, and `useCallback` **only when**:
+- The component re-renders due to parent updates that don't affect its props.
+- A computed value is expensive (> 1ms).
+- A callback is passed as a prop to a memoized child.
+
+**Anti-patterns to avoid:**
+```tsx
+// ❌ Premature memoization — trivial computation
+const label = useMemo(() => `Hello ${name}`, [name]);
+
+// ✅ Justified — passed to memo'd child
+const handleSubmit = useCallback(() => onSubmit(formData), [formData, onSubmit]);
+```
+
+---
+
+## 3. Code Splitting and Lazy Loading
+
+- Use `next/dynamic` for components that are not critical to the initial viewport.
+- Never use `next/dynamic({ ssr: false })` inside Server Components.
+- Use `React.lazy` + `Suspense` in client-only subtrees.
+
+```tsx
+const HeavyChart = dynamic(() => import('@/components/HeavyChart'), {
+  loading: () => <Skeleton className="h-64 w-full" />,
+});
+```
+
+---
+
+## 4. Image and Font Optimization
+
+- **Always** use `next/image` for `<img>` tags — auto-sizes, lazy-loads, and serves WebP/AVIF.
+- **Always** use `next/font` — eliminates layout shift from external font loading.
+- Set `priority` only on the LCP image (above-the-fold hero).
+
+```tsx
+import Image from 'next/image';
+import { Inter } from 'next/font/google';
+
+const inter = Inter({ subsets: ['latin'] }); // no external request at runtime
+```
+
+---
+
+## 5. Key Prop Discipline
+
+- Use **stable, unique identifiers** as `key` (database IDs, slugs).
+- Never use array index as `key` for lists that can be reordered or filtered.
+- A wrong `key` forces full unmount/remount — use only to intentionally reset state.
+
+---
+
+## 6. useEffect Best Practices
+
+- Declare all reactive values used inside `useEffect` in the dependency array.
+- Prefer Server Components or `fetch` with `cache` over `useEffect` for data fetching.
+- Cleanup subscriptions and timers to prevent memory leaks.
+
+```tsx
+useEffect(() => {
+  const subscription = subscribe(id, handler);
+  return () => subscription.unsubscribe(); // cleanup
+}, [id]); // id is the reactive value
+```
+
+---
+
+## 7. Bundle Analysis
+
+Run `ANALYZE=true next build` (with `@next/bundle-analyzer`) to inspect bundle composition.
+- Identify large client-side chunks that could be moved to Server Components.
+- Audit third-party imports — prefer tree-shakeable ESM packages.
+- Lazy-load heavy libraries (e.g. chart libraries, PDF renderers, editors).
+
+---
+
+## 8. Streaming and Suspense
+
+- Wrap slow data-fetching Server Components in `<Suspense fallback={<Skeleton />}>`.
+- Use `loading.tsx` for route-level streaming — shows immediately while the page shell loads.
+- Avoid sequential data fetching — use `Promise.all` / `Promise.allSettled` for parallel requests.
+
+```tsx
+// ✅ Parallel data fetching in Server Component
+const [user, posts] = await Promise.all([getUser(id), getPosts(id)]);
+```
+
+---
+
+## Related
+
+- [next-best-practices](./../next-best-practices/SKILL.md) — File conventions, RSC boundaries, async APIs
+- [vercel-composition-patterns](./../vercel-composition-patterns/SKILL.md) — Component composition patterns
+- Next.js App Router docs: https://nextjs.org/docs/app
+````
+
+## File: .github/skills/web-design-reviewer/SKILL.md
+````markdown
+---
+name: web-design-reviewer
+description: 'Visual inspection and fix of websites for design issues including responsive breakage, accessibility problems, visual inconsistency, and layout errors. Use when asked to review UI design, check layout, or fix design problems. Triggers: "review website design", "check the UI", "fix the layout", "find design problems", "UI review", "design audit".'
+argument-hint: '[URL or component path] [specific design concern, e.g. mobile layout, dark mode, accessibility]'
+---
+
+# Web Design Reviewer
+
+## When to Use
+- Reviewing a local or remote website for visual design issues
+- Checking responsive layout at multiple breakpoints (mobile, tablet, desktop)
+- Auditing accessibility: color contrast, font sizes, focus states, ARIA labels
+- Identifying visual inconsistencies across pages or components
+
+## Prerequisites
+- The target website must be accessible (local dev server or public URL)
+- Browser automation (Chrome DevTools MCP or Playwright MCP) must be active
+- Know the design system or style guide in use (Tailwind, shadcn/ui, custom CSS)
+
+## Workflow
+1. Navigate to the target URL and take a full-page screenshot.
+2. Take snapshots at three viewport widths: mobile (375px), tablet (768px), desktop (1280px).
+3. Inspect each snapshot for:
+   - Layout breakage: overflow, clipping, stacking issues
+   - Typography: inconsistent font sizes, line heights, or weights
+   - Color: insufficient contrast ratios (must meet WCAG AA: 4.5:1 for text)
+   - Spacing: inconsistent padding/margin vs. design system tokens
+   - Accessibility: missing `alt` text, focus indicators, ARIA roles
+4. Categorize findings by severity: Critical / Warning / Suggestion.
+5. Locate the source file for each finding.
+6. Apply source-level fixes for Critical and Warning findings.
+7. Re-take screenshots after fixes to verify improvement.
+
+## Output Contract
+- Produce a review report with: Findings by Severity, Screenshot Evidence, Source File Reference, Fix Applied.
+- Include before/after screenshots for every Critical fix.
+- List Suggestions separately as optional improvements.
+
+## Guardrails
+- Do not modify component logic — only CSS, Tailwind classes, and layout structure.
+- Do not override global design tokens; use existing theme values.
+- Flag fixes that require design system changes for human review.
+
+## Source of Truth
+- VS Code Copilot Agent Skills: https://code.visualstudio.com/docs/copilot/customization/agent-skills
+- WCAG contrast checker: https://webaim.org/resources/contrastchecker/
+````
+
 ## File: .github/skills/x-framework-guardian/SKILL.md
 ````markdown
 ---
@@ -2642,6 +3851,172 @@ and docs/architecture/README.md. Please provide the Drift Report and Compliance 
 - 架構文件索引：[`.github/skills/xuanwu-docs-index/SKILL.md`](../xuanwu-docs-index/SKILL.md)
 ````
 
+## File: .github/skills/xuanwu-diagram-standards/SKILL.md
+````markdown
+---
+name: xuanwu-diagram-standards
+description: >
+  Diagram standards, Mermaid guidelines, architecture layer color system, layout
+  principles, refactoring rules, and quality targets for all Xuanwu architecture
+  diagrams. Use when designing, refining, or reviewing architecture diagrams in
+  this repository. Triggers: "architecture diagram", "Mermaid", "diagram refactor",
+  "diagram review", "diagram standard", "layer color", "diagram quality".
+---
+
+# Xuanwu Diagram Design Standards
+
+This skill is the single source of truth for visual standards applied to all Mermaid
+architecture diagrams in the Xuanwu repository.
+
+---
+
+## Architecture Layer Color System
+
+All diagrams MUST use consistent layer-based semantic grouping. The following table
+defines the canonical architecture layer names and their semantic meanings. Use Mermaid
+`subgraph` blocks labelled with these layer names to reflect which layer each component
+belongs to:
+
+| Layer | Semantic Meaning |
+|-------|-----------------|
+| Identity | identity / actor / account |
+| Governance | tenant / policy / rules |
+| Semantic | ontology / tagging / classification |
+| Task / Skill | task system / skill system |
+| Data Lifecycle | ingestion / parsing / storage |
+| Matching / AI | AI matching / reasoning |
+| Infrastructure | database / cloud / storage |
+| Observability | monitoring / logging |
+
+---
+
+## Diagram Standards
+
+Use **Mermaid only**. No other diagram format is accepted.
+
+Preferred diagram types (in order of preference):
+
+- `flowchart TD` / `graph TD` — top-down architecture flows
+- `graph LR` — left-right dependency chains
+- `sequenceDiagram` — protocol / interaction sequences
+
+Avoid unnecessary diagram types (e.g. `pie`, `gantt`, `er`) unless explicitly required.
+
+---
+
+## Layout Principles
+
+Architecture MUST visually flow in canonical layer order:
+
+```
+Identity
+↓
+Governance
+↓
+Semantic
+↓
+Task / Skill
+↓
+Data Lifecycle
+↓
+Matching / AI
+↓
+Infrastructure
+↓
+Observability
+```
+
+Group components that belong to the same layer inside a Mermaid `subgraph`:
+
+```mermaid
+flowchart TD
+  subgraph Identity
+    A[Account] --> B[Auth]
+  end
+  subgraph Governance
+    C[Policy]
+  end
+  B --> C
+```
+
+---
+
+## Minimal Edges
+
+Avoid:
+
+- Crossing lines
+- Chaotic node connections
+- Redundant arrows
+
+Prefer clear directional flow with as few edge crossings as possible.
+
+---
+
+## Semantic Grouping
+
+Related components that belong to the same layer MUST be grouped using Mermaid `subgraph` blocks:
+
+```mermaid
+flowchart TD
+  subgraph Identity
+    ...
+  end
+  subgraph Governance
+    ...
+  end
+  subgraph Infrastructure
+    ...
+  end
+```
+
+---
+
+## Diagram Refactoring Rules
+
+You MAY:
+
+- Reorganize node layout
+- Group components into subgraphs
+- Simplify flows
+- Remove redundant nodes
+- Rename nodes for clarity
+
+You MUST NOT:
+
+- Invent new architecture components
+- Change system meaning
+- Introduce new subsystems not present in the surrounding documentation
+
+---
+
+## Editing Strategy
+
+When refining a diagram:
+
+1. Read surrounding documentation to understand the architecture meaning.
+2. Identify unclear flows, missing groupings, or nodes that misrepresent the system.
+3. Reorganize node layout following layer order from top to bottom.
+4. Apply `subgraph` blocks that align with the architecture layer color system.
+5. Simplify the graph — remove clutter without losing semantic meaning.
+6. Verify the final diagram matches the surrounding narrative and SSOT documents.
+
+Always ensure the diagram matches the architecture narrative before committing.
+
+---
+
+## Quality Target
+
+A good diagram should:
+
+- Be readable in under 5 seconds
+- Clearly show system layers
+- Avoid visual clutter
+- Resemble professional architecture documentation
+
+Think like a principal architect presenting a system design.
+````
+
 ## File: .github/skills/xuanwu-docs-index/SKILL.md
 ````markdown
 ---
@@ -2716,6 +4091,229 @@ Resolved/closed items MUST be migrated to:
 - `references/architecture-index.md`
 - `references/management-index.md`
 - VS Code Copilot Agent Skills: https://code.visualstudio.com/docs/copilot/customization/agent-skills
+````
+
+## File: .github/skills/xuanwu-intent-pipeline/SKILL.md
+````markdown
+---
+name: xuanwu-intent-pipeline
+user-invocable: false
+description: >
+  Xuanwu 六步驟智能理解管道（Six-Step Intent Pipeline）。
+  在執行任何代理任務之前，透過結構化步驟完整理解用戶意圖。
+  Use this skill when: decomposing an ambiguous request, routing to the
+  correct agent, or verifying you have captured all parameters before
+  making code or documentation changes.
+  Triggers: "understand intent", "analyze request", "pipeline",
+  "六步驟", "意圖分析", "任務拆解", "before dispatch", "clarify scope".
+---
+
+# Xuanwu 六步驟智能理解管道
+
+本技能定義 Xuanwu 代理系統處理所有進入請求的**標準理解流程**。
+
+---
+
+## 六步驟流程
+
+### ① 接收原始輸入（Raw Input）
+
+**目的：** 完整保留用戶的原始文字或指令，不做早期解釋。
+
+```
+輸出：verbatim_request = "<用戶原始文字>"
+```
+
+規則：
+- 不刪除、不改寫任何部分
+- 如有程式碼片段或錯誤訊息，完整保留
+- 識別輸入語言（中文 / 英文 / 混合）
+
+---
+
+### ② 語意分析（Intent Detection）
+
+**目的：** 判斷用戶的目標和行為意圖。
+
+```
+輸出：
+  action_type: create | audit | fix | refactor | document | optimize | research | configure
+  domain_area: architecture | code | ui | ci-cd | docs | security | performance | testing
+  urgency: blocking | high | normal | low
+```
+
+問題清單：
+1. 用戶要「建立」還是「修改」還是「查詢」？
+2. 這是一次性任務還是重複性工作流程？
+3. 有沒有隱含的約束（時間、範圍、品質）？
+4. 請求是否涉及多個領域（需要跨代理協調）？
+
+---
+
+### ③ 上下文抓取（Context Extraction）
+
+**目的：** 收集與任務相關的背景資訊。
+
+```
+工具序列：
+  1. serena-list_memories → 檢查現有專案記憶
+  2. serena-read_memory(project/architecture) → 架構現況
+  3. agent-memory-search_long_term_memory(query) → 跨 session 歷史
+  4. serena-find_symbol / serena-search_for_pattern → 具體程式碼位置
+```
+
+輸出：
+- 相關模組列表（`src/modules/<name>.module/`）
+- 相關層（Domain / Application / Infrastructure / Presentation）
+- 現有實作模式（參考相似程式碼）
+- 已知約束（ADR 決策、架構邊界）
+
+---
+
+### ④ 關鍵資訊標記（Entity & Parameter Extraction）
+
+**目的：** 將指令拆解為結構化的模組、參數和設定。
+
+```
+輸出結構：
+{
+  "modules": ["identity.module", "workspace.module"],
+  "files": ["src/modules/identity.module/domain.auth/_entity.ts"],
+  "layers": ["Domain", "Application"],
+  "operation": "add PasswordReset aggregate",
+  "constraints": ["must not break existing sign-in flow"],
+  "dependencies": ["FirebaseAuth", "IIdentityRepository"]
+}
+```
+
+標記規則：
+- 模組名稱必須使用倉庫的 `<name>.module` 格式
+- 層必須使用 Presentation / Application / Domain / Infrastructure
+- 明確識別外部依賴（Firebase、第三方 API）
+- 識別共享層（`src/shared/`）涉及範圍
+
+---
+
+### ⑤ 依賴與優先級分析（Dependency & Priority Analysis）
+
+**目的：** 確定任務執行順序與先後關係。
+
+```
+輸出：
+  sequence:
+    - step: 1
+      task: "Domain layer: PasswordReset entity + value objects"
+      agent: ddd-domain-modeler
+      depends_on: []
+      blocking: [step-2, step-3]
+    - step: 2
+      task: "Application layer: ResetPasswordUseCase"
+      agent: ddd-application-layer
+      depends_on: [step-1]
+      blocking: [step-3]
+    - step: 3
+      task: "Infrastructure: FirebaseEmailAdapter"
+      agent: ddd-infrastructure
+      depends_on: [step-2]
+      blocking: []
+```
+
+分析維度：
+1. 哪些任務有**技術依賴**（B 需要 A 的介面）？
+2. 哪些任務可以**平行執行**？
+3. 哪個代理最適合每個步驟？
+4. 什麼是**最小可驗證單元**（MVP）？
+
+---
+
+### ⑥ 生成任務指令（Task Instruction Generation）
+
+**目的：** 形成清晰、可執行的操作方案。
+
+```
+輸出格式：
+
+問題摘要：[一句話總結]
+
+推薦代理：[agent-name]
+推薦指令：[/slash-command 如適用]
+
+執行計劃：
+  Phase 1 (今): ...
+  Phase 2 (可選): ...
+
+預期交付物：
+  - 檔案路徑 + 說明
+  - 測試覆蓋範圍
+
+驗證方式：
+  - 如何確認任務完成？
+```
+
+---
+
+## 在代理中應用
+
+### xuanwu-commander（主入口）
+
+對所有請求執行完整六步驟，輸出「建議交接」。
+
+### xuanwu-orchestrator（跨功能協調）
+
+在分配子任務時，對每個子任務的範圍重新執行步驟 ④-⑥。
+
+### xuanwu-research（上下文研究）
+
+深度執行步驟 ③，產出帶有引用的發現報告。
+
+### xuanwu-software-planner（計劃生成）
+
+以步驟 ⑤-⑥ 為核心，詳細展開任務序列。
+
+---
+
+## 快速模板
+
+```markdown
+## 六步驟分析
+
+**① 原始輸入**
+> [verbatim user request]
+
+**② 意圖分析**
+- 動作類型：[create/audit/fix/refactor/document/optimize]
+- 領域範圍：[architecture/code/ui/ci-cd/docs]
+
+**③ 上下文（Serena 查詢結果）**
+- 相關模組：[list]
+- 現有模式：[reference]
+
+**④ 關鍵參數**
+- 模組：[list]
+- 層：[list]
+- 操作：[description]
+- 約束：[list]
+
+**⑤ 依賴序列**
+1. [任務] → [代理]
+2. [任務] → [代理]
+
+**⑥ 執行方案**
+推薦代理：[agent]
+推薦指令：[/command]
+交付物：[list]
+```
+
+---
+
+## 何時使用此技能
+
+- **請求模糊時** — 使用步驟 ①-② 找出真實意圖
+- **範圍不清時** — 使用步驟 ③-④ 確定邊界
+- **跨代理協調時** — 使用步驟 ⑤ 確定執行序列
+- **準備交接時** — 使用步驟 ⑥ 產出交接文件
+
+不需要在步驟間等待用戶確認 — 以推論補充不確定資訊，並在步驟 ⑥ 標記假設。
 ````
 
 ## File: .github/skills/xuanwu-test-expert/SKILL.md
@@ -7709,6 +9307,151 @@ No test runner configured yet (no jest/vitest/playwright test scripts). Check pa
 | `timeline.module`（時間軸投影） | 跨 Domain 事件投影到時間軸 | 名稱中的「投影」即 CQRS 讀側 Read Model，不是 Bounded Context；每個 Domain 各自提供 timeline query | → 各 Domain 的 `_queries.ts`（讀側投影） |
 ````
 
+## File: .serena/memories/shared.md
+````markdown
+# shared — File Index
+
+**層次**: 共用工具 / Shared Layer
+**職責**: 提供跨模組共用的工具函數、類型定義、錯誤類別、i18n 翻譯、常數和 Pipe 抽象。
+**不包含**: 業務邏輯（由 Domain Modules 負責）、React 元件（由 design-system 負責）、Firebase SDK 呼叫（由 infrastructure 負責）。
+
+---
+
+## `src/shared/index.ts`
+**描述**: 共用層統一具名匯出 barrel。所有跨模組共用工具、類型、常數、錯誤皆應從此單一入口匯入，使重構透明。
+**注意**: Client-side React hooks（`useToggle`、`useDebounce` 等）在 `@/shared/directives` — 需帶 `"use client"` 指令，不在此 barrel。
+**函數清單**:
+- `export * from './constants'` — APP_NAME、APP_VERSION、DEFAULT_LOCALE 等常數
+- `export * from './errors'` — AppError 及所有子類別、`toAppError`
+- `export * from './interfaces'` — API 信封介面、Pagination 介面、Firestore 文件介面
+- `export * from './i18n'` — `isSupportedLocale`、`resolveLocale`、`useTranslation`、`getMessages`
+- `export * from './pipes'` — `Pipe`、`schemaPipe`、`transformPipe`、`composePipes`、`trimPipe`
+- `export * from './types'` — Zod 基礎類型、`Result<T>`、`ok`、`fail`
+- `export * from './utils'` — `formatDate`、`formatDateTime`、`capitalise`、`toKebabCase`、`omit`、`pick`、`unique`、`chunk`
+
+---
+
+## `src/shared/constants/index.ts`
+**描述**: 應用程式層級常數 — 名稱、版本、locale、日期格式 token。
+**函數清單**:
+- `APP_NAME: string` — `"Xuanwu Platform"` 平台顯示名稱
+- `APP_VERSION: string` — `"0.1.0"` 平台版本號
+- `DEFAULT_LOCALE: string` — `"zh-TW"` 預設語系
+- `SUPPORTED_LOCALES: readonly string[]` — `["zh-TW", "en"]` 支援語系清單
+- `DATE_FORMAT: string` — `"YYYY-MM-DD"` 日期格式 token（供 dayjs/date-fns 使用）
+- `DATETIME_FORMAT: string` — `"YYYY-MM-DD HH:mm:ss"` 日期時間格式 token
+
+---
+
+## `src/shared/errors/index.ts`
+**描述**: 應用程式錯誤類別階層。`AppError` 為所有錯誤基底類別，加入機器可讀的 `code` 與 HTTP `statusCode`。
+**函數清單**:
+- `class AppError extends Error` — 基底應用錯誤類別（code, statusCode）
+- `class NotFoundError extends AppError` — 資源找不到（404, "NOT_FOUND"）
+- `class UnauthorizedError extends AppError` — 未認證（401, "UNAUTHORIZED"）
+- `class ForbiddenError extends AppError` — 無存取權（403, "FORBIDDEN"）
+- `class ValidationError extends AppError` — 輸入驗證失敗（422, "VALIDATION_ERROR"，附 `fields`）
+- `class ConflictError extends AppError` — 資源已存在衝突（409, "CONFLICT"）
+- `function toAppError(err: unknown): AppError` — 將任意拋出值轉為 AppError
+
+---
+
+## `src/shared/interfaces/index.ts`
+**描述**: 前後端共用的 TypeScript 結構性介面（API 信封、分頁、Firestore 文件基底、VisDate metadata）。
+**函數清單**:
+- `interface ApiResponse<T>` — 通用 API 信封（ok, data?, error?, code?）
+- `interface ApiError` — 標準化 API 錯誤（message, code, statusCode）
+- `interface PaginationQuery` — 分頁查詢參數（page?, pageSize?, cursor?）
+- `interface PaginatedResult<T>` — 分頁結果（items, total, page, pageSize, hasNextPage, nextCursor?）
+- `interface FirestoreDocument` — Firestore 文件基底標記介面（id, createdAt, updatedAt）
+- `interface VisDateMetadata` — vis-date/DnD 資料合約（詳見檔案）
+
+---
+
+## `src/shared/i18n/index.ts`
+**描述**: 輕量級程式碼內嵌 i18n 解決方案。內含雙語（zh-TW/en）翻譯字典，提供翻譯函數 factory。
+**函數清單**:
+- `function isSupportedLocale(locale: string): locale is Locale` — 型別守衛，判斷是否為支援語系
+- `function resolveLocale(locale?: string | null): Locale` — 解析語系，不支援時退回預設語系
+- `function useTranslation(locale?: string | null): (key: string) => string` — 回傳綁定語系的翻譯函數 `t(key)`
+- `function getMessages(locale?: string | null): Messages` — 取得指定語系的完整翻譯字典
+
+---
+
+## `src/shared/pipes/index.ts`
+**描述**: 函數式管線（Pipe）抽象，用於輸入轉換與驗證。包含 Zod schema pipe、轉換 pipe 和組合工具。
+**函數清單**:
+- `type Pipe<I, O>` — 純轉換函數類型 `(input: I) => O`
+- `function schemaPipe<T>(schema): Pipe<unknown, Result<T, ValidationError>>` — 建立 Zod 解析 pipe，回傳 `Result`
+- `function transformPipe<I, O>(fn): Pipe<I, O>` — 包裝任意轉換函數為 Pipe
+- `function composePipes<A, B, C>(first, second): Pipe<A, C>` — 左至右組合兩個 Pipe（A→B→C）
+- `function trimPipe<T>(input: T): T` — 遞迴剝除物件所有字串值的頭尾空白
+
+---
+
+## `src/shared/types/index.ts`
+**描述**: Zod 驗證的基礎值物件類型、Locale 類型、以及通用 `Result<T>` 成功/失敗 union 類型。
+**函數清單**:
+- `NonEmptyString: ZodSchema` — 非空字串 schema
+- `UuidSchema: ZodSchema` — UUID v4 schema
+- `IsoDateString: ZodSchema` — ISO-8601 日期字串 schema
+- `PositiveInt: ZodSchema` — 正整數 schema
+- `PaginationSchema: ZodSchema` — 分頁查詢 schema（page, pageSize）
+- `PaginatedResponseSchema<T>(itemSchema): ZodSchema` — 泛型分頁回應 schema
+- `type PaginatedResponse<T>` — 分頁回應類型
+- `LocaleSchema: ZodEnum` — 語系 enum schema
+- `type Locale` — `"zh-TW" | "en"` 語系 union 類型
+- `type Success<T>` — `{ ok: true; value: T }` 成功類型
+- `type Failure<E>` — `{ ok: false; error: E }` 失敗類型
+- `type Result<T, E>` — `Success<T> | Failure<E>` 結果 union 類型
+- `function ok<T>(value: T): Success<T>` — 建立成功結果
+- `function fail<E>(error: E): Failure<E>` — 建立失敗結果
+
+---
+
+## `src/shared/utils/index.ts`
+**描述**: 純函數工具集，涵蓋日期格式化、字串轉換、物件操作、陣列工具。無副作用。
+**函數清單**:
+- `function formatDate(date: Date, locale?: string): string` — 格式化日期（locale-aware，預設 zh-TW）
+- `function formatDateTime(date: Date, locale?: string): string` — 格式化日期時間（locale-aware）
+- `function capitalise(str: string): string` — 首字母大寫
+- `function toKebabCase(str: string): string` — camelCase/PascalCase 轉 kebab-case
+- `function omit<T, K>(obj: T, keys: K[]): Omit<T, K>` — 從物件移除指定 key
+- `function pick<T, K>(obj: T, keys: K[]): Pick<T, K>` — 從物件挑選指定 key
+- `function unique<T>(arr: T[]): T[]` — 移除陣列重複元素
+- `function chunk<T>(arr: T[], size: number): T[][]` — 將陣列切割為指定大小的子陣列
+
+---
+
+## `src/shared/directives/index.ts`
+**描述**: Client-side React hooks，標記 `"use client"` 指令。僅限 Client Components 匯入，不包含在 `@/shared` barrel。
+**函數清單**:
+- `function useToggle(initial?: boolean): [boolean, () => void, (value: boolean) => void]` — 布林切換 hook
+- `function useDebounce<T>(value: T, delay: number): T` — 防抖值 hook
+- `function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((prev: T) => T)) => void]` — localStorage 持久化 hook（支援 updater 函數）
+- `function usePrevious<T>(value: T): T | undefined` — 取得前一個值 hook
+- `function useIsMounted(): boolean` — 判斷元件是否已 mount hook
+- `const LOCALE_STORAGE_KEY = "xuanwu-locale"` — localStorage key 常數
+- `function useLocale(): [Locale, (locale: Locale) => void]` — 語系持久化 hook；實作 `ILocalePort`；在 `useLocalStorage` 之上處理語系解析與 `html[lang]` 同步
+- `function useAuthState(): { user: User | null; loading: boolean }` — 輕量 Firebase Auth 狀態監聽 hook；在 `AccountProvider` 之外使用；回傳 `{ user, loading }`
+
+---
+
+## `src/shared/ports/index.ts`
+**描述**: 防腐層（ACL）跨模組 Port 介面集。供 Application 層以穩定合約取代直接依賴基礎設施。按介面類型（Cache、Queue、Vector、Workflow、Storage、Locale、Logger、Analytics、Auth）分組。
+**匯入規則**: `import type { ICachePort } from "@/shared/ports"` 或透過 barrel `import type { ICachePort } from "@/shared"`。
+**函數清單**:
+- `interface ICachePort` — Cache 抽象（get/set/del/exists/incr/ttl）；具體實作：`src/infrastructure/upstash/redis.ts`
+- `interface IQueuePort` — Queue 抽象（publish/publishJSON/publishDelayed）；具體實作：`src/infrastructure/upstash/qstash.ts`
+- `interface IVectorIndexPort<TMetadata>` — 向量索引抽象（upsert/query/fetch/delete）；具體實作：`src/infrastructure/upstash/vector.ts`
+- `interface IWorkflowPort` — Workflow 抽象（trigger/cancel/getState）；具體實作：`src/infrastructure/upstash/workflow.ts`
+- `interface IStoragePort` — 瀏覽器同步鍵值儲存抽象（getItem/setItem/removeItem）；具體實作：`window.localStorage`（via `useLocalStorage`）
+- `interface ILocalePort` — Locale 持久化與 `html[lang]` 同步抽象（locale/setLocale/supported）；具體實作：`useLocale` directive
+- `interface ILoggerPort` — 結構化日誌抽象（debug/info/warn/error）；具體實作：ConsoleLoggerAdapter / Cloud Logging
+- `interface IAnalyticsPort` — 事件追蹤抽象（track/identify/page）；具體實作：Firebase Analytics / Mixpanel
+- `interface IAuthPort` — Auth 狀態與 ID token 抽象（getUser/getIdToken/signOut）；具體實作：`src/infrastructure/firebase/admin/auth`
+````
+
 ## File: .serena/memories/tasks/BACKLOG.md
 ````markdown
 # Xuanwu Platform — Progressive Value Extraction Backlog
@@ -9226,6 +10969,20 @@ export default function Default() {
 }
 ````
 
+## File: src/app/(main)/(account)/dashboard/page.tsx
+````typescript
+import type { Metadata } from "next";
+import { DashboardView } from "@/modules/workspace.module/_components/dashboard-view";
+
+export const metadata: Metadata = {
+  title: "首頁 — 玄武平台",
+};
+
+export default function DashboardPage() {
+  return <DashboardView />;
+}
+````
+
 ## File: src/app/(main)/(account)/default.tsx
 ````typescript
 import { DashboardView } from "@/modules/workspace.module/_components/dashboard-view";
@@ -9320,6 +11077,20 @@ export const metadata: Metadata = {
 
 export default function SecurityPage() {
   return <SecurityView />;
+}
+````
+
+## File: src/app/(main)/(account)/workspaces/page.tsx
+````typescript
+import type { Metadata } from "next";
+import { AccountWorkspacesPage } from "./_account-workspaces";
+
+export const metadata: Metadata = {
+  title: "工作空間 — 玄武平台",
+};
+
+export default function WorkspacesPage() {
+  return <AccountWorkspacesPage />;
 }
 ````
 
@@ -10196,35 +11967,102 @@ export default function FirebaseCheckPage() {
 }
 ````
 
-## File: src/app/(main)/layout.tsx
+## File: src/app/(main)/onboarding/page.tsx
 ````typescript
-/**
- * MainLayout — Authenticated shell layout.
- *
- * Wraps all (main) routes with AccountProvider (auth + account state),
- * then the sidebar + header shell.
- * Uses SidebarProvider from design system to enable sidebar state.
- */
-import { SidebarInset, SidebarProvider } from "@/design-system/primitives/ui/sidebar";
-import { AccountProvider } from "@/modules/account.module/_components/account-provider";
-import { DashboardSidebar } from "@/modules/workspace.module/_components/shell/dashboard-sidebar";
-import { ShellHeader } from "@/modules/workspace.module/_components/shell/shell-header";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { Building2, Layers, UserCircle, ArrowRight } from "lucide-react";
+import { useTranslation } from "@/shared/i18n";
+import { Button } from "@/design-system/primitives/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/design-system/primitives/ui/card";
 
-export default function MainLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export const metadata: Metadata = {
+  title: "開始使用 — 玄武平台",
+};
+
+export default function OnboardingPage() {
+  const t = useTranslation("zh-TW");
+
+  const steps = [
+    {
+      num: 1,
+      icon: UserCircle,
+      title: t("onboarding.step1"),
+      desc: t("onboarding.step1Desc"),
+      href: "/profile",
+      cta: t("onboarding.getStarted"),
+    },
+    {
+      num: 2,
+      icon: Building2,
+      title: t("onboarding.step2"),
+      desc: t("onboarding.step2Desc"),
+      href: "/organizations",
+      cta: t("onboarding.createOrg"),
+    },
+    {
+      num: 3,
+      icon: Layers,
+      title: t("onboarding.step3"),
+      desc: t("onboarding.step3Desc"),
+      href: "/workspaces",
+      cta: t("nav.workspaces"),
+    },
+  ] as const;
+
   return (
-    <AccountProvider>
-      <SidebarProvider>
-        <DashboardSidebar />
-        <SidebarInset>
-          <ShellHeader />
-          <main className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</main>
-        </SidebarInset>
-      </SidebarProvider>
-    </AccountProvider>
+    <div className="flex min-h-[80vh] flex-col items-center justify-center p-6">
+      <div className="w-full max-w-lg space-y-8 duration-700 animate-in fade-in slide-in-from-bottom-4">
+        {/* Logo / icon */}
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="select-none text-5xl">🐢</div>
+          <h1 className="text-2xl font-bold tracking-tight">{t("onboarding.title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("onboarding.subtitle")}</p>
+        </div>
+
+        {/* Step cards */}
+        <div className="space-y-3">
+          {steps.map(({ num, icon: Icon, title, desc, href, cta }) => (
+            <Card
+              key={num}
+              className="border-border/60 bg-card/80 shadow-sm transition-colors hover:border-primary/30 hover:bg-card"
+            >
+              <CardHeader className="pb-2 pt-4">
+                <div className="flex items-center gap-3">
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-black text-primary">
+                    {num}
+                  </span>
+                  <Icon className="size-4 shrink-0 text-muted-foreground" />
+                  <CardTitle className="text-sm font-bold">{title}</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="pb-4">
+                <CardDescription className="mb-3 text-xs">{desc}</CardDescription>
+                <Button asChild size="sm" variant="outline" className="h-8 rounded-xl text-xs">
+                  <Link href={href}>
+                    {cta}
+                    <ArrowRight className="ml-1.5 size-3" />
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Skip */}
+        <div className="flex justify-center">
+          <Button asChild variant="ghost" size="sm" className="text-xs text-muted-foreground">
+            <Link href="/dashboard">{t("onboarding.skip")}</Link>
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 ````
@@ -10398,6 +12236,39 @@ body {
 }
 ````
 
+## File: src/app/layout.tsx
+````typescript
+import type { Metadata } from "next";
+import "./globals.css";
+import { ThemeProvider } from "@/design-system/providers/theme-provider";
+
+export const metadata: Metadata = {
+  title: "Xuanwu Platform",
+  description: "Next.js Domain-Driven Design minimal runnable platform",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="zh-TW" suppressHydrationWarning>
+      <body>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
+      </body>
+    </html>
+  );
+}
+````
+
 ## File: src/app/page.tsx
 ````typescript
 "use client";
@@ -10528,26 +12399,306 @@ export function RootShell({ children, header, footer }: RootShellProps) {
 }
 ````
 
-## File: src/design-system/layout/index.ts
+## File: src/design-system/layout/marketing/home-layout.tsx
 ````typescript
-// src/design-system/layout/index.ts
-// Design-system layout tier.
-//
-// Structure:
-//   base/       — global, page-agnostic structural shells (RootShell)
-//   marketing/  — marketing / landing page layouts (HomeLayout, MarketingHeader)
-//
-// Add new page-specific sub-directories following the same pattern:
-//   auth/       — authentication page layouts
-//   dashboard/  — app-shell layouts for authenticated views
-//
-// Import via the layout tier:
-//   import { RootShell }      from "@/design-system/layout/base";
-//   import { HomeLayout }     from "@/design-system/layout/marketing";
-//   import { MarketingHeader } from "@/design-system/layout/marketing";
+"use client";
 
-export * from "./base";
-export * from "./marketing";
+import type { ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { useLocale, useAuthState } from "@/shared/directives";
+import { RootShell } from "@/design-system/layout/base";
+import { clientSignOut } from "@/modules/identity.module/_client-actions";
+import { MarketingHeader } from "./marketing-header";
+
+interface HomeLayoutProps {
+  /** Page body content (rendered inside RootShell main area). */
+  children: ReactNode;
+}
+
+/**
+ * HomeLayout — page-specific layout for the marketing homepage (`/`).
+ *
+ * Composes:
+ *   - `RootShell`       — structural chrome (base/)
+ *   - `MarketingHeader` — sticky top nav with locale toggle + auth CTA
+ *
+ * Owns the `useLocale` state and `useAuthState` so `page.tsx` only handles
+ * routing and page-level content composition.
+ *
+ * Auth flow:
+ *   - Unauthenticated: header shows "Login" button.
+ *   - Authenticated:   header shows user avatar + dropdown (Enter Platform / Sign Out).
+ */
+export function HomeLayout({ children }: HomeLayoutProps) {
+  const [locale, setLocale] = useLocale();
+  const { user, loading } = useAuthState();
+  const router = useRouter();
+
+  async function handleSignOut() {
+    const result = await clientSignOut();
+    if (result.ok) {
+      router.push("/");
+      router.refresh();
+    }
+  }
+
+  return (
+    <RootShell
+      header={
+        <MarketingHeader
+          locale={locale}
+          onLocaleChange={setLocale}
+          isAuthenticated={!loading && !!user}
+          user={user}
+          onSignOut={handleSignOut}
+        />
+      }
+    >
+      {children}
+    </RootShell>
+  );
+}
+````
+
+## File: src/design-system/layout/marketing/index.ts
+````typescript
+// src/design-system/layout/marketing/index.ts
+// Page-specific layouts and layout components for marketing / landing pages.
+
+export { MarketingHeader } from "./marketing-header";
+export type { MarketingHeaderProps } from "./marketing-header";
+export { HomeLayout } from "./home-layout";
+export { ModeToggle } from "./mode-toggle";
+````
+
+## File: src/design-system/layout/marketing/marketing-header.tsx
+````typescript
+"use client";
+
+import Link from "next/link";
+import { Globe, LayoutDashboard, LogOut } from "lucide-react";
+import { useTranslation } from "@/shared/i18n";
+import type { Locale } from "@/shared/types";
+import { APP_NAME } from "@/shared/constants";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/design-system/primitives/ui/dropdown-menu";
+import { Button } from "@/design-system/primitives/ui/button";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/design-system/primitives/ui/avatar";
+import { ModeToggle } from "./mode-toggle";
+
+/** Slim user info needed by the header (avoids importing Firebase Auth types). */
+export interface HeaderUser {
+  displayName: string | null;
+  email: string | null;
+  photoURL: string | null;
+}
+
+export interface MarketingHeaderProps {
+  /** Active locale — controlled by the parent page. */
+  locale: Locale;
+  /** Called when the user requests a locale change. */
+  onLocaleChange: (locale: Locale) => void;
+  /**
+   * Whether the current visitor is authenticated.
+   * When `true`, the Login CTA is replaced with a user avatar + dropdown.
+   * Defaults to `false` (unauthenticated view) so SSR / loading states are safe.
+   */
+  isAuthenticated?: boolean;
+  /** Firebase user info used to render the avatar. Required when `isAuthenticated` is `true`. */
+  user?: HeaderUser | null;
+  /** Called when the user chooses "Sign Out" from the avatar dropdown. */
+  onSignOut?: () => void;
+}
+
+/** Derives 1–2 uppercase initials from displayName, then email, then "?". */
+function getInitials(displayName: string | null, email: string | null): string {
+  if (displayName) {
+    return displayName
+      .split(" ")
+      .filter((n) => n.length > 0)
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+  }
+  if (email) {
+    return email.slice(0, 2).toUpperCase();
+  }
+  return "?";
+}
+
+/**
+ * MarketingHeader — sticky top navigation for marketing / landing pages.
+ *
+ * Presentational: receives locale via props and delegates persistence to
+ * the parent (typically via the `useLocale` directive from
+ * `@/shared/directives`).
+ *
+ * Auth states:
+ *   - Unauthenticated: shows a "Login" CTA button.
+ *   - Authenticated:   shows a user avatar that opens a dropdown with
+ *                      "Enter Platform" and "Sign Out" actions.
+ *
+ * Slots:
+ *   - App name / brand (left)
+ *   - Language dropdown + theme toggle + auth CTA (right)
+ */
+export function MarketingHeader({
+  locale,
+  onLocaleChange,
+  isAuthenticated = false,
+  user,
+  onSignOut,
+}: MarketingHeaderProps) {
+  const t = useTranslation(locale);
+
+  return (
+    <header className="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between border-b bg-background/80 px-6 backdrop-blur">
+      <span className="text-sm font-semibold tracking-tight">{APP_NAME}</span>
+      <div className="flex items-center gap-2">
+        {/* Language selector dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              aria-label={t("home.langToggle")}
+              className="gap-1.5 text-xs"
+            >
+              <Globe className="size-3.5" />
+              {locale === "zh-TW" ? t("home.langZhTW") : t("home.langEn")}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onLocaleChange("zh-TW")}>
+              {t("home.langZhTW")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onLocaleChange("en")}>
+              {t("home.langEn")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Dark / light / system theme toggle */}
+        <ModeToggle locale={locale} />
+
+        {/* Auth CTA: avatar + dropdown when signed in, "Login" button otherwise */}
+        {isAuthenticated ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                aria-label={user?.displayName ?? user?.email ?? "User menu"}
+                className="cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <Avatar size="sm">
+                  {user?.photoURL && (
+                    <AvatarImage
+                      src={user.photoURL}
+                      alt={user.displayName ?? ""}
+                    />
+                  )}
+                  <AvatarFallback>
+                    {getInitials(user?.displayName ?? null, user?.email ?? null)}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-40">
+              <DropdownMenuItem asChild>
+                <Link
+                  href="/onboarding"
+                  className="flex w-full cursor-pointer items-center gap-2"
+                >
+                  <LayoutDashboard className="size-4" />
+                  {t("home.enterPlatform")}
+                </Link>
+              </DropdownMenuItem>
+              {onSignOut && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={onSignOut}
+                    className="cursor-pointer gap-2 text-destructive focus:text-destructive"
+                  >
+                    <LogOut className="size-4" />
+                    {t("home.signOut")}
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Button asChild size="sm">
+            <Link href="/login?callbackUrl=/">{t("home.login")}</Link>
+          </Button>
+        )}
+      </div>
+    </header>
+  );
+}
+````
+
+## File: src/design-system/layout/marketing/mode-toggle.tsx
+````typescript
+"use client";
+
+import { Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
+
+import { Button } from "@/design-system/primitives/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/design-system/primitives/ui/dropdown-menu";
+import { useTranslation } from "@/shared/i18n";
+import type { Locale } from "@/shared/types";
+
+interface ModeToggleProps {
+  locale?: Locale;
+}
+
+/**
+ * ModeToggle — icon button that opens a dropdown to pick light / dark / system
+ * theme.  Uses next-themes under the hood; requires ThemeProvider in the tree.
+ */
+export function ModeToggle({ locale }: ModeToggleProps) {
+  const { setTheme } = useTheme();
+  const t = useTranslation(locale);
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="icon" aria-label={t("theme.toggle")}>
+          <Sun className="size-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute size-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          <span className="sr-only">{t("theme.toggle")}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => setTheme("light")}>
+          {t("theme.light")}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("dark")}>
+          {t("theme.dark")}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("system")}>
+          {t("theme.system")}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 ````
 
 ## File: src/design-system/patterns/index.ts
@@ -17568,6 +19719,34 @@ function TooltipContent({
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
 ````
 
+## File: src/design-system/providers/theme-provider.tsx
+````typescript
+"use client";
+
+import { ThemeProvider as NextThemesProvider } from "next-themes";
+import type { ComponentProps } from "react";
+
+/**
+ * ThemeProvider — thin wrapper around next-themes ThemeProvider.
+ *
+ * Place this at the root of the app (inside `<body>`) so that dark/light/system
+ * preference is available throughout the component tree.
+ *
+ * Usage in layout.tsx:
+ * ```tsx
+ * <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+ *   {children}
+ * </ThemeProvider>
+ * ```
+ */
+export function ThemeProvider({
+  children,
+  ...props
+}: ComponentProps<typeof NextThemesProvider>) {
+  return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
+}
+````
+
 ## File: src/design-system/tokens/index.ts
 ````typescript
 /**
@@ -18564,45 +20743,6 @@ export function initAppCheck(): AppCheck | null {
 }
 ````
 
-## File: src/infrastructure/firebase/client/auth.ts
-````typescript
-/**
- * Firebase Authentication adapter.
- *
- * Provides a lazily-initialised Auth instance scoped to the Firebase app
- * singleton. All auth operations (sign-in, sign-out, token refresh) should
- * go through this module to keep infrastructure concerns centralised.
- */
-
-import {
-  getAuth,
-  type Auth,
-  GoogleAuthProvider,
-  GithubAuthProvider,
-  EmailAuthProvider,
-} from "firebase/auth";
-import { getFirebaseApp } from "../app";
-
-let _auth: Auth | null = null;
-
-/**
- * Returns the Firebase Auth singleton.
- * Must only be called on the client side.
- */
-export function getFirebaseAuth(): Auth {
-  if (!_auth) {
-    _auth = getAuth(getFirebaseApp());
-  }
-  return _auth;
-}
-
-// ---------------------------------------------------------------------------
-// Auth providers (re-exported for convenience)
-// ---------------------------------------------------------------------------
-
-export { GoogleAuthProvider, GithubAuthProvider, EmailAuthProvider };
-````
-
 ## File: src/infrastructure/firebase/client/database.ts
 ````typescript
 /**
@@ -18736,105 +20876,6 @@ export {
   type DocumentData,
   type QueryConstraint,
 };
-````
-
-## File: src/infrastructure/firebase/client/index.ts
-````typescript
-/**
- * Firebase Client SDK — public API
- *
- * Web SDK adapters for use in Client Components and browser-side code.
- * Do NOT import from this module in Server Actions or Route Handlers —
- * use `@/infrastructure/firebase/admin` for server-side operations.
- *
- * @example
- * import { getFirebaseAuth }        from "@/infrastructure/firebase/client";
- * import { getFirestoreDb }         from "@/infrastructure/firebase/client";
- * import { getFirebaseRemoteConfig } from "@/infrastructure/firebase/client";
- */
-
-export { getFirebaseApp, resolvedFirebaseConfig } from "../app";
-
-export {
-  getFirebaseAuth,
-  GoogleAuthProvider,
-  GithubAuthProvider,
-  EmailAuthProvider,
-} from "./auth";
-
-export {
-  getFirestoreDb,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  setDoc,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  orderBy,
-  limit,
-  serverTimestamp,
-  Timestamp,
-  type DocumentData,
-  type QueryConstraint,
-} from "./firestore";
-
-export {
-  getFirebaseStorage,
-  ref,
-  uploadBytes,
-  uploadBytesResumable,
-  getDownloadURL,
-  deleteObject,
-  listAll,
-  type StorageReference,
-  type UploadTask,
-  type UploadMetadata,
-} from "./storage";
-
-export {
-  getFirebaseMessaging,
-  requestFcmToken,
-  onMessage,
-} from "./messaging";
-
-export {
-  getFirebaseAnalytics,
-  logEvent,
-  setAnalyticsUserId,
-  setAnalyticsUserProperties,
-} from "./analytics";
-
-export { initAppCheck } from "./app-check";
-
-export {
-  getFirebaseDatabase,
-  dbRef,
-  get,
-  set,
-  update,
-  remove,
-  push,
-  onValue,
-  off,
-  rtdbServerTimestamp,
-  type DataSnapshot,
-  type DatabaseReference,
-  type Unsubscribe,
-} from "./database";
-
-export {
-  getFirebaseRemoteConfig,
-  fetchRemoteConfig,
-  getValue,
-  getString,
-  getBoolean,
-  getNumber,
-  type Value,
-} from "./remoteConfig";
 ````
 
 ## File: src/infrastructure/firebase/client/messaging.ts
@@ -19500,324 +21541,6 @@ export const workflowClient = new _WorkflowClient({
 });
 ````
 
-## File: src/modules/account.module/_components/profile-card.tsx
-````typescript
-"use client";
-/**
- * ProfileCard — displays and edits the user's display name.
- *
- * Source: account.slice/domain.profile/_components/profile-card.tsx
- * Adapted: uses AccountProvider (useCurrentAccount) for shared auth/account state.
- */
-
-import { User, Save } from "lucide-react";
-import { useEffect, useState } from "react";
-import { updateProfile } from "firebase/auth";
-
-import { useCurrentAccount } from "./account-provider";
-import { useTranslation } from "@/shared/i18n";
-import { Avatar, AvatarFallback, AvatarImage } from "@/design-system/primitives/ui/avatar";
-import { Button } from "@/design-system/primitives/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/design-system/primitives/ui/card";
-import { Input } from "@/design-system/primitives/ui/input";
-import { Label } from "@/design-system/primitives/ui/label";
-
-export function ProfileCard() {
-  const t = useTranslation("zh-TW");
-  const { user, account } = useCurrentAccount();
-  const [displayName, setDisplayName] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-
-  // Sync displayName from account (preferred) or Firebase Auth
-  useEffect(() => {
-    setDisplayName(account?.displayName ?? user?.displayName ?? "");
-  }, [account?.displayName, user?.displayName]);
-
-  const handleSave = async () => {
-    if (!user) return;
-    setSaving(true);
-    try {
-      await updateProfile(user, { displayName });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const photoURL = account?.avatarUrl ?? user?.photoURL ?? null;
-  const initial = (displayName || user?.email || "?")[0].toUpperCase();
-
-  return (
-    <Card className="border-border/60 bg-card/80 shadow-sm">
-      <CardHeader className="pb-4">
-        <div className="flex items-center gap-3">
-          <User className="size-5 text-primary" />
-          <div>
-            <CardTitle className="text-base font-bold">{t("profile.title")}</CardTitle>
-            <CardDescription className="text-xs">{t("profile.subtitle")}</CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        {/* Avatar row */}
-        <div className="flex items-center gap-4">
-          <Avatar className="size-16 rounded-2xl">
-            {photoURL ? <AvatarImage src={photoURL} alt={displayName} /> : null}
-            <AvatarFallback className="rounded-2xl bg-primary/10 text-xl font-bold text-primary">
-              {initial}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <p className="text-sm font-semibold">{displayName || t("common.notSet")}</p>
-            <p className="text-xs text-muted-foreground">{user?.email ?? ""}</p>
-          </div>
-        </div>
-
-        {/* Display name */}
-        <div className="space-y-1.5">
-          <Label
-            htmlFor="displayName"
-            className="text-xs font-bold uppercase tracking-wider opacity-60"
-          >
-            {t("profile.displayName")}
-          </Label>
-          <Input
-            id="displayName"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            placeholder={t("profile.displayNamePlaceholder")}
-            className="rounded-xl border-border/50"
-          />
-        </div>
-
-        {/* Email (read-only) */}
-        <div className="space-y-1.5">
-          <Label className="text-xs font-bold uppercase tracking-wider opacity-60">
-            {t("profile.email")}
-          </Label>
-          <Input
-            value={user?.email ?? ""}
-            readOnly
-            disabled
-            className="rounded-xl border-border/50 opacity-60"
-          />
-        </div>
-
-        {/* Save */}
-        <div className="flex items-center justify-end gap-3 border-t border-border/40 pt-4">
-          {saved && (
-            <span className="text-xs font-medium text-green-600">
-              {t("profile.saved")}
-            </span>
-          )}
-          <Button
-            onClick={handleSave}
-            disabled={saving || !displayName.trim()}
-            size="sm"
-            className="gap-2 rounded-xl text-xs font-bold uppercase tracking-wider"
-          >
-            <Save className="size-3.5" />
-            {saving ? t("common.saving") : t("profile.saveChanges")}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-````
-
-## File: src/modules/account.module/_components/security-view.tsx
-````typescript
-"use client";
-/**
- * SecurityView — password change form using Firebase Auth.
- *
- * Source: account.slice/domain.profile/_components/security-card.tsx
- * Adapted: uses EmailAuthProvider.credential + reauthenticateWithCredential + updatePassword
- */
-
-import { KeyRound, Save } from "lucide-react";
-import { useState } from "react";
-import {
-  EmailAuthProvider,
-  getAuth,
-  reauthenticateWithCredential,
-  updatePassword,
-} from "firebase/auth";
-
-import { getFirebaseApp } from "@/infrastructure/firebase/app";
-import { useTranslation } from "@/shared/i18n";
-import { Button } from "@/design-system/primitives/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/design-system/primitives/ui/card";
-import { Input } from "@/design-system/primitives/ui/input";
-import { Label } from "@/design-system/primitives/ui/label";
-
-export function SecurityView() {
-  const t = useTranslation("zh-TW");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [status, setStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
-  const [errorMsg, setErrorMsg] = useState("");
-
-  const isValid =
-    currentPassword.length > 0 &&
-    newPassword.length >= 8 &&
-    newPassword === confirmPassword;
-
-  const handleChange = async () => {
-    const auth = getAuth(getFirebaseApp());
-    const user = auth.currentUser;
-    if (!user || !user.email) return;
-
-    setStatus("saving");
-    setErrorMsg("");
-    try {
-      const credential = EmailAuthProvider.credential(user.email, currentPassword);
-      await reauthenticateWithCredential(user, credential);
-      await updatePassword(user, newPassword);
-      setStatus("success");
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setTimeout(() => setStatus("idle"), 4000);
-    } catch (err: unknown) {
-      setStatus("error");
-      // Surface Firebase Auth error codes when available for better UX
-      const code = (err as { code?: string })?.code;
-      if (code === "auth/wrong-password" || code === "auth/invalid-credential") {
-        setErrorMsg(t("security.currentPassword") + " 錯誤");
-      } else if (code === "auth/too-many-requests") {
-        setErrorMsg("請求過於頻繁，請稍後再試");
-      } else {
-        setErrorMsg(err instanceof Error ? err.message : t("security.changeFailed"));
-      }
-    }
-  };
-
-  const passwordMismatch = confirmPassword.length > 0 && newPassword !== confirmPassword;
-  const tooShort = newPassword.length > 0 && newPassword.length < 8;
-
-  return (
-    <div className="mx-auto max-w-2xl space-y-8 duration-500 animate-in fade-in">
-      <div className="flex items-center gap-3">
-        <KeyRound className="size-6 text-primary" />
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("security.title")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t("security.subtitle")}</p>
-        </div>
-      </div>
-
-      <Card className="border-border/60 bg-card/80 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-base font-bold">{t("security.changePassword")}</CardTitle>
-          <CardDescription className="text-xs">{t("security.subtitle")}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          {/* Current password */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-bold uppercase tracking-wider opacity-60">
-              {t("security.currentPassword")}
-            </Label>
-            <Input
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              className="rounded-xl border-border/50"
-              autoComplete="current-password"
-            />
-          </div>
-
-          {/* New password */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-bold uppercase tracking-wider opacity-60">
-              {t("security.newPassword")}
-            </Label>
-            <Input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="rounded-xl border-border/50"
-              autoComplete="new-password"
-            />
-            {tooShort && (
-              <p className="text-xs text-destructive">{t("security.passwordTooShort")}</p>
-            )}
-          </div>
-
-          {/* Confirm password */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-bold uppercase tracking-wider opacity-60">
-              {t("security.confirmPassword")}
-            </Label>
-            <Input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="rounded-xl border-border/50"
-              autoComplete="new-password"
-            />
-            {passwordMismatch && (
-              <p className="text-xs text-destructive">{t("security.passwordMismatch")}</p>
-            )}
-          </div>
-
-          {/* Feedback */}
-          {status === "success" && (
-            <p className="text-sm font-medium text-green-600">{t("security.passwordChanged")}</p>
-          )}
-          {status === "error" && (
-            <p className="text-sm text-destructive">{errorMsg}</p>
-          )}
-
-          {/* Save */}
-          <div className="flex justify-end border-t border-border/40 pt-4">
-            <Button
-              onClick={handleChange}
-              disabled={!isValid || status === "saving"}
-              size="sm"
-              className="gap-2 rounded-xl text-xs font-bold uppercase tracking-wider"
-            >
-              <Save className="size-3.5" />
-              {status === "saving" ? t("common.saving") : t("security.changePassword")}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-````
-
-## File: src/modules/account.module/core/_actions.ts
-````typescript
-// Account actions — re-export barrel for application use cases.
-// Components import mutation functions from here; repos are injected at the call site.
-
-export type { AccountDTO, PublicProfileDTO } from "./_use-cases";
-export {
-  createPersonalAccount,
-  createOrganizationAccount,
-  updateAccountProfile,
-  getAccountById,
-  getPublicProfile,
-} from "./_use-cases";
-````
-
 ## File: src/modules/account.module/domain.account/__tests__/_service.test.ts
 ````typescript
 import { describe, it, expect } from "vitest";
@@ -20226,6 +21949,67 @@ export type AccountDomainEventUnion =
   | AccountBadgeUnlocked;
 ````
 
+## File: src/modules/account.module/domain.account/_ports.ts
+````typescript
+import type { AccountEntity } from "./_entity";
+import type { AccountId, AccountHandle, MemberRole } from "./_value-objects";
+
+// ---------------------------------------------------------------------------
+// IAccountRepository
+// ---------------------------------------------------------------------------
+
+/**
+ * Port interface for persisting Account aggregates.
+ * Implemented by the Firestore infrastructure adapter.
+ */
+export interface IAccountRepository {
+  findById(id: AccountId): Promise<AccountEntity | null>;
+  findByHandle(handle: AccountHandle): Promise<AccountEntity | null>;
+  findOrganizationsByOwnerId(ownerId: AccountId): Promise<AccountEntity[]>;
+  save(account: AccountEntity): Promise<void>;
+  deleteById(id: AccountId): Promise<void>;
+}
+
+// ---------------------------------------------------------------------------
+// IAccountHandleAvailabilityPort
+// ---------------------------------------------------------------------------
+
+/**
+ * Port for checking whether a handle is available before assignment.
+ * Delegates to namespace.module's read model for global uniqueness enforcement.
+ */
+export interface IAccountHandleAvailabilityPort {
+  isAvailable(handle: AccountHandle): Promise<boolean>;
+}
+
+// ---------------------------------------------------------------------------
+// IAccountBadgeWritePort
+// ---------------------------------------------------------------------------
+
+/**
+ * Write port consumed by achievement.module to project badge unlocks onto accounts.
+ * Ensures achievement.module does not import account.module directly.
+ */
+export interface IAccountBadgeWritePort {
+  addBadge(accountId: AccountId, badgeSlug: string): Promise<void>;
+}
+
+// ---------------------------------------------------------------------------
+// IMembershipRepository
+// ---------------------------------------------------------------------------
+
+/**
+ * Port interface for managing Membership records within an org account.
+ */
+export interface IMembershipRepository {
+  findById(id: string): Promise<{ accountId: AccountId; role: MemberRole; status: string } | null>;
+  invite(orgAccountId: AccountId, memberAccountId: AccountId, role: MemberRole, now: string): Promise<void>;
+  accept(id: string, now: string): Promise<void>;
+  updateRole(id: string, newRole: MemberRole): Promise<void>;
+  revoke(id: string): Promise<void>;
+}
+````
+
 ## File: src/modules/account.module/domain.account/_service.ts
 ````typescript
 /**
@@ -20586,92 +22370,190 @@ export function accountEntityToDoc(entity: AccountEntity): AccountDoc {
 }
 ````
 
-## File: src/modules/account.module/README.md
-````markdown
-# account.module
+## File: src/modules/account.module/infra.firestore/_repository.ts
+````typescript
+/**
+ * Account Firestore repository — implements IAccountRepository port.
+ *
+ * All Firestore access is isolated to this file; the domain and application
+ * layers only interact with the IAccountRepository / IMembershipRepository
+ * port interfaces, keeping Firebase out of business logic.
+ *
+ * Handle uniqueness is enforced with a Firestore transaction (atomic
+ * check-and-write) via `saveWithHandleUniqueness`.
+ */
 
-**Bounded Context:** Account / 帳戶  
-**Layer:** SaaS
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore";
+import type { IAccountRepository, IAccountBadgeWritePort, IMembershipRepository } from "../domain.account/_ports";
+import type { AccountEntity } from "../domain.account/_entity";
+import type { AccountId, AccountHandle, MemberRole } from "../domain.account/_value-objects";
+import { accountDocToEntity, accountEntityToDoc, type AccountDoc } from "./_mapper";
 
-## Purpose
+const ACCOUNTS_COLLECTION = "accounts";
 
-`account.module` provides the unified Account entity for the platform.
-It answers the question: **"What is your account and what do you own?"**
+// ---------------------------------------------------------------------------
+// IAccountRepository implementation
+// ---------------------------------------------------------------------------
 
-`AccountType: personal | organization` — a single model covers both personal user accounts and organization accounts.
+export class FirestoreAccountRepository
+  implements IAccountRepository, IAccountBadgeWritePort
+{
+  private get db() {
+    return getFirestore();
+  }
 
-Previously, User and Organization were separate identity concepts. This module unifies them and also absorbs the organization operational concerns (Teams, Membership governance) that were previously in the removed `org.module`.
+  async findById(id: AccountId): Promise<AccountEntity | null> {
+    const ref = doc(this.db, ACCOUNTS_COLLECTION, id);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return null;
+    const raw = { id: snap.id, ...snap.data() } as AccountDoc;
+    return accountDocToEntity(raw);
+  }
 
-> **Boundary vs `identity.module`:**  
-> `account.module` = "What is your account?" (profile data, handle, team structure, membership roles — the **data** that belongs to you)  
-> `identity.module` = "How do you prove you are you?" (auth credentials, sessions, login/logout, password — the **authentication mechanism**)  
->  
-> Display name / avatar / organization / team / member role → `account.module`  
-> Sign in / sign out / session token / provider linking → `identity.module`
+  async findByHandle(handle: AccountHandle): Promise<AccountEntity | null> {
+    const col = collection(this.db, ACCOUNTS_COLLECTION);
+    const q = query(col, where("handle", "==", handle));
+    const snap = await getDocs(q);
+    if (snap.empty) return null;
+    const first = snap.docs[0];
+    const raw = { id: first.id, ...first.data() } as AccountDoc;
+    return accountDocToEntity(raw);
+  }
 
-## What this module owns
+  async findOrganizationsByOwnerId(ownerId: AccountId): Promise<AccountEntity[]> {
+    const col = collection(this.db, ACCOUNTS_COLLECTION);
+    const q = query(
+      col,
+      where("accountType", "==", "organization"),
+      where("ownerId", "==", ownerId),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => {
+      const raw = { id: d.id, ...d.data() } as AccountDoc;
+      return accountDocToEntity(raw);
+    });
+  }
 
-| Concern | Description |
-|---------|-------------|
-| Account entity | Unified personal/org account with handle, profile, settings |
-| AccountProfile | Public surface: display name, avatar, bio, badges |
-| Team | Sub-aggregate for org accounts: team creation and management |
-| Membership | Invitation, role assignment (owner/admin/member/viewer), revocation |
-| MemberRole | Role assignment within an org: owner/admin/member/viewer (data structure; policy *enforcement* is `audit.module`) |
-| Badge projection | Receives badge unlocks from `achievement.module` via `IAccountBadgeWritePort` |
+  async save(account: AccountEntity): Promise<void> {
+    const ref = doc(this.db, ACCOUNTS_COLLECTION, account.id);
+    const data = accountEntityToDoc(account);
+    await setDoc(ref, data, { merge: true });
+  }
 
-## What this module does NOT own
+  async deleteById(id: AccountId): Promise<void> {
+    const ref = doc(this.db, ACCOUNTS_COLLECTION, id);
+    await deleteDoc(ref);
+  }
 
-| Concern | Owned by |
-|---------|----------|
-| Auth credentials / sessions / password | `identity.module` |
-| Sign-in / sign-out / provider linking | `identity.module` |
-| Namespace slug registration | `namespace.module` |
-| Social graph (follow, star) | `social.module` |
-| Badge rule evaluation | `achievement.module` |
-| Audit / compliance policy enforcement | `audit.module` |
+  // IAccountBadgeWritePort — used by achievement.module via the port interface
+  async addBadge(accountId: AccountId, badgeSlug: string): Promise<void> {
+    const entity = await this.findById(accountId);
+    if (!entity) return;
+    const already = entity.profile.badgeSlugs.includes(badgeSlug);
+    if (already) return;
+    const updated: AccountEntity = {
+      ...entity,
+      profile: {
+        ...entity.profile,
+        badgeSlugs: [...entity.profile.badgeSlugs, badgeSlug],
+      },
+      updatedAt: new Date().toISOString(),
+    };
+    await this.save(updated);
+  }
+}
 
-## Key aggregates
+// ---------------------------------------------------------------------------
+// IMembershipRepository — sub-aggregate management within an org account
+// ---------------------------------------------------------------------------
 
-- `Account` — root aggregate; contains `AccountProfile`, `Team[]`, `Membership[]` (org only)
-- `Team` — sub-aggregate of an org Account
-- `Membership` — sub-aggregate tracking member roles within an org Account
+export class FirestoreMembershipRepository implements IMembershipRepository {
+  constructor(private readonly accountRepo: IAccountRepository) {}
 
-## Cross-module dependencies
+  async findById(id: string): Promise<{ accountId: AccountId; role: MemberRole; status: string } | null> {
+    // Memberships are stored as sub-documents on the AccountEntity.
+    // A direct lookup by membership ID requires a Firestore collectionGroup query
+    // which is not yet implemented. Callers should load the parent AccountEntity
+    // via FirestoreAccountRepository and filter its members array instead.
+    // TODO: replace with collectionGroup('memberships') query when scale requires it.
+    void id;
+    return null;
+  }
 
-| Module | Direction | Reason |
-|--------|-----------|--------|
-| `identity.module` | ← | Identity links to this Account |
-| `namespace.module` | ← | Namespace slug is owned by this Account |
-| `achievement.module` | ← | Writes badge unlocks via IAccountBadgeWritePort |
-| `social.module` | ← | Reads public profile via IAccountSocialReadPort |
-| `collaboration.module` | ← | @mentions resolve to Account handles |
-| `audit.module` | ← | Actor references resolve to Account handles |
+  async invite(
+    orgAccountId: AccountId,
+    memberAccountId: AccountId,
+    role: MemberRole,
+    now: string,
+  ): Promise<void> {
+    const account = await this.accountRepo.findById(orgAccountId);
+    if (!account) throw new Error(`Account ${orgAccountId} not found`);
 
-## Standard 4-layer structure
+    const newMembership = {
+      id: `${orgAccountId}_${memberAccountId}`,
+      accountId: memberAccountId,
+      role,
+      status: "pending" as const,
+      invitedAt: now,
+      acceptedAt: null,
+    };
 
-```
-account.module/
-├── index.ts                     # Public API barrel
-├── domain.account/
-│   ├── _entity.ts               # Account aggregate root + Team + Membership sub-aggregates
-│   ├── _value-objects.ts        # AccountId, AccountHandle, AccountType, TeamId, MemberRole …
-│   ├── _ports.ts                # IAccountRepository, ITeamRepository, IMembershipRepository …
-│   └── _events.ts               # PersonalAccountCreated, OrganizationAccountCreated, TeamCreated …
-├── core/
-│   ├── _use-cases.ts            # CreatePersonalAccountUseCase, CreateTeamUseCase, AddTeamMemberUseCase …
-│   ├── _actions.ts              # createOrgAccountAction, updateProfileAction, addMemberAction
-│   └── _queries.ts              # getAccountByHandleQuery, getTeamsByOrgQuery, getMembersQuery
-├── infra.firestore/
-│   ├── _repository.ts           # Implements IAccountRepository, ITeamRepository, IMembershipRepository
-│   └── _mapper.ts               # Firestore doc ↔ AccountEntity / TeamEntity / MembershipEntity
-└── _components/                 # Account settings, team management UI (future)
-```
-````
+    const updated: AccountEntity = {
+      ...account,
+      members: [...(account.members ?? []), newMembership],
+      updatedAt: now,
+    };
+    await this.accountRepo.save(updated);
+  }
 
-## File: src/modules/achievement.module/_components/.gitkeep
-````
+  async accept(id: string, now: string): Promise<void> {
+    // `id` format: `{orgAccountId}_{memberAccountId}`
+    const [orgAccountId] = id.split("_") as [AccountId];
+    const account = await this.accountRepo.findById(orgAccountId);
+    if (!account) return;
 
+    const updated: AccountEntity = {
+      ...account,
+      members: (account.members ?? []).map((m) =>
+        m.id === id ? { ...m, status: "active" as const, acceptedAt: now } : m,
+      ),
+      updatedAt: now,
+    };
+    await this.accountRepo.save(updated);
+  }
+
+  async updateRole(id: string, newRole: MemberRole): Promise<void> {
+    const [orgAccountId] = id.split("_") as [AccountId];
+    const account = await this.accountRepo.findById(orgAccountId);
+    if (!account) return;
+
+    const now = new Date().toISOString();
+    const updated: AccountEntity = {
+      ...account,
+      members: (account.members ?? []).map((m) =>
+        m.id === id ? { ...m, role: newRole } : m,
+      ),
+      updatedAt: now,
+    };
+    await this.accountRepo.save(updated);
+  }
+
+  async revoke(id: string): Promise<void> {
+    const [orgAccountId] = id.split("_") as [AccountId];
+    const account = await this.accountRepo.findById(orgAccountId);
+    if (!account) return;
+
+    const now = new Date().toISOString();
+    const updated: AccountEntity = {
+      ...account,
+      members: (account.members ?? []).map((m) =>
+        m.id === id ? { ...m, status: "revoked" as const } : m,
+      ),
+      updatedAt: now,
+    };
+    await this.accountRepo.save(updated);
+  }
+}
 ````
 
 ## File: src/modules/achievement.module/_components/achievement-badge.tsx
@@ -21394,55 +23276,6 @@ export class FirestoreAchievementRepository implements IAchievementRepository {
     await setDoc(ref, achievementRecordToDoc(record));
   }
 }
-````
-
-## File: src/modules/achievement.module/README.md
-````markdown
-# achievement.module
-
-**Bounded Context:** Achievement Rules · Badge Unlocking  
-**Layer:** SaaS
-
-## Purpose
-
-`achievement.module` evaluates achievement rules and unlocks badges for accounts.
-Badge unlocks are projected to the Account's public profile in `account.module`
-via the `IAccountBadgeWritePort` cross-module port.
-
-## What this module owns
-
-| Concern | Description |
-|---------|-------------|
-| AchievementRule | Condition-based rule for unlocking a badge |
-| Badge | Badge definition (name, icon, description) |
-| AccountAchievementRecord | Per-account record of unlocked badges |
-
-## Cross-module dependencies
-
-| Module | Direction | Reason |
-|--------|-----------|--------|
-| `account.module` | → | Badge unlocks are written via IAccountBadgeWritePort |
-| All source modules | ← | Achievement rules are evaluated on domain events (e.g. WorkItemCompleted, FileUploaded) |
-
-## Standard 4-layer structure
-
-```
-achievement.module/
-├── index.ts
-├── domain.achievement/
-│   ├── _entity.ts               # AchievementRule + Badge + AccountAchievementRecord
-│   ├── _value-objects.ts
-│   ├── _ports.ts                # IAchievementRepository, IAccountBadgeWritePort
-│   └── _events.ts
-├── core/
-├── infra.firestore/
-└── _components/
-```
-````
-
-## File: src/modules/audit.module/_components/.gitkeep
-````
-
 ````
 
 ## File: src/modules/audit.module/_components/audit-log-view.tsx
@@ -22620,64 +24453,6 @@ export class FirestoreAuditRepository implements IAuditRepository {
     );
   }
 }
-````
-
-## File: src/modules/audit.module/README.md
-````markdown
-# audit.module
-
-**Bounded Context:** Audit Trail · Policy Automation / 稽核記錄 · 政策自動化  
-**Layer:** SaaS (cross-cutting)
-
-## Purpose
-
-`audit.module` provides an immutable audit trail and policy automation layer.
-It captures WHO did WHAT to WHICH artifact at WHAT time across all bounded contexts.
-
-This module also owns the **`Sec` (Integrity & Policy Automation)** participant from
-`core-logic.mermaid` — cross-module policy checks that were previously unassigned.
-
-## What this module owns
-
-| Concern | Description |
-|---------|-------------|
-| AuditEntry | Immutable, append-only record of a domain event |
-| PolicyRule | Condition-based governance rule (e.g. required approvals before merge) |
-| PolicyEvaluation | Deterministic pass/fail evaluation against active rules |
-| ComplianceReport | Aggregated audit report for regulatory or internal review |
-
-## Cross-module dependencies
-
-| Module | Direction | Reason |
-|--------|-----------|--------|
-| All source modules | ← | Subscribes to domain events to record audit entries |
-| `identity.module` | → | Actor identity resolved from IdentityId |
-| `account.module` | → | Actor account handle resolved for display |
-| `workspace.module` | → | Workspace governance rules (required approvals, QA sign-off) |
-| `notification.module` | ← | PolicyViolationDetected triggers notification to workspace owner |
-
-## Standard 4-layer structure
-
-```
-audit.module/
-├── index.ts
-├── domain.audit/
-│   ├── _entity.ts               # AuditEntry (append-only) + PolicyRule + PolicyEvaluation
-│   ├── _value-objects.ts        # AuditEntryId, AuditAction, ResourceRef, PolicyOutcome
-│   ├── _ports.ts                # IAuditEntryRepository, IPolicyRuleRepository, IAuditEventSubscriber
-│   └── _events.ts               # PolicyViolationDetected
-├── core/
-│   ├── _use-cases.ts            # EvaluatePolicyUseCase, GetAuditTrailUseCase, ExportAuditReportUseCase
-│   ├── _actions.ts
-│   └── _queries.ts
-├── infra.firestore/
-└── _components/
-```
-````
-
-## File: src/modules/causal-graph.module/_components/.gitkeep
-````
-
 ````
 
 ## File: src/modules/causal-graph.module/_components/causal-graph-view.tsx
@@ -23927,79 +25702,6 @@ export class FirestoreCausalEdgeRepository implements ICausalEdgeRepository {
 }
 ````
 
-## File: src/modules/causal-graph.module/README.md
-````markdown
-# causal-graph.module
-
-**Bounded Context:** Causal Graph · Impact Analysis / 因果圖 · 影響分析  
-**Layer:** SaaS / Workspace (cross-cutting analytical)
-
-## Purpose
-
-`causal-graph.module` models **cause-effect relationships between domain events and entities**
-across bounded contexts. It answers questions like:
-
-- "What downstream work items are affected if this milestone slips?"
-- "Which workspace events contributed to this settlement discrepancy?"
-- "What is the full impact chain of approving this Change Request?"
-
-> **Key distinction from `work.module` (Dependency):**  
-> `work.module` owns *task ordering dependencies* (A must complete before B — scheduling).  
-> `causal-graph.module` models *analytical cause-effect relationships* across domain events
-> (why did X happen? what does X cause?), including cross-module causal chains.
-
-## What this module owns
-
-| Concern | Description |
-|---------|-------------|
-| CausalNode | A domain entity or event that participates in a causal relationship |
-| CausalEdge | A directed cause→effect relationship between two CausalNodes |
-| CausalPath | A resolved chain of causal edges from root cause to terminal effect |
-| ImpactScope | Set of CausalNodes reachable from a given trigger node |
-
-## What this module does NOT own
-
-| Concern | Correct module |
-|---------|----------------|
-| Task ordering / scheduling dependency | `work.module` (Dependency value object) |
-| Audit history of who did what | `audit.module` (AuditEntry) |
-| Work item status transitions | `work.module` (WorkItem entity) |
-
-## Cross-module dependencies
-
-| Module | Direction | Reason |
-|--------|-----------|--------|
-| All source modules | ← | Domain events feed CausalNode updates |
-| `work.module` | → | WorkItem and Milestone are common CausalNode sources |
-| `workspace.module` | → | CR / QA / Baseline state changes feed causal edges |
-| `search.module` | ← | CausalPath entries indexed for cross-BC impact search |
-
-## Standard 4-layer structure
-
-```
-causal-graph.module/
-├── index.ts
-├── domain.causal-graph/
-│   ├── _entity.ts               # CausalNode · CausalEdge · CausalPath
-│   ├── _value-objects.ts        # CausalNodeId · EdgeWeight · CausalDirection · ImpactScope
-│   ├── _ports.ts                # ICausalNodeRepository · ICausalEdgeRepository · ICausalPathQuery
-│   └── _events.ts               # CausalEdgeAdded · ImpactScopeResolved
-├── core/
-│   ├── _use-cases.ts            # AddCausalEdgeUseCase · ResolveImpactScopeUseCase · QueryCausalPathUseCase
-│   ├── _actions.ts
-│   └── _queries.ts
-├── infra.firestore/
-│   ├── _repository.ts
-│   └── _mapper.ts
-└── _components/
-```
-````
-
-## File: src/modules/collaboration.module/_components/.gitkeep
-````
-
-````
-
 ## File: src/modules/collaboration.module/_components/use-comments.ts
 ````typescript
 "use client";
@@ -24452,15 +26154,6 @@ export const ReactionTypeSchema = z.enum(["like", "heart", "celebrate", "eyes", 
 export type ReactionType = z.infer<typeof ReactionTypeSchema>;
 ````
 
-## File: src/modules/collaboration.module/index.ts
-````typescript
-// collaboration.module — Public API barrel
-// Bounded Context: Collaboration · Comments · Reactions
-export type { CommentDTO } from "./core/_use-cases";
-export { postComment, getCommentsByArtifact } from "./core/_use-cases";
-export type { ICommentRepository } from "./domain.collaboration/_ports";
-````
-
 ## File: src/modules/collaboration.module/infra.firestore/_mapper.ts
 ````typescript
 /**
@@ -24636,61 +26329,6 @@ export class FirestoreCommentRepository implements ICommentRepository {
     await deleteDoc(ref);
   }
 }
-````
-
-## File: src/modules/collaboration.module/README.md
-````markdown
-# collaboration.module
-
-**Bounded Context:** Collaboration / 協作  
-**Layer:** Workspace (cross-cutting)
-
-## Purpose
-
-`collaboration.module` handles all real-time and async multi-participant interaction surfaces:
-threaded comments, reactions, presence indicators, and co-editing sessions.
-
-## What this module owns
-
-| Concern | Description |
-|---------|-------------|
-| Comment | Threaded comments anchored to any artifact |
-| Reaction | Emoji reactions on comments |
-| Presence | Real-time presence indicators (viewing / editing / idle) |
-| CoEditSession | CRDT / OT coordination signals for collaborative editing |
-
-## Cross-module dependencies
-
-| Module | Direction | Reason |
-|--------|-----------|--------|
-| `workspace.module` | → | Comments anchor to workspace artifacts (Issue, CR, QA) |
-| `work.module` | → | Comments anchor to Work Items and Milestones |
-| `file.module` | → | Inline comments anchor to file lines/blocks |
-| `account.module` | → | Participants are Accounts; @mentions resolve to Account handles |
-| `notification.module` | ← | MentionCommentPosted, ReviewRequested events trigger notifications |
-
-## Standard 4-layer structure
-
-```
-collaboration.module/
-├── index.ts
-├── domain.collaboration/
-│   ├── _entity.ts               # Comment + Thread + Reaction
-│   ├── _value-objects.ts        # CommentId, ArtifactRef, ReactionType, PresenceState
-│   ├── _ports.ts                # ICommentRepository, IPresencePort, ICoEditSessionPort
-│   └── _events.ts               # CommentPosted, MentionCommentPosted, ReviewRequested
-├── core/
-│   ├── _use-cases.ts            # PostCommentUseCase, AddReactionUseCase, JoinPresenceUseCase
-│   ├── _actions.ts
-│   └── _queries.ts
-├── infra.firestore/
-└── _components/
-```
-````
-
-## File: src/modules/file.module/_components/.gitkeep
-````
-
 ````
 
 ## File: src/modules/file.module/_components/document-parser-view.tsx
@@ -26642,61 +28280,6 @@ export class FirestoreParsingImportRepository
 }
 ````
 
-## File: src/modules/file.module/README.md
-````markdown
-# file.module
-
-**Bounded Context:** File · Document Intelligence  
-**Layer:** Workspace
-
-## Purpose
-
-`file.module` handles file storage, versioning, and the document intelligence pipeline:
-parsing, object extraction, and AI-powered content analysis.
-
-## What this module owns
-
-| Concern | Description |
-|---------|-------------|
-| File | Upload, storage, versioning, access control |
-| FileVersion | Immutable version records per file |
-| DocParse | Structured document parsing (PDF, DOCX, Markdown) |
-| ObjExtract | Entity / table / diagram extraction from documents |
-| Intelligence | AI pipeline outputs (summaries, embeddings, Q&A) |
-
-## Cross-module dependencies
-
-| Module | Direction | Reason |
-|--------|-----------|--------|
-| `workspace.module` | → | Files are scoped to a workspace |
-| `account.module` | → | File owners are Accounts |
-| `collaboration.module` | ← | Inline comments anchor to file lines/blocks |
-| `search.module` | ← | File content is indexed for full-text search |
-
-## Standard 4-layer structure
-
-```
-file.module/
-├── index.ts
-├── domain.file/
-│   ├── _entity.ts               # File + FileVersion + IntelligenceResult
-│   ├── _value-objects.ts
-│   ├── _ports.ts                # IFileStoragePort, IDocParsePort, IObjExtractPort
-│   └── _events.ts               # FileUploaded, DocParsed, ObjExtracted
-├── core/
-│   ├── _use-cases.ts
-│   ├── _actions.ts
-│   └── _queries.ts
-├── infra.firestore/
-└── _components/
-```
-````
-
-## File: src/modules/fork.module/_components/.gitkeep
-````
-
-````
-
 ## File: src/modules/fork.module/_components/forks-view.tsx
 ````typescript
 "use client";
@@ -27474,51 +29057,6 @@ export class FirestoreForkRepository implements IForkRepository {
 }
 ````
 
-## File: src/modules/fork.module/README.md
-````markdown
-# fork.module
-
-**Bounded Context:** Fork Network  
-**Layer:** Workspace
-
-## Purpose
-
-`fork.module` manages the Fork Network: planning branches forked from a workspace,
-independent divergence, and merge-back via Change Requests.
-
-## What this module owns
-
-| Concern | Description |
-|---------|-------------|
-| Fork | A planning branch derived from a parent workspace |
-| ForkDivergence | Tracked changes made on a fork relative to its parent |
-| MergeProposal | Formal proposal to merge fork changes back via CR |
-
-## Cross-module dependencies
-
-| Module | Direction | Reason |
-|--------|-----------|--------|
-| `workspace.module` | → | Forks branch from a parent workspace |
-| `account.module` | → | Fork owner is an Account |
-| `collaboration.module` | ← | Comments on merge proposals |
-| `notification.module` | ← | Merge proposal events trigger notifications |
-
-## Standard 4-layer structure
-
-```
-fork.module/
-├── index.ts
-├── domain.fork/
-│   ├── _entity.ts               # Fork + ForkDivergence + MergeProposal
-│   ├── _value-objects.ts
-│   ├── _ports.ts
-│   └── _events.ts
-├── core/
-├── infra.firestore/
-└── _components/
-```
-````
-
 ## File: src/modules/identity.module/_client-actions.ts
 ````typescript
 "use client";
@@ -27608,11 +29146,6 @@ export async function clientSignOut(): Promise<Result<void>> {
     return fail(err instanceof Error ? err : new Error(String(err)));
   }
 }
-````
-
-## File: src/modules/identity.module/_components/.gitkeep
-````
-
 ````
 
 ## File: src/modules/identity.module/_components/admin-view.tsx
@@ -27950,6 +29483,185 @@ export function AuthTabsRoot({
         </div>
       </CardFooter>
     </Card>
+  );
+}
+````
+
+## File: src/modules/identity.module/_components/auth-view.tsx
+````typescript
+"use client";
+/**
+ * AuthView — Smart auth container.
+ *
+ * Manages all authentication state and delegates rendering to sub-components.
+ * Renders the full-page auth flow with login/register tabs and password reset dialog.
+ */
+
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+
+import { useTranslation } from "@/shared/i18n";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/design-system/primitives/ui/dialog";
+
+import {
+  clientSignIn,
+  clientRegister,
+  clientSignInAnonymously,
+} from "../_client-actions";
+import { AuthTabsRoot } from "./auth-tabs-root";
+import { ResetPasswordForm } from "./reset-password-form";
+
+/**
+ * Resolves the post-login destination from the `callbackUrl` search parameter.
+ *
+ * Security: uses the URL constructor with a dummy base to fully parse the
+ * value. Only paths whose resolved origin matches the dummy base (i.e. purely
+ * relative paths with no host) are accepted. This prevents open-redirect
+ * attacks including encoded sequences like `/%2f` or protocol-relative URLs.
+ *
+ * Falls back to `fallback` (default `/onboarding`) when no safe URL is found.
+ */
+function resolvePostLoginUrl(
+  searchParams: ReturnType<typeof useSearchParams>,
+  fallback = "/onboarding",
+): string {
+  const raw = searchParams.get("callbackUrl");
+  if (raw) {
+    try {
+      const base = "https://placeholder.invalid";
+      const resolved = new URL(raw, base);
+      // Accept only if the URL stayed within our dummy base (no external host).
+      if (resolved.origin === base) {
+        return resolved.pathname + resolved.search + resolved.hash;
+      }
+    } catch {
+      // Malformed URL — fall through to default.
+    }
+  }
+  return fallback;
+}
+
+/**
+ * AuthView — public export.
+ *
+ * Wraps the real implementation in a `<Suspense>` boundary because
+ * `useSearchParams()` (used inside) requires one for Next.js static rendering.
+ */
+export function AuthView() {
+  return (
+    <Suspense>
+      <AuthViewInner />
+    </Suspense>
+  );
+}
+
+function AuthViewInner() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const t = useTranslation("zh-TW");
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [isResetOpen, setIsResetOpen] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  const handleAuth = async (type: "login" | "register") => {
+    setIsLoading(true);
+    setAuthError(null);
+    try {
+      let result;
+      if (type === "login") {
+        result = await clientSignIn(email, password);
+      } else {
+        if (!name.trim()) {
+          setAuthError(t("auth.pleaseSetDisplayName"));
+          return;
+        }
+        result = await clientRegister(email, password, name);
+      }
+      if (!result.ok) {
+        setAuthError(result.error.message);
+        return;
+      }
+      // New users (register) always go through onboarding.
+      // Returning users (login) honour ?callbackUrl, defaulting to /onboarding.
+      router.push(
+        type === "register" ? "/onboarding" : resolvePostLoginUrl(searchParams),
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAnonymous = async () => {
+    setIsLoading(true);
+    setAuthError(null);
+    try {
+      const result = await clientSignInAnonymously();
+      if (!result.ok) {
+        setAuthError(result.error.message);
+        return;
+      }
+      router.push(resolvePostLoginUrl(searchParams));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background px-4">
+      {/* Subtle radial background glow */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-40"
+        style={{
+          background:
+            "radial-gradient(ellipse 80% 50% at 50% -10%, hsl(var(--primary)/0.15), transparent)",
+        }}
+      />
+
+      {authError && (
+        <div className="absolute top-4 z-20 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">
+          {authError}
+        </div>
+      )}
+
+      <AuthTabsRoot
+        isLoading={isLoading}
+        email={email}
+        setEmail={setEmail}
+        password={password}
+        setPassword={setPassword}
+        name={name}
+        setName={setName}
+        handleAuth={handleAuth}
+        handleAnonymous={handleAnonymous}
+        openResetDialog={() => setIsResetOpen(true)}
+      />
+
+      <Dialog open={isResetOpen} onOpenChange={setIsResetOpen}>
+        <DialogContent className="max-w-sm rounded-[2rem] border-border/40 bg-card/90 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase tracking-wide">
+              {t("auth.resetPassword")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="pt-2">
+            <ResetPasswordForm
+              defaultEmail={email}
+              onSuccess={() => setIsResetOpen(false)}
+              onCancel={() => setIsResetOpen(false)}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
 ````
@@ -29780,176 +31492,80 @@ export class FirestoreAuthClaimsAdapter implements IAuthClaimsPort {
 }
 ````
 
-## File: src/modules/identity.module/README.md
-````markdown
-# identity.module
-
-**Bounded Context:** Identity · Authentication / 身份識別 · 驗證  
-**Layer:** SaaS (cross-cutting)
-
-## Purpose
-
-`identity.module` is the **authentication** boundary for the platform.
-It answers the question: **"Are you who you claim to be?"**
-
-It manages credentials, sessions, identity providers, and JWT auth claims
-for **any** account type — personal or organization.
-
-It replaces direct Firebase Auth SDK usage throughout the codebase.
-All sign-in, sign-out, and session-refresh operations are mediated through this module's Application layer.
-
-> **Boundary vs `account.module`:**  
-> `identity.module` = "How do you prove you are you?" (authentication: login, logout, session, tokens, providers)  
-> `account.module` = "What is your account?" (profile, handle, team, membership — the data that belongs to you after you've proven who you are)  
->  
-> Login / logout / password reset / provider linking → `identity.module`  
-> Display name / avatar / organization membership / team role → `account.module`
-
-## What this module owns
-
-| Concern | Description |
-|---------|-------------|
-| IdentityProvider | Firebase, Google, GitHub, Email |
-| Session | Creation, refresh, revocation |
-| AuthClaims | JWT custom claims (accountId, accountType, role) |
-| ProviderLinking | Attaching additional providers to an account |
-| PasswordReset | Password reset (unauthenticated forgot-password flow) and password change (authenticated user changing their own password) |
-
-## What this module does NOT own
-
-| Concern | Owned by |
-|---------|----------|
-| Account entity (name, avatar, handle) | `account.module` |
-| Authorization (role-based access control) | `account.module` (MemberRole) + `audit.module` (policy) |
-| User-visible profile data | `account.module` |
-| Team / Membership governance | `account.module` |
-
-## Key aggregate
-
-`Identity` — authentication record keyed by (provider, providerUid), linked to one Account.
-
-## Cross-module dependencies
-
-| Module | Direction | Reason |
-|--------|-----------|--------|
-| `account.module` | → | Identity is linked to one Account (creates Account on first registration) |
-
-## Standard 4-layer structure
-
-```
-identity.module/
-├── index.ts                     # Public API barrel
-├── domain.identity/
-│   ├── _entity.ts               # Identity aggregate root
-│   ├── _value-objects.ts        # IdentityId, IdentityProvider, SessionToken, AuthClaims
-│   ├── _ports.ts                # IIdentityRepository, IAuthProviderPort, ISessionPort
-│   └── _events.ts               # IdentityRegistered, IdentitySignedIn, SessionRevoked
-├── core/
-│   ├── _use-cases.ts            # RegisterIdentityUseCase, SignInUseCase, SignOutUseCase …
-│   ├── _actions.ts              # signInAction, signOutAction, linkProviderAction
-│   └── _queries.ts              # getCurrentIdentityQuery, getSessionStatusQuery
-├── infra.firestore/
-│   ├── _repository.ts           # Implements IIdentityRepository + IAuthProviderPort
-│   └── _mapper.ts               # Firestore doc ↔ IdentityEntity
-└── _components/                 # Sign-in UI components (future)
-```
-````
-
-## File: src/modules/namespace.module/_components/.gitkeep
-````
-
-````
-
-## File: src/modules/namespace.module/_components/use-namespace.ts
+## File: src/modules/namespace.module/_components/org-card.tsx
 ````typescript
 "use client";
 /**
- * useNamespace — client-side hook that fetches the namespace (org) for a given owner.
+ * OrgCard — displays an organization account summary card.
  *
- * Source equivalent: organization.slice/core/_hooks/use-org.ts
- * Adapted: uses FirestoreNamespaceRepository (Web SDK) + getNamespaceByOwnerId
- * use-case to load the current user's namespace.
- *
- * Returns null namespace when the user has not yet created an org/namespace.
+ * Receives an AccountDTO for an org account. Links to /{org.handle} for the
+ * org's workspace/settings pages.
  */
 
-import { useEffect, useMemo, useState } from "react";
-import { FirestoreNamespaceRepository } from "../infra.firestore/_repository";
+import { Building2, ArrowRight } from "lucide-react";
+import Link from "next/link";
+
+import { useTranslation } from "@/shared/i18n";
+import { Badge } from "@/design-system/primitives/ui/badge";
+import { Button } from "@/design-system/primitives/ui/button";
 import {
-  getNamespaceByOwnerId,
-  type NamespaceDTO,
-} from "../core/_use-cases";
+  Card,
+  CardContent,
+  CardHeader,
+} from "@/design-system/primitives/ui/card";
+import type { AccountDTO } from "@/modules/account.module";
 
-export interface UseNamespaceResult {
-  namespace: NamespaceDTO | null;
-  loading: boolean;
-  error: string | null;
-  /** Re-fetch (e.g., after creating or updating the org). */
-  refresh: () => void;
+interface OrgCardProps {
+  org: AccountDTO;
 }
 
-/**
- * Fetches the namespace record for the given ownerId (account ID).
- * Returns { namespace, loading, error, refresh }.
- * Pass undefined/null to skip fetching until the user is resolved.
- */
-export function useNamespace(
-  ownerId: string | null | undefined,
-): UseNamespaceResult {
-  const [namespace, setNamespace] = useState<NamespaceDTO | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [tick, setTick] = useState(0);
+export function OrgCard({ org }: OrgCardProps) {
+  const t = useTranslation("zh-TW");
+  const href = `/${org.handle ?? org.id}/workspaces`;
 
-  const repo = useMemo(() => new FirestoreNamespaceRepository(), []);
+  return (
+    <Card className="group relative flex h-full flex-col overflow-hidden border-border/60 bg-card/80 shadow-sm transition-all duration-200 hover:border-primary/30 hover:shadow-md">
+      <div className="flex h-24 w-full items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+        <Building2 className="size-10 text-primary/30" />
+      </div>
 
-  useEffect(() => {
-    if (!ownerId) {
-      setNamespace(null);
-      setLoading(false);
-      return;
-    }
+      <CardHeader className="flex flex-row items-start justify-between gap-2 p-4 pb-2">
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate font-semibold leading-tight tracking-tight">
+            {org.displayName}
+          </h3>
+          {org.handle && (
+            <p className="mt-0.5 truncate text-[10px] font-mono text-muted-foreground/60">
+              /{org.handle}
+            </p>
+          )}
+        </div>
+        <Badge
+          variant="outline"
+          className="h-5 shrink-0 px-2 text-[10px] font-bold uppercase tracking-wider"
+        >
+          {t("sidebar.organization")}
+        </Badge>
+      </CardHeader>
 
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-
-    getNamespaceByOwnerId(repo, ownerId)
-      .then((result) => {
-        if (cancelled) return;
-        if (result.ok) {
-          setNamespace(result.value);
-        } else {
-          setError(result.error?.message ?? "Failed to load namespace");
-        }
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setError(err instanceof Error ? err.message : String(err));
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [ownerId, repo, tick]);
-
-  const refresh = () => setTick((n) => n + 1);
-
-  return { namespace, loading, error, refresh };
+      <CardContent className="flex flex-1 flex-col justify-between gap-3 px-4 pb-4 pt-0">
+        <div className="flex items-center justify-end">
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1 px-2 text-xs font-bold text-primary opacity-0 transition-opacity group-hover:opacity-100"
+          >
+            <Link href={href}>
+              {t("common.open")}
+              <ArrowRight className="size-3" />
+            </Link>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
-````
-
-## File: src/modules/namespace.module/core/_actions.ts
-````typescript
-// Namespace actions — re-export barrel for application use cases.
-export type { NamespaceDTO, WorkspacePathDTO } from "./_use-cases";
-export {
-  registerNamespace,
-  bindWorkspaceToNamespace,
-} from "./_use-cases";
 ````
 
 ## File: src/modules/namespace.module/core/_use-cases.ts
@@ -30859,64 +32475,41 @@ export class FirestoreNamespaceRepository implements INamespaceRepository {
 }
 ````
 
-## File: src/modules/namespace.module/README.md
-````markdown
-# namespace.module
+## File: src/modules/namespace.module/infra.firestore/_slug-availability.ts
+````typescript
+/**
+ * FirestoreNamespaceSlugAvailabilityAdapter
+ *
+ * Implements INamespaceSlugAvailabilityPort by checking the `namespace-slugs`
+ * shadow collection that FirestoreNamespaceRepository maintains.
+ *
+ * Each document ID in `namespace-slugs` equals a reserved slug, so absence
+ * of the document means the slug is available.
+ *
+ * Note: The `save()` method on FirestoreNamespaceRepository also enforces
+ * slug uniqueness atomically inside a transaction, so this pre-check is only
+ * for early user feedback — not the authoritative guard.
+ */
 
-**Bounded Context:** Namespace / 命名空間  
-**Layer:** SaaS
+import { getFirestore, doc, getDoc } from "firebase/firestore";
+import type { INamespaceSlugAvailabilityPort } from "../domain.namespace/_ports";
+import type { NamespaceSlug } from "../domain.namespace/_value-objects";
 
-## Purpose
+const NAMESPACE_SLUGS_COLLECTION = "namespace-slugs";
 
-`namespace.module` is the shared path-resolution service for the platform.
-A namespace binds workspaces under an Account's handle — either a personal account handle
-or an organization account handle.
+export class FirestoreNamespaceSlugAvailabilityAdapter
+  implements INamespaceSlugAvailabilityPort
+{
+  private get db() {
+    return getFirestore();
+  }
 
-Namespace is independent of both `account.module` and `workspace.module` because it
-must be reachable from both personal and organization contexts without coupling them.
-
-## What this module owns
-
-| Concern | Description |
-|---------|-------------|
-| Namespace entity | Slug-to-Account binding with global uniqueness |
-| Slug reservation | Reserve/release a namespace slug |
-| Workspace binding | Register workspaces under a namespace path |
-| Path resolution | Resolve `handle/workspace-slug` → WorkspaceId |
-
-## Key aggregate
-
-`Namespace` — owned by one Account (AccountType: personal | organization); globally unique slug.
-
-## Cross-module dependencies
-
-| Module | Direction | Reason |
-|--------|-----------|--------|
-| `account.module` | → | Namespace owner is an Account |
-| `workspace.module` | ← | Workspaces register under a namespace on creation |
-
-## Standard 4-layer structure
-
-```
-namespace.module/
-├── index.ts
-├── domain.namespace/
-│   ├── _entity.ts               # Namespace aggregate root
-│   ├── _value-objects.ts        # NamespaceId, NamespaceSlug, WorkspacePathRef
-│   ├── _ports.ts                # INamespaceRepository, ISlugAvailabilityPort
-│   └── _events.ts               # NamespaceRegistered, WorkspaceRegisteredUnderNamespace
-├── core/
-│   ├── _use-cases.ts
-│   ├── _actions.ts
-│   └── _queries.ts
-├── infra.firestore/
-└── _components/
-```
-````
-
-## File: src/modules/notification.module/_components/.gitkeep
-````
-
+  async isAvailable(slug: NamespaceSlug): Promise<boolean> {
+    const ref = doc(this.db, NAMESPACE_SLUGS_COLLECTION, slug);
+    const snap = await getDoc(ref);
+    return !snap.exists();
+  }
+}
 ````
 
 ## File: src/modules/notification.module/_components/notification-item.tsx
@@ -31711,56 +33304,6 @@ export class FirestoreNotificationRepository implements INotificationRepository 
     await updateDoc(ref, { read: true, readAt });
   }
 }
-````
-
-## File: src/modules/notification.module/README.md
-````markdown
-# notification.module
-
-**Bounded Context:** Notification Engine · Inbox  
-**Layer:** SaaS (cross-cutting)
-
-## Purpose
-
-`notification.module` is the platform's notification engine.
-It subscribes to domain events from all source modules and dispatches
-notifications to accounts via in-app Inbox, email, and mobile push.
-
-## What this module owns
-
-| Concern | Description |
-|---------|-------------|
-| NotificationRule | Subscriber preferences per event type and channel |
-| InboxItem | In-app notification record visible to an account |
-| NotificationDispatch | Tracks delivery status across channels |
-
-## Cross-module dependencies
-
-| Module | Direction | Reason |
-|--------|-----------|--------|
-| `account.module` | → | Notification recipients are Accounts |
-| `identity.module` | → | Delivery channel lookup (email, push token) |
-| All source modules | ← | Subscribes to domain events to trigger notifications |
-
-## Standard 4-layer structure
-
-```
-notification.module/
-├── index.ts
-├── domain.notification/
-│   ├── _entity.ts
-│   ├── _value-objects.ts
-│   ├── _ports.ts                # IInboxRepository, IEmailPort, IPushPort, INotificationEventSubscriber
-│   └── _events.ts
-├── core/
-├── infra.firestore/
-└── _components/
-```
-````
-
-## File: src/modules/search.module/_components/.gitkeep
-````
-
 ````
 
 ## File: src/modules/search.module/_components/search-filter-bar.tsx
@@ -32654,59 +34197,6 @@ export class FirestoreSearchQueryAdapter implements ISearchQueryPort {
     return rankResults(visible, q, maxResults);
   }
 }
-````
-
-## File: src/modules/search.module/README.md
-````markdown
-# search.module
-
-**Bounded Context:** Search / 全域搜尋  
-**Layer:** SaaS (cross-cutting)
-
-## Purpose
-
-`search.module` provides a unified full-text and semantic search surface across all bounded contexts.
-It maintains a read-side index (projection) kept in sync via domain events from source modules.
-Query operations are read-only; the source of truth remains in each owning module.
-
-## What this module owns
-
-| Concern | Description |
-|---------|-------------|
-| SearchIndex | Materialized, searchable projection of cross-module content |
-| SearchQuery | Full-text + filter query execution with ranking |
-| SearchSuggestion | Auto-complete / type-ahead suggestions |
-
-## Cross-module dependencies
-
-| Module | Direction | Reason |
-|--------|-----------|--------|
-| All source modules | ← | Subscribes to domain events to update the search index |
-| `account.module` | → | Search scope filtering by account/namespace |
-| `identity.module` | → | Auth scope applied at query time |
-
-## Standard 4-layer structure
-
-```
-search.module/
-├── index.ts
-├── domain.search/
-│   ├── _entity.ts               # SearchIndex (materialized projection)
-│   ├── _value-objects.ts        # SearchQuery, SearchResultEntry, SearchScope
-│   ├── _ports.ts                # ISearchIndexRepository, ISearchQueryPort, ISearchEventSubscriber
-│   └── _events.ts               # SearchIndexUpdated
-├── core/
-│   ├── _use-cases.ts            # ExecuteSearchQueryUseCase, IndexSourceDocumentUseCase
-│   ├── _actions.ts
-│   └── _queries.ts
-├── infra.firestore/
-└── _components/
-```
-````
-
-## File: src/modules/settlement.module/_components/.gitkeep
-````
-
 ````
 
 ## File: src/modules/settlement.module/core/_actions.ts
@@ -33618,56 +35108,6 @@ export class FirestoreSettlementRepository implements ISettlementRepository {
     await deleteDoc(ref);
   }
 }
-````
-
-## File: src/modules/settlement.module/README.md
-````markdown
-# settlement.module
-
-**Bounded Context:** Settlement · AR · AP  
-**Layer:** SaaS
-
-## Purpose
-
-`settlement.module` handles the financial settlement lifecycle:
-accounts receivable (AR), accounts payable (AP), and settlement records
-for services rendered within the platform.
-
-## What this module owns
-
-| Concern | Description |
-|---------|-------------|
-| Settlement | Final settlement record for a billing period |
-| AccountsReceivable | Amounts owed to the platform / service provider |
-| AccountsPayable | Amounts owed by the platform to contributors |
-
-## Cross-module dependencies
-
-| Module | Direction | Reason |
-|--------|-----------|--------|
-| `account.module` | → | Settlement parties are Accounts |
-| `workforce.module` | → | Workforce allocations generate AP entries |
-| `audit.module` | ← | Settlement events are audited |
-
-## Standard 4-layer structure
-
-```
-settlement.module/
-├── index.ts
-├── domain.settlement/
-│   ├── _entity.ts
-│   ├── _value-objects.ts
-│   ├── _ports.ts
-│   └── _events.ts
-├── core/
-├── infra.firestore/
-└── _components/
-```
-````
-
-## File: src/modules/social.module/_components/.gitkeep
-````
-
 ````
 
 ## File: src/modules/social.module/_components/followers-panel.tsx
@@ -34948,55 +36388,6 @@ export class FirestoreSocialGraphRepository implements ISocialGraphRepository {
 }
 ````
 
-## File: src/modules/social.module/README.md
-````markdown
-# social.module
-
-**Bounded Context:** Social Graph · Feed · Discovery  
-**Layer:** SaaS
-
-## Purpose
-
-`social.module` manages the social interaction layer:
-the follow/star/watch graph, activity feed, and discovery surfaces.
-
-## What this module owns
-
-| Concern | Description |
-|---------|-------------|
-| SocialEdge | Follow / star / watch relationships between Accounts and Workspaces |
-| Feed | Activity stream aggregated from social graph events |
-| Discovery | Trending workspaces, recommended accounts |
-
-## Cross-module dependencies
-
-| Module | Direction | Reason |
-|--------|-----------|--------|
-| `account.module` | → | Social actors and targets are Accounts |
-| `workspace.module` | → | Starred/watched targets include workspaces |
-| `notification.module` | ← | Follow events may trigger notifications |
-
-## Standard 4-layer structure
-
-```
-social.module/
-├── index.ts
-├── domain.social/
-│   ├── _entity.ts               # SocialEdge + FeedEntry
-│   ├── _value-objects.ts
-│   ├── _ports.ts
-│   └── _events.ts
-├── core/
-├── infra.firestore/
-└── _components/
-```
-````
-
-## File: src/modules/work.module/_components/.gitkeep
-````
-
-````
-
 ## File: src/modules/work.module/domain.work/__tests__/_service.test.ts
 ````typescript
 import { describe, it, expect } from "vitest";
@@ -35679,57 +37070,6 @@ export class FirestoreMilestoneRepository implements IMilestoneRepository {
     await setDoc(ref, milestoneEntityToDoc(milestone));
   }
 }
-````
-
-## File: src/modules/work.module/README.md
-````markdown
-# work.module
-
-**Bounded Context:** Work Items · Milestones · Dependencies  
-**Layer:** Workspace
-
-## Purpose
-
-`work.module` manages the Work Item layer — tasks, milestones, and dependency tracking.
-This is distinct from WBS Tasks in `workspace.module`: Work Items represent the execution
-layer with assignments, status tracking, and inter-item dependencies.
-
-## What this module owns
-
-| Concern | Description |
-|---------|-------------|
-| WorkItem | Assignable unit of work with status, priority, and estimates |
-| Milestone | Date-bound delivery checkpoint grouping Work Items |
-| Dependency | Directional relationship between Work Items (blocks / depends-on) |
-
-## Cross-module dependencies
-
-| Module | Direction | Reason |
-|--------|-----------|--------|
-| `workspace.module` | → | Work Items live within a workspace context |
-| `account.module` | → | Work Items are assigned to Accounts |
-| `collaboration.module` | ← | Comments anchor to Work Items |
-| `notification.module` | ← | Assignment and status change events trigger notifications |
-
-## Standard 4-layer structure
-
-```
-work.module/
-├── index.ts
-├── domain.work/
-│   ├── _entity.ts               # WorkItem + Milestone + Dependency
-│   ├── _value-objects.ts
-│   ├── _ports.ts
-│   └── _events.ts
-├── core/
-├── infra.firestore/
-└── _components/
-```
-````
-
-## File: src/modules/workforce.module/_components/.gitkeep
-````
-
 ````
 
 ## File: src/modules/workforce.module/_components/use-workforce-schedules.ts
@@ -37113,74 +38453,6 @@ export class FirestoreScheduleRepository implements IScheduleRepository {
 }
 ````
 
-## File: src/modules/workforce.module/README.md
-````markdown
-# workforce.module
-
-**Bounded Context:** Workforce Scheduling  
-**Layer:** Bridge (SaaS ↔ Workspace)
-
-## Purpose
-
-`workforce.module` is the Bridge context between the SaaS layer and the Workspace layer.
-It answers the question: **"Who is doing the work, when, and at what capacity?"**
-
-It handles workforce capacity planning, scheduling, and allocation of accounts to workspace work items.
-
-> **Boundary vs `workspace.module`:**  
-> `workforce.module` = "Who does what, and when?" (scheduling, capacity, person-to-work allocation)  
-> `workspace.module` = "What is the workspace and what work is planned?" (project scope, structure, WBS, issues)  
->  
-> Assigning a person to a task / planning capacity for a sprint → `workforce.module`  
-> Creating a task / issue / WBS item / workspace settings → `workspace.module`  
->  
-> Note: This module bridges SaaS accounts (people, HR) with workspace work items (tasks, milestones). Neither `workspace.module` nor `account.module` owns allocation scheduling.
-
-## What this module owns
-
-| Concern | Description |
-|---------|-------------|
-| WorkforceSchedule | Capacity plan for an org account's members |
-| WorkAllocation | Assignment of an account to workspace work items |
-| CapacityConstraint | Limits on how much work can be assigned per period |
-
-## What this module does NOT own
-
-| Concern | Owned by |
-|---------|----------|
-| Workspace settings / access control | `workspace.module` |
-| Work items / milestones definition | `work.module` |
-| Account / membership governance | `account.module` |
-
-## Cross-module dependencies
-
-| Module | Direction | Reason |
-|--------|-----------|--------|
-| `account.module` | → | Members being scheduled are Accounts |
-| `workspace.module` | → | Work is scoped to a workspace |
-| `work.module` | → | Allocations reference Work Items |
-
-## Standard 4-layer structure
-
-```
-workforce.module/
-├── index.ts
-├── domain.workforce/
-│   ├── _entity.ts
-│   ├── _value-objects.ts
-│   ├── _ports.ts
-│   └── _events.ts
-├── core/
-├── infra.firestore/
-└── _components/
-```
-````
-
-## File: src/modules/workspace.module/_components/.gitkeep
-````
-
-````
-
 ## File: src/modules/workspace.module/_components/attachments-dialog.tsx
 ````typescript
 "use client";
@@ -37295,210 +38567,6 @@ export function AttachmentsDialog({
             {t("common.cancel")}
           </Button>
           <Button onClick={handleSave}>{t("common.save")}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-````
-
-## File: src/modules/workspace.module/_components/daily-log-dialog.tsx
-````typescript
-"use client";
-/**
- * DailyLogDialog — create/edit dialog for daily log entries.
- * Wave 45.
- */
-
-import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/design-system/primitives/ui/dialog";
-import { Button } from "@/design-system/primitives/ui/button";
-import { Input } from "@/design-system/primitives/ui/input";
-import { Label } from "@/design-system/primitives/ui/label";
-import { Textarea } from "@/design-system/primitives/ui/textarea";
-import { useTranslation } from "@/shared/i18n";
-import { FirestoreDailyLogRepository } from "@/modules/workspace.module/infra.firestore/_daily-log-repository";
-import { createDailyLog, updateDailyLog } from "@/modules/workspace.module/core/_daily-log-use-cases";
-import type { DailyLogDTO } from "@/modules/workspace.module/core/_daily-log-use-cases";
-
-let _repo: FirestoreDailyLogRepository | null = null;
-function getRepo() {
-  if (!_repo) _repo = new FirestoreDailyLogRepository();
-  return _repo;
-}
-
-interface DailyLogDialogProps {
-  workspaceId: string;
-  authorId: string;
-  existingLog?: DailyLogDTO;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSaved: () => void;
-}
-
-export function DailyLogDialog({
-  workspaceId,
-  authorId,
-  existingLog,
-  open,
-  onOpenChange,
-  onSaved,
-}: DailyLogDialogProps) {
-  const t = useTranslation("zh-TW");
-  const todayStr = new Date().toISOString().slice(0, 10);
-
-  const [date, setDate] = useState(existingLog?.date ?? todayStr);
-  const [content, setContent] = useState(existingLog?.content ?? "");
-  const [photoURLs, setPhotoURLs] = useState<string[]>(
-    existingLog?.photoURLs ? [...existingLog.photoURLs] : [],
-  );
-  const [newUrl, setNewUrl] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleOpenChange = (o: boolean) => {
-    if (o) {
-      setDate(existingLog?.date ?? todayStr);
-      setContent(existingLog?.content ?? "");
-      setPhotoURLs(existingLog?.photoURLs ? [...existingLog.photoURLs] : []);
-      setNewUrl("");
-      setError(null);
-    }
-    onOpenChange(o);
-  };
-
-  const addUrl = () => {
-    const trimmed = newUrl.trim();
-    if (!trimmed || !/^https?:\/\//i.test(trimmed)) return;
-    setPhotoURLs((prev) => [...prev, trimmed]);
-    setNewUrl("");
-  };
-
-  const handleSave = async () => {
-    if (!content.trim()) {
-      setError(t("workspace.daily.contentRequired"));
-      return;
-    }
-    setSaving(true);
-    setError(null);
-    try {
-      let result;
-      if (existingLog) {
-        result = await updateDailyLog(getRepo(), existingLog.id, content.trim(), photoURLs);
-      } else {
-        result = await createDailyLog(
-          getRepo(),
-          crypto.randomUUID(),
-          workspaceId,
-          date,
-          content.trim(),
-          photoURLs,
-          authorId,
-        );
-      }
-      if (!result.ok) throw result.error;
-      onSaved();
-      onOpenChange(false);
-    } catch {
-      setError(t("workspace.daily.saveFailed"));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-md rounded-2xl">
-        <DialogHeader>
-          <DialogTitle>
-            {existingLog ? t("workspace.daily.editEntry") : t("workspace.daily.addEntry")}
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-4 py-2">
-          {/* Date */}
-          {!existingLog && (
-            <div className="grid gap-1.5">
-              <Label htmlFor="dl-date">{t("workspace.daily.date")}</Label>
-              <Input
-                id="dl-date"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="rounded-xl"
-              />
-            </div>
-          )}
-
-          {/* Content */}
-          <div className="grid gap-1.5">
-            <Label htmlFor="dl-content">{t("workspace.daily.content")}</Label>
-            <Textarea
-              id="dl-content"
-              rows={4}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder={t("workspace.daily.contentPlaceholder")}
-              className="resize-none rounded-xl"
-            />
-          </div>
-
-          {/* Photos */}
-          <div className="grid gap-1.5">
-            <Label>{t("workspace.daily.photos")}</Label>
-            {photoURLs.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {photoURLs.map((url, idx) => (
-                  <div key={idx} className="relative">
-                    <img
-                      src={/^https?:\/\//i.test(url) ? url : ""}
-                      alt=""
-                      className="h-16 w-16 rounded-lg border object-cover"
-                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setPhotoURLs((p) => p.filter((_, i) => i !== idx))}
-                      className="absolute -right-1 -top-1 rounded-full bg-destructive p-0.5"
-                      aria-label="Remove photo"
-                    >
-                      <Trash2 className="size-3 text-white" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="flex gap-2">
-              <Input
-                value={newUrl}
-                onChange={(e) => setNewUrl(e.target.value)}
-                placeholder={t("tasks.attachments.urlPlaceholder")}
-                className="rounded-xl text-xs"
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addUrl(); } }}
-              />
-              <Button type="button" size="sm" variant="outline" onClick={addUrl} className="shrink-0">
-                <Plus className="size-4" />
-              </Button>
-            </div>
-          </div>
-
-          {error && <p className="text-xs text-destructive">{error}</p>}
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-            {t("common.cancel")}
-          </Button>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? t("common.saving") : t("common.save")}
-          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -40018,83 +41086,6 @@ export class FirestoreWorkspaceGrantRepository
 }
 ````
 
-## File: src/modules/workspace.module/README.md
-````markdown
-# workspace.module
-
-**Bounded Context:** Workspace · WBS · Issue · CR · QA · Acceptance · Baseline  
-**Layer:** Workspace
-
-## Purpose
-
-`workspace.module` is the primary **project planning and delivery** bounded context.
-It answers the question: **"What is being planned and delivered in this workspace?"**
-
-It owns the planning and delivery lifecycle: breakdown structure, issues,
-change requests, QA, acceptance, and baselines.
-
-> **Boundary vs `workforce.module`:**  
-> `workspace.module` = "What is the workspace and what work is planned?" (project scope, structure, settings, access control)  
-> `workforce.module` = "Who is doing the work and when?" (capacity, scheduling, person-to-work allocation)  
->  
-> Workspace creation / members list / WBS tasks / issues → `workspace.module`  
-> Who is assigned to which task / how much capacity is available → `workforce.module`  
->  
-> Note: Workspace members (who has *access*) are stored here as an access-control list.
->   Their **scheduling and capacity allocation** belongs to `workforce.module` — workforce answers "when and how much", workspace answers "who is allowed in".
-
-## What this module owns
-
-| Concern | Description |
-|---------|-------------|
-| Workspace | Root aggregate: settings, members, access control |
-| WBS Task | Work breakdown structure tasks |
-| Issue | Bug reports, requests, and planning issues |
-| Change Request (CR) | Formal change proposals with approval workflow |
-| QA Review | Quality assurance sign-off flow |
-| Acceptance | Stakeholder acceptance records |
-| Baseline | Snapshot of approved scope/schedule |
-
-## What this module does NOT own
-
-| Concern | Owned by |
-|---------|----------|
-| Workforce capacity planning | `workforce.module` |
-| Work item assignment / allocation scheduling | `workforce.module` |
-| Work items and milestones | `work.module` |
-| Fork (planning branches) | `fork.module` |
-
-## Cross-module dependencies
-
-| Module | Direction | Reason |
-|--------|-----------|--------|
-| `namespace.module` | → | Workspace is registered under a namespace |
-| `account.module` | → | Workspace members are Accounts |
-| `work.module` | ← | Work Items and Milestones reference workspace context |
-| `fork.module` | ← | Forks are branched from a workspace |
-| `collaboration.module` | ← | Comments and reviews anchor to workspace artifacts |
-| `audit.module` | ← | Governance rules evaluated against workspace artifacts |
-| `notification.module` | ← | Workspace events trigger notifications |
-
-## Standard 4-layer structure
-
-```
-workspace.module/
-├── index.ts
-├── domain.workspace/
-│   ├── _entity.ts               # Workspace + WBS + Issue + CR + QA + Acceptance + Baseline
-│   ├── _value-objects.ts
-│   ├── _ports.ts
-│   └── _events.ts
-├── core/
-│   ├── _use-cases.ts
-│   ├── _actions.ts
-│   └── _queries.ts
-├── infra.firestore/
-└── _components/
-```
-````
-
 ## File: src/shared/AGENTS.md
 ````markdown
 # `src/shared/` — AI Agent & Copilot Usage Rules
@@ -40297,44 +41288,6 @@ import { APP_NAME } from "@/shared/constants";
 - Do not add domain-specific constants (e.g. workspace lifecycle states) — those belong in the owning Domain Module's `domain.*/_value-objects.ts`.
 ````
 
-## File: src/shared/directives/README.md
-````markdown
-# `src/shared/directives/`
-
-## Purpose
-
-Provides **client-side React hooks** that are shared across multiple UI modules. All files in this sub-module carry the `"use client"` directive and are **not server-safe**. They must only be imported from Client Components.
-
-## Exports
-
-| Hook | Signature | Description |
-|------|-----------|-------------|
-| `useToggle` | `(initial?: boolean) → [boolean, () => void, (v: boolean) => void]` | Boolean on/off toggle with explicit setter |
-| `useDebounce` | `<T>(value: T, delay: number) → T` | Debounce a reactive value by `delay` ms |
-| `useLocalStorage` | `<T>(key: string, initial: T) → [T, setter]` | Persist state in `localStorage` with JSON serialisation |
-| `usePrevious` | `<T>(value: T) → T \| undefined` | Track the previous render value of a variable |
-| `useIsMounted` | `() → boolean` | Returns `true` after first client-side mount (avoids hydration mismatch) |
-
-## Usage
-
-```typescript
-// ✅ Correct — import directly from the sub-path, NOT from @/shared
-import { useToggle, useDebounce } from "@/shared/directives";
-
-// ❌ Wrong — @/shared/index.ts does NOT re-export directives
-import { useToggle } from "@/shared";
-```
-
-> **Why the separate import?**  
-> The `"use client"` directive on `directives/index.ts` would contaminate the `@/shared` barrel if it were re-exported, making it impossible to import `@/shared` inside Server Components or Server Actions.
-
-## Conventions
-
-- Keep hooks small and single-purpose.
-- Do not import from `src/modules/` inside this sub-module.
-- When a hook needs domain-specific data (e.g., workspace state), it belongs in `src/modules/{module}/_components/use-{feature}.ts` instead.
-````
-
 ## File: src/shared/errors/index.ts
 ````typescript
 // ---------------------------------------------------------------------------
@@ -40511,50 +41464,6 @@ return <h1>{t("home.welcome")}</h1>;
 - Do not add HTML markup inside translation strings.
 - Do not interpolate variables inside the dictionary strings; use a template helper at the call site.
 - `directives/index.ts` does not depend on `i18n`; locale resolution is always done at the component boundary.
-````
-
-## File: src/shared/index.ts
-````typescript
-// src/shared/index.ts
-// Unified named-export barrel for the shared layer.
-//
-// All shared utilities, types, constants, and errors should be imported
-// from this single entry point so that refactors inside sub-modules remain
-// transparent to callers and import paths are easy to audit:
-//
-//   import { AppError, formatDate, PaginatedResponse } from "@/shared"
-//
-// Sub-modules and what they contribute:
-//   constants   — APP_NAME, APP_VERSION, DEFAULT_LOCALE, SUPPORTED_LOCALES, date format tokens
-//   errors      — AppError, NotFoundError, UnauthorizedError, ForbiddenError,
-//                 ValidationError, ConflictError, toAppError
-//   interfaces  — ApiResponse, ApiError, PaginationQuery, PaginatedResult,
-//                 FirestoreDocument, VisDateMetadata
-//   i18n        — isSupportedLocale, resolveLocale, useTranslation, getMessages
-//   pipes       — Pipe, schemaPipe, transformPipe, composePipes, trimPipe
-//   ports       — ICachePort, IQueuePort, IVectorIndexPort, IWorkflowPort,
-//                 IStoragePort, ILocalePort, ILoggerPort, IAnalyticsPort, IAuthPort
-//   types       — NonEmptyString, UuidSchema, IsoDateString, PositiveInt,
-//                 PaginationSchema, PaginatedResponseSchema, LocaleSchema,
-//                 Locale, Success, Failure, Result, ok, fail
-//   utils       — formatDate, formatDateTime, capitalise, toKebabCase,
-//                 omit, pick, unique, chunk
-//
-// NOTE: Client-side React hooks (useToggle, useDebounce, useLocalStorage,
-//       usePrevious, useIsMounted, useLocale) are in @/shared/directives.
-//       They carry a "use client" directive and must be imported separately
-//       from within Client Components only:
-//
-//   import { useToggle, useDebounce, useLocale } from "@/shared/directives"
-
-export * from './constants';
-export * from './errors';
-export * from './interfaces';
-export * from './i18n';
-export * from './pipes';
-export * from './ports';
-export * from './types';
-export * from './utils';
 ````
 
 ## File: src/shared/interfaces/index.ts
@@ -41668,426 +42577,6 @@ export default defineConfig({
 }
 ````
 
-## File: .github/agents/ddd-application-layer.agent.md
-````markdown
----
-name: 'ddd-application-layer'
-description: 'Design and implement the Application layer for progressive DDD migration: use cases, actions, queries, and port-oriented orchestration.'
-tools: ['codebase', 'search', 'editFiles', 'filesystem/*', 'serena/*']
-skills: ['ddd-architecture']
-user-invocable: false
-handoffs:
-  - label: 'Implement infrastructure adapters'
-    agent: ddd-infrastructure
-    prompt: 'Implement the concrete adapters required by these use cases and ports.'
-  - label: 'Return to DDD orchestrator'
-    agent: ddd-orchestrator
-    prompt: 'Resume the progressive DDD migration sequence from the application-layer design above.'
----
-
-# Role: ddd-application-layer
-
-This agent owns thin orchestration between Presentation, Domain, and port interfaces.
-
-## Mission
-- Move workflow coordination into explicit use cases, actions, and queries.
-- Depend on domain behavior and port interfaces rather than concrete adapters.
-- Keep application code testable with mocked dependencies.
-
-## Required behavior
-1. Accept explicit dependencies as ports rather than importing concrete infrastructure.
-2. Load aggregates, invoke domain behavior, persist through ports, and return application-safe results.
-3. Keep branch-heavy business rules in domain methods unless the branching is purely orchestration.
-4. Keep read models and query handlers separate from write-side aggregate mutation.
-5. Add integration tests with mocked ports when behavior crosses more than one dependency.
-
-## Boundaries
-- No Firebase or SDK imports.
-- No JSX, component logic, or hook logic.
-- No persistence mapping details that belong in adapters.
-````
-
-## File: .github/agents/ddd-domain-modeler.agent.md
-````markdown
----
-name: 'ddd-domain-modeler'
-description: 'Design and implement the Domain layer for progressive DDD migration: aggregates, entities, value objects, domain services, and invariants.'
-tools: ['codebase', 'search', 'editFiles', 'filesystem/*', 'serena/*']
-skills: ['ddd-architecture']
-user-invocable: false
-handoffs:
-  - label: 'Continue with application layer'
-    agent: ddd-application-layer
-    prompt: 'Use the extracted domain model to shape the application services and port-oriented orchestration.'
-  - label: 'Return to DDD orchestrator'
-    agent: ddd-orchestrator
-    prompt: 'Resume the progressive DDD migration sequence from the domain findings above.'
----
-
-# Role: ddd-domain-modeler
-
-This agent owns pure domain extraction and refinement.
-
-## Mission
-- Pull business invariants out of UI handlers, server actions, and adapters.
-- Model entities, value objects, and domain events around a real consistency boundary.
-- Leave framework, transport, and persistence details outside the domain.
-
-## Required behavior
-1. Identify the aggregate root and the invariants it must enforce.
-2. Prefer value objects over loose primitives when validation or equality matters.
-3. Keep factory methods explicit and reviewable.
-4. If legacy code cannot be fully moved yet, isolate the invariant-preserving core first.
-5. Add or update unit tests for every extracted invariant.
-
-## Boundaries
-- No `firebase`, `next`, `react`, browser, or database imports.
-- No DTO mapping or repository knowledge.
-- No orchestration that belongs in application services.
-````
-
-## File: .github/agents/ddd-infrastructure.agent.md
-````markdown
----
-name: 'ddd-infrastructure'
-description: 'Design and implement Infrastructure layer adapters for progressive DDD migration: repositories, outbox writers, event buses, storage, and other concrete I/O behind ports.'
-tools: ['codebase', 'search', 'editFiles', 'filesystem/*', 'serena/*', 'firebase-mcp-server/*']
-skills: ['ddd-architecture']
-user-invocable: false
-handoffs:
-  - label: 'Return to DDD orchestrator'
-    agent: ddd-orchestrator
-    prompt: 'Resume the progressive DDD migration sequence from the infrastructure findings above.'
-  - label: 'Request quality review'
-    agent: xuanwu-quality
-    prompt: 'Review the adapter and boundary changes for regressions, import violations, and test gaps.'
----
-
-# Role: ddd-infrastructure
-
-This agent owns concrete adapters and compatibility seams for external systems.
-
-## Mission
-- Move Firebase and other I/O behind port interfaces.
-- Keep persistence mapping and transport concerns out of Domain and Application.
-- Support progressive migration with adapters and facades rather than churn-heavy rewrites.
-
-## Required behavior
-1. Implement or reuse a port interface before introducing a concrete adapter dependency.
-2. Keep adapter code focused on mapping, I/O, transactions, retries, and transport concerns.
-3. Preserve existing public APIs when possible with thin re-export or wrapper seams.
-4. Place adapters in the owning module under `src/modules/{module}/infra.{adapter}/`.
-5. Add adapter tests with mocks or emulators when the change affects persistence semantics.
-
-## Boundaries
-- No business invariants in adapters.
-- No direct imports from Presentation.
-- Do not leak concrete adapter classes into use-case signatures.
-````
-
-## File: .github/agents/ddd-orchestrator.agent.md
-````markdown
----
-name: 'ddd-orchestrator'
-description: 'Coordinate progressive migration of existing Xuanwu code toward Layered Architecture in Domain-Driven Design using the smallest safe Domain -> Application -> Infrastructure -> Presentation sequence.'
-tools: ['agent', 'codebase', 'search', 'editFiles', 'filesystem/*', 'serena/*', 'sequential-thinking/*']
-skills: ['ddd-architecture', 'ddd-progressive-layering']
-agents:
-  - ddd-domain-modeler
-  - ddd-application-layer
-  - ddd-infrastructure
-  - xuanwu-ui
-  - xuanwu-quality
-  - xuanwu-architect
-handoffs:
-  - label: 'Model domain first'
-    agent: ddd-domain-modeler
-    prompt: 'Model or extract the domain concepts, invariants, and value objects for the current migration unit.'
-  - label: 'Wire application layer'
-    agent: ddd-application-layer
-    prompt: 'Design or refine the use cases, actions, queries, and port-oriented orchestration for this migration step.'
-  - label: 'Implement infrastructure adapters'
-    agent: ddd-infrastructure
-    prompt: 'Implement or refine the repository and adapter layer behind explicit port interfaces for this migration step.'
-  - label: 'Review boundaries'
-    agent: xuanwu-quality
-    prompt: 'Review the DDD migration for boundary violations, compatibility risk, and missing tests.'
-  - label: 'Return to orchestrator'
-    agent: xuanwu-orchestrator
-    prompt: 'Continue coordinating the broader Xuanwu task with the DDD migration context preserved.'
----
-
-# Role: ddd-orchestrator
-
-Use this agent to move an existing slice toward 4-layer DDD without a risky big-bang rewrite.
-
-## Mission
-- Classify the current shape of the target scope before changing code.
-- Pick the smallest migration unit that improves layer ownership.
-- Drive work in the order Domain -> Application -> Infrastructure -> Presentation.
-- Preserve public APIs with compatibility shims when immediate caller migration would be too expensive.
-
-## Use when
-- A legacy slice mixes business rules, SDK calls, and UI concerns.
-- You need a migration plan and implementation sequence for layered DDD.
-- Existing prompts like `/ddd-slice-scaffold` are too greenfield-oriented for the task.
-
-## Required workflow
-1. Audit the requested scope and classify each touched file by layer ownership.
-2. Choose one migration unit: aggregate, use case, adapter boundary, or public API seam.
-3. Delegate domain modeling to `ddd-domain-modeler` first when invariants or value objects are unclear.
-4. Delegate use-case orchestration to `ddd-application-layer` after domain ownership is clear.
-5. Delegate Firebase, storage, queue, or event transport work to `ddd-infrastructure` only after ports are defined.
-6. Use `xuanwu-ui` only after the application API is stable enough for Presentation to depend on.
-7. Use `xuanwu-quality` to verify layer direction, compatibility, and regression risk before closing the task.
-
-## Boundaries
-- Do not jump straight to infrastructure extraction before naming the domain concepts and port interfaces.
-- Do not recommend full-slice rewrites when a compatibility bridge can reduce risk.
-- Do not let Presentation import Domain or Infrastructure directly.
-- Keep outputs decision-oriented: current problem, target layer ownership, migration steps, and verification.
-````
-
-## File: .github/agents/xuanwu-architecture-chief.agent.md
-````markdown
----
-name: 'xuanwu-architecture-chief'
-description: 'Principal architect responsible for refining architecture documentation to production-grade quality.'
-tools: ['codebase', 'search', 'editFiles', 'repomix/*', 'filesystem/*', 'serena/*']
-handoffs:
-  - label: 'Delegate diagram work'
-    agent: xuanwu-diagram-designer
-    prompt: 'Refine and standardize the architecture diagrams using Mermaid.'
-  - label: 'Delegate doc restructuring'
-    agent: xuanwu-architecture-refactor
-    prompt: 'Restructure the architecture documentation based on the direction established above.'
-  - label: 'Return to orchestrator'
-    agent: xuanwu-orchestrator
-    prompt: 'Continue coordinating the broader task with the architecture documentation realigned.'
----
-
-# Role: xuanwu-architecture-chief
-
-You are the **Principal Architecture Engineer** of this repository.
-
-Your task is to review and refine architecture documentation so that it reaches **production-grade system architecture quality**.
-
-You operate as the **final architectural authority** for documentation structure and clarity.
-
----
-
-# Target Documents
-
-Primary (canonical SSOT -- align all other docs to these):
-
-- docs/architecture/README.md
-
-Supporting documents to refine and align:
-
-- docs/architecture/README.md
-
----
-
-# Mission
-
-Refine documentation to achieve:
-
-- architectural clarity
-- semantic consistency
-- structural hierarchy
-- high-quality diagrams
-
-This is **architecture refinement**, not architecture redesign.
-
----
-
-# Constraints
-
-Do NOT:
-
-- introduce new systems
-- invent new architecture layers
-- change conceptual models
-
-You MAY:
-
-- reorganize sections
-- rename headings
-- simplify explanations
-- improve diagrams
-
----
-
-# Architecture Quality Standard
-
-The documentation must read like a **principal system blueprint**.
-
-Characteristics:
-
-- clear architecture layers
-- consistent terminology
-- minimal redundancy
-- diagrams understandable at a glance
-
----
-
-# Diagram Requirements
-
-For diagram standards, architecture layer color system, layout principles, and Mermaid guidelines, follow `.github/skills/xuanwu-diagram-standards/SKILL.md`.
-
----
-
-# Editing Strategy
-
-When editing files:
-
-1. preserve meaning
-2. reduce noise
-3. unify terminology
-4. improve diagram readability
-5. maintain architectural consistency
-````
-
-## File: .github/agents/xuanwu-architecture-refactor.agent.md
-````markdown
----
-name: 'xuanwu-architecture-refactor'
-description: 'Refines architecture documentation structure and diagrams under the guidance of xuanwu-architecture-chief.'
-tools: ['codebase', 'search', 'editFiles', 'filesystem/*', 'serena/*']
-user-invocable: false
-handoffs:
-  - label: 'Escalate to architecture chief'
-    agent: xuanwu-architecture-chief
-    prompt: 'Review and finalize the architecture documentation restructuring direction.'
-  - label: 'Return to orchestrator'
-    agent: xuanwu-orchestrator
-    prompt: 'Continue coordinating the broader task with the documentation restructuring complete.'
----
-
-# Role: xuanwu-architecture-refactor
-
-You are responsible for **refactoring architecture documentation**.
-
-You improve structure, clarity, and diagram readability.
-
-You operate under the guidance of **xuanwu-architecture-chief**.
-
----
-
-# Target Files
-
-- docs/architecture/README.md
-
----
-
-# Goals
-
-Improve:
-
-- document hierarchy
-- diagram clarity
-- terminology consistency
-- architectural readability
-
----
-
-# Constraints
-
-Do NOT introduce new architecture components.
-
-Focus on:
-
-- restructuring sections
-- refining diagrams
-- aligning terminology
-
----
-
-# Diagram Standard
-
-Use **Mermaid diagrams**.
-
-Diagrams must be:
-
-- layered
-- minimal
-- semantically grouped
-- readable at a glance
-
----
-
-# Editing Rules
-
-Preserve original meaning while improving clarity and structure.
-````
-
-## File: .github/agents/xuanwu-repo-browser.agent.md
-````markdown
----
-name: 'xuanwu-repo-browser'
-description: 'Reads repository documentation and extracts architecture structure. Read-only analysis agent.'
-tools: ['codebase', 'search', 'filesystem/*', 'repomix/*', 'serena/*']
-user-invocable: false
-handoffs:
-  - label: 'Hand off to architecture chief'
-    agent: xuanwu-architecture-chief
-    prompt: 'Refine and realign the architecture documentation based on the analysis above.'
-  - label: 'Return to orchestrator'
-    agent: xuanwu-orchestrator
-    prompt: 'Continue coordinating the broader task with the architecture analysis complete.'
----
-
-# Role: xuanwu-repo-browser
-
-You are a **repository architecture analyst**.
-
-Your job is to read architecture documents and extract the real system structure.
-
-You do NOT modify files.
-
----
-
-# Documents to Analyze
-
-- docs/architecture/README.md
-
----
-
-# Responsibilities
-
-Identify and summarize:
-
-- architecture layers
-- system components
-- data lifecycle stages
-- governance constraints
-- infrastructure mapping
-
----
-
-# Output Structure
-
-Always return analysis using this structure:
-
-Architecture Layers
-
-System Components
-
-Data Lifecycle Flow
-
-Governance Constraints
-
-Infrastructure Mapping
-
----
-
-# Constraint
-
-Do NOT redesign the architecture.
-
-Only extract and clarify existing structure.
-````
-
 ## File: .github/copilot/mcp-coding-agent.json
 ````json
 {
@@ -42437,143 +42926,256 @@ Main aggregate: ${input:aggregate:e.g. ReportEntity}
 Primary use cases: ${input:usecases:e.g. CreateReport, ApproveReport, ArchiveReport}
 ````
 
-## File: .github/prompts/xuanwu-architecture-realign.prompt.md
+## File: .github/skills/context7-repomix-global-awareness/SKILL.md
 ````markdown
 ---
-name: xuanwu-architecture-realign
-description: 'Realign and condense Xuanwu architecture documentation against the canonical SSOT, unify terminology, and refine Mermaid diagrams.'
-agent: 'xuanwu-architecture-chief'
-argument-hint: 'Target doc or realignment scope, e.g.: realign architecture docs against SSOT | slim README navigation'
+name: context7-repomix-global-awareness
+user-invocable: false
+description: >
+  Two-pillar global awareness workflow combining Repomix (codebase snapshot) and
+  Context7 (version-accurate framework docs) to give agents comprehensive project context.
+  Use when starting a session with cross-module or architectural scope, before any
+  framework API usage, or when performing broad impact analysis.
+  Triggers: "global awareness", "全域感知", "context initialization", "session bootstrap",
+  "codebase snapshot", "framework docs", "repomix pack", "context7 lookup",
+  "強化感知", "全局上下文".
 ---
 
-## Xuanwu Architecture Realignment Prompt
+# Global Awareness Initialization（全域感知初始化）
 
-### Role
-
-You are the Xuanwu Chief Architecture Engineer, responsible for realigning and slimming the repository architecture documentation.
-
-Your goal is to make the repository fully consistent with the canonical SSOT, remove redundant content, and produce production-grade architecture documents and diagrams.
-
----
-
-### Baseline Reference
-
-The authoritative architecture SSOT is defined in two layers:
-
-**Protocol SSOT (Semantic Kernel & Matchmaking — primary sequence authority):**
-
-- `Xuanwu-Semantic-Kernel-and-Matchmaking-Protocol.md` — Phase 0/1/2/3 participant definitions, step numbers, fail-closed rules (E8, GT-2), L4A audit fields (Who/Why/Evidence/Version/Tenant), and tool call ordering.
-
-**Topology & Standards SSOT (layers, boundaries, naming):**
-
-- docs/architecture/README.md
-
-All alignment and refinement must strictly follow both layers. On any conflict between topology and protocol, `Xuanwu-Semantic-Kernel-and-Matchmaking-Protocol.md` governs participant identity and step ordering; `docs/architecture/README.md` governs layer direction and boundary rules.
-
----
-
-### Target Documents
-
-The documents to be refined and aligned:
-
-- docs/architecture/README.md
-
----
-
-### Task Objectives
-
-For each target document:
-
-1. Shrink and condense content that is redundant, over-elaborated, or inconsistent with the baseline.
-2. Align structure and headings to match the baseline.
-3. Unify terminology with the baseline documents.
-4. Refactor Mermaid diagrams:
-   - Must reflect architecture layer system
-   - Maintain clear directional flows and visible lines
-   - Simplify node layout without losing meaning
-5. Preserve essential content, flows, and architecture semantics.
-
----
-
-### Architecture Layer System
-
-Ensure all diagrams and references follow the architecture layer color system defined in `.github/skills/xuanwu-diagram-standards/SKILL.md`.
-
----
-
-### Constraints
-
-- Do NOT introduce new architecture concepts, layers, or subsystems.
-- Do NOT expand scope beyond the baseline SSOT.
-- Do NOT preserve any content that conflicts with baseline.
-- The goal is realignment and slimming, not expansion.
-
----
-
-### Output Requirements
-
-After refinement:
-
-- Target documents are fully aligned with the Protocol SSOT (`Xuanwu-Semantic-Kernel-and-Matchmaking-Protocol.md`) and the topology SSOT (`docs/architecture/README.md`)
-- Redundant or bloated sections are shrunk
-- Terminology is consistent across all documents
-- Mermaid diagrams are clean, readable, and aligned with the architecture layer system
-- Documents reflect a lean, professional system architecture blueprint
-
----
-
-### Execution Guidelines for Agent
-
-Prefer modifying and shrinking existing sections and diagrams rather than creating new ones.
-Always ensure that diagrams and text match the baseline.
-Maintain clarity, readability, and layer alignment at all times.
-````
-
-## File: .github/skills/breakdown-plan/SKILL.md
-````markdown
----
-name: breakdown-plan
-description: 'Generate a comprehensive project plan with Epic > Feature > Story/Enabler > Test hierarchy, dependencies, priorities, and automated tracking. Use when decomposing a large initiative into actionable issues, planning a sprint, or creating a GitHub project backlog. Triggers: "breakdown plan", "project plan", "issue planning", "task decomposition", "sprint planning".'
-argument-hint: '[initiative or epic title] [scope and key constraints]'
----
-
-# Breakdown Plan
-
-## Consolidation Status
-- Canonical planning skill for phased implementation planning.
-- Consolidated and removed wrappers: `create-implementation-plan`, `gen-specs-as-issues`.
+This skill provides a systematic workflow for giving agents comprehensive context about
+**both the codebase** (via Repomix) and **the framework ecosystem** (via Context7) before
+undertaking complex tasks. It extends the standard Serena session startup and is the
+recommended approach for any session involving cross-module, architectural, or
+framework-version-sensitive work.
 
 ## When to Use
-- Decomposing a large initiative or epic into trackable tasks
-- Creating a structured backlog for sprint planning
-- Generating GitHub issues from a requirements document
 
-## Prerequisites
-- Have a clear goal statement or PRD (use `breakdown-epic-pm` first if needed)
-- Understand the target repository and issue tracker
+| Scenario | Trigger |
+|----------|---------|
+| Session start with cross-module scope | Any task touching 2+ modules |
+| Framework API usage (Next.js, React, Firebase…) | Any call to a version-sensitive API |
+| Broad impact analysis | PRs, refactors, dependency upgrades |
+| Onboarding a new agent to current project state | First session or after long gap |
+| Architecture compliance audit | Before or after DDD migration steps |
 
-## Workflow
-1. Parse the goal or PRD: extract the top-level epic.
-2. Decompose into Features: groups of related functionality.
-3. Break each Feature into Stories (user-facing) and Enablers (technical tasks).
-4. Write test tasks for each Story: define what automated tests must pass.
-5. Assign priorities: Critical / High / Medium / Low based on business value and risk.
-6. Map dependencies: which tasks must complete before others can start.
-7. Estimate complexity: S / M / L / XL for each story.
-8. Format the plan as a Markdown checklist and optionally create GitHub issues.
+---
 
-## Output Contract
-- Produce a hierarchical plan: `Epic > Feature > Story/Enabler > Test`.
-- Each story must have: title, description, acceptance criteria, priority, complexity, dependencies.
-- Include a dependency graph or ordered list of blocking relationships.
+## Two Pillars of Global Awareness
 
-## Guardrails
-- Do not create stories without acceptance criteria.
-- Flag circular dependencies and escalate for resolution before finalizing the plan.
-- Keep each story independently deliverable where possible.
+| Pillar | Tool | What It Provides |
+|--------|------|-----------------|
+| **Codebase Awareness** | `repomix/*` | Full project structure, module boundaries, existing code patterns |
+| **Framework Awareness** | `context7/*` | Current API docs for Next.js 15, React 19, Firebase, Tailwind v4, TypeScript 5.x, shadcn/ui |
 
-## Source of Truth
-- VS Code Copilot Agent Skills: https://code.visualstudio.com/docs/copilot/customization/agent-skills
+These two pillars complement **Serena** (precise symbol-level code intelligence) rather than
+replace it. Use Serena for targeted edits; use Repomix + Context7 for broad situational
+awareness.
+
+---
+
+## Full Workflow
+
+### Phase 0 — Serena Session Startup (prerequisite)
+
+All agents must complete the standard startup sequence first:
+
+```
+1. serena-check_onboarding_performed
+2. serena-list_memories
+3. serena-read_memory(project/architecture)
+4. serena-read_memory(project/conventions)
+```
+
+### Phase 1 — Codebase Snapshot (Repomix)
+
+Pack the relevant sections of the codebase. Use **Tree-sitter compression** (`compress: true`)
+to reduce token usage by ~70% while keeping semantic meaning.
+
+```
+repomix-pack_codebase(
+  directory: ".",
+  compress: true,
+  includePatterns: "<target scope — see table below>",
+  ignorePatterns: "node_modules/**,dist/**,.next/**,.serena/**"
+)
+```
+
+**Project-specific scope patterns for this codebase:**
+
+| Task Scope | `includePatterns` |
+|-----------|-------------------|
+| All modules (overview) | `src/modules/**,docs/architecture/**` |
+| Single module deep-dive | `src/modules/<name>.module/**` |
+| Domain layer only | `src/modules/*/domain.*/**` |
+| Infrastructure & adapters | `src/modules/*/infra.*/**,src/infrastructure/**` |
+| Design system | `src/design-system/**,src/shared/**` |
+| Architecture docs | `docs/architecture/**,src/modules/*/README.md` |
+| Copilot customization | `.github/**` |
+
+After packing, use `repomix-grep_repomix_output` to search the packed output without
+re-packing:
+
+```
+repomix-grep_repomix_output(
+  outputId: <id from pack step>,
+  pattern: "domain\\.|_ports\\.ts|IRepository",
+  contextLines: 2
+)
+```
+
+> **When NOT to use Repomix:** For locating a single known symbol or making a surgical edit,
+> prefer `serena-find_symbol` / `serena-replace_symbol_body`. Repomix shines for broad
+> structural understanding, not precision edits.
+
+### Phase 2 — Framework Documentation (Context7)
+
+Always resolve the library ID first, then query docs. Limit to **3 total calls** per question
+(1 resolve + up to 2 queries). This is a best-practice token-budget guideline — not a hard
+API rate limit — to keep context size manageable. Refine the query or split into sub-questions
+if 2 queries are insufficient.
+
+```
+// Step 2a: Resolve library ID
+context7-resolve-library-id(
+  libraryName: "next.js",
+  query: "App Router async params Server Components Next.js 15"
+)
+
+// Step 2b: Query with the resolved ID
+context7-query-docs(
+  libraryId: "/vercel/next.js",
+  query: "async params searchParams Server Components App Router"
+)
+```
+
+**Pre-resolved library IDs for this project:**
+
+| Library | Library ID | Common Query Topics |
+|---------|-----------|---------------------|
+| Next.js 15 | `/vercel/next.js` | App Router, Server Components, async `params`/`searchParams`, Route Handlers, `loading.tsx`, `error.tsx` |
+| React 19 | `/facebook/react` | Server Actions, `useActionState`, Suspense, `use()` hook, concurrent features |
+| TypeScript 5.x | `/microsoft/typescript` | `satisfies`, `const` type params, decorators, type predicates |
+| Tailwind CSS v4 | `/tailwindlabs/tailwindcss` | v4 config migration, CSS variables, `@theme`, dark mode |
+| Firebase JS SDK | `/firebase/firebase-js-sdk` | Firestore v9 modular queries, Auth, Security Rules |
+| shadcn/ui | `/shadcn-ui/ui` | Component API, new-york style, theming, `cn()` utility |
+
+> **When NOT to use Context7:** For project-internal conventions and established patterns,
+> rely on `serena-read_memory` and the architecture SSOT instead.
+
+### Phase 3 — Synthesize and Annotate
+
+After gathering both pillars:
+
+1. **Cross-reference existing code vs. current API**: Does the codebase use deprecated
+   patterns from older framework versions?
+2. **Identify framework-version conflicts**: Are there `async params` patterns required by
+   Next.js 15 that existing code hasn't adopted?
+3. **Build a session context summary** containing:
+   - Active module boundaries (from Repomix)
+   - Framework constraints that apply to the current task (from Context7)
+   - Any breaking changes relevant to the work at hand
+
+---
+
+## Extended Startup Sequence
+
+When the task requires global awareness, extend the Serena startup sequence with phases 1–3:
+
+```
+Standard Serena startup (all agents, always):
+  1. serena-check_onboarding_performed
+  2. serena-list_memories
+  3. serena-read_memory(project/architecture)
+  4. serena-read_memory(project/conventions)
+
+Extended with global awareness (when scope is cross-module or framework-sensitive):
+  5. repomix-pack_codebase (compressed, targeted scope)
+  6. context7-resolve-library-id + context7-query-docs (only for version-sensitive APIs)
+  7. Synthesize: cross-reference Repomix structure with Context7 API constraints
+```
+
+> Steps 5–7 add context but cost tokens. Invoke only when the task scope justifies it.
+> Single-file edits with known APIs do not need steps 5–7.
+
+---
+
+## Tool Decision Matrix
+
+| Need | Best Tool | Reason |
+|------|-----------|--------|
+| Find a specific class or function | `serena-find_symbol` | Precise, indexed lookup |
+| Understand module structure broadly | `repomix-pack_codebase` (compress=true) | Full tree snapshot with low token cost |
+| Current API signature for a framework | `context7-query-docs` | Version-accurate, avoids stale training data |
+| Edit a specific method or class | `serena-replace_symbol_body` | Safe, surgical, language-server-backed |
+| Inspect a remote or external repo | `repomix-pack_remote_repository` | Clone-free analysis |
+| Cross-file pattern search in local repo | `serena-search_for_pattern` | Indexed, precise |
+| Cross-file pattern search in packed output | `repomix-grep_repomix_output` | No re-pack needed |
+| Project conventions and architecture facts | `serena-read_memory` | Pre-indexed project memory |
+
+---
+
+## GitHub Copilot Browser Agent Setup
+
+When using GitHub Copilot agents through the **browser interface** (github.com → Copilot →
+Coding Agent), both Context7 and Repomix must be registered in the Coding Agent MCP
+configuration.
+
+### Verification Checklist
+
+- [ ] Copy `.github/copilot/mcp-coding-agent.json` into
+  [Settings → Copilot → Coding agent → MCP configuration](https://github.com/7Spade/xuanwu-platform/settings/copilot/coding_agent)
+- [ ] Add required Copilot environment secrets:
+
+  | Secret Name | Purpose |
+  |-------------|---------|
+  | `COPILOT_MCP_REDIS_URL` | `agent-memory` cross-session recall |
+  | `COPILOT_MCP_OPENAI_API_KEY` | `agent-memory` embeddings/generation |
+
+- [ ] Confirm `.github/workflows/copilot-setup-steps.yml` has the `copilot-setup-steps` job
+  that installs `uv` via `astral-sh/setup-uv@v5` (required for `serena`, `markitdown`,
+  `agent-memory` MCP servers)
+- [ ] After agent runs: verify Context7 resolved a library ID successfully and Repomix
+  produced a packed output ID before querying
+
+### Expected Tool Calls in a Global-Aware Session
+
+```
+Session start
+  └─ serena-check_onboarding_performed ✓
+  └─ serena-list_memories ✓
+  └─ serena-read_memory(project/architecture) ✓
+  └─ serena-read_memory(project/conventions) ✓
+  └─ repomix-pack_codebase (compressed, scoped) → outputId
+  └─ repomix-grep_repomix_output (search key patterns) → structure summary
+  └─ context7-resolve-library-id (for relevant framework) → libraryId
+  └─ context7-query-docs (version-sensitive API) → doc excerpts
+  └─ [synthesize context] → proceed with task
+```
+
+---
+
+## Agents Using This Skill
+
+| Agent | When to invoke |
+|-------|---------------|
+| `xuanwu-research` | Primary user — all research and context-gathering sessions |
+| `xuanwu-architect` | Before system design or impact analysis sessions |
+| `xuanwu-orchestrator` | When initializing complex cross-functional delivery |
+| `xuanwu-implementer` | Before implementing against version-sensitive framework APIs |
+| `xuanwu-quality` | When auditing framework API compliance |
+
+---
+
+## References
+
+- MCP Context7 memory: `.serena/memories/mcp/context7.md`
+- MCP Repomix memory: `.serena/memories/mcp/repomix.md`
+- MCP Coding Agent config: `.github/copilot/mcp-coding-agent.json`
+- VS Code MCP config: `.vscode/mcp.json`
+- Serena session startup: `docs/copilot/README.md` (Serena 協同最大化 section)
+- Architecture SSOT: `docs/architecture/README.md`
+- Agent MCP assignments: `.github/README.md` (MCP tool assignment guide)
 ````
 
 ## File: .github/skills/ddd-architecture/SKILL.md
@@ -50421,991 +51023,6 @@ This skill provides authoritative guidance for the following areas. Load the rel
 - VS Code Copilot Agent Skills: https://code.visualstudio.com/docs/copilot/customization/agent-skills
 ````
 
-## File: .github/skills/refactor/SKILL.md
-````markdown
----
-name: refactor
-description: 'Surgical code refactoring and quality review to improve maintainability without changing behavior. Use when extracting functions, reducing method cognitive complexity, renaming variables, breaking down god functions, improving type safety, eliminating code smells, reviewing code quality before merge, or applying design patterns. Triggers: "refactor", "clean up code", "extract method", "reduce complexity", "simplify method", "extract helpers", "cognitive complexity", "code smell", "improve maintainability", "review and refactor", "code quality", "fix smells", "improve readability".'
-argument-hint: '[file or symbol to refactor] [goal, e.g. extract method, reduce complexity, improve types]'
----
-
-# Refactor
-
-## Consolidation Status
-- Canonical skill for both refactor execution and refactor planning mode.
-- Consolidated and removed wrapper: `refactor-plan`.
-
-## When to Use
-
-**Refactor mode** — structural cleanup of specific code patterns:
-- Extracting a reusable function from duplicated logic
-- Renaming a variable, function, or type for clarity
-- Breaking a god function into focused helpers
-- Improving type safety by replacing `any` with proper types
-- Eliminating code smells: magic numbers, deep nesting, feature envy
-
-**Review & Refactor mode** — broader quality pass before merge:
-- A file or module has grown complex and needs cleanup before a PR merge
-- Code review identified structural problems that need fixing
-- Asked to "clean up" or "improve" a set of files
-
-**Method Complexity Reduce mode** — targeted cognitive complexity reduction:
-- A linter or review flags a method as exceeding complexity threshold
-- A function has deep nesting or mixed concerns that hurt readability/testability
-- Asked to "simplify this method" while preserving behavior
-
-## Prerequisites
-- Identify the target file(s) and the specific code to refactor
-- Confirm tests exist to verify behavior before and after
-- Understand the public API surface that must not change
-- In review mode: read `.github/copilot-instructions.md` for project conventions and run existing lint checks to baseline current issues
-
-## Workflow
-
-### Focused Refactor
-1. Read the full target file to understand context before changing anything.
-2. Identify the specific code smell or improvement opportunity.
-3. Apply one refactoring operation at a time:
-   - **Extract**: move logic into a named function or variable
-   - **Rename**: update symbol to communicate intent clearly
-   - **Inline**: remove unnecessary indirection if it obscures intent
-   - **Simplify**: replace complex conditionals with guard clauses or early returns
-4. Run tests and type-check after each operation — do not batch unverified changes.
-5. Review that the public API, types, and exports are unchanged.
-6. Summarize every change with its category and rationale.
-
-### Review & Refactor Pass
-1. Read and understand each target file in full before changing anything.
-2. Identify issues: dead code, magic literals, oversized functions, duplicated logic, unclear naming.
-3. Apply changes incrementally: rename → extract → simplify → remove dead code.
-4. Preserve all existing behavior; do not add new features.
-5. Run `npm run check` (or equivalent) after changes to verify no regressions.
-6. Summarize every change made and the reason for each.
-
-### Method Complexity Reduce Pass
-1. Identify the method name, current complexity score, and target threshold.
-2. Read the full method and split it into logical sub-tasks.
-3. Extract candidates incrementally (guard clauses, branch blocks, repeated logic) into named helpers.
-4. Re-score complexity after each extraction and stop when the threshold is met.
-5. Run targeted tests and type-check to verify behavior remains unchanged.
-6. Report before/after complexity scores and any follow-up extraction needed.
-
-## Output Contract
-- Each change must be labeled with its refactoring type (Extract / Rename / Inline / Simplify / Remove).
-- Behavioral equivalence must be verifiable by existing tests.
-- Output a summary table: file → change type → rationale.
-- Include a diff summary grouped by change type for review passes.
-- For complexity-reduction tasks, include before/after cognitive complexity scores.
-
-## Guardrails
-- Do not change behavior — pure structural changes only.
-- Do not rename public API symbols without explicit approval.
-- Do not introduce new dependencies during refactoring.
-- Do not remove error handling, even if it looks redundant.
-- Stop and report if any change cannot be verified by an existing test or would require architecture changes.
-
-## Source of Truth
-- VS Code Copilot Agent Skills: https://code.visualstudio.com/docs/copilot/customization/agent-skills
-````
-
-## File: .github/skills/shadcn/SKILL.md
-````markdown
----
-name: shadcn
-description: >
-  Project-aware shadcn/ui skill for Xuanwu. Knows the project's component aliases,
-  registry configuration, installed components, Tailwind setup, and correct import paths.
-  Use when adding, customizing, or troubleshooting shadcn/ui components in this project.
-  Triggers: "shadcn", "ui component", "add component", "button", "dialog", "dropdown",
-  "form", "table", "card", "shadcn/ui", "radix", "component registry".
-user-invocable: false
----
-
-# shadcn/ui Project Skill for Xuanwu
-
-Project-aware guidance for shadcn/ui in the Xuanwu platform.
-Source: [ui.shadcn.com/docs/skills](https://ui.shadcn.com/docs/skills)
-
-## Project Configuration (`components.json`)
-
-| Setting | Value |
-|---------|-------|
-| Style | `new-york` |
-| RSC | `true` |
-| TypeScript | `true` |
-| Tailwind CSS | `src/app/globals.css` |
-| Base color | `neutral` |
-| CSS variables | `true` |
-| Icon library | `lucide-react` |
-
-## Alias Map
-
-All component imports use project-specific path aliases — **never** use relative paths from `components/ui`:
-
-| Alias | Resolves to |
-|-------|-------------|
-| `@/design-system/primitives` | All shadcn/ui components |
-| `@/design-system/primitives/ui` | Raw UI primitives (Button, Input, Dialog…) |
-| `@/design-system/primitives/lib/utils` | `cn()` utility |
-| `@/design-system/primitives/hooks` | shadcn/ui hooks |
-
-```tsx
-// ✅ Correct import
-import { Button } from "@/design-system/primitives/ui/button";
-import { cn } from "@/design-system/primitives/lib/utils";
-
-// ❌ Wrong — do not use default shadcn paths
-import { Button } from "@/components/ui/button";
-```
-
-## Adding Components
-
-Use the shadcn CLI with the project's component alias:
-
-```bash
-npx shadcn add <component>
-```
-
-The CLI reads `components.json` and places files in `src/design-system/primitives/ui/`.
-
-To browse available components:
-```bash
-npx shadcn search <keyword>
-```
-
-Or use the shadcn MCP server (already configured in `.vscode/mcp.json`):
-- `shadcn-list_items_in_registries` — list all components
-- `shadcn-search_items_in_registries` — fuzzy search
-- `shadcn-view_items_in_registries` — inspect component source
-- `shadcn-get_item_examples_from_registries` — find usage examples
-- `shadcn-get_add_command_for_items` — get the correct CLI install command
-
-## Composition Rules
-
-- Use `DropdownMenu` for action menus with 3+ options.
-- Use `Dialog` + `DialogContent` for modal workflows.
-- Use `Sheet` for side panels and mobile drawers.
-- Use `Form` + `FormField` + `FormMessage` (react-hook-form integration) for all user input.
-- Use `Table` + `DataTable` pattern for tabular data.
-- Use semantic `variant` prop rather than boolean flags (`variant="destructive"`, `variant="outline"`).
-- Use `cn()` from `@/design-system/primitives/lib/utils` to merge Tailwind classes.
-
-## Dark Mode
-
-Dark mode is enabled via `next-themes` `ThemeProvider` in `src/app/layout.tsx`.
-All CSS variables in `src/app/globals.css` have `.dark` overrides.
-Use `bg-background`, `text-foreground`, `border-border` etc. — these auto-adapt.
-
-## Theming
-
-The project uses **CSS variables** (not Tailwind color utilities directly) for theming:
-- `--background`, `--foreground` — page background/text
-- `--primary`, `--primary-foreground` — primary interactive color
-- `--secondary`, `--secondary-foreground` — secondary elements
-- `--muted`, `--muted-foreground` — muted/placeholder text
-- `--destructive`, `--destructive-foreground` — error/danger states
-- `--border`, `--ring` — borders and focus rings
-
-Override in `src/app/globals.css` under `:root` and `.dark`.
-
-## Key Components in This Project
-
-| Component | Location | Notes |
-|-----------|----------|-------|
-| `Button` | `@/design-system/primitives/ui/button` | Variants: default, destructive, outline, secondary, ghost, link |
-| `DropdownMenu` | `@/design-system/primitives/ui/dropdown-menu` | Used in `ModeToggle`, `MarketingHeader` locale selector |
-| `Dialog` | `@/design-system/primitives/ui/dialog` | Used in workspace dialogs |
-| `Form` | `@/design-system/primitives/ui/form` | react-hook-form integration |
-| `Card` | `@/design-system/primitives/ui/card` | Used in dashboard cards |
-| `Sidebar` | `@/design-system/primitives/ui/sidebar` | App shell sidebar |
-| `Avatar` | `@/design-system/primitives/ui/avatar` | User avatars in nav |
-
-## MCP Server
-
-The shadcn MCP server is pre-configured in `.vscode/mcp.json`.
-Use `shadcn-search_items_in_registries` and `shadcn-view_items_in_registries` before
-implementing any new shadcn/ui component to verify its API and usage patterns.
-
-## Related
-
-- [vercel-react-best-practices](./../vercel-react-best-practices/SKILL.md) — React performance
-- [vercel-composition-patterns](./../vercel-composition-patterns/SKILL.md) — Composition APIs
-- [next-best-practices](./../next-best-practices/SKILL.md) — Server/client boundaries
-- Project `components.json`: `/components.json`
-- shadcn/ui docs: https://ui.shadcn.com
-- shadcn MCP: https://ui.shadcn.com/docs/mcp
-````
-
-## File: .github/skills/vercel-composition-patterns/SKILL.md
-````markdown
----
-name: vercel-composition-patterns
-description: >
-  React composition patterns that scale — avoiding boolean prop proliferation, compound
-  components, render props, and slot-based composition. Use when designing reusable
-  component APIs, reviewing component interfaces, or refactoring components that have
-  grown too many boolean flags or conditional branches.
-  Triggers: "composition patterns", "compound component", "boolean prop proliferation",
-  "render prop", "slot pattern", "component API design".
-user-invocable: false
----
-
-# Vercel Composition Patterns
-
-React composition patterns for building scalable, maintainable component APIs.
-Source: [vercel.com/docs/agent-resources/skills](https://vercel.com/docs/agent-resources/skills)
-
-## When to use this skill
-
-- Designing a reusable component that is getting too many boolean props
-- Reviewing a component API for maintainability
-- Refactoring tightly coupled parent/child rendering logic
-- Building design-system components that need to be composable
-
----
-
-## 1. Avoid Boolean Prop Proliferation
-
-When a component accumulates many boolean flags (`isLoading`, `isError`, `isDisabled`, `isPrimary`, `isLarge`…), it is a sign that composition should replace configuration.
-
-```tsx
-// ❌ Boolean prop explosion
-<Button isPrimary isLarge isLoading isDisabled>Save</Button>
-
-// ✅ Composition via variant + slot
-<Button variant="primary" size="lg" asChild>
-  <Link href="/save">Save</Link>
-</Button>
-```
-
-**Rule of thumb:** If you need more than 2–3 boolean props to describe visual or behavioral variants, reach for composition or a `variant` prop with a discriminated union type.
-
----
-
-## 2. Compound Components
-
-Expose a family of components that share implicit state through context, giving callers flexible control over structure.
-
-```tsx
-// Context
-const AccordionContext = createContext<AccordionContextValue | null>(null);
-
-// Root
-function Accordion({ children }: { children: ReactNode }) {
-  const [open, setOpen] = useState<string | null>(null);
-  return (
-    <AccordionContext.Provider value={{ open, setOpen }}>
-      <div>{children}</div>
-    </AccordionContext.Provider>
-  );
-}
-
-// Sub-components
-Accordion.Item = function AccordionItem({ id, children }: AccordionItemProps) { /* ... */ };
-Accordion.Trigger = function AccordionTrigger({ id, children }: AccordionTriggerProps) { /* ... */ };
-Accordion.Content = function AccordionContent({ id, children }: AccordionContentProps) { /* ... */ };
-
-// Usage — caller controls structure
-<Accordion>
-  <Accordion.Item id="q1">
-    <Accordion.Trigger id="q1">What is Xuanwu?</Accordion.Trigger>
-    <Accordion.Content id="q1">A platform for...</Accordion.Content>
-  </Accordion.Item>
-</Accordion>
-```
-
-> **Note:** shadcn/ui components (e.g. `Accordion`, `Dialog`, `DropdownMenu`) already use this pattern — follow their lead.
-
----
-
-## 3. Slot-Based Composition (Children as Flexible Slots)
-
-Accept `ReactNode` props for named regions instead of hardcoding structure. Used in `RootShell` and layout components in this project.
-
-```tsx
-// ✅ Slot-based layout shell
-interface PageLayoutProps {
-  header?: ReactNode;
-  footer?: ReactNode;
-  children: ReactNode;
-}
-
-export function PageLayout({ header, footer, children }: PageLayoutProps) {
-  return (
-    <>
-      {header && <header className="sticky top-0 z-50">{header}</header>}
-      <main className="flex-1">{children}</main>
-      {footer && <footer>{footer}</footer>}
-    </>
-  );
-}
-```
-
----
-
-## 4. `asChild` / Polymorphic Components
-
-Allow a component to render as a different HTML element or React component without duplicating its logic. Radix UI's `asChild` prop is the standard approach.
-
-```tsx
-import { Slot } from '@radix-ui/react-slot';
-
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  asChild?: boolean;
-}
-
-export function Button({ asChild, ...props }: ButtonProps) {
-  const Comp = asChild ? Slot : 'button';
-  return <Comp {...props} />;
-}
-
-// Renders as an anchor, but with Button styles
-<Button asChild>
-  <a href="/dashboard">Go to Dashboard</a>
-</Button>
-```
-
----
-
-## 5. Render Props (Inversion of Control)
-
-When a parent needs to delegate rendering to the caller, use render props or children-as-function.
-
-```tsx
-// ✅ Render prop for flexible list items
-interface ListProps<T> {
-  items: T[];
-  renderItem: (item: T, index: number) => ReactNode;
-  emptyState?: ReactNode;
-}
-
-function List<T>({ items, renderItem, emptyState }: ListProps<T>) {
-  if (items.length === 0) return <>{emptyState ?? <p>No items.</p>}</>;
-  return <ul>{items.map((item, i) => <li key={i}>{renderItem(item, i)}</li>)}</ul>;
-}
-
-// Caller owns the rendering
-<List
-  items={workspaces}
-  renderItem={(ws) => <WorkspaceCard workspace={ws} />}
-  emptyState={<EmptyWorkspaces />}
-/>
-```
-
----
-
-## 6. Controlled vs. Uncontrolled Components
-
-Design reusable components to support both modes:
-- **Uncontrolled** — manages state internally; good for simple cases.
-- **Controlled** — caller owns state via `value` + `onChange`; required for forms and complex UIs.
-
-```tsx
-interface ToggleProps {
-  defaultChecked?: boolean; // uncontrolled
-  checked?: boolean;        // controlled
-  onChange?: (checked: boolean) => void;
-}
-```
-
----
-
-## Related
-
-- [vercel-react-best-practices](./../vercel-react-best-practices/SKILL.md) — Performance and memoization
-- [next-best-practices](./../next-best-practices/SKILL.md) — Server vs. client boundaries
-- [ddd-architecture](./../ddd-architecture/SKILL.md) — Application layer composition patterns
-- Radix UI primitives: https://www.radix-ui.com/primitives
-````
-
-## File: .github/skills/vercel-react-best-practices/SKILL.md
-````markdown
----
-name: vercel-react-best-practices
-description: >
-  React and Next.js performance optimization guidelines. Use when reviewing or implementing
-  React components, optimizing rendering performance, auditing bundle size, or following
-  Vercel-recommended patterns for production Next.js applications.
-  Triggers: "React performance", "memo", "bundle size", "rendering optimization",
-  "avoid re-render", "lazy load", "code splitting".
-user-invocable: false
----
-
-# Vercel React Best Practices
-
-React and Next.js performance optimization guidelines from Vercel's production experience.
-Source: [vercel.com/docs/agent-resources/skills](https://vercel.com/docs/agent-resources/skills)
-
-## When to use this skill
-
-- Reviewing React component performance
-- Optimizing bundle size and code splitting
-- Preventing unnecessary re-renders
-- Auditing server vs. client component decisions in Next.js
-
----
-
-## 1. Server Components First (Next.js App Router)
-
-- **Default to Server Components.** Add `"use client"` only when you need browser APIs, event handlers, or stateful interactivity.
-- Every `"use client"` boundary creates a new client bundle entry — keep boundaries as far down the tree as possible.
-- Compose: wrap a small interactive island in `"use client"` while keeping the surrounding layout server-rendered.
-
-```tsx
-// ✅ Server Component (no directive needed)
-export async function ProductList() {
-  const products = await fetchProducts();
-  return <ul>{products.map(p => <ProductItem key={p.id} product={p} />)}</ul>;
-}
-
-// ✅ Isolated client leaf
-"use client";
-export function AddToCartButton({ productId }: { productId: string }) {
-  const [loading, setLoading] = useState(false);
-  // ...
-}
-```
-
----
-
-## 2. Memoization
-
-Use `React.memo`, `useMemo`, and `useCallback` **only when**:
-- The component re-renders due to parent updates that don't affect its props.
-- A computed value is expensive (> 1ms).
-- A callback is passed as a prop to a memoized child.
-
-**Anti-patterns to avoid:**
-```tsx
-// ❌ Premature memoization — trivial computation
-const label = useMemo(() => `Hello ${name}`, [name]);
-
-// ✅ Justified — passed to memo'd child
-const handleSubmit = useCallback(() => onSubmit(formData), [formData, onSubmit]);
-```
-
----
-
-## 3. Code Splitting and Lazy Loading
-
-- Use `next/dynamic` for components that are not critical to the initial viewport.
-- Never use `next/dynamic({ ssr: false })` inside Server Components.
-- Use `React.lazy` + `Suspense` in client-only subtrees.
-
-```tsx
-const HeavyChart = dynamic(() => import('@/components/HeavyChart'), {
-  loading: () => <Skeleton className="h-64 w-full" />,
-});
-```
-
----
-
-## 4. Image and Font Optimization
-
-- **Always** use `next/image` for `<img>` tags — auto-sizes, lazy-loads, and serves WebP/AVIF.
-- **Always** use `next/font` — eliminates layout shift from external font loading.
-- Set `priority` only on the LCP image (above-the-fold hero).
-
-```tsx
-import Image from 'next/image';
-import { Inter } from 'next/font/google';
-
-const inter = Inter({ subsets: ['latin'] }); // no external request at runtime
-```
-
----
-
-## 5. Key Prop Discipline
-
-- Use **stable, unique identifiers** as `key` (database IDs, slugs).
-- Never use array index as `key` for lists that can be reordered or filtered.
-- A wrong `key` forces full unmount/remount — use only to intentionally reset state.
-
----
-
-## 6. useEffect Best Practices
-
-- Declare all reactive values used inside `useEffect` in the dependency array.
-- Prefer Server Components or `fetch` with `cache` over `useEffect` for data fetching.
-- Cleanup subscriptions and timers to prevent memory leaks.
-
-```tsx
-useEffect(() => {
-  const subscription = subscribe(id, handler);
-  return () => subscription.unsubscribe(); // cleanup
-}, [id]); // id is the reactive value
-```
-
----
-
-## 7. Bundle Analysis
-
-Run `ANALYZE=true next build` (with `@next/bundle-analyzer`) to inspect bundle composition.
-- Identify large client-side chunks that could be moved to Server Components.
-- Audit third-party imports — prefer tree-shakeable ESM packages.
-- Lazy-load heavy libraries (e.g. chart libraries, PDF renderers, editors).
-
----
-
-## 8. Streaming and Suspense
-
-- Wrap slow data-fetching Server Components in `<Suspense fallback={<Skeleton />}>`.
-- Use `loading.tsx` for route-level streaming — shows immediately while the page shell loads.
-- Avoid sequential data fetching — use `Promise.all` / `Promise.allSettled` for parallel requests.
-
-```tsx
-// ✅ Parallel data fetching in Server Component
-const [user, posts] = await Promise.all([getUser(id), getPosts(id)]);
-```
-
----
-
-## Related
-
-- [next-best-practices](./../next-best-practices/SKILL.md) — File conventions, RSC boundaries, async APIs
-- [vercel-composition-patterns](./../vercel-composition-patterns/SKILL.md) — Component composition patterns
-- Next.js App Router docs: https://nextjs.org/docs/app
-````
-
-## File: .github/skills/web-design-reviewer/SKILL.md
-````markdown
----
-name: web-design-reviewer
-description: 'Visual inspection and fix of websites for design issues including responsive breakage, accessibility problems, visual inconsistency, and layout errors. Use when asked to review UI design, check layout, or fix design problems. Triggers: "review website design", "check the UI", "fix the layout", "find design problems", "UI review", "design audit".'
-argument-hint: '[URL or component path] [specific design concern, e.g. mobile layout, dark mode, accessibility]'
----
-
-# Web Design Reviewer
-
-## When to Use
-- Reviewing a local or remote website for visual design issues
-- Checking responsive layout at multiple breakpoints (mobile, tablet, desktop)
-- Auditing accessibility: color contrast, font sizes, focus states, ARIA labels
-- Identifying visual inconsistencies across pages or components
-
-## Prerequisites
-- The target website must be accessible (local dev server or public URL)
-- Browser automation (Chrome DevTools MCP or Playwright MCP) must be active
-- Know the design system or style guide in use (Tailwind, shadcn/ui, custom CSS)
-
-## Workflow
-1. Navigate to the target URL and take a full-page screenshot.
-2. Take snapshots at three viewport widths: mobile (375px), tablet (768px), desktop (1280px).
-3. Inspect each snapshot for:
-   - Layout breakage: overflow, clipping, stacking issues
-   - Typography: inconsistent font sizes, line heights, or weights
-   - Color: insufficient contrast ratios (must meet WCAG AA: 4.5:1 for text)
-   - Spacing: inconsistent padding/margin vs. design system tokens
-   - Accessibility: missing `alt` text, focus indicators, ARIA roles
-4. Categorize findings by severity: Critical / Warning / Suggestion.
-5. Locate the source file for each finding.
-6. Apply source-level fixes for Critical and Warning findings.
-7. Re-take screenshots after fixes to verify improvement.
-
-## Output Contract
-- Produce a review report with: Findings by Severity, Screenshot Evidence, Source File Reference, Fix Applied.
-- Include before/after screenshots for every Critical fix.
-- List Suggestions separately as optional improvements.
-
-## Guardrails
-- Do not modify component logic — only CSS, Tailwind classes, and layout structure.
-- Do not override global design tokens; use existing theme values.
-- Flag fixes that require design system changes for human review.
-
-## Source of Truth
-- VS Code Copilot Agent Skills: https://code.visualstudio.com/docs/copilot/customization/agent-skills
-- WCAG contrast checker: https://webaim.org/resources/contrastchecker/
-````
-
-## File: .github/skills/xuanwu-diagram-standards/SKILL.md
-````markdown
----
-name: xuanwu-diagram-standards
-description: >
-  Diagram standards, Mermaid guidelines, architecture layer color system, layout
-  principles, refactoring rules, and quality targets for all Xuanwu architecture
-  diagrams. Use when designing, refining, or reviewing architecture diagrams in
-  this repository. Triggers: "architecture diagram", "Mermaid", "diagram refactor",
-  "diagram review", "diagram standard", "layer color", "diagram quality".
----
-
-# Xuanwu Diagram Design Standards
-
-This skill is the single source of truth for visual standards applied to all Mermaid
-architecture diagrams in the Xuanwu repository.
-
----
-
-## Architecture Layer Color System
-
-All diagrams MUST use consistent layer-based semantic grouping. The following table
-defines the canonical architecture layer names and their semantic meanings. Use Mermaid
-`subgraph` blocks labelled with these layer names to reflect which layer each component
-belongs to:
-
-| Layer | Semantic Meaning |
-|-------|-----------------|
-| Identity | identity / actor / account |
-| Governance | tenant / policy / rules |
-| Semantic | ontology / tagging / classification |
-| Task / Skill | task system / skill system |
-| Data Lifecycle | ingestion / parsing / storage |
-| Matching / AI | AI matching / reasoning |
-| Infrastructure | database / cloud / storage |
-| Observability | monitoring / logging |
-
----
-
-## Diagram Standards
-
-Use **Mermaid only**. No other diagram format is accepted.
-
-Preferred diagram types (in order of preference):
-
-- `flowchart TD` / `graph TD` — top-down architecture flows
-- `graph LR` — left-right dependency chains
-- `sequenceDiagram` — protocol / interaction sequences
-
-Avoid unnecessary diagram types (e.g. `pie`, `gantt`, `er`) unless explicitly required.
-
----
-
-## Layout Principles
-
-Architecture MUST visually flow in canonical layer order:
-
-```
-Identity
-↓
-Governance
-↓
-Semantic
-↓
-Task / Skill
-↓
-Data Lifecycle
-↓
-Matching / AI
-↓
-Infrastructure
-↓
-Observability
-```
-
-Group components that belong to the same layer inside a Mermaid `subgraph`:
-
-```mermaid
-flowchart TD
-  subgraph Identity
-    A[Account] --> B[Auth]
-  end
-  subgraph Governance
-    C[Policy]
-  end
-  B --> C
-```
-
----
-
-## Minimal Edges
-
-Avoid:
-
-- Crossing lines
-- Chaotic node connections
-- Redundant arrows
-
-Prefer clear directional flow with as few edge crossings as possible.
-
----
-
-## Semantic Grouping
-
-Related components that belong to the same layer MUST be grouped using Mermaid `subgraph` blocks:
-
-```mermaid
-flowchart TD
-  subgraph Identity
-    ...
-  end
-  subgraph Governance
-    ...
-  end
-  subgraph Infrastructure
-    ...
-  end
-```
-
----
-
-## Diagram Refactoring Rules
-
-You MAY:
-
-- Reorganize node layout
-- Group components into subgraphs
-- Simplify flows
-- Remove redundant nodes
-- Rename nodes for clarity
-
-You MUST NOT:
-
-- Invent new architecture components
-- Change system meaning
-- Introduce new subsystems not present in the surrounding documentation
-
----
-
-## Editing Strategy
-
-When refining a diagram:
-
-1. Read surrounding documentation to understand the architecture meaning.
-2. Identify unclear flows, missing groupings, or nodes that misrepresent the system.
-3. Reorganize node layout following layer order from top to bottom.
-4. Apply `subgraph` blocks that align with the architecture layer color system.
-5. Simplify the graph — remove clutter without losing semantic meaning.
-6. Verify the final diagram matches the surrounding narrative and SSOT documents.
-
-Always ensure the diagram matches the architecture narrative before committing.
-
----
-
-## Quality Target
-
-A good diagram should:
-
-- Be readable in under 5 seconds
-- Clearly show system layers
-- Avoid visual clutter
-- Resemble professional architecture documentation
-
-Think like a principal architect presenting a system design.
-````
-
-## File: .github/skills/xuanwu-intent-pipeline/SKILL.md
-````markdown
----
-name: xuanwu-intent-pipeline
-user-invocable: false
-description: >
-  Xuanwu 六步驟智能理解管道（Six-Step Intent Pipeline）。
-  在執行任何代理任務之前，透過結構化步驟完整理解用戶意圖。
-  Use this skill when: decomposing an ambiguous request, routing to the
-  correct agent, or verifying you have captured all parameters before
-  making code or documentation changes.
-  Triggers: "understand intent", "analyze request", "pipeline",
-  "六步驟", "意圖分析", "任務拆解", "before dispatch", "clarify scope".
----
-
-# Xuanwu 六步驟智能理解管道
-
-本技能定義 Xuanwu 代理系統處理所有進入請求的**標準理解流程**。
-
----
-
-## 六步驟流程
-
-### ① 接收原始輸入（Raw Input）
-
-**目的：** 完整保留用戶的原始文字或指令，不做早期解釋。
-
-```
-輸出：verbatim_request = "<用戶原始文字>"
-```
-
-規則：
-- 不刪除、不改寫任何部分
-- 如有程式碼片段或錯誤訊息，完整保留
-- 識別輸入語言（中文 / 英文 / 混合）
-
----
-
-### ② 語意分析（Intent Detection）
-
-**目的：** 判斷用戶的目標和行為意圖。
-
-```
-輸出：
-  action_type: create | audit | fix | refactor | document | optimize | research | configure
-  domain_area: architecture | code | ui | ci-cd | docs | security | performance | testing
-  urgency: blocking | high | normal | low
-```
-
-問題清單：
-1. 用戶要「建立」還是「修改」還是「查詢」？
-2. 這是一次性任務還是重複性工作流程？
-3. 有沒有隱含的約束（時間、範圍、品質）？
-4. 請求是否涉及多個領域（需要跨代理協調）？
-
----
-
-### ③ 上下文抓取（Context Extraction）
-
-**目的：** 收集與任務相關的背景資訊。
-
-```
-工具序列：
-  1. serena-list_memories → 檢查現有專案記憶
-  2. serena-read_memory(project/architecture) → 架構現況
-  3. agent-memory-search_long_term_memory(query) → 跨 session 歷史
-  4. serena-find_symbol / serena-search_for_pattern → 具體程式碼位置
-```
-
-輸出：
-- 相關模組列表（`src/modules/<name>.module/`）
-- 相關層（Domain / Application / Infrastructure / Presentation）
-- 現有實作模式（參考相似程式碼）
-- 已知約束（ADR 決策、架構邊界）
-
----
-
-### ④ 關鍵資訊標記（Entity & Parameter Extraction）
-
-**目的：** 將指令拆解為結構化的模組、參數和設定。
-
-```
-輸出結構：
-{
-  "modules": ["identity.module", "workspace.module"],
-  "files": ["src/modules/identity.module/domain.auth/_entity.ts"],
-  "layers": ["Domain", "Application"],
-  "operation": "add PasswordReset aggregate",
-  "constraints": ["must not break existing sign-in flow"],
-  "dependencies": ["FirebaseAuth", "IIdentityRepository"]
-}
-```
-
-標記規則：
-- 模組名稱必須使用倉庫的 `<name>.module` 格式
-- 層必須使用 Presentation / Application / Domain / Infrastructure
-- 明確識別外部依賴（Firebase、第三方 API）
-- 識別共享層（`src/shared/`）涉及範圍
-
----
-
-### ⑤ 依賴與優先級分析（Dependency & Priority Analysis）
-
-**目的：** 確定任務執行順序與先後關係。
-
-```
-輸出：
-  sequence:
-    - step: 1
-      task: "Domain layer: PasswordReset entity + value objects"
-      agent: ddd-domain-modeler
-      depends_on: []
-      blocking: [step-2, step-3]
-    - step: 2
-      task: "Application layer: ResetPasswordUseCase"
-      agent: ddd-application-layer
-      depends_on: [step-1]
-      blocking: [step-3]
-    - step: 3
-      task: "Infrastructure: FirebaseEmailAdapter"
-      agent: ddd-infrastructure
-      depends_on: [step-2]
-      blocking: []
-```
-
-分析維度：
-1. 哪些任務有**技術依賴**（B 需要 A 的介面）？
-2. 哪些任務可以**平行執行**？
-3. 哪個代理最適合每個步驟？
-4. 什麼是**最小可驗證單元**（MVP）？
-
----
-
-### ⑥ 生成任務指令（Task Instruction Generation）
-
-**目的：** 形成清晰、可執行的操作方案。
-
-```
-輸出格式：
-
-問題摘要：[一句話總結]
-
-推薦代理：[agent-name]
-推薦指令：[/slash-command 如適用]
-
-執行計劃：
-  Phase 1 (今): ...
-  Phase 2 (可選): ...
-
-預期交付物：
-  - 檔案路徑 + 說明
-  - 測試覆蓋範圍
-
-驗證方式：
-  - 如何確認任務完成？
-```
-
----
-
-## 在代理中應用
-
-### xuanwu-commander（主入口）
-
-對所有請求執行完整六步驟，輸出「建議交接」。
-
-### xuanwu-orchestrator（跨功能協調）
-
-在分配子任務時，對每個子任務的範圍重新執行步驟 ④-⑥。
-
-### xuanwu-research（上下文研究）
-
-深度執行步驟 ③，產出帶有引用的發現報告。
-
-### xuanwu-software-planner（計劃生成）
-
-以步驟 ⑤-⑥ 為核心，詳細展開任務序列。
-
----
-
-## 快速模板
-
-```markdown
-## 六步驟分析
-
-**① 原始輸入**
-> [verbatim user request]
-
-**② 意圖分析**
-- 動作類型：[create/audit/fix/refactor/document/optimize]
-- 領域範圍：[architecture/code/ui/ci-cd/docs]
-
-**③ 上下文（Serena 查詢結果）**
-- 相關模組：[list]
-- 現有模式：[reference]
-
-**④ 關鍵參數**
-- 模組：[list]
-- 層：[list]
-- 操作：[description]
-- 約束：[list]
-
-**⑤ 依賴序列**
-1. [任務] → [代理]
-2. [任務] → [代理]
-
-**⑥ 執行方案**
-推薦代理：[agent]
-推薦指令：[/command]
-交付物：[list]
-```
-
----
-
-## 何時使用此技能
-
-- **請求模糊時** — 使用步驟 ①-② 找出真實意圖
-- **範圍不清時** — 使用步驟 ③-④ 確定邊界
-- **跨代理協調時** — 使用步驟 ⑤ 確定執行序列
-- **準備交接時** — 使用步驟 ⑥ 產出交接文件
-
-不需要在步驟間等待用戶確認 — 以推論補充不確定資訊，並在步驟 ⑥ 標記假設。
-````
-
 ## File: .gitignore
 ````
 # dependencies
@@ -51460,6 +51077,301 @@ repomix-output.json
 # Example:
 # *.log
 # tmp/
+````
+
+## File: .serena/memories/design-system.md
+````markdown
+# design-system — File Index
+
+**層次**: 設計系統 / Design System
+**職責**: 提供 UI 元件的五層結構（primitives → components → patterns → tokens → layout）加上 providers，確保設計一致性。
+**架構**: Five-tier hierarchy — `primitives`（raw shadcn/ui 元件）→ `components`（專案特定包裝）→ `patterns`（高階 UI 複合體）→ `tokens`（設計常數）→ `layout`（結構版面殼層）；`providers/` 放 React context providers。
+**匯入規則**: 從對應層次匯入，例如 `import { Button } from "@/design-system/primitives"`，或直接使用 `@/design-system` barrel。
+
+---
+
+## `src/design-system/index.ts`
+**描述**: 設計系統公開 API barrel，五層全匯出入口（primitives / components / patterns / tokens / layout）。
+**函數清單**:
+- `export * from './primitives'` — raw shadcn/ui 元件層
+- `export * from './components'` — 專案特定包裝元件層
+- `export * from './patterns'` — 高階 UI 複合體層
+- `export * from './tokens'` — 設計 token 常數層
+- `export * from './layout'` — Layout 層（base shell + page-specific layouts）
+
+---
+
+## Primitives 層（`src/design-system/primitives/`）
+
+### `src/design-system/primitives/index.ts`
+**描述**: Primitives 層 barrel，匯出所有 shadcn/ui 元件及 hooks。
+**函數清單**:
+- `export * from './ui/*'` — 所有 shadcn/ui 元件（56 個）
+- `export * from './hooks/use-mobile'` — `useIsMobile` hook
+- `export { cn } from './lib/utils'` — Tailwind class 合併工具
+
+### `src/design-system/primitives/lib/utils.ts`
+**描述**: Tailwind CSS class 合併工具 — 組合 `clsx` 和 `tailwind-merge`。
+**函數清單**:
+- `function cn(...inputs: ClassValue[]): string` — 合併並去重 Tailwind CSS class names
+
+### `src/design-system/primitives/hooks/use-mobile.ts`
+**描述**: 回應式行動裝置偵測 hook — 監聽 window resize，判斷目前視窗是否為行動裝置寬度（< 768px）。
+**函數清單**:
+- `function useIsMobile(): boolean` — 回傳目前是否為行動裝置視窗寬度
+
+---
+
+## Primitives UI 元件（`src/design-system/primitives/ui/`）
+
+> 以下 56 個元件均為 shadcn/ui（New York style）自動生成元件，直接包裝對應的 Radix UI primitives 或第三方套件，並套用 Tailwind CSS 樣式。
+
+### `accordion.tsx` — 手風琴展開/收合元件（Radix UI Accordion）
+- `Accordion`, `AccordionItem`, `AccordionTrigger`, `AccordionContent`
+
+### `alert-dialog.tsx` — 警告對話框元件，用於需要確認的破壞性操作（Radix UI AlertDialog）
+- `AlertDialog`, `AlertDialogTrigger`, `AlertDialogContent`, `AlertDialogHeader`, `AlertDialogFooter`, `AlertDialogTitle`, `AlertDialogDescription`, `AlertDialogAction`, `AlertDialogCancel`
+
+### `alert.tsx` — 靜態提示訊息橫幅（variant: default/destructive）
+- `Alert`, `AlertTitle`, `AlertDescription`
+
+### `aspect-ratio.tsx` — 固定寬高比容器（Radix UI AspectRatio）
+- `AspectRatio`
+
+### `avatar.tsx` — 使用者頭像（圖片 + 備援文字縮寫）
+- `Avatar`, `AvatarImage`, `AvatarFallback`
+
+### `badge.tsx` — 狀態/標籤 badge（variant: default/secondary/destructive/outline）
+- `Badge`, `badgeVariants`
+
+### `breadcrumb.tsx` — 頁面導覽 breadcrumb
+- `Breadcrumb`, `BreadcrumbList`, `BreadcrumbItem`, `BreadcrumbLink`, `BreadcrumbPage`, `BreadcrumbSeparator`, `BreadcrumbEllipsis`
+
+### `button-group.tsx` — 按鈕群組容器
+- `ButtonGroup`
+
+### `button.tsx` — 主要按鈕元件（variant: default/destructive/outline/secondary/ghost/link）
+- `Button`, `buttonVariants`
+
+### `calendar.tsx` — 日期選擇器日曆（react-day-picker）
+- `Calendar`
+
+### `card.tsx` — 卡片容器
+- `Card`, `CardHeader`, `CardFooter`, `CardTitle`, `CardDescription`, `CardContent`
+
+### `carousel.tsx` — 輪播元件（Embla Carousel）
+- `Carousel`, `CarouselContent`, `CarouselItem`, `CarouselPrevious`, `CarouselNext`
+
+### `chart.tsx` — 圖表容器與工具（Recharts 包裝）
+- `ChartContainer`, `ChartTooltip`, `ChartTooltipContent`, `ChartLegend`, `ChartLegendContent`, `ChartStyle`
+
+### `checkbox.tsx` — 核取方塊（Radix UI Checkbox）
+- `Checkbox`
+
+### `collapsible.tsx` — 可收合/展開區塊（Radix UI Collapsible）
+- `Collapsible`, `CollapsibleTrigger`, `CollapsibleContent`
+
+### `combobox.tsx` — 可搜尋下拉選單（Command + Popover 組合）
+- `Combobox`
+
+### `command.tsx` — 命令面板/鍵盤導航搜尋（cmdk）
+- `Command`, `CommandDialog`, `CommandInput`, `CommandList`, `CommandEmpty`, `CommandGroup`, `CommandItem`, `CommandShortcut`, `CommandSeparator`
+
+### `context-menu.tsx` — 右鍵選單（Radix UI ContextMenu）
+- `ContextMenu`, `ContextMenuTrigger`, `ContextMenuContent`, `ContextMenuItem`, `ContextMenuCheckboxItem`, `ContextMenuRadioItem`, `ContextMenuLabel`, `ContextMenuSeparator`, `ContextMenuShortcut`, `ContextMenuGroup`, `ContextMenuPortal`, `ContextMenuSub`, `ContextMenuSubContent`, `ContextMenuSubTrigger`, `ContextMenuRadioGroup`
+
+### `dialog.tsx` — 模態對話框（Radix UI Dialog）
+- `Dialog`, `DialogPortal`, `DialogOverlay`, `DialogTrigger`, `DialogClose`, `DialogContent`, `DialogHeader`, `DialogFooter`, `DialogTitle`, `DialogDescription`
+
+### `direction.tsx` — 文字方向提供者（RTL/LTR）
+- `DirectionProvider`
+
+### `drawer.tsx` — 抽屜/底部滑入面板（Vaul）
+- `Drawer`, `DrawerPortal`, `DrawerOverlay`, `DrawerTrigger`, `DrawerClose`, `DrawerContent`, `DrawerHeader`, `DrawerFooter`, `DrawerTitle`, `DrawerDescription`
+
+### `dropdown-menu.tsx` — 下拉式選單（Radix UI DropdownMenu）
+- `DropdownMenu`, `DropdownMenuTrigger`, `DropdownMenuContent`, `DropdownMenuItem`, `DropdownMenuCheckboxItem`, `DropdownMenuRadioItem`, `DropdownMenuLabel`, `DropdownMenuSeparator`, `DropdownMenuShortcut`, `DropdownMenuGroup`, `DropdownMenuPortal`, `DropdownMenuSub`, `DropdownMenuSubContent`, `DropdownMenuSubTrigger`, `DropdownMenuRadioGroup`
+
+### `empty.tsx` — 空狀態佔位元件
+- `Empty`
+
+### `field.tsx` — 表單欄位容器（label + input + hint 組合）
+- `Field`, `FieldLabel`, `FieldHint`, `FieldError`
+
+### `form.tsx` — react-hook-form 整合表單元件
+- `Form`, `FormItem`, `FormLabel`, `FormControl`, `FormDescription`, `FormMessage`, `FormField`, `useFormField`
+
+### `hover-card.tsx` — 懸停預覽卡片（Radix UI HoverCard）
+- `HoverCard`, `HoverCardTrigger`, `HoverCardContent`
+
+### `input-group.tsx` — 輸入框群組（前綴/後綴組合）
+- `InputGroup`, `InputGroupPrefix`, `InputGroupSuffix`
+
+### `input-otp.tsx` — OTP/PIN 輸入框（input-otp）
+- `InputOTP`, `InputOTPGroup`, `InputOTPSlot`, `InputOTPSeparator`
+
+### `input.tsx` — 基礎文字輸入框
+- `Input`
+
+### `item.tsx` — 通用清單項目元件
+- `Item`, `ItemIcon`, `ItemLabel`, `ItemBadge`
+
+### `kbd.tsx` — 鍵盤按鍵顯示元件
+- `Kbd`
+
+### `label.tsx` — 表單標籤（Radix UI Label）
+- `Label`
+
+### `menubar.tsx` — 選單列（Radix UI Menubar）
+- `Menubar`, `MenubarMenu`, `MenubarTrigger`, `MenubarContent`, `MenubarItem`, `MenubarSeparator`, `MenubarLabel`, `MenubarCheckboxItem`, `MenubarRadioGroup`, `MenubarRadioItem`, `MenubarPortal`, `MenubarSubContent`, `MenubarSubTrigger`, `MenubarGroup`, `MenubarSub`, `MenubarShortcut`
+
+### `native-select.tsx` — 原生 HTML `<select>` 包裝
+- `NativeSelect`
+
+### `navigation-menu.tsx` — 導覽選單（Radix UI NavigationMenu）
+- `NavigationMenu`, `NavigationMenuList`, `NavigationMenuItem`, `NavigationMenuContent`, `NavigationMenuTrigger`, `NavigationMenuLink`, `NavigationMenuIndicator`, `NavigationMenuViewport`
+
+### `pagination.tsx` — 分頁導覽元件
+- `Pagination`, `PaginationContent`, `PaginationItem`, `PaginationLink`, `PaginationPrevious`, `PaginationNext`, `PaginationEllipsis`
+
+### `popover.tsx` — 浮動彈出層（Radix UI Popover）
+- `Popover`, `PopoverTrigger`, `PopoverContent`, `PopoverAnchor`
+
+### `progress.tsx` — 進度條（Radix UI Progress）
+- `Progress`
+
+### `radio-group.tsx` — 單選按鈕群組（Radix UI RadioGroup）
+- `RadioGroup`, `RadioGroupItem`
+
+### `resizable.tsx` — 可調整大小的面板群組（react-resizable-panels）
+- `ResizablePanelGroup`, `ResizablePanel`, `ResizableHandle`
+
+### `scroll-area.tsx` — 自訂滾動區域（Radix UI ScrollArea）
+- `ScrollArea`, `ScrollBar`
+
+### `select.tsx` — 下拉選擇器（Radix UI Select）
+- `Select`, `SelectGroup`, `SelectValue`, `SelectTrigger`, `SelectContent`, `SelectLabel`, `SelectItem`, `SelectSeparator`, `SelectScrollUpButton`, `SelectScrollDownButton`
+
+### `separator.tsx` — 分隔線（Radix UI Separator）
+- `Separator`
+
+### `sheet.tsx` — 側邊抽屜（Radix UI Dialog 變體）
+- `Sheet`, `SheetPortal`, `SheetOverlay`, `SheetTrigger`, `SheetClose`, `SheetContent`, `SheetHeader`, `SheetFooter`, `SheetTitle`, `SheetDescription`
+
+### `sidebar.tsx` — 側邊欄完整元件（帶 context, hook, 折疊狀態管理）
+- `Sidebar`, `SidebarProvider`, `SidebarTrigger`, `SidebarContent`, `SidebarGroup`, `SidebarGroupLabel`, `SidebarGroupContent`, `SidebarMenu`, `SidebarMenuItem`, `SidebarMenuButton`, `SidebarMenuSub`, `SidebarMenuSubItem`, `SidebarMenuSubButton`, `SidebarMenuBadge`, `SidebarMenuSkeleton`, `SidebarMenuAction`, `SidebarSeparator`, `SidebarHeader`, `SidebarFooter`, `SidebarInset`, `SidebarRail`, `useSidebar`
+
+### `skeleton.tsx` — 載入佔位骨架屏
+- `Skeleton`
+
+### `slider.tsx` — 滑桿輸入（Radix UI Slider）
+- `Slider`
+
+### `sonner.tsx` — Toast 通知（Sonner）
+- `Toaster`
+
+### `spinner.tsx` — 載入旋轉指示器
+- `Spinner`
+
+### `switch.tsx` — 開關切換（Radix UI Switch）
+- `Switch`
+
+### `table.tsx` — 資料表格
+- `Table`, `TableHeader`, `TableBody`, `TableFooter`, `TableHead`, `TableRow`, `TableCell`, `TableCaption`
+
+### `tabs.tsx` — 分頁標籤（Radix UI Tabs）
+- `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`
+
+### `textarea.tsx` — 多行文字輸入框
+- `Textarea`
+
+### `toggle-group.tsx` — 切換按鈕群組（Radix UI ToggleGroup）
+- `ToggleGroup`, `ToggleGroupItem`
+
+### `toggle.tsx` — 單一切換按鈕（Radix UI Toggle）
+- `Toggle`, `toggleVariants`
+
+### `tooltip.tsx` — 工具提示（Radix UI Tooltip）
+- `Tooltip`, `TooltipTrigger`, `TooltipContent`, `TooltipProvider`
+
+---
+
+## Components 層（`src/design-system/components/`）
+
+### `src/design-system/components/index.ts`
+**描述**: Components 層 barrel — 專案特定包裝元件，建立在 primitives 之上，加入專案 i18n、主題、UX 規範。目前尚未定義元件（`export {}`）。
+**函數清單**:
+- *(目前為空，待擴充)*
+
+---
+
+## Patterns 層（`src/design-system/patterns/`）
+
+### `src/design-system/patterns/index.ts`
+**描述**: Patterns 層 barrel — 高階 UI 複合體，將 primitives 和 components 組合成可重複使用的互動模式（如登入表單、資料表格頁、Modal 流程）。目前尚未定義 patterns（`export {}`）。
+**函數清單**:
+- *(目前為空，待擴充)*
+
+---
+
+## Tokens 層（`src/design-system/tokens/`）
+
+### `src/design-system/tokens/index.ts`
+**描述**: Tokens 層 barrel — 設計 token 常數（色彩、間距、字體、圓角、陰影、z-index、動畫時長）。這些值與 `globals.css`/`tailwind.config.ts` 的 CSS custom properties 同步。目前尚未定義 token（`export {}`）。
+**函數清單**:
+- *(目前為空，待擴充；預計匯出 colorBrand、spacingBase 等常數)*
+
+---
+
+## Layout 層（`src/design-system/layout/`）
+
+**職責**: 頁面結構 chrome（header slot + `<main>` + footer slot）與頁面專用 Layout 組合。按 `base/`（全局共用）+ `[page]/`（頁面專用）子目錄結構組織。
+**設計原則**: `src/app/` 只做路由對應與頁面組裝，不持有 Layout 結構；Layout 狀態（locale、auth）由頁面 Layout 元件擁有，不下沉到 `app/`。
+
+### `src/design-system/layout/index.ts`
+**描述**: Layout 層 barrel — 統一匯出 base/ 和所有頁面 Layout。
+
+### `src/design-system/layout/base/index.ts`
+**描述**: Base 層 barrel — 匯出全局共用結構元件。
+
+### `src/design-system/layout/base/root-shell.tsx`
+**描述**: 全局頁面結構 chrome（Client Component）。接受可選的 `header` 和 `footer` slot，以 flexbox 垂直排列 header/main/footer。讓頁面專用 Layout 注入特定 header，避免重複 HTML 結構。
+**函數清單**:
+- `function RootShell({ children, header?, footer? }): JSX.Element` — 全局結構 chrome；header/footer 為可選 ReactNode slot
+
+### `src/design-system/layout/marketing/index.ts`
+**描述**: Marketing Layout 層 barrel — 匯出首頁 Layout 和 Header 元件。
+**函數清單**:
+- `export * from './home-layout'`
+- `export * from './marketing-header'`
+- `export * from './mode-toggle'`
+
+### `src/design-system/layout/marketing/home-layout.tsx`
+**描述**: 首頁（`/`）頁面專用 Layout（Client Component）。擁有 `useLocale`（語系狀態）和 `useAuthState`（認證狀態），並將它們作為 props 傳入 `MarketingHeader`。組合 `RootShell` + `MarketingHeader`。
+**函數清單**:
+- `function HomeLayout({ children }): JSX.Element` — 首頁 Layout；擁有 locale + auth 狀態，傳入 MarketingHeader
+
+### `src/design-system/layout/marketing/marketing-header.tsx`
+**描述**: 首頁黏性行銷 Header（純展示元件，狀態由 props 注入）。包含：品牌 logo、語系下拉選單（Globe 圖示）、深色模式切換（`ModeToggle`）、認證感知 CTA 按鈕（未登入→「登入」`/login?callbackUrl=/`，已登入→「進入平台」`/workspaces`）。
+**函數清單**:
+- `interface MarketingHeaderProps` — `{ locale, onLocaleChange, isAuthenticated? }`
+- `function MarketingHeader({ locale, onLocaleChange, isAuthenticated }): JSX.Element` — 純展示黏性 header
+
+### `src/design-system/layout/marketing/mode-toggle.tsx`
+**描述**: 深色模式切換按鈕（Client Component）。使用 `next-themes` 的 `useTheme` + shadcn/ui `DropdownMenu`，提供 Light / Dark / System 三種選項。
+**函數清單**:
+- `function ModeToggle({ locale? }): JSX.Element` — 主題切換下拉按鈕（Sun/Moon 圖示）
+
+---
+
+## Providers 層（`src/design-system/providers/`）
+
+**職責**: React Context Provider 包裝，供 `src/app/layout.tsx` 在根節點掛載。
+
+### `src/design-system/providers/theme-provider.tsx`
+**描述**: `next-themes` ThemeProvider 包裝（Client Component）。遵循 shadcn/ui 深色模式指南配置。掛載在 `src/app/layout.tsx` 根 layout 中，讓所有頁面共享主題支援。配置：`attribute="class"`、`defaultTheme="system"`、`enableSystem`。
+**函數清單**:
+- `function ThemeProvider({ children, ...props }: ThemeProviderProps): JSX.Element` — next-themes Provider 包裝；於根 layout 使用
 ````
 
 ## File: .serena/memories/mcp/firebase-mcp-server.md
@@ -51901,151 +51813,6 @@ At this point the project used `src/shared-infra/` (later deleted in PR #6 and r
 ## Lessons learned
 - Zero-config dev defaults (hardcoded fallback) prevent blocking on `.env.local` setup
 - `resolvedFirebaseConfig` single source of truth pattern prevents drift between env vars and hardcoded values
-````
-
-## File: .serena/memories/shared.md
-````markdown
-# shared — File Index
-
-**層次**: 共用工具 / Shared Layer
-**職責**: 提供跨模組共用的工具函數、類型定義、錯誤類別、i18n 翻譯、常數和 Pipe 抽象。
-**不包含**: 業務邏輯（由 Domain Modules 負責）、React 元件（由 design-system 負責）、Firebase SDK 呼叫（由 infrastructure 負責）。
-
----
-
-## `src/shared/index.ts`
-**描述**: 共用層統一具名匯出 barrel。所有跨模組共用工具、類型、常數、錯誤皆應從此單一入口匯入，使重構透明。
-**注意**: Client-side React hooks（`useToggle`、`useDebounce` 等）在 `@/shared/directives` — 需帶 `"use client"` 指令，不在此 barrel。
-**函數清單**:
-- `export * from './constants'` — APP_NAME、APP_VERSION、DEFAULT_LOCALE 等常數
-- `export * from './errors'` — AppError 及所有子類別、`toAppError`
-- `export * from './interfaces'` — API 信封介面、Pagination 介面、Firestore 文件介面
-- `export * from './i18n'` — `isSupportedLocale`、`resolveLocale`、`useTranslation`、`getMessages`
-- `export * from './pipes'` — `Pipe`、`schemaPipe`、`transformPipe`、`composePipes`、`trimPipe`
-- `export * from './types'` — Zod 基礎類型、`Result<T>`、`ok`、`fail`
-- `export * from './utils'` — `formatDate`、`formatDateTime`、`capitalise`、`toKebabCase`、`omit`、`pick`、`unique`、`chunk`
-
----
-
-## `src/shared/constants/index.ts`
-**描述**: 應用程式層級常數 — 名稱、版本、locale、日期格式 token。
-**函數清單**:
-- `APP_NAME: string` — `"Xuanwu Platform"` 平台顯示名稱
-- `APP_VERSION: string` — `"0.1.0"` 平台版本號
-- `DEFAULT_LOCALE: string` — `"zh-TW"` 預設語系
-- `SUPPORTED_LOCALES: readonly string[]` — `["zh-TW", "en"]` 支援語系清單
-- `DATE_FORMAT: string` — `"YYYY-MM-DD"` 日期格式 token（供 dayjs/date-fns 使用）
-- `DATETIME_FORMAT: string` — `"YYYY-MM-DD HH:mm:ss"` 日期時間格式 token
-
----
-
-## `src/shared/errors/index.ts`
-**描述**: 應用程式錯誤類別階層。`AppError` 為所有錯誤基底類別，加入機器可讀的 `code` 與 HTTP `statusCode`。
-**函數清單**:
-- `class AppError extends Error` — 基底應用錯誤類別（code, statusCode）
-- `class NotFoundError extends AppError` — 資源找不到（404, "NOT_FOUND"）
-- `class UnauthorizedError extends AppError` — 未認證（401, "UNAUTHORIZED"）
-- `class ForbiddenError extends AppError` — 無存取權（403, "FORBIDDEN"）
-- `class ValidationError extends AppError` — 輸入驗證失敗（422, "VALIDATION_ERROR"，附 `fields`）
-- `class ConflictError extends AppError` — 資源已存在衝突（409, "CONFLICT"）
-- `function toAppError(err: unknown): AppError` — 將任意拋出值轉為 AppError
-
----
-
-## `src/shared/interfaces/index.ts`
-**描述**: 前後端共用的 TypeScript 結構性介面（API 信封、分頁、Firestore 文件基底、VisDate metadata）。
-**函數清單**:
-- `interface ApiResponse<T>` — 通用 API 信封（ok, data?, error?, code?）
-- `interface ApiError` — 標準化 API 錯誤（message, code, statusCode）
-- `interface PaginationQuery` — 分頁查詢參數（page?, pageSize?, cursor?）
-- `interface PaginatedResult<T>` — 分頁結果（items, total, page, pageSize, hasNextPage, nextCursor?）
-- `interface FirestoreDocument` — Firestore 文件基底標記介面（id, createdAt, updatedAt）
-- `interface VisDateMetadata` — vis-date/DnD 資料合約（詳見檔案）
-
----
-
-## `src/shared/i18n/index.ts`
-**描述**: 輕量級程式碼內嵌 i18n 解決方案。內含雙語（zh-TW/en）翻譯字典，提供翻譯函數 factory。
-**函數清單**:
-- `function isSupportedLocale(locale: string): locale is Locale` — 型別守衛，判斷是否為支援語系
-- `function resolveLocale(locale?: string | null): Locale` — 解析語系，不支援時退回預設語系
-- `function useTranslation(locale?: string | null): (key: string) => string` — 回傳綁定語系的翻譯函數 `t(key)`
-- `function getMessages(locale?: string | null): Messages` — 取得指定語系的完整翻譯字典
-
----
-
-## `src/shared/pipes/index.ts`
-**描述**: 函數式管線（Pipe）抽象，用於輸入轉換與驗證。包含 Zod schema pipe、轉換 pipe 和組合工具。
-**函數清單**:
-- `type Pipe<I, O>` — 純轉換函數類型 `(input: I) => O`
-- `function schemaPipe<T>(schema): Pipe<unknown, Result<T, ValidationError>>` — 建立 Zod 解析 pipe，回傳 `Result`
-- `function transformPipe<I, O>(fn): Pipe<I, O>` — 包裝任意轉換函數為 Pipe
-- `function composePipes<A, B, C>(first, second): Pipe<A, C>` — 左至右組合兩個 Pipe（A→B→C）
-- `function trimPipe<T>(input: T): T` — 遞迴剝除物件所有字串值的頭尾空白
-
----
-
-## `src/shared/types/index.ts`
-**描述**: Zod 驗證的基礎值物件類型、Locale 類型、以及通用 `Result<T>` 成功/失敗 union 類型。
-**函數清單**:
-- `NonEmptyString: ZodSchema` — 非空字串 schema
-- `UuidSchema: ZodSchema` — UUID v4 schema
-- `IsoDateString: ZodSchema` — ISO-8601 日期字串 schema
-- `PositiveInt: ZodSchema` — 正整數 schema
-- `PaginationSchema: ZodSchema` — 分頁查詢 schema（page, pageSize）
-- `PaginatedResponseSchema<T>(itemSchema): ZodSchema` — 泛型分頁回應 schema
-- `type PaginatedResponse<T>` — 分頁回應類型
-- `LocaleSchema: ZodEnum` — 語系 enum schema
-- `type Locale` — `"zh-TW" | "en"` 語系 union 類型
-- `type Success<T>` — `{ ok: true; value: T }` 成功類型
-- `type Failure<E>` — `{ ok: false; error: E }` 失敗類型
-- `type Result<T, E>` — `Success<T> | Failure<E>` 結果 union 類型
-- `function ok<T>(value: T): Success<T>` — 建立成功結果
-- `function fail<E>(error: E): Failure<E>` — 建立失敗結果
-
----
-
-## `src/shared/utils/index.ts`
-**描述**: 純函數工具集，涵蓋日期格式化、字串轉換、物件操作、陣列工具。無副作用。
-**函數清單**:
-- `function formatDate(date: Date, locale?: string): string` — 格式化日期（locale-aware，預設 zh-TW）
-- `function formatDateTime(date: Date, locale?: string): string` — 格式化日期時間（locale-aware）
-- `function capitalise(str: string): string` — 首字母大寫
-- `function toKebabCase(str: string): string` — camelCase/PascalCase 轉 kebab-case
-- `function omit<T, K>(obj: T, keys: K[]): Omit<T, K>` — 從物件移除指定 key
-- `function pick<T, K>(obj: T, keys: K[]): Pick<T, K>` — 從物件挑選指定 key
-- `function unique<T>(arr: T[]): T[]` — 移除陣列重複元素
-- `function chunk<T>(arr: T[], size: number): T[][]` — 將陣列切割為指定大小的子陣列
-
----
-
-## `src/shared/directives/index.ts`
-**描述**: Client-side React hooks，標記 `"use client"` 指令。僅限 Client Components 匯入，不包含在 `@/shared` barrel。
-**函數清單**:
-- `function useToggle(initial?: boolean): [boolean, () => void, (value: boolean) => void]` — 布林切換 hook
-- `function useDebounce<T>(value: T, delay: number): T` — 防抖值 hook
-- `function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((prev: T) => T)) => void]` — localStorage 持久化 hook（支援 updater 函數）
-- `function usePrevious<T>(value: T): T | undefined` — 取得前一個值 hook
-- `function useIsMounted(): boolean` — 判斷元件是否已 mount hook
-- `const LOCALE_STORAGE_KEY = "xuanwu-locale"` — localStorage key 常數
-- `function useLocale(): [Locale, (locale: Locale) => void]` — 語系持久化 hook；實作 `ILocalePort`；在 `useLocalStorage` 之上處理語系解析與 `html[lang]` 同步
-- `function useAuthState(): { user: User | null; loading: boolean }` — 輕量 Firebase Auth 狀態監聽 hook；在 `AccountProvider` 之外使用；回傳 `{ user, loading }`
-
----
-
-## `src/shared/ports/index.ts`
-**描述**: 防腐層（ACL）跨模組 Port 介面集。供 Application 層以穩定合約取代直接依賴基礎設施。按介面類型（Cache、Queue、Vector、Workflow、Storage、Locale、Logger、Analytics、Auth）分組。
-**匯入規則**: `import type { ICachePort } from "@/shared/ports"` 或透過 barrel `import type { ICachePort } from "@/shared"`。
-**函數清單**:
-- `interface ICachePort` — Cache 抽象（get/set/del/exists/incr/ttl）；具體實作：`src/infrastructure/upstash/redis.ts`
-- `interface IQueuePort` — Queue 抽象（publish/publishJSON/publishDelayed）；具體實作：`src/infrastructure/upstash/qstash.ts`
-- `interface IVectorIndexPort<TMetadata>` — 向量索引抽象（upsert/query/fetch/delete）；具體實作：`src/infrastructure/upstash/vector.ts`
-- `interface IWorkflowPort` — Workflow 抽象（trigger/cancel/getState）；具體實作：`src/infrastructure/upstash/workflow.ts`
-- `interface IStoragePort` — 瀏覽器同步鍵值儲存抽象（getItem/setItem/removeItem）；具體實作：`window.localStorage`（via `useLocalStorage`）
-- `interface ILocalePort` — Locale 持久化與 `html[lang]` 同步抽象（locale/setLocale/supported）；具體實作：`useLocale` directive
-- `interface ILoggerPort` — 結構化日誌抽象（debug/info/warn/error）；具體實作：ConsoleLoggerAdapter / Cloud Logging
-- `interface IAnalyticsPort` — 事件追蹤抽象（track/identify/page）；具體實作：Firebase Analytics / Mixpanel
-- `interface IAuthPort` — Auth 狀態與 ID token 抽象（getUser/getIdToken/signOut）；具體實作：`src/infrastructure/firebase/admin/auth`
 ````
 
 ## File: apphosting.yaml
@@ -53411,6 +53178,207 @@ to fit the **Modular DDD** architecture of `xuanwu-platform`:
 3. 其他 notes 視具體需求查閱
 ````
 
+## File: docs/management/new-issues.md
+````markdown
+# New Issues — Module Boundary Violations (2026-03-17)
+
+> Tags: `boundary` `ddd` `architecture` `presentation-layer` `infra-leak`
+> Found by: systematic `_components` import audit across all 21 modules.
+> Owner: `xuanwu-quality` + `xuanwu-implementer`
+
+---
+
+## Summary at a Glance
+
+| ID | Severity | Module | Violation |
+|----|----------|--------|-----------|
+| BDY-001 | 🔴 Critical | `collaboration.module` | `_components` 直接實例化 `infra.firestore/_repository` |
+| BDY-002 | 🔴 Critical | `fork.module` | `_components` 直接實例化 `infra.firestore/_repository` |
+| BDY-003 | 🔴 Critical | `social.module` | `_components` 直接實例化 `infra.firestore/_repository` |
+| BDY-004 | 🔴 Critical | `workforce.module` | `_components` 直接實例化 `infra.firestore/_repository` |
+| BDY-005 | 🟡 Moderate | `collaboration.module` | `_components` → `core/_use-cases` 直通，繞過 `index.ts` |
+| BDY-006 | 🟡 Moderate | `fork.module` | `_components` → `core/_use-cases` 直通，繞過 `index.ts` |
+| BDY-007 | 🟡 Moderate | `social.module` | `_components` → `core/_use-cases` 直通，繞過 `index.ts` |
+| BDY-008 | 🟡 Moderate | `workforce.module` | `_components` → `core/_use-cases` 直通，繞過 `index.ts` |
+| BDY-009 | 🟡 Moderate | `achievement.module` | `_components` → `core/_use-cases` 直通，繞過 `index.ts` |
+| BDY-010 | 🟡 Moderate | `notification.module` | `_components` → `core/_use-cases` 直通，繞過 `index.ts` |
+| BDY-011 | 🟡 Moderate | `social.module` | `_components` → `domain.social/_value-objects` 直通 |
+| BDY-012 | 🟡 Moderate | `fork.module` | `index.ts` 繞過 `_actions`/`_queries`，直接 re-export `_use-cases` |
+| BDY-013 | 🟡 Moderate | `workforce.module` | `index.ts` 繞過 `_actions`/`_queries`，直接 re-export `_use-cases` |
+| BDY-014 | 🟡 Moderate | `social.module` | `index.ts` 繞過 `_actions`/`_queries`，直接 re-export `_use-cases` |
+| BDY-015 | 🟡 Moderate | `achievement.module` | `index.ts` 繞過 `_actions`/`_queries`，直接 re-export `_use-cases` |
+| BDY-016 | 🟡 Moderate | `notification.module` | `index.ts` 繞過 `_actions`/`_queries`，直接 re-export `_use-cases` |
+| BDY-017 | 🟡 Moderate | `collaboration.module` | `index.ts` 繞過 `_actions`/`_queries`，直接 re-export `_use-cases` |
+
+---
+
+## 🔴 Critical: Presentation Layer 直接實例化 Infrastructure Repository
+
+### BDY-001 — `collaboration.module` infra leak in `_components`
+
+**檔案:** `src/modules/collaboration.module/_components/comment-thread.tsx`
+
+**違規 import:**
+```typescript
+import { postComment } from "@/modules/collaboration.module/core/_use-cases";
+import { FirestoreCommentRepository } from "@/modules/collaboration.module/infra.firestore/_repository";
+import type { CommentDTO } from "@/modules/collaboration.module/core/_use-cases";
+```
+
+**問題:** `FirestoreCommentRepository` 在 component 內以 singleton 模式實例化 (`let _repo = new FirestoreCommentRepository()`)。Presentation layer 不應感知 Infrastructure。
+
+**修復方向:**
+1. `core/_actions.ts` 補上 `postComment(id, workspaceId, ...)` facade（不傳 repo 參數）— 內部自行持有 `FirestoreCommentRepository` 單例。
+2. `index.ts` 從 `core/_actions` re-export `postComment`。
+3. `comment-thread.tsx` 改 import `postComment` from `@/modules/collaboration.module`，刪除 `FirestoreCommentRepository` import 與 `getRepo()` 函式。
+
+---
+
+### BDY-002 — `fork.module` infra leak in `_components`
+
+**檔案:** `src/modules/fork.module/_components/forks-view.tsx`
+
+**違規 import:**
+```typescript
+import { abandonFork } from "@/modules/fork.module/core/_use-cases";
+import { FirestoreForkRepository } from "@/modules/fork.module/infra.firestore/_repository";
+import type { ForkDTO } from "@/modules/fork.module/core/_use-cases";
+```
+
+**問題:** 同 BDY-001，`_components` 直接 `new FirestoreForkRepository()`。
+
+**修復方向:**
+1. `core/_actions.ts` 補上 `abandonFork(id)` facade，內部持有 `FirestoreForkRepository` 單例。
+2. `index.ts` 從 `core/_actions` re-export（見 BDY-012）。
+3. `forks-view.tsx` 改使用 `abandonFork` from `@/modules/fork.module`。
+
+---
+
+### BDY-003 — `social.module` infra leak in `_components`
+
+**檔案:** `src/modules/social.module/_components/social-actions-bar.tsx`
+
+**違規 import:**
+```typescript
+import { FirestoreSocialGraphRepository } from "@/modules/social.module/infra.firestore/_repository";
+import { toggleReaction, getReactionState } from "@/modules/social.module/core/_use-cases";
+import type { SocialTargetType } from "@/modules/social.module/domain.social/_value-objects";
+```
+
+**問題:** 三層違規：Infra、Core use-case、Domain value-object 全部直通到 component。
+
+**修復方向:**
+1. `core/_actions.ts` 補 `toggleReaction(subjectAccountId, targetId, targetType, relationType)` facade。
+2. `core/_queries.ts` 補 `getReactionState(subjectAccountId, targetId, relationType)` facade。
+3. `index.ts` 從 `_actions`/`_queries` re-export；`SocialTargetType` 已在 `index.ts` 中 export，只需改 component import 來源。
+4. `social-actions-bar.tsx` 刪除 `FirestoreSocialGraphRepository` import 與 `getRepo()` 函式，改從 `@/modules/social.module` 取用所有需要的符號。
+
+---
+
+### BDY-004 — `workforce.module` infra leak in `_components`
+
+**檔案:** `src/modules/workforce.module/_components/workforce-schedule-view.tsx`
+
+**違規 import:**
+```typescript
+import { approveSchedule, rejectSchedule } from "@/modules/workforce.module/core/_use-cases";
+import { FirestoreScheduleRepository } from "@/modules/workforce.module/infra.firestore/_repository";
+import type { ScheduleDTO } from "@/modules/workforce.module/core/_use-cases";
+```
+
+**問題:** 同 BDY-001，`_components` 直接 `new FirestoreScheduleRepository()`。
+
+**修復方向:**
+1. `core/_actions.ts` 補 `approveSchedule(id)` / `rejectSchedule(id)` facade，內部持有 `FirestoreScheduleRepository` 單例。
+2. `index.ts` 從 `core/_actions` re-export（見 BDY-013）。
+3. `workforce-schedule-view.tsx` 改使用 facade，刪除 infra import。
+
+---
+
+## 🟡 Moderate: `_components` 繞過 `index.ts`，直接 import `core/_use-cases`
+
+### BDY-005 ~ BDY-010 — 六個模組的 `_components` 直通 `core/_use-cases`
+
+| ID | 模組 | 檔案 | 繞過的符號 |
+|----|------|------|-----------|
+| BDY-005 | `collaboration` | `comment-thread.tsx` | `postComment`, `CommentDTO` |
+| BDY-006 | `fork` | `forks-view.tsx` | `abandonFork`, `ForkDTO` |
+| BDY-007 | `social` | `social-actions-bar.tsx` | `toggleReaction`, `getReactionState` |
+| BDY-008 | `workforce` | `workforce-schedule-view.tsx` | `approveSchedule`, `rejectSchedule`, `ScheduleDTO` |
+| BDY-009 | `achievement` | `achievement-badge.tsx` | `AchievementDTO` |
+| BDY-010 | `notification` | `notification-item.tsx` | `NotificationDTO` |
+
+**修復方向（統一）:** 確保 `index.ts` 已 export 所需符號後，將 component 內的
+`from "@/modules/xxx.module/core/_use-cases"` 改為 `from "@/modules/xxx.module"`。
+
+---
+
+## 🟡 Moderate: `_components` 直接 import Domain Layer
+
+### BDY-011 — `social.module` domain value-object 直通
+
+**檔案:** `src/modules/social.module/_components/social-actions-bar.tsx`
+
+**違規 import:**
+```typescript
+import type { SocialTargetType } from "@/modules/social.module/domain.social/_value-objects";
+```
+
+**狀態:** `social.module/index.ts` 已 export `SocialTargetType`，直接改 import 路徑即可修復。
+
+---
+
+## 🟡 Moderate: `index.ts` Facade 層未就位（`_actions`/`_queries` stub 未接 repo）
+
+### BDY-012 ~ BDY-017 — 六個模組 `index.ts` 直接 re-export `_use-cases`
+
+**現象:** `index.ts` 的 export 指向 `./core/_use-cases`，而非 `./core/_actions` 或 `./core/_queries`。`_actions.ts`/`_queries.ts` 雖已存在，但屬「pass-through stub」（仍接受 `repo` 參數），未完成 adapter-backed facade 模式。
+
+**對照 account.module 正確模式:**
+```typescript
+// core/_actions.ts — 正確：自行持有 repo 單例，不暴露 repo 至外部
+const accountRepository = new FirestoreAccountRepository();
+export async function createPersonalAccount(uid: string, displayName: string) {
+  return createPersonalAccountUseCase(accountRepository, uid, displayName);
+}
+// index.ts — 正確：從 _actions/_queries re-export
+export { createPersonalAccount } from "./core/_actions";
+```
+
+| ID | 模組 | `index.ts` 現況 | 需要改為 |
+|----|------|----------------|---------|
+| BDY-012 | `fork` | export from `./core/_use-cases` | export from `./core/_actions` / `./core/_queries` |
+| BDY-013 | `workforce` | export from `./core/_use-cases` | export from `./core/_actions` / `./core/_queries` |
+| BDY-014 | `social` | export from `./core/_use-cases` | export from `./core/_actions` / `./core/_queries` |
+| BDY-015 | `achievement` | export from `./core/_use-cases` | export from `./core/_actions` / `./core/_queries` |
+| BDY-016 | `notification` | export from `./core/_use-cases` | export from `./core/_actions` / `./core/_queries` |
+| BDY-017 | `collaboration` | export from `./core/_use-cases` | export from `./core/_actions` / `./core/_queries` |
+
+**修復方向（每個模組）:**
+1. 將 `core/_actions.ts` 改為 adapter-backed facade：移除 `repo` 參數，在檔案頂層建立 `const xxxRepository = new FirestoreXxxRepository()` 單例，包裝所有 write use-cases。
+2. 將 `core/_queries.ts` 同樣改為 adapter-backed facade：包裝所有 read use-cases。
+3. `index.ts` 改為從 `./core/_actions` 和 `./core/_queries` re-export DTOs 及函式。
+
+---
+
+## Fix Priority
+
+```
+BDY-001 ~ BDY-004  (🔴 Infra in Presentation)  → 最優先，架構完整性
+BDY-012 ~ BDY-017  (🟡 _actions/_queries stub)  → 配合 BDY-001~004 一起修，facade 就位後 component 才能改
+BDY-005 ~ BDY-011  (🟡 direct internal imports)  → facade 就位後改 import 路徑即完成
+```
+
+---
+
+## Modules Confirmed Clean
+
+下列 16 個模組（排除 5 個存根）在本次审計中無 `_components` boundary violations：
+
+`account` · `audit` · `causal-graph` · `identity` · `namespace` · `search` · `settlement` · `work` · `workspace`  
+存根（無 `_components`）：`governance` · `knowledge` · `subscription` · `taxonomy` · `vector-ingestion`
+````
+
 ## File: eslint.config.mjs
 ````javascript
 import { dirname } from "path";
@@ -54141,188 +54109,942 @@ export const processDocument = onRequest(
 }
 ````
 
-## File: src/app/(main)/(account)/dashboard/page.tsx
-````typescript
-import type { Metadata } from "next";
-import { DashboardView } from "@/modules/workspace.module/_components/dashboard-view";
-
-export const metadata: Metadata = {
-  title: "首頁 — 玄武平台",
-};
-
-export default function DashboardPage() {
-  return <DashboardView />;
-}
-````
-
-## File: src/app/(main)/(account)/workspaces/page.tsx
-````typescript
-import type { Metadata } from "next";
-import { AccountWorkspacesPage } from "./_account-workspaces";
-
-export const metadata: Metadata = {
-  title: "工作空間 — 玄武平台",
-};
-
-export default function WorkspacesPage() {
-  return <AccountWorkspacesPage />;
-}
-````
-
-## File: src/app/AGENTS.md
+## File: src/AGENTS.md
 ````markdown
+# `src/` Agent Rules
 
+Purpose: enforce one-way dependency direction and correct layer placement across the entire source tree.
+
+This file is mandatory reading for any agent touching files under `src/`.
+
+---
+
+## 0. Dependency Direction (Non-negotiable)
+
+```
+src/app/            → src/modules/ (via public index.ts barrels only)
+src/app/            → src/design-system/
+src/modules/        → src/shared/
+src/modules/        → src/infrastructure/ (via port interfaces only)
+src/infrastructure/ → src/shared/
+src/design-system/  → src/shared/
+src/shared/         → (nothing outside shared)
+```
+
+**Red lines — stop and report if any of the following appears:**
+
+1. `src/shared/` imports from `src/modules/`, `src/infrastructure/`, or `src/app/`.
+2. `src/infrastructure/` imports from `src/modules/`.
+3. `src/modules/<A>.module` imports from `src/modules/<B>.module` internal paths (`core/`, `domain.*`, `infra.*`, `_components/`) — must use `<B>.module/index.ts` barrel only.
+4. `src/design-system/` imports from `src/modules/` or `src/infrastructure/`.
+5. Firebase or external SDK calls placed directly in `src/app/` routes (must go through module application layer or infrastructure adapter).
+
+---
+
+## 1. Boundary Gate (Run Before Any Edit)
+
+1. Which layer does the target file belong to?
+2. Does the edit respect the dependency direction above?
+3. If adding a new import, is it from the correct layer or public barrel?
+4. Does the change introduce side effects in a layer that must stay pure (`shared/`, domain layer)?
+5. Does new UI text use the i18n dictionary in `src/shared/i18n/`?
+
+---
+
+## 2. Layer Placement Checklist
+
+| What you are adding | Where it belongs |
+|---------------------|-----------------|
+| New route or page | `src/app/` |
+| New UI component (reusable) | `src/design-system/` |
+| New domain rule or aggregate | `src/modules/<name>.module/domain.*/` |
+| New use case / Server Action | `src/modules/<name>.module/core/` |
+| New Firebase / Upstash adapter | `src/infrastructure/` or `src/modules/<name>.module/infra.*/` |
+| New pure utility / type / error | `src/shared/` |
+| New port interface | `src/shared/ports/` (cross-cutting) or module `domain.*/_ports.ts` (module-scoped) |
+
+---
+
+## 3. Cross-Directory Safe Integration Pattern
+
+1. `src/app/` pages call module public APIs: `import { X } from "@/modules/<name>.module"`.
+2. Use cases wire port interfaces to concrete adapters at the composition root (Server Action or Route Handler).
+3. `src/design-system/` components receive data as props — they must not call use cases or adapters directly.
+4. New shared utilities go in `src/shared/` only when used by more than one module.
+
+---
+
+## 4. i18n Rule
+
+Every user-visible string added to `src/app/` or `src/design-system/` MUST have a corresponding key added to **both** `en` and `zh-TW` locale entries in `src/shared/i18n/index.ts`.
 ````
 
-## File: src/app/layout.tsx
+## File: src/app/(main)/(account)/workspaces/_account-workspaces.tsx
 ````typescript
-import type { Metadata } from "next";
-import "./globals.css";
-import { ThemeProvider } from "@/design-system/providers/theme-provider";
+"use client";
+/**
+ * AccountWorkspacesPage — client wrapper for the account-level workspaces view.
+ *
+ * Derives the namespace slug from the currently active account context
+ * (activeAccount → personal account → fallback to account.id) and renders
+ * WorkspacesView, which handles its own data fetching via useWorkspaces.
+ */
 
-export const metadata: Metadata = {
-  title: "Xuanwu Platform",
-  description: "Next.js Domain-Driven Design minimal runnable platform",
-};
+import { Loader2 } from "lucide-react";
+import { useCurrentAccount } from "@/modules/account.module";
+import { WorkspacesView } from "@/modules/workspace.module/_components/workspaces-view";
 
-export default function RootLayout({
+export function AccountWorkspacesPage() {
+  const { account, activeAccount, loading } = useCurrentAccount();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  const effectiveAccount = activeAccount ?? account;
+  // Slug is the account handle (org handle or personal handle).
+  // Falls back to the Firestore document ID so WorkspaceCard hrefs are always valid.
+  const slug = effectiveAccount?.handle ?? effectiveAccount?.id ?? "";
+  // Pass the effective account ID as dimensionId so WorkspacesView fetches
+  // workspaces for the active org (not always the personal account).
+  const dimensionId = effectiveAccount?.id ?? "";
+
+  return <WorkspacesView slug={slug} dimensionId={dimensionId} />;
+}
+````
+
+## File: src/app/(main)/layout.tsx
+````typescript
+/**
+ * MainLayout — Authenticated shell layout.
+ *
+ * Wraps all (main) routes with AccountProvider (auth + account state),
+ * then the sidebar + header shell.
+ * Uses SidebarProvider from design system to enable sidebar state.
+ */
+import { SidebarInset, SidebarProvider } from "@/design-system/primitives/ui/sidebar";
+import { AccountProvider } from "@/modules/account.module/_components/account-provider";
+import { DashboardSidebar, ShellHeader } from "@/design-system/layout/dashboard";
+
+export default function MainLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="zh-TW" suppressHydrationWarning>
-      <body>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-        </ThemeProvider>
-      </body>
-    </html>
+    <AccountProvider>
+      <SidebarProvider>
+        <DashboardSidebar />
+        <SidebarInset>
+          <ShellHeader />
+          <main className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</main>
+        </SidebarInset>
+      </SidebarProvider>
+    </AccountProvider>
   );
 }
 ````
 
-## File: src/app/README.md
-````markdown
-
-````
-
-## File: src/design-system/AGENTS.md
-````markdown
-
-````
-
-## File: src/design-system/layout/marketing/index.ts
-````typescript
-// src/design-system/layout/marketing/index.ts
-// Page-specific layouts and layout components for marketing / landing pages.
-
-export { MarketingHeader } from "./marketing-header";
-export type { MarketingHeaderProps } from "./marketing-header";
-export { HomeLayout } from "./home-layout";
-export { ModeToggle } from "./mode-toggle";
-````
-
-## File: src/design-system/layout/marketing/mode-toggle.tsx
+## File: src/design-system/layout/dashboard/dashboard-shell.tsx
 ````typescript
 "use client";
+/**
+ * DashboardShell — Pure UI container for authenticated app layouts.
+ *
+ * Combines sidebar and header into a two-column layout.
+ * All content is passed as children and props.
+ * For the orchestrated version, see: src/app/(main)/layout.tsx
+ */
 
-import { Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
+import { ReactNode } from "react";
+import { SidebarProvider } from "@/design-system/primitives/ui/sidebar";
 
-import { Button } from "@/design-system/primitives/ui/button";
+export interface DashboardShellProps {
+  children: ReactNode;
+  sidebar?: ReactNode;
+  header?: ReactNode;
+  sidebarOpen?: boolean;
+}
+
+export function DashboardShell({
+  children,
+  sidebar,
+  header,
+  sidebarOpen,
+}: DashboardShellProps) {
+  return (
+    <SidebarProvider defaultOpen={sidebarOpen}>
+      <div className="grid h-screen w-full grid-cols-1 grid-rows-[auto_1fr]">
+        {header && <div className="col-span-full">{header}</div>}
+        <div className="grid grid-cols-[auto_1fr]">
+          {sidebar && <aside className="hidden sm:block">{sidebar}</aside>}
+          <main className="overflow-x-hidden">{children}</main>
+        </div>
+      </div>
+    </SidebarProvider>
+  );
+}
+````
+
+## File: src/design-system/layout/dashboard/dashboard-sidebar.tsx
+````typescript
+"use client";
+/**
+ * DashboardSidebar — Main sidebar for authenticated pages.
+ *
+ * Assembles the sidebar structure using SidebarProvider + Sidebar components.
+ * Aggregates navigation items from multiple domains:
+ * - NavMain: hardcoded routes
+ * - NavTopWorkspaces: workspace list from workspace.module
+ * - NavUser: user profile from account.module + identity.module
+ */
+
+import { useTranslation } from "@/shared/i18n";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarRail,
+} from "@/design-system/primitives/ui/sidebar";
+
+import { NavMain } from "./nav-main";
+import { NavTopWorkspaces } from "./nav-top-workspaces";
+import { NavUser } from "./nav-user";
+
+export function DashboardSidebar() {
+  const t = useTranslation("zh-TW");
+
+  return (
+    <Sidebar className="border-r border-border/50">
+      <SidebarHeader className="p-2">
+      </SidebarHeader>
+
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel className="px-3 text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">
+            {t("nav.mainMenu")}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <NavMain />
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel className="px-3 text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">
+            {t("nav.topWorkspaces")}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <NavTopWorkspaces />
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter className="p-2">
+        <NavUser />
+      </SidebarFooter>
+
+      <SidebarRail />
+    </Sidebar>
+  );
+}
+````
+
+## File: src/design-system/layout/dashboard/README.md
+````markdown
+# `src/design-system/layout/dashboard/` — Authenticated App Layouts
+
+## Purpose
+
+Pure UI layout components for authenticated (dashboard) pages. These are **presentation-only** — they have no business logic and accept all dynamic data as props.
+
+## Components
+
+| Component | Purpose |
+|-----------|---------|
+| **`DashboardShell`** | Main container combining sidebar + header + content area |
+| **`ShellHeader`** | Sticky top header with breadcrumbs and search trigger |
+| **`NavMain`** | Primary navigation menu (home, workspaces, notifications, etc.) |
+| **`NavTopWorkspaces`** | List of workspaces with expand/collapse |
+| **`NavUser`** | User profile menu in sidebar footer |
+
+## Usage Pattern
+
+These components are **presentation-tier** in the DDD layer hierarchy. They should be composed in either:
+
+1. **`src/app/(main)/layout.tsx`** — App-level layout orchestrator that:
+   - Wraps these components with actual business logic
+   - Fetches user data from `account.module`
+   - Passes workspace data from `workspace.module`
+   - Resolves breadcrumbs from the current route
+
+2. **App-specific wrappers** — Each module can provide its own "smart" version:
+   - `account.module/_components/nav-user-orchestrated.tsx` (wraps pure `NavUser` with hooks)
+   - `workspace.module/_components/nav-top-workspaces-orchestrated.tsx` (wraps pure version with queries)
+
+## Example (App-Level Orchestrator)
+
+```tsx
+// src/app/(main)/layout.tsx
+import { DashboardShell, ShellHeader, NavMain, NavTopWorkspaces, NavUser } from "@/design-system/layout/dashboard";
+import { useCurrentAccount } from "@/modules/account.module";
+import { useWorkspaces } from "@/modules/workspace.module/_hooks";
+
+export default function MainLayout({ children }: { children: ReactNode }) {
+  const { user, account } = useCurrentAccount();
+  const { workspaces } = useWorkspaces(account?.id);
+
+  return (
+    <DashboardShell
+      header={<ShellHeader breadcrumbs={breadcrumbs} />}
+      sidebar={
+        <>
+          <NavMain items={navItems} pathname={pathname} />
+          <NavTopWorkspaces workspaces={workspaces} slug={account?.handle} />
+        </>
+      }
+    >
+      {children}
+    </DashboardShell>
+  );
+}
+```
+
+## Import Pattern
+
+```typescript
+// ✅ Correct — import from design-system
+import { DashboardShell, NavMain } from "@/design-system/layout/dashboard";
+
+// ❌ Wrong — do not import from workspace.module internals
+import { DashboardSidebar } from "@/modules/workspace.module/_components/shell";
+```
+
+## Design Principles
+
+1. **Props-driven** — All dynamic content flows in via props, never via hooks inside
+2. **No business logic** — Pure rendering based on input data
+3. **Composable** — Each sub-component can be used independently in various shell layouts
+4. **i18n-aware** — Pass labels/text as props; component does not call `useTranslation`
+````
+
+## File: src/design-system/layout/index.ts
+````typescript
+// src/design-system/layout/index.ts
+// Design-system layout tier.
+//
+// Structure:
+//   base/       — global, page-agnostic structural shells (RootShell)
+//   marketing/  — marketing / landing page layouts (HomeLayout, MarketingHeader)
+//   dashboard/  — authenticated app layouts (DashboardShell, NavMain, ShellHeader, …)
+//
+// Import via the layout tier:
+//   import { RootShell }      from "@/design-system/layout/base";
+//   import { HomeLayout }     from "@/design-system/layout/marketing";
+//   import { DashboardShell } from "@/design-system/layout/dashboard";
+
+export * from "./base";
+export * from "./marketing";
+export * from "./dashboard";
+````
+
+## File: src/infrastructure/firebase/client/auth.ts
+````typescript
+/**
+ * Firebase Authentication adapter.
+ *
+ * Provides a lazily-initialised Auth instance scoped to the Firebase app
+ * singleton. All auth operations (sign-in, sign-out, token refresh) should
+ * go through this module to keep infrastructure concerns centralised.
+ */
+
+import {
+  getAuth,
+  onAuthStateChanged,
+  updateProfile,
+  reauthenticateWithCredential,
+  updatePassword,
+  type Auth,
+  type User,
+  GoogleAuthProvider,
+  GithubAuthProvider,
+  EmailAuthProvider,
+} from "firebase/auth";
+import { getFirebaseApp } from "../app";
+
+let _auth: Auth | null = null;
+
+/**
+ * Returns the Firebase Auth singleton.
+ * Must only be called on the client side.
+ */
+export function getFirebaseAuth(): Auth {
+  if (!_auth) {
+    _auth = getAuth(getFirebaseApp());
+  }
+  return _auth;
+}
+
+// ---------------------------------------------------------------------------
+// Auth providers and operations (re-exported for convenience)
+// ---------------------------------------------------------------------------
+
+export {
+  onAuthStateChanged,
+  updateProfile,
+  reauthenticateWithCredential,
+  updatePassword,
+  GoogleAuthProvider,
+  GithubAuthProvider,
+  EmailAuthProvider,
+};
+export type { User };
+````
+
+## File: src/infrastructure/firebase/client/index.ts
+````typescript
+/**
+ * Firebase Client SDK — public API
+ *
+ * Web SDK adapters for use in Client Components and browser-side code.
+ * Do NOT import from this module in Server Actions or Route Handlers —
+ * use `@/infrastructure/firebase/admin` for server-side operations.
+ *
+ * @example
+ * import { getFirebaseAuth }        from "@/infrastructure/firebase/client";
+ * import { getFirestoreDb }         from "@/infrastructure/firebase/client";
+ * import { getFirebaseRemoteConfig } from "@/infrastructure/firebase/client";
+ */
+
+export { getFirebaseApp, resolvedFirebaseConfig } from "../app";
+
+export {
+  getFirebaseAuth,
+  onAuthStateChanged,
+  updateProfile,
+  reauthenticateWithCredential,
+  updatePassword,
+  GoogleAuthProvider,
+  GithubAuthProvider,
+  EmailAuthProvider,
+} from "./auth";
+export type { User } from "./auth";
+
+export {
+  getFirestoreDb,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  limit,
+  serverTimestamp,
+  Timestamp,
+  type DocumentData,
+  type QueryConstraint,
+} from "./firestore";
+
+export {
+  getFirebaseStorage,
+  ref,
+  uploadBytes,
+  uploadBytesResumable,
+  getDownloadURL,
+  deleteObject,
+  listAll,
+  type StorageReference,
+  type UploadTask,
+  type UploadMetadata,
+} from "./storage";
+
+export {
+  getFirebaseMessaging,
+  requestFcmToken,
+  onMessage,
+} from "./messaging";
+
+export {
+  getFirebaseAnalytics,
+  logEvent,
+  setAnalyticsUserId,
+  setAnalyticsUserProperties,
+} from "./analytics";
+
+export { initAppCheck } from "./app-check";
+
+export {
+  getFirebaseDatabase,
+  dbRef,
+  get,
+  set,
+  update,
+  remove,
+  push,
+  onValue,
+  off,
+  rtdbServerTimestamp,
+  type DataSnapshot,
+  type DatabaseReference,
+  type Unsubscribe,
+} from "./database";
+
+export {
+  getFirebaseRemoteConfig,
+  fetchRemoteConfig,
+  getValue,
+  getString,
+  getBoolean,
+  getNumber,
+  type Value,
+} from "./remoteConfig";
+````
+
+## File: src/modules/account.module/_components/account-switcher.tsx
+````typescript
+"use client";
+/**
+ * AccountSwitcher — context switcher for personal account + organization accounts.
+ *
+ * Shows the current active account and allows switching between all available accounts.
+ * For organization accounts, displays the user's role (owner/admin/member/viewer).
+ * Personal account is always available at the top.
+ */
+
+import { Check, ChevronDown } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/design-system/primitives/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/design-system/primitives/ui/dropdown-menu";
 import { useTranslation } from "@/shared/i18n";
-import type { Locale } from "@/shared/types";
+import { useCurrentAccount, type AccountContextValue } from "./account-provider";
 
-interface ModeToggleProps {
-  locale?: Locale;
+interface AccountMenuItemProps {
+  account: AccountContextValue["account"] | AccountContextValue["organizations"][number];
+  isActive: boolean;
+  userRole?: AccountContextValue["activeAccountRole"];
+  onClick: () => void;
 }
 
-/**
- * ModeToggle — icon button that opens a dropdown to pick light / dark / system
- * theme.  Uses next-themes under the hood; requires ThemeProvider in the tree.
- */
-export function ModeToggle({ locale }: ModeToggleProps) {
-  const { setTheme } = useTheme();
-  const t = useTranslation(locale);
+function AccountMenuItem({ account, isActive, userRole, onClick }: AccountMenuItemProps) {
+  if (!account) return null;
+  const initial = (account.displayName || account.handle || "?")[0].toUpperCase();
+
+  return (
+    <DropdownMenuItem onClick={onClick} className="flex items-center gap-3 cursor-pointer">
+      <Avatar className="size-8 rounded-lg">
+        {account.avatarUrl ? <AvatarImage src={account.avatarUrl} alt={account.displayName} /> : null}
+        <AvatarFallback className="rounded-lg bg-primary/10 text-xs font-bold text-primary">
+          {initial}
+        </AvatarFallback>
+      </Avatar>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate">{account.displayName}</p>
+        <p className="text-[11px] text-muted-foreground">
+          {account.accountType === "personal" ? (
+            <span className="opacity-60">Personal</span>
+          ) : (
+            <span>
+              {userRole?.charAt(0).toUpperCase() + (userRole?.slice(1) || "")} • {account.handle || "Org"}
+            </span>
+          )}
+        </p>
+      </div>
+      {isActive && <Check className="size-4 text-primary shrink-0" />}
+    </DropdownMenuItem>
+  );
+}
+
+export function AccountSwitcher() {
+  const t = useTranslation("zh-TW");
+  const { account, activeAccount, organizations, setActiveAccount, activeAccountRole } = useCurrentAccount();
+
+  if (!account) return null;
+
+  const isPersonalActive = activeAccount === null || activeAccount?.id === account.id;
+  const activeInitial = (activeAccount?.displayName || activeAccount?.handle || account.displayName || "?")[0].toUpperCase();
+  const displayAccount = activeAccount || account;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" aria-label={t("theme.toggle")}>
-          <Sun className="size-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute size-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          <span className="sr-only">{t("theme.toggle")}</span>
-        </Button>
+        <button className="flex w-full items-center gap-3 rounded-lg border border-border/50 bg-muted/20 px-3 py-2 hover:bg-muted/40 transition-colors">
+          <Avatar className="size-8 rounded-lg">
+            {displayAccount.avatarUrl ? (
+              <AvatarImage src={displayAccount.avatarUrl} alt={displayAccount.displayName} />
+            ) : null}
+            <AvatarFallback className="rounded-lg bg-primary/10 text-xs font-bold text-primary">
+              {activeInitial}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0 text-left">
+            <p className="text-sm font-medium truncate leading-tight">{displayAccount.displayName}</p>
+            <p className="text-[10px] text-muted-foreground">
+              {activeAccount?.accountType === "personal" || !activeAccount ? (
+                <span className="opacity-60">Personal</span>
+              ) : (
+                <span>
+                  {activeAccountRole?.charAt(0).toUpperCase() + (activeAccountRole?.slice(1) || "")}
+                </span>
+              )}
+            </p>
+          </div>
+          <ChevronDown className="size-4 text-muted-foreground shrink-0 opacity-50" />
+        </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>
-          {t("theme.light")}
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
-          {t("theme.dark")}
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
-          {t("theme.system")}
-        </DropdownMenuItem>
+
+      <DropdownMenuContent align="start" className="w-56">
+        {/* Personal account — always at top */}
+        <DropdownMenuLabel className="text-xs font-bold uppercase tracking-wider opacity-60 px-2 py-1.5">
+          {t("account.personalAccount")}
+        </DropdownMenuLabel>
+        <AccountMenuItem
+          account={account}
+          isActive={isPersonalActive}
+          onClick={() => setActiveAccount(null)}
+        />
+
+        {/* Organizations */}
+        {organizations.length > 0 && (
+          <>
+            <DropdownMenuSeparator className="my-1" />
+            <DropdownMenuLabel className="text-xs font-bold uppercase tracking-wider opacity-60 px-2 py-1.5">
+              {t("account.organizations")}
+            </DropdownMenuLabel>
+            {organizations.map((org) => (
+              <AccountMenuItem
+                key={org.id}
+                account={org}
+                isActive={activeAccount?.id === org.id}
+                userRole={activeAccount?.id === org.id ? activeAccountRole : undefined}
+                onClick={() => setActiveAccount(org)}
+              />
+            ))}
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 ````
 
-## File: src/design-system/providers/theme-provider.tsx
+## File: src/modules/account.module/_components/profile-card.tsx
 ````typescript
 "use client";
-
-import { ThemeProvider as NextThemesProvider } from "next-themes";
-import type { ComponentProps } from "react";
-
 /**
- * ThemeProvider — thin wrapper around next-themes ThemeProvider.
+ * ProfileCard — displays and edits the user's display name.
  *
- * Place this at the root of the app (inside `<body>`) so that dark/light/system
- * preference is available throughout the component tree.
- *
- * Usage in layout.tsx:
- * ```tsx
- * <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
- *   {children}
- * </ThemeProvider>
- * ```
+ * Source: account.slice/domain.profile/_components/profile-card.tsx
+ * Adapted: uses AccountProvider (useCurrentAccount) for shared auth/account state.
  */
-export function ThemeProvider({
-  children,
-  ...props
-}: ComponentProps<typeof NextThemesProvider>) {
-  return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
+
+import { User, Save } from "lucide-react";
+import { useEffect, useState } from "react";
+
+import { updateProfile } from "@/infrastructure/firebase/client";
+import { useCurrentAccount } from "./account-provider";
+import { useTranslation } from "@/shared/i18n";
+import { Avatar, AvatarFallback, AvatarImage } from "@/design-system/primitives/ui/avatar";
+import { Button } from "@/design-system/primitives/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/design-system/primitives/ui/card";
+import { Input } from "@/design-system/primitives/ui/input";
+import { Label } from "@/design-system/primitives/ui/label";
+
+export function ProfileCard() {
+  const t = useTranslation("zh-TW");
+  const { user, account } = useCurrentAccount();
+  const [displayName, setDisplayName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  // Sync displayName from account (preferred) or Firebase Auth
+  useEffect(() => {
+    setDisplayName(account?.displayName ?? user?.displayName ?? "");
+  }, [account?.displayName, user?.displayName]);
+
+  const handleSave = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      await updateProfile(user, { displayName });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const photoURL = account?.avatarUrl ?? user?.photoURL ?? null;
+  const initial = (displayName || user?.email || "?")[0].toUpperCase();
+
+  return (
+    <Card className="border-border/60 bg-card/80 shadow-sm">
+      <CardHeader className="pb-4">
+        <div className="flex items-center gap-3">
+          <User className="size-5 text-primary" />
+          <div>
+            <CardTitle className="text-base font-bold">{t("profile.title")}</CardTitle>
+            <CardDescription className="text-xs">{t("profile.subtitle")}</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        {/* Avatar row */}
+        <div className="flex items-center gap-4">
+          <Avatar className="size-16 rounded-2xl">
+            {photoURL ? <AvatarImage src={photoURL} alt={displayName} /> : null}
+            <AvatarFallback className="rounded-2xl bg-primary/10 text-xl font-bold text-primary">
+              {initial}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="text-sm font-semibold">{displayName || t("common.notSet")}</p>
+            <p className="text-xs text-muted-foreground">{user?.email ?? ""}</p>
+          </div>
+        </div>
+
+        {/* Display name */}
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="displayName"
+            className="text-xs font-bold uppercase tracking-wider opacity-60"
+          >
+            {t("profile.displayName")}
+          </Label>
+          <Input
+            id="displayName"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            placeholder={t("profile.displayNamePlaceholder")}
+            className="rounded-xl border-border/50"
+          />
+        </div>
+
+        {/* Email (read-only) */}
+        <div className="space-y-1.5">
+          <Label className="text-xs font-bold uppercase tracking-wider opacity-60">
+            {t("profile.email")}
+          </Label>
+          <Input
+            value={user?.email ?? ""}
+            readOnly
+            disabled
+            className="rounded-xl border-border/50 opacity-60"
+          />
+        </div>
+
+        {/* Save */}
+        <div className="flex items-center justify-end gap-3 border-t border-border/40 pt-4">
+          {saved && (
+            <span className="text-xs font-medium text-green-600">
+              {t("profile.saved")}
+            </span>
+          )}
+          <Button
+            onClick={handleSave}
+            disabled={saving || !displayName.trim()}
+            size="sm"
+            className="gap-2 rounded-xl text-xs font-bold uppercase tracking-wider"
+          >
+            <Save className="size-3.5" />
+            {saving ? t("common.saving") : t("profile.saveChanges")}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 ````
 
-## File: src/design-system/README.md
-````markdown
+## File: src/modules/account.module/_components/security-view.tsx
+````typescript
+"use client";
+/**
+ * SecurityView — password change form using Firebase Auth.
+ *
+ * Source: account.slice/domain.profile/_components/security-card.tsx
+ * Adapted: uses EmailAuthProvider.credential + reauthenticateWithCredential + updatePassword
+ */
 
-````
+import { KeyRound, Save } from "lucide-react";
+import { useState } from "react";
 
-## File: src/infrastructure/AGENTS.md
-````markdown
+import {
+  EmailAuthProvider,
+  getFirebaseAuth,
+  reauthenticateWithCredential,
+  updatePassword,
+} from "@/infrastructure/firebase/client";
+import { useTranslation } from "@/shared/i18n";
+import { Button } from "@/design-system/primitives/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/design-system/primitives/ui/card";
+import { Input } from "@/design-system/primitives/ui/input";
+import { Label } from "@/design-system/primitives/ui/label";
 
-````
+export function SecurityView() {
+  const t = useTranslation("zh-TW");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [status, setStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
 
-## File: src/infrastructure/README.md
-````markdown
+  const isValid =
+    currentPassword.length > 0 &&
+    newPassword.length >= 8 &&
+    newPassword === confirmPassword;
 
+  const handleChange = async () => {
+    const auth = getFirebaseAuth();
+    const user = auth.currentUser;
+    if (!user || !user.email) return;
+
+    setStatus("saving");
+    setErrorMsg("");
+    try {
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
+      await updatePassword(user, newPassword);
+      setStatus("success");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setTimeout(() => setStatus("idle"), 4000);
+    } catch (err: unknown) {
+      setStatus("error");
+      // Surface Firebase Auth error codes when available for better UX
+      const code = (err as { code?: string })?.code;
+      if (code === "auth/wrong-password" || code === "auth/invalid-credential") {
+        setErrorMsg(t("security.currentPassword") + " 錯誤");
+      } else if (code === "auth/too-many-requests") {
+        setErrorMsg("請求過於頻繁，請稍後再試");
+      } else {
+        setErrorMsg(err instanceof Error ? err.message : t("security.changeFailed"));
+      }
+    }
+  };
+
+  const passwordMismatch = confirmPassword.length > 0 && newPassword !== confirmPassword;
+  const tooShort = newPassword.length > 0 && newPassword.length < 8;
+
+  return (
+    <div className="mx-auto max-w-2xl space-y-8 duration-500 animate-in fade-in">
+      <div className="flex items-center gap-3">
+        <KeyRound className="size-6 text-primary" />
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">{t("security.title")}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t("security.subtitle")}</p>
+        </div>
+      </div>
+
+      <Card className="border-border/60 bg-card/80 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-base font-bold">{t("security.changePassword")}</CardTitle>
+          <CardDescription className="text-xs">{t("security.subtitle")}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {/* Current password */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-bold uppercase tracking-wider opacity-60">
+              {t("security.currentPassword")}
+            </Label>
+            <Input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="rounded-xl border-border/50"
+              autoComplete="current-password"
+            />
+          </div>
+
+          {/* New password */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-bold uppercase tracking-wider opacity-60">
+              {t("security.newPassword")}
+            </Label>
+            <Input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="rounded-xl border-border/50"
+              autoComplete="new-password"
+            />
+            {tooShort && (
+              <p className="text-xs text-destructive">{t("security.passwordTooShort")}</p>
+            )}
+          </div>
+
+          {/* Confirm password */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-bold uppercase tracking-wider opacity-60">
+              {t("security.confirmPassword")}
+            </Label>
+            <Input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="rounded-xl border-border/50"
+              autoComplete="new-password"
+            />
+            {passwordMismatch && (
+              <p className="text-xs text-destructive">{t("security.passwordMismatch")}</p>
+            )}
+          </div>
+
+          {/* Feedback */}
+          {status === "success" && (
+            <p className="text-sm font-medium text-green-600">{t("security.passwordChanged")}</p>
+          )}
+          {status === "error" && (
+            <p className="text-sm text-destructive">{errorMsg}</p>
+          )}
+
+          {/* Save */}
+          <div className="flex justify-end border-t border-border/40 pt-4">
+            <Button
+              onClick={handleChange}
+              disabled={!isValid || status === "saving"}
+              size="sm"
+              className="gap-2 rounded-xl text-xs font-bold uppercase tracking-wider"
+            >
+              <Save className="size-3.5" />
+              {status === "saving" ? t("common.saving") : t("security.changePassword")}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 ````
 
 ## File: src/modules/account.module/_components/user-settings-view.tsx
@@ -54373,39 +55095,83 @@ export function UserSettingsView() {
 }
 ````
 
-## File: src/modules/account.module/core/_queries.ts
+## File: src/modules/account.module/AGENTS.md
+````markdown
+# account.module Agent Rules
+
+Purpose: document automation boundaries for `account.module` and keep DDD layer direction intact.
+
+## 邊界簡述
+- Bounded Context：**Account / 帳戶治理與身分關聯**
+- 模組定位：**核心域**
+- 核心責任：維持本域規則與契約，不外溢到他模組。
+
+## 自動化任務 / Agent 說明
+1. 新增或修改功能時，先確認規則屬於本模組上下文邊界。
+2. 變更流程時，優先更新 `domain.*` / `core/`，再調整 `infra.*` 與 `_components/`。
+3. 跨模組需求只能使用對方 `index.ts` 公開 API 或事件契約。
+4. 外部資料整合須經由 ACL（mapper/adapter），禁止將外部格式直接帶入 Domain。
+
+## 依賴方向與圖
+```
+Presentation (_components/ or src/app)
+        ↓
+Application (core/)
+        ↓
+Domain (domain.*)
+        ↑
+Infrastructure (infra.* implements ports)
+```
+
+Context mapping (high-level):
+`account.module` ↔ Identity、Namespace、Workspace、Settlement、Audit、Notification
+
+## 防線（Hard Rules）
+- 禁止從其他模組直接 import 內部路徑（`core/*`, `domain.*/*`, `infra.*/*`, `_components/*`）。
+- 禁止在 Domain 層引入 I/O、SDK、framework side effects。
+- 禁止在 Infrastructure 層編寫業務規則。
+- 禁止在 Presentation 層直接呼叫 Firebase / Upstash SDK。
+
+## 模組契約檢查清單
+- [ ] 上下文邊界是否清楚（Bounded Context）
+- [ ] 核心域 / 支撐域分類是否維持一致
+- [ ] Context Mapping 是否僅透過契約互動
+- [ ] ACL 是否隔離外部資料模型
+- [ ] 核心業務邏輯是否只在 Domain/Application
+- [ ] 操作流程是否符合 Presentation → Application → Domain ← Infrastructure
+- [ ] 模組間契約（DTO / Event）是否向後相容
+````
+
+## File: src/modules/account.module/core/_actions.ts
 ````typescript
-// Account queries — adapter-backed application facade for read paths.
+// Account actions — adapter-backed application facade for write paths.
 
 import { FirestoreAccountRepository } from "../infra.firestore/_repository";
 import {
-  getAccountById as getAccountByIdUseCase,
-  getOrgMembersByHandle as getOrgMembersByHandleUseCase,
-  getOrganizationsByOwnerId as getOrganizationsByOwnerIdUseCase,
-  getPublicProfile as getPublicProfileUseCase,
+  createOrganizationAccount as createOrganizationAccountUseCase,
+  createPersonalAccount as createPersonalAccountUseCase,
+  updateAccountProfile as updateAccountProfileUseCase,
   type AccountDTO,
-  type MemberDTO,
   type PublicProfileDTO,
 } from "./_use-cases";
 
 const accountRepository = new FirestoreAccountRepository();
 
-export type { AccountDTO, MemberDTO, PublicProfileDTO };
+export type { AccountDTO, PublicProfileDTO };
 
-export async function getAccountById(id: string) {
-  return getAccountByIdUseCase(accountRepository, id);
+export async function createPersonalAccount(uid: string, displayName: string) {
+  return createPersonalAccountUseCase(accountRepository, uid, displayName);
 }
 
-export async function getPublicProfile(id: string) {
-  return getPublicProfileUseCase(accountRepository, id);
+export async function createOrganizationAccount(orgId: string, ownerId: string, displayName: string) {
+  return createOrganizationAccountUseCase(accountRepository, orgId, ownerId, displayName);
 }
 
-export async function getOrgMembersByHandle(handle: string) {
-  return getOrgMembersByHandleUseCase(accountRepository, handle);
-}
-
-export async function getOrganizationsByOwnerId(ownerId: string) {
-  return getOrganizationsByOwnerIdUseCase(accountRepository, ownerId);
+export async function updateAccountProfile(
+  id: string,
+  updates: Partial<{ displayName: string; avatarUrl: string | null; bio: string | null }>,
+) {
+  return updateAccountProfileUseCase(accountRepository, id, updates);
 }
 ````
 
@@ -54633,253 +55399,191 @@ export async function getOrganizationsByOwnerId(
     return fail(err instanceof Error ? err : new Error(String(err)));
   }
 }
-````
-
-## File: src/modules/account.module/domain.account/_ports.ts
-````typescript
-import type { AccountEntity } from "./_entity";
-import type { AccountId, AccountHandle, MemberRole } from "./_value-objects";
-
-// ---------------------------------------------------------------------------
-// IAccountRepository
-// ---------------------------------------------------------------------------
 
 /**
- * Port interface for persisting Account aggregates.
- * Implemented by the Firestore infrastructure adapter.
+ * GetUserRoleInOrganizationUseCase
+ * Returns the MemberRole of a user within a specific organization.
+ * Returns null when the user is not a member or the organization doesn't exist.
+ * Note: This is for looking up a user's role in an org they are a member of,
+ * not for checking if they own it.
  */
-export interface IAccountRepository {
-  findById(id: AccountId): Promise<AccountEntity | null>;
-  findByHandle(handle: AccountHandle): Promise<AccountEntity | null>;
-  findOrganizationsByOwnerId(ownerId: AccountId): Promise<AccountEntity[]>;
-  save(account: AccountEntity): Promise<void>;
-  deleteById(id: AccountId): Promise<void>;
-}
-
-// ---------------------------------------------------------------------------
-// IAccountHandleAvailabilityPort
-// ---------------------------------------------------------------------------
-
-/**
- * Port for checking whether a handle is available before assignment.
- * Delegates to namespace.module's read model for global uniqueness enforcement.
- */
-export interface IAccountHandleAvailabilityPort {
-  isAvailable(handle: AccountHandle): Promise<boolean>;
-}
-
-// ---------------------------------------------------------------------------
-// IAccountBadgeWritePort
-// ---------------------------------------------------------------------------
-
-/**
- * Write port consumed by achievement.module to project badge unlocks onto accounts.
- * Ensures achievement.module does not import account.module directly.
- */
-export interface IAccountBadgeWritePort {
-  addBadge(accountId: AccountId, badgeSlug: string): Promise<void>;
-}
-
-// ---------------------------------------------------------------------------
-// IMembershipRepository
-// ---------------------------------------------------------------------------
-
-/**
- * Port interface for managing Membership records within an org account.
- */
-export interface IMembershipRepository {
-  findById(id: string): Promise<{ accountId: AccountId; role: MemberRole; status: string } | null>;
-  invite(orgAccountId: AccountId, memberAccountId: AccountId, role: MemberRole, now: string): Promise<void>;
-  accept(id: string, now: string): Promise<void>;
-  updateRole(id: string, newRole: MemberRole): Promise<void>;
-  revoke(id: string): Promise<void>;
+export async function getUserRoleInOrganization(
+  repo: IAccountRepository,
+  userId: string,
+  orgId: string,
+): Promise<Result<MemberRole | null>> {
+  try {
+    const org = await repo.findById(orgId as AccountId);
+    if (!org || org.accountType !== "organization") return ok(null);
+    const member = org.members?.find((m) => m.accountId === userId);
+    return ok(member?.role ?? null);
+  } catch (err) {
+    return fail(err instanceof Error ? err : new Error(String(err)));
+  }
 }
 ````
 
-## File: src/modules/account.module/infra.firestore/_repository.ts
-````typescript
-/**
- * Account Firestore repository — implements IAccountRepository port.
- *
- * All Firestore access is isolated to this file; the domain and application
- * layers only interact with the IAccountRepository / IMembershipRepository
- * port interfaces, keeping Firebase out of business logic.
- *
- * Handle uniqueness is enforced with a Firestore transaction (atomic
- * check-and-write) via `saveWithHandleUniqueness`.
- */
+## File: src/modules/account.module/README.md
+````markdown
+# account.module
 
-import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore";
-import type { IAccountRepository, IAccountBadgeWritePort, IMembershipRepository } from "../domain.account/_ports";
-import type { AccountEntity } from "../domain.account/_entity";
-import type { AccountId, AccountHandle, MemberRole } from "../domain.account/_value-objects";
-import { accountDocToEntity, accountEntityToDoc, type AccountDoc } from "./_mapper";
+**Bounded Context:** Account / 帳戶  
+**Layer:** SaaS
 
-const ACCOUNTS_COLLECTION = "accounts";
+## Purpose
 
-// ---------------------------------------------------------------------------
-// IAccountRepository implementation
-// ---------------------------------------------------------------------------
+`account.module` provides the unified Account entity for the platform.
+It answers the question: **"What is your account and what do you own?"**
 
-export class FirestoreAccountRepository
-  implements IAccountRepository, IAccountBadgeWritePort
-{
-  private get db() {
-    return getFirestore();
-  }
+`AccountType: personal | organization` — a single model covers both personal user accounts and organization accounts.
 
-  async findById(id: AccountId): Promise<AccountEntity | null> {
-    const ref = doc(this.db, ACCOUNTS_COLLECTION, id);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) return null;
-    const raw = { id: snap.id, ...snap.data() } as AccountDoc;
-    return accountDocToEntity(raw);
-  }
+Previously, User and Organization were separate identity concepts. This module unifies them and also absorbs the organization operational concerns (Teams, Membership governance) that were previously in the removed `org.module`.
 
-  async findByHandle(handle: AccountHandle): Promise<AccountEntity | null> {
-    const col = collection(this.db, ACCOUNTS_COLLECTION);
-    const q = query(col, where("handle", "==", handle));
-    const snap = await getDocs(q);
-    if (snap.empty) return null;
-    const first = snap.docs[0];
-    const raw = { id: first.id, ...first.data() } as AccountDoc;
-    return accountDocToEntity(raw);
-  }
+> **Boundary vs `identity.module`:**  
+> `account.module` = "What is your account?" (profile data, handle, team structure, membership roles — the **data** that belongs to you)  
+> `identity.module` = "How do you prove you are you?" (auth credentials, sessions, login/logout, password — the **authentication mechanism**)  
+>  
+> Display name / avatar / organization / team / member role → `account.module`  
+> Sign in / sign out / session token / provider linking → `identity.module`
 
-  async findOrganizationsByOwnerId(ownerId: AccountId): Promise<AccountEntity[]> {
-    const col = collection(this.db, ACCOUNTS_COLLECTION);
-    const q = query(
-      col,
-      where("accountType", "==", "organization"),
-      where("ownerId", "==", ownerId),
-    );
-    const snap = await getDocs(q);
-    return snap.docs.map((d) => {
-      const raw = { id: d.id, ...d.data() } as AccountDoc;
-      return accountDocToEntity(raw);
-    });
-  }
+## What this module owns
 
-  async save(account: AccountEntity): Promise<void> {
-    const ref = doc(this.db, ACCOUNTS_COLLECTION, account.id);
-    const data = accountEntityToDoc(account);
-    await setDoc(ref, data, { merge: true });
-  }
+| Concern | Description |
+|---------|-------------|
+| Account entity | Unified personal/org account with handle, profile, settings |
+| AccountProfile | Public surface: display name, avatar, bio, badges |
+| Team | Sub-aggregate for org accounts: team creation and management |
+| Membership | Invitation, role assignment (owner/admin/member/viewer), revocation |
+| MemberRole | Role assignment within an org: owner/admin/member/viewer (data structure; policy *enforcement* is `audit.module`) |
+| Badge projection | Receives badge unlocks from `achievement.module` via `IAccountBadgeWritePort` |
 
-  async deleteById(id: AccountId): Promise<void> {
-    const ref = doc(this.db, ACCOUNTS_COLLECTION, id);
-    await deleteDoc(ref);
-  }
+## What this module does NOT own
 
-  // IAccountBadgeWritePort — used by achievement.module via the port interface
-  async addBadge(accountId: AccountId, badgeSlug: string): Promise<void> {
-    const entity = await this.findById(accountId);
-    if (!entity) return;
-    const already = entity.profile.badgeSlugs.includes(badgeSlug);
-    if (already) return;
-    const updated: AccountEntity = {
-      ...entity,
-      profile: {
-        ...entity.profile,
-        badgeSlugs: [...entity.profile.badgeSlugs, badgeSlug],
-      },
-      updatedAt: new Date().toISOString(),
-    };
-    await this.save(updated);
-  }
-}
+| Concern | Owned by |
+|---------|----------|
+| Auth credentials / sessions / password | `identity.module` |
+| Sign-in / sign-out / provider linking | `identity.module` |
+| Namespace slug registration | `namespace.module` |
+| Social graph (follow, star) | `social.module` |
+| Badge rule evaluation | `achievement.module` |
+| Audit / compliance policy enforcement | `audit.module` |
 
-// ---------------------------------------------------------------------------
-// IMembershipRepository — sub-aggregate management within an org account
-// ---------------------------------------------------------------------------
+## Key aggregates
 
-export class FirestoreMembershipRepository implements IMembershipRepository {
-  constructor(private readonly accountRepo: IAccountRepository) {}
+- `Account` — root aggregate; contains `AccountProfile`, `Team[]`, `Membership[]` (org only)
+- `Team` — sub-aggregate of an org Account
+- `Membership` — sub-aggregate tracking member roles within an org Account
 
-  async findById(id: string): Promise<{ accountId: AccountId; role: MemberRole; status: string } | null> {
-    // Memberships are stored as sub-documents on the AccountEntity.
-    // A direct lookup by membership ID requires a Firestore collectionGroup query
-    // which is not yet implemented. Callers should load the parent AccountEntity
-    // via FirestoreAccountRepository and filter its members array instead.
-    // TODO: replace with collectionGroup('memberships') query when scale requires it.
-    void id;
-    return null;
-  }
+## Cross-module dependencies
 
-  async invite(
-    orgAccountId: AccountId,
-    memberAccountId: AccountId,
-    role: MemberRole,
-    now: string,
-  ): Promise<void> {
-    const account = await this.accountRepo.findById(orgAccountId);
-    if (!account) throw new Error(`Account ${orgAccountId} not found`);
+| Module | Direction | Reason |
+|--------|-----------|--------|
+| `identity.module` | ← | Identity links to this Account |
+| `namespace.module` | ← | Namespace slug is owned by this Account |
+| `achievement.module` | ← | Writes badge unlocks via IAccountBadgeWritePort |
+| `social.module` | ← | Reads public profile via IAccountSocialReadPort |
+| `collaboration.module` | ← | @mentions resolve to Account handles |
+| `audit.module` | ← | Actor references resolve to Account handles |
 
-    const newMembership = {
-      id: `${orgAccountId}_${memberAccountId}`,
-      accountId: memberAccountId,
-      role,
-      status: "pending" as const,
-      invitedAt: now,
-      acceptedAt: null,
-    };
+## Standard 4-layer structure
 
-    const updated: AccountEntity = {
-      ...account,
-      members: [...(account.members ?? []), newMembership],
-      updatedAt: now,
-    };
-    await this.accountRepo.save(updated);
-  }
+```
+account.module/
+├── index.ts                     # Public API barrel
+├── domain.account/
+│   ├── _entity.ts               # Account aggregate root + Team + Membership sub-aggregates
+│   ├── _value-objects.ts        # AccountId, AccountHandle, AccountType, TeamId, MemberRole …
+│   ├── _ports.ts                # IAccountRepository, ITeamRepository, IMembershipRepository …
+│   └── _events.ts               # PersonalAccountCreated, OrganizationAccountCreated, TeamCreated …
+├── core/
+│   ├── _use-cases.ts            # CreatePersonalAccountUseCase, CreateTeamUseCase, AddTeamMemberUseCase …
+│   ├── _actions.ts              # createOrgAccountAction, updateProfileAction, addMemberAction
+│   └── _queries.ts              # getAccountByHandleQuery, getTeamsByOrgQuery, getMembersQuery
+├── infra.firestore/
+│   ├── _repository.ts           # Implements IAccountRepository, ITeamRepository, IMembershipRepository
+│   └── _mapper.ts               # Firestore doc ↔ AccountEntity / TeamEntity / MembershipEntity
+└── _components/                 # Account settings, team management UI (future)
+```
 
-  async accept(id: string, now: string): Promise<void> {
-    // `id` format: `{orgAccountId}_{memberAccountId}`
-    const [orgAccountId] = id.split("_") as [AccountId];
-    const account = await this.accountRepo.findById(orgAccountId);
-    if (!account) return;
+## Domain Governance（必填）
 
-    const updated: AccountEntity = {
-      ...account,
-      members: (account.members ?? []).map((m) =>
-        m.id === id ? { ...m, status: "active" as const, acceptedAt: now } : m,
-      ),
-      updatedAt: now,
-    };
-    await this.accountRepo.save(updated);
-  }
+### 1. 上下文邊界（Bounded Context）
+- 本模組邊界：**Account / 帳戶治理與身分關聯**。
+- 僅允許透過 `src/modules/account.module/index.ts` 對外暴露能力；禁止跨模組直連 `core/`、`domain.*`、`infra.*`、`_components/`。
 
-  async updateRole(id: string, newRole: MemberRole): Promise<void> {
-    const [orgAccountId] = id.split("_") as [AccountId];
-    const account = await this.accountRepo.findById(orgAccountId);
-    if (!account) return;
+### 2. 核心域與支撐域識別
+- 本模組定位：**核心域**。
+- 核心能力放在 `domain.*` + `core/`；跨域整合、通知、搜尋等配套能力視為支撐能力，由應用層編排。
 
-    const now = new Date().toISOString();
-    const updated: AccountEntity = {
-      ...account,
-      members: (account.members ?? []).map((m) =>
-        m.id === id ? { ...m, role: newRole } : m,
-      ),
-      updatedAt: now,
-    };
-    await this.accountRepo.save(updated);
-  }
+### 3. 上下文映射（Context Mapping）
+- 主要上下游關聯：**Identity、Namespace、Workspace、Settlement、Audit、Notification**。
+- 跨上下文資料交換需使用 DTO／事件，不共享對方內部實體。
 
-  async revoke(id: string): Promise<void> {
-    const [orgAccountId] = id.split("_") as [AccountId];
-    const account = await this.accountRepo.findById(orgAccountId);
-    if (!account) return;
+### 4. 防腐層（Anti-Corruption Layer）
+- 外部系統（Firebase / Upstash / 外部 API）必須封裝在 `infra.*`。
+- 使用 Mapper / Adapter 將外部資料格式轉換為本域 Value Object 與 Entity，避免污染領域模型。
 
-    const now = new Date().toISOString();
-    const updated: AccountEntity = {
-      ...account,
-      members: (account.members ?? []).map((m) =>
-        m.id === id ? { ...m, status: "revoked" as const } : m,
-      ),
-      updatedAt: now,
-    };
-    await this.accountRepo.save(updated);
-  }
-}
+### 5. 核心業務邏輯
+- 不變條件（invariants）與規則放在 `domain.*`（Entity / VO / Domain Service）。
+- `core/_use-cases.ts` 僅做流程協調：載入 → 套用規則 → 透過 Port 持久化 → 發布事件。
+
+### 6. 操作流程
+1. Presentation（`_components/` 或 `src/app`）呼叫模組公開 Action/Query。
+2. Application（`core/`）執行用例並調用 Domain。
+3. Domain 計算狀態變更與事件。
+4. Infrastructure（`infra.*`）透過 Port 落地 I/O。
+
+### 7. 模組間契約
+- 同步契約：`index.ts` 匯出的 Action / Query / DTO。
+- 非同步契約：Domain Event payload（版本化、向後相容）。
+- 契約變更需先更新 README 與呼叫端，避免破壞既有流程。
+````
+
+## File: src/modules/achievement.module/AGENTS.md
+````markdown
+# achievement.module Agent Rules
+
+Purpose: document automation boundaries for `achievement.module` and keep DDD layer direction intact.
+
+## 邊界簡述
+- Bounded Context：**Achievement / 成就規則與徽章**
+- 模組定位：**支撐域**
+- 核心責任：維持本域規則與契約，不外溢到他模組。
+
+## 自動化任務 / Agent 說明
+1. 新增或修改功能時，先確認規則屬於本模組上下文邊界。
+2. 變更流程時，優先更新 `domain.*` / `core/`，再調整 `infra.*` 與 `_components/`。
+3. 跨模組需求只能使用對方 `index.ts` 公開 API 或事件契約。
+4. 外部資料整合須經由 ACL（mapper/adapter），禁止將外部格式直接帶入 Domain。
+
+## 依賴方向與圖
+```
+Presentation (_components/ or src/app)
+        ↓
+Application (core/)
+        ↓
+Domain (domain.*)
+        ↑
+Infrastructure (infra.* implements ports)
+```
+
+Context mapping (high-level):
+`achievement.module` ↔ Workspace、Social、Notification
+
+## 防線（Hard Rules）
+- 禁止從其他模組直接 import 內部路徑（`core/*`, `domain.*/*`, `infra.*/*`, `_components/*`）。
+- 禁止在 Domain 層引入 I/O、SDK、framework side effects。
+- 禁止在 Infrastructure 層編寫業務規則。
+- 禁止在 Presentation 層直接呼叫 Firebase / Upstash SDK。
+
+## 模組契約檢查清單
+- [ ] 上下文邊界是否清楚（Bounded Context）
+- [ ] 核心域 / 支撐域分類是否維持一致
+- [ ] Context Mapping 是否僅透過契約互動
+- [ ] ACL 是否隔離外部資料模型
+- [ ] 核心業務邏輯是否只在 Domain/Application
+- [ ] 操作流程是否符合 Presentation → Application → Domain ← Infrastructure
+- [ ] 模組間契約（DTO / Event）是否向後相容
 ````
 
 ## File: src/modules/achievement.module/index.ts
@@ -54892,139 +55596,362 @@ export type { IAchievementRepository } from "./domain.achievement/_ports";
 export { AchievementsPanel } from "./_components/achievements-panel";
 ````
 
-## File: src/modules/AGENTS.md
+## File: src/modules/achievement.module/README.md
 ````markdown
-# src/modules Agent Guardrails
+# achievement.module
 
-Purpose: prevent boundary mistakes across Domain Modules and enforce predictable, reviewable changes.
+**Bounded Context:** Achievement Rules · Badge Unlocking  
+**Layer:** SaaS
 
-This file is mandatory guidance for any agent editing code under src/modules.
+## Purpose
 
----
+`achievement.module` evaluates achievement rules and unlocks badges for accounts.
+Badge unlocks are projected to the Account's public profile in `account.module`
+via the `IAccountBadgeWritePort` cross-module port.
 
-## 0. Non-negotiable Principles
+## What this module owns
 
-1. One module = one Bounded Context.
-2. Keep cohesion high: logic that changes for the same business reason stays in the same module.
-3. Dependency direction must be one-way by layer:
-	- Presentation -> Application -> Domain
-	- Infrastructure implements Domain ports
-4. Cross-module access must go through public API only:
-	- Allowed: src/modules/<target>.module/index.ts exports
-	- Forbidden: direct import from another module's core, domain.*, infra.*, _components
-5. Cross-context side effects are event or application orchestration concerns, not direct domain coupling.
+| Concern | Description |
+|---------|-------------|
+| AchievementRule | Condition-based rule for unlocking a badge |
+| Badge | Badge definition (name, icon, description) |
+| AccountAchievementRecord | Per-account record of unlocked badges |
 
----
+## Cross-module dependencies
 
-## 1. Boundary Gate (Run Before Any Edit)
+| Module | Direction | Reason |
+|--------|-----------|--------|
+| `account.module` | → | Badge unlocks are written via IAccountBadgeWritePort |
+| All source modules | ← | Achievement rules are evaluated on domain events (e.g. WorkItemCompleted, FileUploaded) |
 
-Before writing code, the agent must answer all checks below:
+## Standard 4-layer structure
 
-1. Which module owns this business rule?
-2. Is the target file in the owning module?
-3. Does this edit introduce any cross-module import?
-4. If yes, is it from target module public index barrel only?
-5. Does the change keep layer direction valid?
-6. Is this behavior same-context synchronous invariant, or cross-context eventual propagation?
+```
+achievement.module/
+├── index.ts
+├── domain.achievement/
+│   ├── _entity.ts               # AchievementRule + Badge + AccountAchievementRecord
+│   ├── _value-objects.ts
+│   ├── _ports.ts                # IAchievementRepository, IAccountBadgeWritePort
+│   └── _events.ts
+├── core/
+├── infra.firestore/
+└── _components/
+```
 
-If any answer is unclear, stop and clarify before editing.
+## Domain Governance（必填）
 
----
+### 1. 上下文邊界（Bounded Context）
+- 本模組邊界：**Achievement / 成就規則與徽章**。
+- 僅允許透過 `src/modules/achievement.module/index.ts` 對外暴露能力；禁止跨模組直連 `core/`、`domain.*`、`infra.*`、`_components/`。
 
-## 2. Red Lines (Hard Fail)
+### 2. 核心域與支撐域識別
+- 本模組定位：**支撐域**。
+- 核心能力放在 `domain.*` + `core/`；跨域整合、通知、搜尋等配套能力視為支撐能力，由應用層編排。
 
-Agent must stop and report when any of the following appears:
+### 3. 上下文映射（Context Mapping）
+- 主要上下游關聯：**Workspace、Social、Notification**。
+- 跨上下文資料交換需使用 DTO／事件，不共享對方內部實體。
 
-1. Importing another module internals:
-	- src/modules/<other>.module/core/*
-	- src/modules/<other>.module/domain.*/*
-	- src/modules/<other>.module/infra.*/*
-	- src/modules/<other>.module/_components/*
-2. Placing Account-specific business logic in workspace.module (or inverse).
-3. Placing Infrastructure concerns in Presentation or Domain.
-4. Using shortcuts that bypass existing public use-cases and DTO contracts.
-5. UI-driven quick fix that silently changes bounded context ownership.
+### 4. 防腐層（Anti-Corruption Layer）
+- 外部系統（Firebase / Upstash / 外部 API）必須封裝在 `infra.*`。
+- 使用 Mapper / Adapter 將外部資料格式轉換為本域 Value Object 與 Entity，避免污染領域模型。
 
----
+### 5. 核心業務邏輯
+- 不變條件（invariants）與規則放在 `domain.*`（Entity / VO / Domain Service）。
+- `core/_use-cases.ts` 僅做流程協調：載入 → 套用規則 → 透過 Port 持久化 → 發布事件。
 
-## 3. Account vs Workspace Ownership Rule
+### 6. 操作流程
+1. Presentation（`_components/` 或 `src/app`）呼叫模組公開 Action/Query。
+2. Application（`core/`）執行用例並調用 Domain。
+3. Domain 計算狀態變更與事件。
+4. Infrastructure（`infra.*`）透過 Port 落地 I/O。
 
-Use this as the default arbiter:
+### 7. 模組間契約
+- 同步契約：`index.ts` 匯出的 Action / Query / DTO。
+- 非同步契約：Domain Event payload（版本化、向後相容）。
+- 契約變更需先更新 README 與呼叫端，避免破壞既有流程。
+````
 
-1. account.module owns:
-	- account identity and profile
-	- accountType personal|organization semantics
-	- active account context switching
-	- membership model and account governance
-2. workspace.module owns:
-	- workspace lifecycle and workspace ACL usage
-	- WBS, issue, CR, QA, acceptance, baseline
-	- planning and delivery context bound to workspace
-3. Workspace UI may consume current account context, but must not own account business rules.
+## File: src/modules/audit.module/AGENTS.md
+````markdown
+# audit.module Agent Rules
 
----
+Purpose: document automation boundaries for `audit.module` and keep DDD layer direction intact.
 
-## 4. Safe Integration Pattern Across Modules
+## 邊界簡述
+- Bounded Context：**Audit / 稽核追蹤與政策事件**
+- 模組定位：**支撐域**
+- 核心責任：維持本域規則與契約，不外溢到他模組。
 
-When module A needs data from module B:
+## 自動化任務 / Agent 說明
+1. 新增或修改功能時，先確認規則屬於本模組上下文邊界。
+2. 變更流程時，優先更新 `domain.*` / `core/`，再調整 `infra.*` 與 `_components/`。
+3. 跨模組需求只能使用對方 `index.ts` 公開 API 或事件契約。
+4. 外部資料整合須經由 ACL（mapper/adapter），禁止將外部格式直接帶入 Domain。
 
-1. Read from module B public API barrel only.
-2. Keep module B behavior in B; do not duplicate rules in A.
-3. Prefer DTOs and explicit use-cases over internal repository usage.
-4. For side effects crossing contexts, use events/application orchestration.
-5. Document assumptions where consistency is eventual.
+## 依賴方向與圖
+```
+Presentation (_components/ or src/app)
+        ↓
+Application (core/)
+        ↓
+Domain (domain.*)
+        ↑
+Infrastructure (infra.* implements ports)
+```
 
----
+Context mapping (high-level):
+`audit.module` ↔ All modules、Search
 
-## 5. Consistency and Event Flow Rule
+## 防線（Hard Rules）
+- 禁止從其他模組直接 import 內部路徑（`core/*`, `domain.*/*`, `infra.*/*`, `_components/*`）。
+- 禁止在 Domain 層引入 I/O、SDK、framework side effects。
+- 禁止在 Infrastructure 層編寫業務規則。
+- 禁止在 Presentation 層直接呼叫 Firebase / Upstash SDK。
 
-1. Aggregate invariants: enforce synchronously inside owning context before persistence.
-2. Standard use-case flow:
-	- load aggregate -> apply domain rules -> persist -> emit domain event
-3. Cross-context updates default to eventual consistency unless explicitly documented otherwise.
-4. Do not fake strong consistency by directly mutating another module internals.
+## 模組契約檢查清單
+- [ ] 上下文邊界是否清楚（Bounded Context）
+- [ ] 核心域 / 支撐域分類是否維持一致
+- [ ] Context Mapping 是否僅透過契約互動
+- [ ] ACL 是否隔離外部資料模型
+- [ ] 核心業務邏輯是否只在 Domain/Application
+- [ ] 操作流程是否符合 Presentation → Application → Domain ← Infrastructure
+- [ ] 模組間契約（DTO / Event）是否向後相容
+````
 
----
+## File: src/modules/audit.module/README.md
+````markdown
+# audit.module
 
-## 6. Pre-Commit Checklist (Required)
+**Bounded Context:** Audit Trail · Policy Automation / 稽核記錄 · 政策自動化  
+**Layer:** SaaS (cross-cutting)
 
-1. No forbidden cross-module internal imports added.
-2. Any new cross-module dependency uses public barrel import.
-3. Changed logic matches owning bounded context.
-4. Layer direction remains valid after edit.
-5. i18n and docs are updated if user-facing behavior changed.
-6. At least one validation command has been run.
+## Purpose
 
----
+`audit.module` provides an immutable audit trail and policy automation layer.
+It captures WHO did WHAT to WHICH artifact at WHAT time across all bounded contexts.
 
-## 7. Incident Pattern to Avoid
+This module also owns the **`Sec` (Integrity & Policy Automation)** participant from
+`core-logic.mermaid` — cross-module policy checks that were previously unassigned.
 
-Never repeat this pattern:
+## What this module owns
 
-1. Detect boundary issue.
-2. Delete component immediately.
-3. Forget replacement in correct owning module.
+| Concern | Description |
+|---------|-------------|
+| AuditEntry | Immutable, append-only record of a domain event |
+| PolicyRule | Condition-based governance rule (e.g. required approvals before merge) |
+| PolicyEvaluation | Deterministic pass/fail evaluation against active rules |
+| ComplianceReport | Aggregated audit report for regulatory or internal review |
 
-Correct sequence:
+## Cross-module dependencies
 
-1. Confirm ownership.
-2. Design replacement target path.
-3. Migrate wiring safely.
-4. Remove old file last.
-5. Validate runtime and imports.
+| Module | Direction | Reason |
+|--------|-----------|--------|
+| All source modules | ← | Subscribes to domain events to record audit entries |
+| `identity.module` | → | Actor identity resolved from IdentityId |
+| `account.module` | → | Actor account handle resolved for display |
+| `workspace.module` | → | Workspace governance rules (required approvals, QA sign-off) |
+| `notification.module` | ← | PolicyViolationDetected triggers notification to workspace owner |
 
----
+## Standard 4-layer structure
 
-## 8. Default Agent Behavior
+```
+audit.module/
+├── index.ts
+├── domain.audit/
+│   ├── _entity.ts               # AuditEntry (append-only) + PolicyRule + PolicyEvaluation
+│   ├── _value-objects.ts        # AuditEntryId, AuditAction, ResourceRef, PolicyOutcome
+│   ├── _ports.ts                # IAuditEntryRepository, IPolicyRuleRepository, IAuditEventSubscriber
+│   └── _events.ts               # PolicyViolationDetected
+├── core/
+│   ├── _use-cases.ts            # EvaluatePolicyUseCase, GetAuditTrailUseCase, ExportAuditReportUseCase
+│   ├── _actions.ts
+│   └── _queries.ts
+├── infra.firestore/
+└── _components/
+```
 
-When uncertain, prefer explicitness over speed:
+## Domain Governance（必填）
 
-1. Explain ownership decision first.
-2. Propose minimal safe migration steps.
-3. Execute in small verifiable diffs.
-4. Report what changed, why, and what remains.
+### 1. 上下文邊界（Bounded Context）
+- 本模組邊界：**Audit / 稽核追蹤與政策事件**。
+- 僅允許透過 `src/modules/audit.module/index.ts` 對外暴露能力；禁止跨模組直連 `core/`、`domain.*`、`infra.*`、`_components/`。
 
-This repository values architectural correctness above fast but risky edits.
+### 2. 核心域與支撐域識別
+- 本模組定位：**支撐域**。
+- 核心能力放在 `domain.*` + `core/`；跨域整合、通知、搜尋等配套能力視為支撐能力，由應用層編排。
+
+### 3. 上下文映射（Context Mapping）
+- 主要上下游關聯：**All modules、Search**。
+- 跨上下文資料交換需使用 DTO／事件，不共享對方內部實體。
+
+### 4. 防腐層（Anti-Corruption Layer）
+- 外部系統（Firebase / Upstash / 外部 API）必須封裝在 `infra.*`。
+- 使用 Mapper / Adapter 將外部資料格式轉換為本域 Value Object 與 Entity，避免污染領域模型。
+
+### 5. 核心業務邏輯
+- 不變條件（invariants）與規則放在 `domain.*`（Entity / VO / Domain Service）。
+- `core/_use-cases.ts` 僅做流程協調：載入 → 套用規則 → 透過 Port 持久化 → 發布事件。
+
+### 6. 操作流程
+1. Presentation（`_components/` 或 `src/app`）呼叫模組公開 Action/Query。
+2. Application（`core/`）執行用例並調用 Domain。
+3. Domain 計算狀態變更與事件。
+4. Infrastructure（`infra.*`）透過 Port 落地 I/O。
+
+### 7. 模組間契約
+- 同步契約：`index.ts` 匯出的 Action / Query / DTO。
+- 非同步契約：Domain Event payload（版本化、向後相容）。
+- 契約變更需先更新 README 與呼叫端，避免破壞既有流程。
+````
+
+## File: src/modules/causal-graph.module/AGENTS.md
+````markdown
+# causal-graph.module Agent Rules
+
+Purpose: document automation boundaries for `causal-graph.module` and keep DDD layer direction intact.
+
+## 邊界簡述
+- Bounded Context：**Causal Graph / 因果分析與影響路徑**
+- 模組定位：**支撐域**
+- 核心責任：維持本域規則與契約，不外溢到他模組。
+
+## 自動化任務 / Agent 說明
+1. 新增或修改功能時，先確認規則屬於本模組上下文邊界。
+2. 變更流程時，優先更新 `domain.*` / `core/`，再調整 `infra.*` 與 `_components/`。
+3. 跨模組需求只能使用對方 `index.ts` 公開 API 或事件契約。
+4. 外部資料整合須經由 ACL（mapper/adapter），禁止將外部格式直接帶入 Domain。
+
+## 依賴方向與圖
+```
+Presentation (_components/ or src/app)
+        ↓
+Application (core/)
+        ↓
+Domain (domain.*)
+        ↑
+Infrastructure (infra.* implements ports)
+```
+
+Context mapping (high-level):
+`causal-graph.module` ↔ Workspace、Search、Audit
+
+## 防線（Hard Rules）
+- 禁止從其他模組直接 import 內部路徑（`core/*`, `domain.*/*`, `infra.*/*`, `_components/*`）。
+- 禁止在 Domain 層引入 I/O、SDK、framework side effects。
+- 禁止在 Infrastructure 層編寫業務規則。
+- 禁止在 Presentation 層直接呼叫 Firebase / Upstash SDK。
+
+## 模組契約檢查清單
+- [ ] 上下文邊界是否清楚（Bounded Context）
+- [ ] 核心域 / 支撐域分類是否維持一致
+- [ ] Context Mapping 是否僅透過契約互動
+- [ ] ACL 是否隔離外部資料模型
+- [ ] 核心業務邏輯是否只在 Domain/Application
+- [ ] 操作流程是否符合 Presentation → Application → Domain ← Infrastructure
+- [ ] 模組間契約（DTO / Event）是否向後相容
+````
+
+## File: src/modules/causal-graph.module/README.md
+````markdown
+# causal-graph.module
+
+**Bounded Context:** Causal Graph · Impact Analysis / 因果圖 · 影響分析  
+**Layer:** SaaS / Workspace (cross-cutting analytical)
+
+## Purpose
+
+`causal-graph.module` models **cause-effect relationships between domain events and entities**
+across bounded contexts. It answers questions like:
+
+- "What downstream work items are affected if this milestone slips?"
+- "Which workspace events contributed to this settlement discrepancy?"
+- "What is the full impact chain of approving this Change Request?"
+
+> **Key distinction from `work.module` (Dependency):**  
+> `work.module` owns *task ordering dependencies* (A must complete before B — scheduling).  
+> `causal-graph.module` models *analytical cause-effect relationships* across domain events
+> (why did X happen? what does X cause?), including cross-module causal chains.
+
+## What this module owns
+
+| Concern | Description |
+|---------|-------------|
+| CausalNode | A domain entity or event that participates in a causal relationship |
+| CausalEdge | A directed cause→effect relationship between two CausalNodes |
+| CausalPath | A resolved chain of causal edges from root cause to terminal effect |
+| ImpactScope | Set of CausalNodes reachable from a given trigger node |
+
+## What this module does NOT own
+
+| Concern | Correct module |
+|---------|----------------|
+| Task ordering / scheduling dependency | `work.module` (Dependency value object) |
+| Audit history of who did what | `audit.module` (AuditEntry) |
+| Work item status transitions | `work.module` (WorkItem entity) |
+
+## Cross-module dependencies
+
+| Module | Direction | Reason |
+|--------|-----------|--------|
+| All source modules | ← | Domain events feed CausalNode updates |
+| `work.module` | → | WorkItem and Milestone are common CausalNode sources |
+| `workspace.module` | → | CR / QA / Baseline state changes feed causal edges |
+| `search.module` | ← | CausalPath entries indexed for cross-BC impact search |
+
+## Standard 4-layer structure
+
+```
+causal-graph.module/
+├── index.ts
+├── domain.causal-graph/
+│   ├── _entity.ts               # CausalNode · CausalEdge · CausalPath
+│   ├── _value-objects.ts        # CausalNodeId · EdgeWeight · CausalDirection · ImpactScope
+│   ├── _ports.ts                # ICausalNodeRepository · ICausalEdgeRepository · ICausalPathQuery
+│   └── _events.ts               # CausalEdgeAdded · ImpactScopeResolved
+├── core/
+│   ├── _use-cases.ts            # AddCausalEdgeUseCase · ResolveImpactScopeUseCase · QueryCausalPathUseCase
+│   ├── _actions.ts
+│   └── _queries.ts
+├── infra.firestore/
+│   ├── _repository.ts
+│   └── _mapper.ts
+└── _components/
+```
+
+## Domain Governance（必填）
+
+### 1. 上下文邊界（Bounded Context）
+- 本模組邊界：**Causal Graph / 因果分析與影響路徑**。
+- 僅允許透過 `src/modules/causal-graph.module/index.ts` 對外暴露能力；禁止跨模組直連 `core/`、`domain.*`、`infra.*`、`_components/`。
+
+### 2. 核心域與支撐域識別
+- 本模組定位：**支撐域**。
+- 核心能力放在 `domain.*` + `core/`；跨域整合、通知、搜尋等配套能力視為支撐能力，由應用層編排。
+
+### 3. 上下文映射（Context Mapping）
+- 主要上下游關聯：**Workspace、Search、Audit**。
+- 跨上下文資料交換需使用 DTO／事件，不共享對方內部實體。
+
+### 4. 防腐層（Anti-Corruption Layer）
+- 外部系統（Firebase / Upstash / 外部 API）必須封裝在 `infra.*`。
+- 使用 Mapper / Adapter 將外部資料格式轉換為本域 Value Object 與 Entity，避免污染領域模型。
+
+### 5. 核心業務邏輯
+- 不變條件（invariants）與規則放在 `domain.*`（Entity / VO / Domain Service）。
+- `core/_use-cases.ts` 僅做流程協調：載入 → 套用規則 → 透過 Port 持久化 → 發布事件。
+
+### 6. 操作流程
+1. Presentation（`_components/` 或 `src/app`）呼叫模組公開 Action/Query。
+2. Application（`core/`）執行用例並調用 Domain。
+3. Domain 計算狀態變更與事件。
+4. Infrastructure（`infra.*`）透過 Port 落地 I/O。
+
+### 7. 模組間契約
+- 同步契約：`index.ts` 匯出的 Action / Query / DTO。
+- 非同步契約：Domain Event payload（版本化、向後相容）。
+- 契約變更需先更新 README 與呼叫端，避免破壞既有流程。
 ````
 
 ## File: src/modules/collaboration.module/_components/comment-thread.tsx
@@ -55190,6 +56117,146 @@ export function CommentThread({ artifactType, artifactId, defaultCollapsed = fal
     </div>
   );
 }
+````
+
+## File: src/modules/collaboration.module/AGENTS.md
+````markdown
+# collaboration.module Agent Rules
+
+Purpose: document automation boundaries for `collaboration.module` and keep DDD layer direction intact.
+
+## 邊界簡述
+- Bounded Context：**Collaboration / 協作互動（留言、反應、Presence）**
+- 模組定位：**支撐域**
+- 核心責任：維持本域規則與契約，不外溢到他模組。
+
+## 自動化任務 / Agent 說明
+1. 新增或修改功能時，先確認規則屬於本模組上下文邊界。
+2. 變更流程時，優先更新 `domain.*` / `core/`，再調整 `infra.*` 與 `_components/`。
+3. 跨模組需求只能使用對方 `index.ts` 公開 API 或事件契約。
+4. 外部資料整合須經由 ACL（mapper/adapter），禁止將外部格式直接帶入 Domain。
+
+## 依賴方向與圖
+```
+Presentation (_components/ or src/app)
+        ↓
+Application (core/)
+        ↓
+Domain (domain.*)
+        ↑
+Infrastructure (infra.* implements ports)
+```
+
+Context mapping (high-level):
+`collaboration.module` ↔ Workspace、Identity、Notification
+
+## 防線（Hard Rules）
+- 禁止從其他模組直接 import 內部路徑（`core/*`, `domain.*/*`, `infra.*/*`, `_components/*`）。
+- 禁止在 Domain 層引入 I/O、SDK、framework side effects。
+- 禁止在 Infrastructure 層編寫業務規則。
+- 禁止在 Presentation 層直接呼叫 Firebase / Upstash SDK。
+
+## 模組契約檢查清單
+- [ ] 上下文邊界是否清楚（Bounded Context）
+- [ ] 核心域 / 支撐域分類是否維持一致
+- [ ] Context Mapping 是否僅透過契約互動
+- [ ] ACL 是否隔離外部資料模型
+- [ ] 核心業務邏輯是否只在 Domain/Application
+- [ ] 操作流程是否符合 Presentation → Application → Domain ← Infrastructure
+- [ ] 模組間契約（DTO / Event）是否向後相容
+````
+
+## File: src/modules/collaboration.module/index.ts
+````typescript
+// collaboration.module — Public API barrel
+// Bounded Context: Collaboration · Comments · Reactions
+export type { CommentDTO } from "./core/_use-cases";
+export { postComment, getCommentsByArtifact } from "./core/_use-cases";
+export type { ICommentRepository } from "./domain.collaboration/_ports";
+export { CommentThread } from "./_components/comment-thread";
+````
+
+## File: src/modules/collaboration.module/README.md
+````markdown
+# collaboration.module
+
+**Bounded Context:** Collaboration / 協作  
+**Layer:** Workspace (cross-cutting)
+
+## Purpose
+
+`collaboration.module` handles all real-time and async multi-participant interaction surfaces:
+threaded comments, reactions, presence indicators, and co-editing sessions.
+
+## What this module owns
+
+| Concern | Description |
+|---------|-------------|
+| Comment | Threaded comments anchored to any artifact |
+| Reaction | Emoji reactions on comments |
+| Presence | Real-time presence indicators (viewing / editing / idle) |
+| CoEditSession | CRDT / OT coordination signals for collaborative editing |
+
+## Cross-module dependencies
+
+| Module | Direction | Reason |
+|--------|-----------|--------|
+| `workspace.module` | → | Comments anchor to workspace artifacts (Issue, CR, QA) |
+| `work.module` | → | Comments anchor to Work Items and Milestones |
+| `file.module` | → | Inline comments anchor to file lines/blocks |
+| `account.module` | → | Participants are Accounts; @mentions resolve to Account handles |
+| `notification.module` | ← | MentionCommentPosted, ReviewRequested events trigger notifications |
+
+## Standard 4-layer structure
+
+```
+collaboration.module/
+├── index.ts
+├── domain.collaboration/
+│   ├── _entity.ts               # Comment + Thread + Reaction
+│   ├── _value-objects.ts        # CommentId, ArtifactRef, ReactionType, PresenceState
+│   ├── _ports.ts                # ICommentRepository, IPresencePort, ICoEditSessionPort
+│   └── _events.ts               # CommentPosted, MentionCommentPosted, ReviewRequested
+├── core/
+│   ├── _use-cases.ts            # PostCommentUseCase, AddReactionUseCase, JoinPresenceUseCase
+│   ├── _actions.ts
+│   └── _queries.ts
+├── infra.firestore/
+└── _components/
+```
+
+## Domain Governance（必填）
+
+### 1. 上下文邊界（Bounded Context）
+- 本模組邊界：**Collaboration / 協作互動（留言、反應、Presence）**。
+- 僅允許透過 `src/modules/collaboration.module/index.ts` 對外暴露能力；禁止跨模組直連 `core/`、`domain.*`、`infra.*`、`_components/`。
+
+### 2. 核心域與支撐域識別
+- 本模組定位：**支撐域**。
+- 核心能力放在 `domain.*` + `core/`；跨域整合、通知、搜尋等配套能力視為支撐能力，由應用層編排。
+
+### 3. 上下文映射（Context Mapping）
+- 主要上下游關聯：**Workspace、Identity、Notification**。
+- 跨上下文資料交換需使用 DTO／事件，不共享對方內部實體。
+
+### 4. 防腐層（Anti-Corruption Layer）
+- 外部系統（Firebase / Upstash / 外部 API）必須封裝在 `infra.*`。
+- 使用 Mapper / Adapter 將外部資料格式轉換為本域 Value Object 與 Entity，避免污染領域模型。
+
+### 5. 核心業務邏輯
+- 不變條件（invariants）與規則放在 `domain.*`（Entity / VO / Domain Service）。
+- `core/_use-cases.ts` 僅做流程協調：載入 → 套用規則 → 透過 Port 持久化 → 發布事件。
+
+### 6. 操作流程
+1. Presentation（`_components/` 或 `src/app`）呼叫模組公開 Action/Query。
+2. Application（`core/`）執行用例並調用 Domain。
+3. Domain 計算狀態變更與事件。
+4. Infrastructure（`infra.*`）透過 Port 落地 I/O。
+
+### 7. 模組間契約
+- 同步契約：`index.ts` 匯出的 Action / Query / DTO。
+- 非同步契約：Domain Event payload（版本化、向後相容）。
+- 契約變更需先更新 README 與呼叫端，避免破壞既有流程。
 ````
 
 ## File: src/modules/file.module/_components/file-item.tsx
@@ -55494,6 +56561,53 @@ export function useFiles(workspaceId: string | null | undefined): UseFilesResult
 }
 ````
 
+## File: src/modules/file.module/AGENTS.md
+````markdown
+# file.module Agent Rules
+
+Purpose: document automation boundaries for `file.module` and keep DDD layer direction intact.
+
+## 邊界簡述
+- Bounded Context：**File / 檔案與文件智能解析**
+- 模組定位：**核心域**
+- 核心責任：維持本域規則與契約，不外溢到他模組。
+
+## 自動化任務 / Agent 說明
+1. 新增或修改功能時，先確認規則屬於本模組上下文邊界。
+2. 變更流程時，優先更新 `domain.*` / `core/`，再調整 `infra.*` 與 `_components/`。
+3. 跨模組需求只能使用對方 `index.ts` 公開 API 或事件契約。
+4. 外部資料整合須經由 ACL（mapper/adapter），禁止將外部格式直接帶入 Domain。
+
+## 依賴方向與圖
+```
+Presentation (_components/ or src/app)
+        ↓
+Application (core/)
+        ↓
+Domain (domain.*)
+        ↑
+Infrastructure (infra.* implements ports)
+```
+
+Context mapping (high-level):
+`file.module` ↔ Workspace、Search、Audit
+
+## 防線（Hard Rules）
+- 禁止從其他模組直接 import 內部路徑（`core/*`, `domain.*/*`, `infra.*/*`, `_components/*`）。
+- 禁止在 Domain 層引入 I/O、SDK、framework side effects。
+- 禁止在 Infrastructure 層編寫業務規則。
+- 禁止在 Presentation 層直接呼叫 Firebase / Upstash SDK。
+
+## 模組契約檢查清單
+- [ ] 上下文邊界是否清楚（Bounded Context）
+- [ ] 核心域 / 支撐域分類是否維持一致
+- [ ] Context Mapping 是否僅透過契約互動
+- [ ] ACL 是否隔離外部資料模型
+- [ ] 核心業務邏輯是否只在 Domain/Application
+- [ ] 操作流程是否符合 Presentation → Application → Domain ← Infrastructure
+- [ ] 模組間契約（DTO / Event）是否向後相容
+````
+
 ## File: src/modules/file.module/core/_mime.ts
 ````typescript
 /**
@@ -55560,267 +56674,556 @@ export { FileItem } from "./_components/file-item";
 export { FilePreview } from "./_components/file-preview";
 ````
 
-## File: src/modules/governance.module/README.md
+## File: src/modules/file.module/README.md
 ````markdown
+# file.module
 
+**Bounded Context:** File · Document Intelligence  
+**Layer:** Workspace
+
+## Purpose
+
+`file.module` handles file storage, versioning, and the document intelligence pipeline:
+parsing, object extraction, and AI-powered content analysis.
+
+## What this module owns
+
+| Concern | Description |
+|---------|-------------|
+| File | Upload, storage, versioning, access control |
+| FileVersion | Immutable version records per file |
+| DocParse | Structured document parsing (PDF, DOCX, Markdown) |
+| ObjExtract | Entity / table / diagram extraction from documents |
+| Intelligence | AI pipeline outputs (summaries, embeddings, Q&A) |
+
+## Cross-module dependencies
+
+| Module | Direction | Reason |
+|--------|-----------|--------|
+| `workspace.module` | → | Files are scoped to a workspace |
+| `account.module` | → | File owners are Accounts |
+| `collaboration.module` | ← | Inline comments anchor to file lines/blocks |
+| `search.module` | ← | File content is indexed for full-text search |
+
+## Standard 4-layer structure
+
+```
+file.module/
+├── index.ts
+├── domain.file/
+│   ├── _entity.ts               # File + FileVersion + IntelligenceResult
+│   ├── _value-objects.ts
+│   ├── _ports.ts                # IFileStoragePort, IDocParsePort, IObjExtractPort
+│   └── _events.ts               # FileUploaded, DocParsed, ObjExtracted
+├── core/
+│   ├── _use-cases.ts
+│   ├── _actions.ts
+│   └── _queries.ts
+├── infra.firestore/
+└── _components/
+```
+
+## Domain Governance（必填）
+
+### 1. 上下文邊界（Bounded Context）
+- 本模組邊界：**File / 檔案與文件智能解析**。
+- 僅允許透過 `src/modules/file.module/index.ts` 對外暴露能力；禁止跨模組直連 `core/`、`domain.*`、`infra.*`、`_components/`。
+
+### 2. 核心域與支撐域識別
+- 本模組定位：**核心域**。
+- 核心能力放在 `domain.*` + `core/`；跨域整合、通知、搜尋等配套能力視為支撐能力，由應用層編排。
+
+### 3. 上下文映射（Context Mapping）
+- 主要上下游關聯：**Workspace、Search、Audit**。
+- 跨上下文資料交換需使用 DTO／事件，不共享對方內部實體。
+
+### 4. 防腐層（Anti-Corruption Layer）
+- 外部系統（Firebase / Upstash / 外部 API）必須封裝在 `infra.*`。
+- 使用 Mapper / Adapter 將外部資料格式轉換為本域 Value Object 與 Entity，避免污染領域模型。
+
+### 5. 核心業務邏輯
+- 不變條件（invariants）與規則放在 `domain.*`（Entity / VO / Domain Service）。
+- `core/_use-cases.ts` 僅做流程協調：載入 → 套用規則 → 透過 Port 持久化 → 發布事件。
+
+### 6. 操作流程
+1. Presentation（`_components/` 或 `src/app`）呼叫模組公開 Action/Query。
+2. Application（`core/`）執行用例並調用 Domain。
+3. Domain 計算狀態變更與事件。
+4. Infrastructure（`infra.*`）透過 Port 落地 I/O。
+
+### 7. 模組間契約
+- 同步契約：`index.ts` 匯出的 Action / Query / DTO。
+- 非同步契約：Domain Event payload（版本化、向後相容）。
+- 契約變更需先更新 README 與呼叫端，避免破壞既有流程。
 ````
 
-## File: src/modules/identity.module/_components/auth-view.tsx
+## File: src/modules/fork.module/AGENTS.md
+````markdown
+# fork.module Agent Rules
+
+Purpose: document automation boundaries for `fork.module` and keep DDD layer direction intact.
+
+## 邊界簡述
+- Bounded Context：**Fork Network / 分支與提案**
+- 模組定位：**核心域**
+- 核心責任：維持本域規則與契約，不外溢到他模組。
+
+## 自動化任務 / Agent 說明
+1. 新增或修改功能時，先確認規則屬於本模組上下文邊界。
+2. 變更流程時，優先更新 `domain.*` / `core/`，再調整 `infra.*` 與 `_components/`。
+3. 跨模組需求只能使用對方 `index.ts` 公開 API 或事件契約。
+4. 外部資料整合須經由 ACL（mapper/adapter），禁止將外部格式直接帶入 Domain。
+
+## 依賴方向與圖
+```
+Presentation (_components/ or src/app)
+        ↓
+Application (core/)
+        ↓
+Domain (domain.*)
+        ↑
+Infrastructure (infra.* implements ports)
+```
+
+Context mapping (high-level):
+`fork.module` ↔ Workspace、Notification、Audit
+
+## 防線（Hard Rules）
+- 禁止從其他模組直接 import 內部路徑（`core/*`, `domain.*/*`, `infra.*/*`, `_components/*`）。
+- 禁止在 Domain 層引入 I/O、SDK、framework side effects。
+- 禁止在 Infrastructure 層編寫業務規則。
+- 禁止在 Presentation 層直接呼叫 Firebase / Upstash SDK。
+
+## 模組契約檢查清單
+- [ ] 上下文邊界是否清楚（Bounded Context）
+- [ ] 核心域 / 支撐域分類是否維持一致
+- [ ] Context Mapping 是否僅透過契約互動
+- [ ] ACL 是否隔離外部資料模型
+- [ ] 核心業務邏輯是否只在 Domain/Application
+- [ ] 操作流程是否符合 Presentation → Application → Domain ← Infrastructure
+- [ ] 模組間契約（DTO / Event）是否向後相容
+````
+
+## File: src/modules/fork.module/README.md
+````markdown
+# fork.module
+
+**Bounded Context:** Fork Network  
+**Layer:** Workspace
+
+## Purpose
+
+`fork.module` manages the Fork Network: planning branches forked from a workspace,
+independent divergence, and merge-back via Change Requests.
+
+## What this module owns
+
+| Concern | Description |
+|---------|-------------|
+| Fork | A planning branch derived from a parent workspace |
+| ForkDivergence | Tracked changes made on a fork relative to its parent |
+| MergeProposal | Formal proposal to merge fork changes back via CR |
+
+## Cross-module dependencies
+
+| Module | Direction | Reason |
+|--------|-----------|--------|
+| `workspace.module` | → | Forks branch from a parent workspace |
+| `account.module` | → | Fork owner is an Account |
+| `collaboration.module` | ← | Comments on merge proposals |
+| `notification.module` | ← | Merge proposal events trigger notifications |
+
+## Standard 4-layer structure
+
+```
+fork.module/
+├── index.ts
+├── domain.fork/
+│   ├── _entity.ts               # Fork + ForkDivergence + MergeProposal
+│   ├── _value-objects.ts
+│   ├── _ports.ts
+│   └── _events.ts
+├── core/
+├── infra.firestore/
+└── _components/
+```
+
+## Domain Governance（必填）
+
+### 1. 上下文邊界（Bounded Context）
+- 本模組邊界：**Fork Network / 分支與提案**。
+- 僅允許透過 `src/modules/fork.module/index.ts` 對外暴露能力；禁止跨模組直連 `core/`、`domain.*`、`infra.*`、`_components/`。
+
+### 2. 核心域與支撐域識別
+- 本模組定位：**核心域**。
+- 核心能力放在 `domain.*` + `core/`；跨域整合、通知、搜尋等配套能力視為支撐能力，由應用層編排。
+
+### 3. 上下文映射（Context Mapping）
+- 主要上下游關聯：**Workspace、Notification、Audit**。
+- 跨上下文資料交換需使用 DTO／事件，不共享對方內部實體。
+
+### 4. 防腐層（Anti-Corruption Layer）
+- 外部系統（Firebase / Upstash / 外部 API）必須封裝在 `infra.*`。
+- 使用 Mapper / Adapter 將外部資料格式轉換為本域 Value Object 與 Entity，避免污染領域模型。
+
+### 5. 核心業務邏輯
+- 不變條件（invariants）與規則放在 `domain.*`（Entity / VO / Domain Service）。
+- `core/_use-cases.ts` 僅做流程協調：載入 → 套用規則 → 透過 Port 持久化 → 發布事件。
+
+### 6. 操作流程
+1. Presentation（`_components/` 或 `src/app`）呼叫模組公開 Action/Query。
+2. Application（`core/`）執行用例並調用 Domain。
+3. Domain 計算狀態變更與事件。
+4. Infrastructure（`infra.*`）透過 Port 落地 I/O。
+
+### 7. 模組間契約
+- 同步契約：`index.ts` 匯出的 Action / Query / DTO。
+- 非同步契約：Domain Event payload（版本化、向後相容）。
+- 契約變更需先更新 README 與呼叫端，避免破壞既有流程。
+````
+
+## File: src/modules/governance.module/AGENTS.md
+````markdown
+# governance.module Agent Rules
+
+Purpose: document automation boundaries for `governance.module` and keep DDD layer direction intact.
+
+## 邊界簡述
+- Bounded Context：**Governance / 授權與政策控制**
+- 模組定位：**支撐域**
+- 核心責任：維持本域規則與契約，不外溢到他模組。
+
+## 自動化任務 / Agent 說明
+1. 新增或修改功能時，先確認規則屬於本模組上下文邊界。
+2. 變更流程時，優先更新 `domain.*` / `core/`，再調整 `infra.*` 與 `_components/`。
+3. 跨模組需求只能使用對方 `index.ts` 公開 API 或事件契約。
+4. 外部資料整合須經由 ACL（mapper/adapter），禁止將外部格式直接帶入 Domain。
+
+## 依賴方向與圖
+```
+Presentation (_components/ or src/app)
+        ↓
+Application (core/)
+        ↓
+Domain (domain.*)
+        ↑
+Infrastructure (infra.* implements ports)
+```
+
+Context mapping (high-level):
+`governance.module` ↔ Identity、Account、All modules
+
+## 防線（Hard Rules）
+- 禁止從其他模組直接 import 內部路徑（`core/*`, `domain.*/*`, `infra.*/*`, `_components/*`）。
+- 禁止在 Domain 層引入 I/O、SDK、framework side effects。
+- 禁止在 Infrastructure 層編寫業務規則。
+- 禁止在 Presentation 層直接呼叫 Firebase / Upstash SDK。
+
+## 模組契約檢查清單
+- [ ] 上下文邊界是否清楚（Bounded Context）
+- [ ] 核心域 / 支撐域分類是否維持一致
+- [ ] Context Mapping 是否僅透過契約互動
+- [ ] ACL 是否隔離外部資料模型
+- [ ] 核心業務邏輯是否只在 Domain/Application
+- [ ] 操作流程是否符合 Presentation → Application → Domain ← Infrastructure
+- [ ] 模組間契約（DTO / Event）是否向後相容
+````
+
+## File: src/modules/identity.module/AGENTS.md
+````markdown
+# identity.module Agent Rules
+
+Purpose: document automation boundaries for `identity.module` and keep DDD layer direction intact.
+
+## 邊界簡述
+- Bounded Context：**Identity / 驗證、Session、Credential**
+- 模組定位：**核心域**
+- 核心責任：維持本域規則與契約，不外溢到他模組。
+
+## 自動化任務 / Agent 說明
+1. 新增或修改功能時，先確認規則屬於本模組上下文邊界。
+2. 變更流程時，優先更新 `domain.*` / `core/`，再調整 `infra.*` 與 `_components/`。
+3. 跨模組需求只能使用對方 `index.ts` 公開 API 或事件契約。
+4. 外部資料整合須經由 ACL（mapper/adapter），禁止將外部格式直接帶入 Domain。
+
+## 依賴方向與圖
+```
+Presentation (_components/ or src/app)
+        ↓
+Application (core/)
+        ↓
+Domain (domain.*)
+        ↑
+Infrastructure (infra.* implements ports)
+```
+
+Context mapping (high-level):
+`identity.module` ↔ Account、Namespace、Governance
+
+## 防線（Hard Rules）
+- 禁止從其他模組直接 import 內部路徑（`core/*`, `domain.*/*`, `infra.*/*`, `_components/*`）。
+- 禁止在 Domain 層引入 I/O、SDK、framework side effects。
+- 禁止在 Infrastructure 層編寫業務規則。
+- 禁止在 Presentation 層直接呼叫 Firebase / Upstash SDK。
+
+## 模組契約檢查清單
+- [ ] 上下文邊界是否清楚（Bounded Context）
+- [ ] 核心域 / 支撐域分類是否維持一致
+- [ ] Context Mapping 是否僅透過契約互動
+- [ ] ACL 是否隔離外部資料模型
+- [ ] 核心業務邏輯是否只在 Domain/Application
+- [ ] 操作流程是否符合 Presentation → Application → Domain ← Infrastructure
+- [ ] 模組間契約（DTO / Event）是否向後相容
+````
+
+## File: src/modules/identity.module/README.md
+````markdown
+# identity.module
+
+**Bounded Context:** Identity · Authentication / 身份識別 · 驗證  
+**Layer:** SaaS (cross-cutting)
+
+## Purpose
+
+`identity.module` is the **authentication** boundary for the platform.
+It answers the question: **"Are you who you claim to be?"**
+
+It manages credentials, sessions, identity providers, and JWT auth claims
+for **any** account type — personal or organization.
+
+It replaces direct Firebase Auth SDK usage throughout the codebase.
+All sign-in, sign-out, and session-refresh operations are mediated through this module's Application layer.
+
+> **Boundary vs `account.module`:**  
+> `identity.module` = "How do you prove you are you?" (authentication: login, logout, session, tokens, providers)  
+> `account.module` = "What is your account?" (profile, handle, team, membership — the data that belongs to you after you've proven who you are)  
+>  
+> Login / logout / password reset / provider linking → `identity.module`  
+> Display name / avatar / organization membership / team role → `account.module`
+
+## What this module owns
+
+| Concern | Description |
+|---------|-------------|
+| IdentityProvider | Firebase, Google, GitHub, Email |
+| Session | Creation, refresh, revocation |
+| AuthClaims | JWT custom claims (accountId, accountType, role) |
+| ProviderLinking | Attaching additional providers to an account |
+| PasswordReset | Password reset (unauthenticated forgot-password flow) and password change (authenticated user changing their own password) |
+
+## What this module does NOT own
+
+| Concern | Owned by |
+|---------|----------|
+| Account entity (name, avatar, handle) | `account.module` |
+| Authorization (role-based access control) | `account.module` (MemberRole) + `audit.module` (policy) |
+| User-visible profile data | `account.module` |
+| Team / Membership governance | `account.module` |
+
+## Key aggregate
+
+`Identity` — authentication record keyed by (provider, providerUid), linked to one Account.
+
+## Cross-module dependencies
+
+| Module | Direction | Reason |
+|--------|-----------|--------|
+| `account.module` | → | Identity is linked to one Account (creates Account on first registration) |
+
+## Standard 4-layer structure
+
+```
+identity.module/
+├── index.ts                     # Public API barrel
+├── domain.identity/
+│   ├── _entity.ts               # Identity aggregate root
+│   ├── _value-objects.ts        # IdentityId, IdentityProvider, SessionToken, AuthClaims
+│   ├── _ports.ts                # IIdentityRepository, IAuthProviderPort, ISessionPort
+│   └── _events.ts               # IdentityRegistered, IdentitySignedIn, SessionRevoked
+├── core/
+│   ├── _use-cases.ts            # RegisterIdentityUseCase, SignInUseCase, SignOutUseCase …
+│   ├── _actions.ts              # signInAction, signOutAction, linkProviderAction
+│   └── _queries.ts              # getCurrentIdentityQuery, getSessionStatusQuery
+├── infra.firestore/
+│   ├── _repository.ts           # Implements IIdentityRepository + IAuthProviderPort
+│   └── _mapper.ts               # Firestore doc ↔ IdentityEntity
+└── _components/                 # Sign-in UI components (future)
+```
+
+## Domain Governance（必填）
+
+### 1. 上下文邊界（Bounded Context）
+- 本模組邊界：**Identity / 驗證、Session、Credential**。
+- 僅允許透過 `src/modules/identity.module/index.ts` 對外暴露能力；禁止跨模組直連 `core/`、`domain.*`、`infra.*`、`_components/`。
+
+### 2. 核心域與支撐域識別
+- 本模組定位：**核心域**。
+- 核心能力放在 `domain.*` + `core/`；跨域整合、通知、搜尋等配套能力視為支撐能力，由應用層編排。
+
+### 3. 上下文映射（Context Mapping）
+- 主要上下游關聯：**Account、Namespace、Governance**。
+- 跨上下文資料交換需使用 DTO／事件，不共享對方內部實體。
+
+### 4. 防腐層（Anti-Corruption Layer）
+- 外部系統（Firebase / Upstash / 外部 API）必須封裝在 `infra.*`。
+- 使用 Mapper / Adapter 將外部資料格式轉換為本域 Value Object 與 Entity，避免污染領域模型。
+
+### 5. 核心業務邏輯
+- 不變條件（invariants）與規則放在 `domain.*`（Entity / VO / Domain Service）。
+- `core/_use-cases.ts` 僅做流程協調：載入 → 套用規則 → 透過 Port 持久化 → 發布事件。
+
+### 6. 操作流程
+1. Presentation（`_components/` 或 `src/app`）呼叫模組公開 Action/Query。
+2. Application（`core/`）執行用例並調用 Domain。
+3. Domain 計算狀態變更與事件。
+4. Infrastructure（`infra.*`）透過 Port 落地 I/O。
+
+### 7. 模組間契約
+- 同步契約：`index.ts` 匯出的 Action / Query / DTO。
+- 非同步契約：Domain Event payload（版本化、向後相容）。
+- 契約變更需先更新 README 與呼叫端，避免破壞既有流程。
+````
+
+## File: src/modules/knowledge.module/AGENTS.md
+````markdown
+# knowledge.module Agent Rules
+
+Purpose: document automation boundaries for `knowledge.module` and keep DDD layer direction intact.
+
+## 邊界簡述
+- Bounded Context：**Knowledge / 知識卡與版本化內容**
+- 模組定位：**支撐域**
+- 核心責任：維持本域規則與契約，不外溢到他模組。
+
+## 自動化任務 / Agent 說明
+1. 新增或修改功能時，先確認規則屬於本模組上下文邊界。
+2. 變更流程時，優先更新 `domain.*` / `core/`，再調整 `infra.*` 與 `_components/`。
+3. 跨模組需求只能使用對方 `index.ts` 公開 API 或事件契約。
+4. 外部資料整合須經由 ACL（mapper/adapter），禁止將外部格式直接帶入 Domain。
+
+## 依賴方向與圖
+```
+Presentation (_components/ or src/app)
+        ↓
+Application (core/)
+        ↓
+Domain (domain.*)
+        ↑
+Infrastructure (infra.* implements ports)
+```
+
+Context mapping (high-level):
+`knowledge.module` ↔ Search、Vector Ingestion、Workspace
+
+## 防線（Hard Rules）
+- 禁止從其他模組直接 import 內部路徑（`core/*`, `domain.*/*`, `infra.*/*`, `_components/*`）。
+- 禁止在 Domain 層引入 I/O、SDK、framework side effects。
+- 禁止在 Infrastructure 層編寫業務規則。
+- 禁止在 Presentation 層直接呼叫 Firebase / Upstash SDK。
+
+## 模組契約檢查清單
+- [ ] 上下文邊界是否清楚（Bounded Context）
+- [ ] 核心域 / 支撐域分類是否維持一致
+- [ ] Context Mapping 是否僅透過契約互動
+- [ ] ACL 是否隔離外部資料模型
+- [ ] 核心業務邏輯是否只在 Domain/Application
+- [ ] 操作流程是否符合 Presentation → Application → Domain ← Infrastructure
+- [ ] 模組間契約（DTO / Event）是否向後相容
+````
+
+## File: src/modules/namespace.module/_components/organizations-view.tsx
 ````typescript
 "use client";
 /**
- * AuthView — Smart auth container.
+ * OrganizationsView — lists the current user's organizations with a
+ * create-org CTA that opens an inline dialog.
  *
- * Manages all authentication state and delegates rendering to sub-components.
- * Renders the full-page auth flow with login/register tabs and password reset dialog.
+ * DDD chain:
+ *   Presentation (this view)
+ *     ← Application context: organizations[] via AccountProvider
+ *     → CreateOrgDialog (Presentation) → Application use cases (create account + namespace)
+ *
+ * Data source fixed: uses organizations[] from AccountProvider context
+ * (AccountDTO[]) instead of namespace lookup by personal account ID.
  */
 
-import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { Building2, Plus, Loader2 } from "lucide-react";
 
+import { Button } from "@/design-system/primitives/ui/button";
 import { useTranslation } from "@/shared/i18n";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/design-system/primitives/ui/dialog";
+import { useCurrentAccount } from "@/modules/account.module";
+import type { AccountDTO } from "@/modules/account.module";
 
-import {
-  clientSignIn,
-  clientRegister,
-  clientSignInAnonymously,
-} from "../_client-actions";
-import { AuthTabsRoot } from "./auth-tabs-root";
-import { ResetPasswordForm } from "./reset-password-form";
+import { OrgCard } from "./org-card";
+import { CreateOrgDialog } from "./create-org-dialog";
 
-/**
- * Resolves the post-login destination from the `callbackUrl` search parameter.
- *
- * Security: uses the URL constructor with a dummy base to fully parse the
- * value. Only paths whose resolved origin matches the dummy base (i.e. purely
- * relative paths with no host) are accepted. This prevents open-redirect
- * attacks including encoded sequences like `/%2f` or protocol-relative URLs.
- *
- * Falls back to `fallback` (default `/onboarding`) when no safe URL is found.
- */
-function resolvePostLoginUrl(
-  searchParams: ReturnType<typeof useSearchParams>,
-  fallback = "/onboarding",
-): string {
-  const raw = searchParams.get("callbackUrl");
-  if (raw) {
-    try {
-      const base = "https://placeholder.invalid";
-      const resolved = new URL(raw, base);
-      // Accept only if the URL stayed within our dummy base (no external host).
-      if (resolved.origin === base) {
-        return resolved.pathname + resolved.search + resolved.hash;
-      }
-    } catch {
-      // Malformed URL — fall through to default.
-    }
-  }
-  return fallback;
-}
-
-/**
- * AuthView — public export.
- *
- * Wraps the real implementation in a `<Suspense>` boundary because
- * `useSearchParams()` (used inside) requires one for Next.js static rendering.
- */
-export function AuthView() {
-  return (
-    <Suspense>
-      <AuthViewInner />
-    </Suspense>
-  );
-}
-
-function AuthViewInner() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+export function OrganizationsView() {
   const t = useTranslation("zh-TW");
+  const { loading: authLoading, orgsLoading, organizations, refreshOrganizations } =
+    useCurrentAccount();
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [isResetOpen, setIsResetOpen] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
+  const loading = authLoading || orgsLoading;
+  const [createOpen, setCreateOpen] = useState(false);
 
-  const handleAuth = async (type: "login" | "register") => {
-    setIsLoading(true);
-    setAuthError(null);
-    try {
-      let result;
-      if (type === "login") {
-        result = await clientSignIn(email, password);
-      } else {
-        if (!name.trim()) {
-          setAuthError(t("auth.pleaseSetDisplayName"));
-          return;
-        }
-        result = await clientRegister(email, password, name);
-      }
-      if (!result.ok) {
-        setAuthError(result.error.message);
-        return;
-      }
-      // New users (register) always go through onboarding.
-      // Returning users (login) honour ?callbackUrl, defaulting to /onboarding.
-      router.push(
-        type === "register" ? "/onboarding" : resolvePostLoginUrl(searchParams),
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleAnonymous = async () => {
-    setIsLoading(true);
-    setAuthError(null);
-    try {
-      const result = await clientSignInAnonymously();
-      if (!result.ok) {
-        setAuthError(result.error.message);
-        return;
-      }
-      router.push(resolvePostLoginUrl(searchParams));
-    } finally {
-      setIsLoading(false);
-    }
+  const handleOrgCreated = async (_org: AccountDTO) => {
+    // Re-fetch the org list from Firestore so the new card appears immediately.
+    await refreshOrganizations();
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background px-4">
-      {/* Subtle radial background glow */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-40"
-        style={{
-          background:
-            "radial-gradient(ellipse 80% 50% at 50% -10%, hsl(var(--primary)/0.15), transparent)",
-        }}
-      />
+    <div className="mx-auto max-w-4xl space-y-6 duration-500 animate-in fade-in">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Building2 className="size-6 text-primary" />
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">{t("organizations.title")}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{t("organizations.subtitle")}</p>
+          </div>
+        </div>
+        <Button
+          className="gap-2 px-4 text-[11px] font-bold uppercase tracking-widest"
+          onClick={() => setCreateOpen(true)}
+        >
+          <Plus className="size-4" />
+          {t("organizations.createOrg")}
+        </Button>
+      </div>
 
-      {authError && (
-        <div className="absolute top-4 z-20 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">
-          {authError}
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : organizations.length > 0 ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {organizations.map((org) => (
+            <OrgCard key={org.id} org={org} />
+          ))}
+        </div>
+      ) : (
+        /* Empty state */
+        <div className="flex flex-col items-center rounded-3xl border-2 border-dashed border-border/40 bg-muted/5 px-6 py-16 text-center">
+          <Building2 className="mb-4 size-12 text-muted-foreground opacity-10" />
+          <h3 className="text-lg font-bold">{t("organizations.noOrgs")}</h3>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+            {t("organizations.noOrgsHint")}
+          </p>
+          <Button
+            size="lg"
+            className="mt-8 rounded-full px-8 text-xs font-bold uppercase tracking-widest shadow-lg"
+            onClick={() => setCreateOpen(true)}
+          >
+            {t("organizations.createOrg")}
+          </Button>
         </div>
       )}
 
-      <AuthTabsRoot
-        isLoading={isLoading}
-        email={email}
-        setEmail={setEmail}
-        password={password}
-        setPassword={setPassword}
-        name={name}
-        setName={setName}
-        handleAuth={handleAuth}
-        handleAnonymous={handleAnonymous}
-        openResetDialog={() => setIsResetOpen(true)}
+      <CreateOrgDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreated={handleOrgCreated}
       />
-
-      <Dialog open={isResetOpen} onOpenChange={setIsResetOpen}>
-        <DialogContent className="max-w-sm rounded-[2rem] border-border/40 bg-card/90 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-black uppercase tracking-wide">
-              {t("auth.resetPassword")}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="pt-2">
-            <ResetPasswordForm
-              defaultEmail={email}
-              onSuccess={() => setIsResetOpen(false)}
-              onCancel={() => setIsResetOpen(false)}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
-  );
-}
-````
-
-## File: src/modules/knowledge.module/README.md
-````markdown
-
-````
-
-## File: src/modules/namespace.module/_components/org-card.tsx
-````typescript
-"use client";
-/**
- * OrgCard — displays an organization account summary card.
- *
- * Receives an AccountDTO for an org account. Links to /{org.handle} for the
- * org's workspace/settings pages.
- */
-
-import { Building2, ArrowRight } from "lucide-react";
-import Link from "next/link";
-
-import { useTranslation } from "@/shared/i18n";
-import { Badge } from "@/design-system/primitives/ui/badge";
-import { Button } from "@/design-system/primitives/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from "@/design-system/primitives/ui/card";
-import type { AccountDTO } from "@/modules/account.module";
-
-interface OrgCardProps {
-  org: AccountDTO;
-}
-
-export function OrgCard({ org }: OrgCardProps) {
-  const t = useTranslation("zh-TW");
-  const href = `/${org.handle ?? org.id}/workspaces`;
-
-  return (
-    <Card className="group relative flex h-full flex-col overflow-hidden border-border/60 bg-card/80 shadow-sm transition-all duration-200 hover:border-primary/30 hover:shadow-md">
-      <div className="flex h-24 w-full items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-        <Building2 className="size-10 text-primary/30" />
-      </div>
-
-      <CardHeader className="flex flex-row items-start justify-between gap-2 p-4 pb-2">
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate font-semibold leading-tight tracking-tight">
-            {org.displayName}
-          </h3>
-          {org.handle && (
-            <p className="mt-0.5 truncate text-[10px] font-mono text-muted-foreground/60">
-              /{org.handle}
-            </p>
-          )}
-        </div>
-        <Badge
-          variant="outline"
-          className="h-5 shrink-0 px-2 text-[10px] font-bold uppercase tracking-wider"
-        >
-          {t("sidebar.organization")}
-        </Badge>
-      </CardHeader>
-
-      <CardContent className="flex flex-1 flex-col justify-between gap-3 px-4 pb-4 pt-0">
-        <div className="flex items-center justify-end">
-          <Button
-            asChild
-            variant="ghost"
-            size="sm"
-            className="h-7 gap-1 px-2 text-xs font-bold text-primary opacity-0 transition-opacity group-hover:opacity-100"
-          >
-            <Link href={href}>
-              {t("common.open")}
-              <ArrowRight className="size-3" />
-            </Link>
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
   );
 }
 ````
@@ -55898,6 +57301,168 @@ export function useNamespaceBySlug(
 }
 ````
 
+## File: src/modules/namespace.module/_components/use-namespace.ts
+````typescript
+"use client";
+/**
+ * useNamespace — client-side hook that fetches the namespace (org) for a given owner.
+ *
+ * Source equivalent: organization.slice/core/_hooks/use-org.ts
+ * Adapted: uses FirestoreNamespaceRepository (Web SDK) + getNamespaceByOwnerId
+ * use-case to load the current user's namespace.
+ *
+ * Returns null namespace when the user has not yet created an org/namespace.
+ */
+
+import { useEffect, useState } from "react";
+import {
+  getNamespaceByOwnerId,
+  type NamespaceDTO,
+} from "@/modules/namespace.module";
+
+export interface UseNamespaceResult {
+  namespace: NamespaceDTO | null;
+  loading: boolean;
+  error: string | null;
+  /** Re-fetch (e.g., after creating or updating the org). */
+  refresh: () => void;
+}
+
+/**
+ * Fetches the namespace record for the given ownerId (account ID).
+ * Returns { namespace, loading, error, refresh }.
+ * Pass undefined/null to skip fetching until the user is resolved.
+ */
+export function useNamespace(
+  ownerId: string | null | undefined,
+): UseNamespaceResult {
+  const [namespace, setNamespace] = useState<NamespaceDTO | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    if (!ownerId) {
+      setNamespace(null);
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    getNamespaceByOwnerId(ownerId)
+      .then((result) => {
+        if (cancelled) return;
+        if (result.ok) {
+          setNamespace(result.value);
+        } else {
+          setError(result.error?.message ?? "Failed to load namespace");
+        }
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : String(err));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [ownerId, tick]);
+
+  const refresh = () => setTick((n) => n + 1);
+
+  return { namespace, loading, error, refresh };
+}
+````
+
+## File: src/modules/namespace.module/AGENTS.md
+````markdown
+# namespace.module Agent Rules
+
+Purpose: document automation boundaries for `namespace.module` and keep DDD layer direction intact.
+
+## 邊界簡述
+- Bounded Context：**Namespace / Slug 與帳戶路由綁定**
+- 模組定位：**核心域**
+- 核心責任：維持本域規則與契約，不外溢到他模組。
+
+## 自動化任務 / Agent 說明
+1. 新增或修改功能時，先確認規則屬於本模組上下文邊界。
+2. 變更流程時，優先更新 `domain.*` / `core/`，再調整 `infra.*` 與 `_components/`。
+3. 跨模組需求只能使用對方 `index.ts` 公開 API 或事件契約。
+4. 外部資料整合須經由 ACL（mapper/adapter），禁止將外部格式直接帶入 Domain。
+
+## 依賴方向與圖
+```
+Presentation (_components/ or src/app)
+        ↓
+Application (core/)
+        ↓
+Domain (domain.*)
+        ↑
+Infrastructure (infra.* implements ports)
+```
+
+Context mapping (high-level):
+`namespace.module` ↔ Account、Workspace、Search
+
+## 防線（Hard Rules）
+- 禁止從其他模組直接 import 內部路徑（`core/*`, `domain.*/*`, `infra.*/*`, `_components/*`）。
+- 禁止在 Domain 層引入 I/O、SDK、framework side effects。
+- 禁止在 Infrastructure 層編寫業務規則。
+- 禁止在 Presentation 層直接呼叫 Firebase / Upstash SDK。
+
+## 模組契約檢查清單
+- [ ] 上下文邊界是否清楚（Bounded Context）
+- [ ] 核心域 / 支撐域分類是否維持一致
+- [ ] Context Mapping 是否僅透過契約互動
+- [ ] ACL 是否隔離外部資料模型
+- [ ] 核心業務邏輯是否只在 Domain/Application
+- [ ] 操作流程是否符合 Presentation → Application → Domain ← Infrastructure
+- [ ] 模組間契約（DTO / Event）是否向後相容
+````
+
+## File: src/modules/namespace.module/core/_actions.ts
+````typescript
+// Namespace actions — adapter-backed application facade for write paths.
+
+import { FirestoreNamespaceRepository } from "../infra.firestore/_repository";
+import { FirestoreNamespaceSlugAvailabilityAdapter } from "../infra.firestore/_slug-availability";
+import {
+  bindWorkspaceToNamespace as bindWorkspaceToNamespaceUseCase,
+  registerNamespace as registerNamespaceUseCase,
+  type NamespaceDTO,
+  type WorkspacePathDTO,
+} from "./_use-cases";
+
+const namespaceRepository = new FirestoreNamespaceRepository();
+const slugAvailabilityPort = new FirestoreNamespaceSlugAvailabilityAdapter();
+
+export type { NamespaceDTO, WorkspacePathDTO };
+
+export async function registerNamespace(
+  id: string,
+  slug: string,
+  ownerType: "personal" | "organization",
+  ownerId: string,
+) {
+  return registerNamespaceUseCase(namespaceRepository, slugAvailabilityPort, id, slug, ownerType, ownerId);
+}
+
+export async function bindWorkspaceToNamespace(
+  namespaceId: string,
+  workspaceId: string,
+  workspaceSlug: string,
+) {
+  return bindWorkspaceToNamespaceUseCase(namespaceRepository, namespaceId, workspaceId, workspaceSlug);
+}
+````
+
 ## File: src/modules/namespace.module/core/_queries.ts
 ````typescript
 // Namespace queries — adapter-backed application facade for read paths.
@@ -55928,65 +57493,92 @@ export async function resolveWorkspacePath(path: string) {
 }
 ````
 
-## File: src/modules/namespace.module/index.ts
-````typescript
-// namespace.module — Public API barrel
-// Bounded Context: Namespace / 命名空間
-//
-// Exports: DTOs, application use cases, port interfaces.
-// NEVER export entities, value objects, repositories, or domain events directly.
+## File: src/modules/namespace.module/README.md
+````markdown
+# namespace.module
 
-export type { NamespaceDTO, WorkspacePathDTO } from "./core/_queries";
+**Bounded Context:** Namespace / 命名空間  
+**Layer:** SaaS
 
-export {
-  getNamespaceBySlug,
-  resolveWorkspacePath,
-} from "./core/_queries";
-export { bindWorkspaceToNamespace, registerNamespace } from "./core/_use-cases";
+## Purpose
 
-export type {
-  INamespaceRepository,
-  INamespaceSlugAvailabilityPort,
-} from "./domain.namespace/_ports";
-export { useNamespaceBySlug } from "./_components/use-namespace-by-slug";
-export type { UseNamespaceBySlugResult } from "./_components/use-namespace-by-slug";
-````
+`namespace.module` is the shared path-resolution service for the platform.
+A namespace binds workspaces under an Account's handle — either a personal account handle
+or an organization account handle.
 
-## File: src/modules/namespace.module/infra.firestore/_slug-availability.ts
-````typescript
-/**
- * FirestoreNamespaceSlugAvailabilityAdapter
- *
- * Implements INamespaceSlugAvailabilityPort by checking the `namespace-slugs`
- * shadow collection that FirestoreNamespaceRepository maintains.
- *
- * Each document ID in `namespace-slugs` equals a reserved slug, so absence
- * of the document means the slug is available.
- *
- * Note: The `save()` method on FirestoreNamespaceRepository also enforces
- * slug uniqueness atomically inside a transaction, so this pre-check is only
- * for early user feedback — not the authoritative guard.
- */
+Namespace is independent of both `account.module` and `workspace.module` because it
+must be reachable from both personal and organization contexts without coupling them.
 
-import { getFirestore, doc, getDoc } from "firebase/firestore";
-import type { INamespaceSlugAvailabilityPort } from "../domain.namespace/_ports";
-import type { NamespaceSlug } from "../domain.namespace/_value-objects";
+## What this module owns
 
-const NAMESPACE_SLUGS_COLLECTION = "namespace-slugs";
+| Concern | Description |
+|---------|-------------|
+| Namespace entity | Slug-to-Account binding with global uniqueness |
+| Slug reservation | Reserve/release a namespace slug |
+| Workspace binding | Register workspaces under a namespace path |
+| Path resolution | Resolve `handle/workspace-slug` → WorkspaceId |
 
-export class FirestoreNamespaceSlugAvailabilityAdapter
-  implements INamespaceSlugAvailabilityPort
-{
-  private get db() {
-    return getFirestore();
-  }
+## Key aggregate
 
-  async isAvailable(slug: NamespaceSlug): Promise<boolean> {
-    const ref = doc(this.db, NAMESPACE_SLUGS_COLLECTION, slug);
-    const snap = await getDoc(ref);
-    return !snap.exists();
-  }
-}
+`Namespace` — owned by one Account (AccountType: personal | organization); globally unique slug.
+
+## Cross-module dependencies
+
+| Module | Direction | Reason |
+|--------|-----------|--------|
+| `account.module` | → | Namespace owner is an Account |
+| `workspace.module` | ← | Workspaces register under a namespace on creation |
+
+## Standard 4-layer structure
+
+```
+namespace.module/
+├── index.ts
+├── domain.namespace/
+│   ├── _entity.ts               # Namespace aggregate root
+│   ├── _value-objects.ts        # NamespaceId, NamespaceSlug, WorkspacePathRef
+│   ├── _ports.ts                # INamespaceRepository, ISlugAvailabilityPort
+│   └── _events.ts               # NamespaceRegistered, WorkspaceRegisteredUnderNamespace
+├── core/
+│   ├── _use-cases.ts
+│   ├── _actions.ts
+│   └── _queries.ts
+├── infra.firestore/
+└── _components/
+```
+
+## Domain Governance（必填）
+
+### 1. 上下文邊界（Bounded Context）
+- 本模組邊界：**Namespace / Slug 與帳戶路由綁定**。
+- 僅允許透過 `src/modules/namespace.module/index.ts` 對外暴露能力；禁止跨模組直連 `core/`、`domain.*`、`infra.*`、`_components/`。
+
+### 2. 核心域與支撐域識別
+- 本模組定位：**核心域**。
+- 核心能力放在 `domain.*` + `core/`；跨域整合、通知、搜尋等配套能力視為支撐能力，由應用層編排。
+
+### 3. 上下文映射（Context Mapping）
+- 主要上下游關聯：**Account、Workspace、Search**。
+- 跨上下文資料交換需使用 DTO／事件，不共享對方內部實體。
+
+### 4. 防腐層（Anti-Corruption Layer）
+- 外部系統（Firebase / Upstash / 外部 API）必須封裝在 `infra.*`。
+- 使用 Mapper / Adapter 將外部資料格式轉換為本域 Value Object 與 Entity，避免污染領域模型。
+
+### 5. 核心業務邏輯
+- 不變條件（invariants）與規則放在 `domain.*`（Entity / VO / Domain Service）。
+- `core/_use-cases.ts` 僅做流程協調：載入 → 套用規則 → 透過 Port 持久化 → 發布事件。
+
+### 6. 操作流程
+1. Presentation（`_components/` 或 `src/app`）呼叫模組公開 Action/Query。
+2. Application（`core/`）執行用例並調用 Domain。
+3. Domain 計算狀態變更與事件。
+4. Infrastructure（`infra.*`）透過 Port 落地 I/O。
+
+### 7. 模組間契約
+- 同步契約：`index.ts` 匯出的 Action / Query / DTO。
+- 非同步契約：Domain Event payload（版本化、向後相容）。
+- 契約變更需先更新 README 與呼叫端，避免破壞既有流程。
 ````
 
 ## File: src/modules/notification.module/_components/notifications-view.tsx
@@ -56068,6 +57660,178 @@ export function NotificationsView() {
 }
 ````
 
+## File: src/modules/notification.module/AGENTS.md
+````markdown
+# notification.module Agent Rules
+
+Purpose: document automation boundaries for `notification.module` and keep DDD layer direction intact.
+
+## 邊界簡述
+- Bounded Context：**Notification / 收件匣與多通道通知**
+- 模組定位：**支撐域**
+- 核心責任：維持本域規則與契約，不外溢到他模組。
+
+## 自動化任務 / Agent 說明
+1. 新增或修改功能時，先確認規則屬於本模組上下文邊界。
+2. 變更流程時，優先更新 `domain.*` / `core/`，再調整 `infra.*` 與 `_components/`。
+3. 跨模組需求只能使用對方 `index.ts` 公開 API 或事件契約。
+4. 外部資料整合須經由 ACL（mapper/adapter），禁止將外部格式直接帶入 Domain。
+
+## 依賴方向與圖
+```
+Presentation (_components/ or src/app)
+        ↓
+Application (core/)
+        ↓
+Domain (domain.*)
+        ↑
+Infrastructure (infra.* implements ports)
+```
+
+Context mapping (high-level):
+`notification.module` ↔ All modules、Identity
+
+## 防線（Hard Rules）
+- 禁止從其他模組直接 import 內部路徑（`core/*`, `domain.*/*`, `infra.*/*`, `_components/*`）。
+- 禁止在 Domain 層引入 I/O、SDK、framework side effects。
+- 禁止在 Infrastructure 層編寫業務規則。
+- 禁止在 Presentation 層直接呼叫 Firebase / Upstash SDK。
+
+## 模組契約檢查清單
+- [ ] 上下文邊界是否清楚（Bounded Context）
+- [ ] 核心域 / 支撐域分類是否維持一致
+- [ ] Context Mapping 是否僅透過契約互動
+- [ ] ACL 是否隔離外部資料模型
+- [ ] 核心業務邏輯是否只在 Domain/Application
+- [ ] 操作流程是否符合 Presentation → Application → Domain ← Infrastructure
+- [ ] 模組間契約（DTO / Event）是否向後相容
+````
+
+## File: src/modules/notification.module/README.md
+````markdown
+# notification.module
+
+**Bounded Context:** Notification Engine · Inbox  
+**Layer:** SaaS (cross-cutting)
+
+## Purpose
+
+`notification.module` is the platform's notification engine.
+It subscribes to domain events from all source modules and dispatches
+notifications to accounts via in-app Inbox, email, and mobile push.
+
+## What this module owns
+
+| Concern | Description |
+|---------|-------------|
+| NotificationRule | Subscriber preferences per event type and channel |
+| InboxItem | In-app notification record visible to an account |
+| NotificationDispatch | Tracks delivery status across channels |
+
+## Cross-module dependencies
+
+| Module | Direction | Reason |
+|--------|-----------|--------|
+| `account.module` | → | Notification recipients are Accounts |
+| `identity.module` | → | Delivery channel lookup (email, push token) |
+| All source modules | ← | Subscribes to domain events to trigger notifications |
+
+## Standard 4-layer structure
+
+```
+notification.module/
+├── index.ts
+├── domain.notification/
+│   ├── _entity.ts
+│   ├── _value-objects.ts
+│   ├── _ports.ts                # IInboxRepository, IEmailPort, IPushPort, INotificationEventSubscriber
+│   └── _events.ts
+├── core/
+├── infra.firestore/
+└── _components/
+```
+
+## Domain Governance（必填）
+
+### 1. 上下文邊界（Bounded Context）
+- 本模組邊界：**Notification / 收件匣與多通道通知**。
+- 僅允許透過 `src/modules/notification.module/index.ts` 對外暴露能力；禁止跨模組直連 `core/`、`domain.*`、`infra.*`、`_components/`。
+
+### 2. 核心域與支撐域識別
+- 本模組定位：**支撐域**。
+- 核心能力放在 `domain.*` + `core/`；跨域整合、通知、搜尋等配套能力視為支撐能力，由應用層編排。
+
+### 3. 上下文映射（Context Mapping）
+- 主要上下游關聯：**All modules、Identity**。
+- 跨上下文資料交換需使用 DTO／事件，不共享對方內部實體。
+
+### 4. 防腐層（Anti-Corruption Layer）
+- 外部系統（Firebase / Upstash / 外部 API）必須封裝在 `infra.*`。
+- 使用 Mapper / Adapter 將外部資料格式轉換為本域 Value Object 與 Entity，避免污染領域模型。
+
+### 5. 核心業務邏輯
+- 不變條件（invariants）與規則放在 `domain.*`（Entity / VO / Domain Service）。
+- `core/_use-cases.ts` 僅做流程協調：載入 → 套用規則 → 透過 Port 持久化 → 發布事件。
+
+### 6. 操作流程
+1. Presentation（`_components/` 或 `src/app`）呼叫模組公開 Action/Query。
+2. Application（`core/`）執行用例並調用 Domain。
+3. Domain 計算狀態變更與事件。
+4. Infrastructure（`infra.*`）透過 Port 落地 I/O。
+
+### 7. 模組間契約
+- 同步契約：`index.ts` 匯出的 Action / Query / DTO。
+- 非同步契約：Domain Event payload（版本化、向後相容）。
+- 契約變更需先更新 README 與呼叫端，避免破壞既有流程。
+````
+
+## File: src/modules/search.module/AGENTS.md
+````markdown
+# search.module Agent Rules
+
+Purpose: document automation boundaries for `search.module` and keep DDD layer direction intact.
+
+## 邊界簡述
+- Bounded Context：**Search / 全域檢索與語義查詢**
+- 模組定位：**支撐域**
+- 核心責任：維持本域規則與契約，不外溢到他模組。
+
+## 自動化任務 / Agent 說明
+1. 新增或修改功能時，先確認規則屬於本模組上下文邊界。
+2. 變更流程時，優先更新 `domain.*` / `core/`，再調整 `infra.*` 與 `_components/`。
+3. 跨模組需求只能使用對方 `index.ts` 公開 API 或事件契約。
+4. 外部資料整合須經由 ACL（mapper/adapter），禁止將外部格式直接帶入 Domain。
+
+## 依賴方向與圖
+```
+Presentation (_components/ or src/app)
+        ↓
+Application (core/)
+        ↓
+Domain (domain.*)
+        ↑
+Infrastructure (infra.* implements ports)
+```
+
+Context mapping (high-level):
+`search.module` ↔ Workspace、Social、Knowledge、Vector Ingestion
+
+## 防線（Hard Rules）
+- 禁止從其他模組直接 import 內部路徑（`core/*`, `domain.*/*`, `infra.*/*`, `_components/*`）。
+- 禁止在 Domain 層引入 I/O、SDK、framework side effects。
+- 禁止在 Infrastructure 層編寫業務規則。
+- 禁止在 Presentation 層直接呼叫 Firebase / Upstash SDK。
+
+## 模組契約檢查清單
+- [ ] 上下文邊界是否清楚（Bounded Context）
+- [ ] 核心域 / 支撐域分類是否維持一致
+- [ ] Context Mapping 是否僅透過契約互動
+- [ ] ACL 是否隔離外部資料模型
+- [ ] 核心業務邏輯是否只在 Domain/Application
+- [ ] 操作流程是否符合 Presentation → Application → Domain ← Infrastructure
+- [ ] 模組間契約（DTO / Event）是否向後相容
+````
+
 ## File: src/modules/search.module/core/_queries.ts
 ````typescript
 import type { SearchScope } from "../domain.search/_value-objects";
@@ -56101,6 +57865,87 @@ export { GlobalSearchDialog } from "./_components/global-search-dialog";
 export { SearchResultsView } from "./_components/search-results-view";
 export { SearchFilterBar } from "./_components/search-filter-bar";
 export { useSearchHistory } from "./_components/use-search-history";
+````
+
+## File: src/modules/search.module/README.md
+````markdown
+# search.module
+
+**Bounded Context:** Search / 全域搜尋  
+**Layer:** SaaS (cross-cutting)
+
+## Purpose
+
+`search.module` provides a unified full-text and semantic search surface across all bounded contexts.
+It maintains a read-side index (projection) kept in sync via domain events from source modules.
+Query operations are read-only; the source of truth remains in each owning module.
+
+## What this module owns
+
+| Concern | Description |
+|---------|-------------|
+| SearchIndex | Materialized, searchable projection of cross-module content |
+| SearchQuery | Full-text + filter query execution with ranking |
+| SearchSuggestion | Auto-complete / type-ahead suggestions |
+
+## Cross-module dependencies
+
+| Module | Direction | Reason |
+|--------|-----------|--------|
+| All source modules | ← | Subscribes to domain events to update the search index |
+| `account.module` | → | Search scope filtering by account/namespace |
+| `identity.module` | → | Auth scope applied at query time |
+
+## Standard 4-layer structure
+
+```
+search.module/
+├── index.ts
+├── domain.search/
+│   ├── _entity.ts               # SearchIndex (materialized projection)
+│   ├── _value-objects.ts        # SearchQuery, SearchResultEntry, SearchScope
+│   ├── _ports.ts                # ISearchIndexRepository, ISearchQueryPort, ISearchEventSubscriber
+│   └── _events.ts               # SearchIndexUpdated
+├── core/
+│   ├── _use-cases.ts            # ExecuteSearchQueryUseCase, IndexSourceDocumentUseCase
+│   ├── _actions.ts
+│   └── _queries.ts
+├── infra.firestore/
+└── _components/
+```
+
+## Domain Governance（必填）
+
+### 1. 上下文邊界（Bounded Context）
+- 本模組邊界：**Search / 全域檢索與語義查詢**。
+- 僅允許透過 `src/modules/search.module/index.ts` 對外暴露能力；禁止跨模組直連 `core/`、`domain.*`、`infra.*`、`_components/`。
+
+### 2. 核心域與支撐域識別
+- 本模組定位：**支撐域**。
+- 核心能力放在 `domain.*` + `core/`；跨域整合、通知、搜尋等配套能力視為支撐能力，由應用層編排。
+
+### 3. 上下文映射（Context Mapping）
+- 主要上下游關聯：**Workspace、Social、Knowledge、Vector Ingestion**。
+- 跨上下文資料交換需使用 DTO／事件，不共享對方內部實體。
+
+### 4. 防腐層（Anti-Corruption Layer）
+- 外部系統（Firebase / Upstash / 外部 API）必須封裝在 `infra.*`。
+- 使用 Mapper / Adapter 將外部資料格式轉換為本域 Value Object 與 Entity，避免污染領域模型。
+
+### 5. 核心業務邏輯
+- 不變條件（invariants）與規則放在 `domain.*`（Entity / VO / Domain Service）。
+- `core/_use-cases.ts` 僅做流程協調：載入 → 套用規則 → 透過 Port 持久化 → 發布事件。
+
+### 6. 操作流程
+1. Presentation（`_components/` 或 `src/app`）呼叫模組公開 Action/Query。
+2. Application（`core/`）執行用例並調用 Domain。
+3. Domain 計算狀態變更與事件。
+4. Infrastructure（`infra.*`）透過 Port 落地 I/O。
+
+### 7. 模組間契約
+- 同步契約：`index.ts` 匯出的 Action / Query / DTO。
+- 非同步契約：Domain Event payload（版本化、向後相容）。
+- 契約變更需先更新 README 與呼叫端，避免破壞既有流程。
 ````
 
 ## File: src/modules/settlement.module/_components/billing-view.tsx
@@ -56200,19 +58045,441 @@ export function BillingView({ slug }: BillingViewProps) {
 }
 ````
 
-## File: src/modules/subscription.module/README.md
+## File: src/modules/settlement.module/AGENTS.md
 ````markdown
+# settlement.module Agent Rules
 
+Purpose: document automation boundaries for `settlement.module` and keep DDD layer direction intact.
+
+## 邊界簡述
+- Bounded Context：**Settlement / 結算與收支紀錄**
+- 模組定位：**支撐域**
+- 核心責任：維持本域規則與契約，不外溢到他模組。
+
+## 自動化任務 / Agent 說明
+1. 新增或修改功能時，先確認規則屬於本模組上下文邊界。
+2. 變更流程時，優先更新 `domain.*` / `core/`，再調整 `infra.*` 與 `_components/`。
+3. 跨模組需求只能使用對方 `index.ts` 公開 API 或事件契約。
+4. 外部資料整合須經由 ACL（mapper/adapter），禁止將外部格式直接帶入 Domain。
+
+## 依賴方向與圖
+```
+Presentation (_components/ or src/app)
+        ↓
+Application (core/)
+        ↓
+Domain (domain.*)
+        ↑
+Infrastructure (infra.* implements ports)
+```
+
+Context mapping (high-level):
+`settlement.module` ↔ Account、Workspace、Audit
+
+## 防線（Hard Rules）
+- 禁止從其他模組直接 import 內部路徑（`core/*`, `domain.*/*`, `infra.*/*`, `_components/*`）。
+- 禁止在 Domain 層引入 I/O、SDK、framework side effects。
+- 禁止在 Infrastructure 層編寫業務規則。
+- 禁止在 Presentation 層直接呼叫 Firebase / Upstash SDK。
+
+## 模組契約檢查清單
+- [ ] 上下文邊界是否清楚（Bounded Context）
+- [ ] 核心域 / 支撐域分類是否維持一致
+- [ ] Context Mapping 是否僅透過契約互動
+- [ ] ACL 是否隔離外部資料模型
+- [ ] 核心業務邏輯是否只在 Domain/Application
+- [ ] 操作流程是否符合 Presentation → Application → Domain ← Infrastructure
+- [ ] 模組間契約（DTO / Event）是否向後相容
 ````
 
-## File: src/modules/taxonomy.module/README.md
+## File: src/modules/settlement.module/README.md
 ````markdown
+# settlement.module
 
+**Bounded Context:** Settlement · AR · AP  
+**Layer:** SaaS
+
+## Purpose
+
+`settlement.module` handles the financial settlement lifecycle:
+accounts receivable (AR), accounts payable (AP), and settlement records
+for services rendered within the platform.
+
+## What this module owns
+
+| Concern | Description |
+|---------|-------------|
+| Settlement | Final settlement record for a billing period |
+| AccountsReceivable | Amounts owed to the platform / service provider |
+| AccountsPayable | Amounts owed by the platform to contributors |
+
+## Cross-module dependencies
+
+| Module | Direction | Reason |
+|--------|-----------|--------|
+| `account.module` | → | Settlement parties are Accounts |
+| `workforce.module` | → | Workforce allocations generate AP entries |
+| `audit.module` | ← | Settlement events are audited |
+
+## Standard 4-layer structure
+
+```
+settlement.module/
+├── index.ts
+├── domain.settlement/
+│   ├── _entity.ts
+│   ├── _value-objects.ts
+│   ├── _ports.ts
+│   └── _events.ts
+├── core/
+├── infra.firestore/
+└── _components/
+```
+
+## Domain Governance（必填）
+
+### 1. 上下文邊界（Bounded Context）
+- 本模組邊界：**Settlement / 結算與收支紀錄**。
+- 僅允許透過 `src/modules/settlement.module/index.ts` 對外暴露能力；禁止跨模組直連 `core/`、`domain.*`、`infra.*`、`_components/`。
+
+### 2. 核心域與支撐域識別
+- 本模組定位：**支撐域**。
+- 核心能力放在 `domain.*` + `core/`；跨域整合、通知、搜尋等配套能力視為支撐能力，由應用層編排。
+
+### 3. 上下文映射（Context Mapping）
+- 主要上下游關聯：**Account、Workspace、Audit**。
+- 跨上下文資料交換需使用 DTO／事件，不共享對方內部實體。
+
+### 4. 防腐層（Anti-Corruption Layer）
+- 外部系統（Firebase / Upstash / 外部 API）必須封裝在 `infra.*`。
+- 使用 Mapper / Adapter 將外部資料格式轉換為本域 Value Object 與 Entity，避免污染領域模型。
+
+### 5. 核心業務邏輯
+- 不變條件（invariants）與規則放在 `domain.*`（Entity / VO / Domain Service）。
+- `core/_use-cases.ts` 僅做流程協調：載入 → 套用規則 → 透過 Port 持久化 → 發布事件。
+
+### 6. 操作流程
+1. Presentation（`_components/` 或 `src/app`）呼叫模組公開 Action/Query。
+2. Application（`core/`）執行用例並調用 Domain。
+3. Domain 計算狀態變更與事件。
+4. Infrastructure（`infra.*`）透過 Port 落地 I/O。
+
+### 7. 模組間契約
+- 同步契約：`index.ts` 匯出的 Action / Query / DTO。
+- 非同步契約：Domain Event payload（版本化、向後相容）。
+- 契約變更需先更新 README 與呼叫端，避免破壞既有流程。
 ````
 
-## File: src/modules/vector-ingestion.module/README.md
+## File: src/modules/social.module/AGENTS.md
 ````markdown
+# social.module Agent Rules
 
+Purpose: document automation boundaries for `social.module` and keep DDD layer direction intact.
+
+## 邊界簡述
+- Bounded Context：**Social / 社交圖譜與動態流**
+- 模組定位：**支撐域**
+- 核心責任：維持本域規則與契約，不外溢到他模組。
+
+## 自動化任務 / Agent 說明
+1. 新增或修改功能時，先確認規則屬於本模組上下文邊界。
+2. 變更流程時，優先更新 `domain.*` / `core/`，再調整 `infra.*` 與 `_components/`。
+3. 跨模組需求只能使用對方 `index.ts` 公開 API 或事件契約。
+4. 外部資料整合須經由 ACL（mapper/adapter），禁止將外部格式直接帶入 Domain。
+
+## 依賴方向與圖
+```
+Presentation (_components/ or src/app)
+        ↓
+Application (core/)
+        ↓
+Domain (domain.*)
+        ↑
+Infrastructure (infra.* implements ports)
+```
+
+Context mapping (high-level):
+`social.module` ↔ Account、Achievement、Notification
+
+## 防線（Hard Rules）
+- 禁止從其他模組直接 import 內部路徑（`core/*`, `domain.*/*`, `infra.*/*`, `_components/*`）。
+- 禁止在 Domain 層引入 I/O、SDK、framework side effects。
+- 禁止在 Infrastructure 層編寫業務規則。
+- 禁止在 Presentation 層直接呼叫 Firebase / Upstash SDK。
+
+## 模組契約檢查清單
+- [ ] 上下文邊界是否清楚（Bounded Context）
+- [ ] 核心域 / 支撐域分類是否維持一致
+- [ ] Context Mapping 是否僅透過契約互動
+- [ ] ACL 是否隔離外部資料模型
+- [ ] 核心業務邏輯是否只在 Domain/Application
+- [ ] 操作流程是否符合 Presentation → Application → Domain ← Infrastructure
+- [ ] 模組間契約（DTO / Event）是否向後相容
+````
+
+## File: src/modules/social.module/README.md
+````markdown
+# social.module
+
+**Bounded Context:** Social Graph · Feed · Discovery  
+**Layer:** SaaS
+
+## Purpose
+
+`social.module` manages the social interaction layer:
+the follow/star/watch graph, activity feed, and discovery surfaces.
+
+## What this module owns
+
+| Concern | Description |
+|---------|-------------|
+| SocialEdge | Follow / star / watch relationships between Accounts and Workspaces |
+| Feed | Activity stream aggregated from social graph events |
+| Discovery | Trending workspaces, recommended accounts |
+
+## Cross-module dependencies
+
+| Module | Direction | Reason |
+|--------|-----------|--------|
+| `account.module` | → | Social actors and targets are Accounts |
+| `workspace.module` | → | Starred/watched targets include workspaces |
+| `notification.module` | ← | Follow events may trigger notifications |
+
+## Standard 4-layer structure
+
+```
+social.module/
+├── index.ts
+├── domain.social/
+│   ├── _entity.ts               # SocialEdge + FeedEntry
+│   ├── _value-objects.ts
+│   ├── _ports.ts
+│   └── _events.ts
+├── core/
+├── infra.firestore/
+└── _components/
+```
+
+## Domain Governance（必填）
+
+### 1. 上下文邊界（Bounded Context）
+- 本模組邊界：**Social / 社交圖譜與動態流**。
+- 僅允許透過 `src/modules/social.module/index.ts` 對外暴露能力；禁止跨模組直連 `core/`、`domain.*`、`infra.*`、`_components/`。
+
+### 2. 核心域與支撐域識別
+- 本模組定位：**支撐域**。
+- 核心能力放在 `domain.*` + `core/`；跨域整合、通知、搜尋等配套能力視為支撐能力，由應用層編排。
+
+### 3. 上下文映射（Context Mapping）
+- 主要上下游關聯：**Account、Achievement、Notification**。
+- 跨上下文資料交換需使用 DTO／事件，不共享對方內部實體。
+
+### 4. 防腐層（Anti-Corruption Layer）
+- 外部系統（Firebase / Upstash / 外部 API）必須封裝在 `infra.*`。
+- 使用 Mapper / Adapter 將外部資料格式轉換為本域 Value Object 與 Entity，避免污染領域模型。
+
+### 5. 核心業務邏輯
+- 不變條件（invariants）與規則放在 `domain.*`（Entity / VO / Domain Service）。
+- `core/_use-cases.ts` 僅做流程協調：載入 → 套用規則 → 透過 Port 持久化 → 發布事件。
+
+### 6. 操作流程
+1. Presentation（`_components/` 或 `src/app`）呼叫模組公開 Action/Query。
+2. Application（`core/`）執行用例並調用 Domain。
+3. Domain 計算狀態變更與事件。
+4. Infrastructure（`infra.*`）透過 Port 落地 I/O。
+
+### 7. 模組間契約
+- 同步契約：`index.ts` 匯出的 Action / Query / DTO。
+- 非同步契約：Domain Event payload（版本化、向後相容）。
+- 契約變更需先更新 README 與呼叫端，避免破壞既有流程。
+````
+
+## File: src/modules/subscription.module/AGENTS.md
+````markdown
+# subscription.module Agent Rules
+
+Purpose: document automation boundaries for `subscription.module` and keep DDD layer direction intact.
+
+## 邊界簡述
+- Bounded Context：**Subscription / 訂閱、配額、方案生命週期**
+- 模組定位：**支撐域**
+- 核心責任：維持本域規則與契約，不外溢到他模組。
+
+## 自動化任務 / Agent 說明
+1. 新增或修改功能時，先確認規則屬於本模組上下文邊界。
+2. 變更流程時，優先更新 `domain.*` / `core/`，再調整 `infra.*` 與 `_components/`。
+3. 跨模組需求只能使用對方 `index.ts` 公開 API 或事件契約。
+4. 外部資料整合須經由 ACL（mapper/adapter），禁止將外部格式直接帶入 Domain。
+
+## 依賴方向與圖
+```
+Presentation (_components/ or src/app)
+        ↓
+Application (core/)
+        ↓
+Domain (domain.*)
+        ↑
+Infrastructure (infra.* implements ports)
+```
+
+Context mapping (high-level):
+`subscription.module` ↔ Account、Settlement、Governance
+
+## 防線（Hard Rules）
+- 禁止從其他模組直接 import 內部路徑（`core/*`, `domain.*/*`, `infra.*/*`, `_components/*`）。
+- 禁止在 Domain 層引入 I/O、SDK、framework side effects。
+- 禁止在 Infrastructure 層編寫業務規則。
+- 禁止在 Presentation 層直接呼叫 Firebase / Upstash SDK。
+
+## 模組契約檢查清單
+- [ ] 上下文邊界是否清楚（Bounded Context）
+- [ ] 核心域 / 支撐域分類是否維持一致
+- [ ] Context Mapping 是否僅透過契約互動
+- [ ] ACL 是否隔離外部資料模型
+- [ ] 核心業務邏輯是否只在 Domain/Application
+- [ ] 操作流程是否符合 Presentation → Application → Domain ← Infrastructure
+- [ ] 模組間契約（DTO / Event）是否向後相容
+````
+
+## File: src/modules/taxonomy.module/AGENTS.md
+````markdown
+# taxonomy.module Agent Rules
+
+Purpose: document automation boundaries for `taxonomy.module` and keep DDD layer direction intact.
+
+## 邊界簡述
+- Bounded Context：**Taxonomy / 分類法、標籤、詞彙**
+- 模組定位：**支撐域**
+- 核心責任：維持本域規則與契約，不外溢到他模組。
+
+## 自動化任務 / Agent 說明
+1. 新增或修改功能時，先確認規則屬於本模組上下文邊界。
+2. 變更流程時，優先更新 `domain.*` / `core/`，再調整 `infra.*` 與 `_components/`。
+3. 跨模組需求只能使用對方 `index.ts` 公開 API 或事件契約。
+4. 外部資料整合須經由 ACL（mapper/adapter），禁止將外部格式直接帶入 Domain。
+
+## 依賴方向與圖
+```
+Presentation (_components/ or src/app)
+        ↓
+Application (core/)
+        ↓
+Domain (domain.*)
+        ↑
+Infrastructure (infra.* implements ports)
+```
+
+Context mapping (high-level):
+`taxonomy.module` ↔ Search、Knowledge、Workspace
+
+## 防線（Hard Rules）
+- 禁止從其他模組直接 import 內部路徑（`core/*`, `domain.*/*`, `infra.*/*`, `_components/*`）。
+- 禁止在 Domain 層引入 I/O、SDK、framework side effects。
+- 禁止在 Infrastructure 層編寫業務規則。
+- 禁止在 Presentation 層直接呼叫 Firebase / Upstash SDK。
+
+## 模組契約檢查清單
+- [ ] 上下文邊界是否清楚（Bounded Context）
+- [ ] 核心域 / 支撐域分類是否維持一致
+- [ ] Context Mapping 是否僅透過契約互動
+- [ ] ACL 是否隔離外部資料模型
+- [ ] 核心業務邏輯是否只在 Domain/Application
+- [ ] 操作流程是否符合 Presentation → Application → Domain ← Infrastructure
+- [ ] 模組間契約（DTO / Event）是否向後相容
+````
+
+## File: src/modules/vector-ingestion.module/AGENTS.md
+````markdown
+# vector-ingestion.module Agent Rules
+
+Purpose: document automation boundaries for `vector-ingestion.module` and keep DDD layer direction intact.
+
+## 邊界簡述
+- Bounded Context：**Vector Ingestion / 向量化與索引管線**
+- 模組定位：**支撐域**
+- 核心責任：維持本域規則與契約，不外溢到他模組。
+
+## 自動化任務 / Agent 說明
+1. 新增或修改功能時，先確認規則屬於本模組上下文邊界。
+2. 變更流程時，優先更新 `domain.*` / `core/`，再調整 `infra.*` 與 `_components/`。
+3. 跨模組需求只能使用對方 `index.ts` 公開 API 或事件契約。
+4. 外部資料整合須經由 ACL（mapper/adapter），禁止將外部格式直接帶入 Domain。
+
+## 依賴方向與圖
+```
+Presentation (_components/ or src/app)
+        ↓
+Application (core/)
+        ↓
+Domain (domain.*)
+        ↑
+Infrastructure (infra.* implements ports)
+```
+
+Context mapping (high-level):
+`vector-ingestion.module` ↔ Knowledge、Search、File
+
+## 防線（Hard Rules）
+- 禁止從其他模組直接 import 內部路徑（`core/*`, `domain.*/*`, `infra.*/*`, `_components/*`）。
+- 禁止在 Domain 層引入 I/O、SDK、framework side effects。
+- 禁止在 Infrastructure 層編寫業務規則。
+- 禁止在 Presentation 層直接呼叫 Firebase / Upstash SDK。
+
+## 模組契約檢查清單
+- [ ] 上下文邊界是否清楚（Bounded Context）
+- [ ] 核心域 / 支撐域分類是否維持一致
+- [ ] Context Mapping 是否僅透過契約互動
+- [ ] ACL 是否隔離外部資料模型
+- [ ] 核心業務邏輯是否只在 Domain/Application
+- [ ] 操作流程是否符合 Presentation → Application → Domain ← Infrastructure
+- [ ] 模組間契約（DTO / Event）是否向後相容
+````
+
+## File: src/modules/work.module/AGENTS.md
+````markdown
+# work.module Agent Rules
+
+Purpose: document automation boundaries for `work.module` and keep DDD layer direction intact.
+
+## 邊界簡述
+- Bounded Context：**Work / 任務、里程碑、依賴**
+- 模組定位：**核心域**
+- 核心責任：維持本域規則與契約，不外溢到他模組。
+
+## 自動化任務 / Agent 說明
+1. 新增或修改功能時，先確認規則屬於本模組上下文邊界。
+2. 變更流程時，優先更新 `domain.*` / `core/`，再調整 `infra.*` 與 `_components/`。
+3. 跨模組需求只能使用對方 `index.ts` 公開 API 或事件契約。
+4. 外部資料整合須經由 ACL（mapper/adapter），禁止將外部格式直接帶入 Domain。
+
+## 依賴方向與圖
+```
+Presentation (_components/ or src/app)
+        ↓
+Application (core/)
+        ↓
+Domain (domain.*)
+        ↑
+Infrastructure (infra.* implements ports)
+```
+
+Context mapping (high-level):
+`work.module` ↔ Workspace、Collaboration、Audit
+
+## 防線（Hard Rules）
+- 禁止從其他模組直接 import 內部路徑（`core/*`, `domain.*/*`, `infra.*/*`, `_components/*`）。
+- 禁止在 Domain 層引入 I/O、SDK、framework side effects。
+- 禁止在 Infrastructure 層編寫業務規則。
+- 禁止在 Presentation 層直接呼叫 Firebase / Upstash SDK。
+
+## 模組契約檢查清單
+- [ ] 上下文邊界是否清楚（Bounded Context）
+- [ ] 核心域 / 支撐域分類是否維持一致
+- [ ] Context Mapping 是否僅透過契約互動
+- [ ] ACL 是否隔離外部資料模型
+- [ ] 核心業務邏輯是否只在 Domain/Application
+- [ ] 操作流程是否符合 Presentation → Application → Domain ← Infrastructure
+- [ ] 模組間契約（DTO / Event）是否向後相容
 ````
 
 ## File: src/modules/work.module/core/_actions.ts
@@ -56607,6 +58874,228 @@ export function buildTaskTree(items: WorkItemDTO[]): TaskWithChildren[] {
 }
 ````
 
+## File: src/modules/work.module/README.md
+````markdown
+# work.module
+
+**Bounded Context:** Work Items · Milestones · Dependencies  
+**Layer:** Workspace
+
+## Purpose
+
+`work.module` manages the Work Item layer — tasks, milestones, and dependency tracking.
+This is distinct from WBS Tasks in `workspace.module`: Work Items represent the execution
+layer with assignments, status tracking, and inter-item dependencies.
+
+## What this module owns
+
+| Concern | Description |
+|---------|-------------|
+| WorkItem | Assignable unit of work with status, priority, and estimates |
+| Milestone | Date-bound delivery checkpoint grouping Work Items |
+| Dependency | Directional relationship between Work Items (blocks / depends-on) |
+
+## Cross-module dependencies
+
+| Module | Direction | Reason |
+|--------|-----------|--------|
+| `workspace.module` | → | Work Items live within a workspace context |
+| `account.module` | → | Work Items are assigned to Accounts |
+| `collaboration.module` | ← | Comments anchor to Work Items |
+| `notification.module` | ← | Assignment and status change events trigger notifications |
+
+## Standard 4-layer structure
+
+```
+work.module/
+├── index.ts
+├── domain.work/
+│   ├── _entity.ts               # WorkItem + Milestone + Dependency
+│   ├── _value-objects.ts
+│   ├── _ports.ts
+│   └── _events.ts
+├── core/
+├── infra.firestore/
+└── _components/
+```
+
+## Domain Governance（必填）
+
+### 1. 上下文邊界（Bounded Context）
+- 本模組邊界：**Work / 任務、里程碑、依賴**。
+- 僅允許透過 `src/modules/work.module/index.ts` 對外暴露能力；禁止跨模組直連 `core/`、`domain.*`、`infra.*`、`_components/`。
+
+### 2. 核心域與支撐域識別
+- 本模組定位：**核心域**。
+- 核心能力放在 `domain.*` + `core/`；跨域整合、通知、搜尋等配套能力視為支撐能力，由應用層編排。
+
+### 3. 上下文映射（Context Mapping）
+- 主要上下游關聯：**Workspace、Collaboration、Audit**。
+- 跨上下文資料交換需使用 DTO／事件，不共享對方內部實體。
+
+### 4. 防腐層（Anti-Corruption Layer）
+- 外部系統（Firebase / Upstash / 外部 API）必須封裝在 `infra.*`。
+- 使用 Mapper / Adapter 將外部資料格式轉換為本域 Value Object 與 Entity，避免污染領域模型。
+
+### 5. 核心業務邏輯
+- 不變條件（invariants）與規則放在 `domain.*`（Entity / VO / Domain Service）。
+- `core/_use-cases.ts` 僅做流程協調：載入 → 套用規則 → 透過 Port 持久化 → 發布事件。
+
+### 6. 操作流程
+1. Presentation（`_components/` 或 `src/app`）呼叫模組公開 Action/Query。
+2. Application（`core/`）執行用例並調用 Domain。
+3. Domain 計算狀態變更與事件。
+4. Infrastructure（`infra.*`）透過 Port 落地 I/O。
+
+### 7. 模組間契約
+- 同步契約：`index.ts` 匯出的 Action / Query / DTO。
+- 非同步契約：Domain Event payload（版本化、向後相容）。
+- 契約變更需先更新 README 與呼叫端，避免破壞既有流程。
+````
+
+## File: src/modules/workforce.module/AGENTS.md
+````markdown
+# workforce.module Agent Rules
+
+Purpose: document automation boundaries for `workforce.module` and keep DDD layer direction intact.
+
+## 邊界簡述
+- Bounded Context：**Workforce / 人力排程與能力匹配**
+- 模組定位：**核心域**
+- 核心責任：維持本域規則與契約，不外溢到他模組。
+
+## 自動化任務 / Agent 說明
+1. 新增或修改功能時，先確認規則屬於本模組上下文邊界。
+2. 變更流程時，優先更新 `domain.*` / `core/`，再調整 `infra.*` 與 `_components/`。
+3. 跨模組需求只能使用對方 `index.ts` 公開 API 或事件契約。
+4. 外部資料整合須經由 ACL（mapper/adapter），禁止將外部格式直接帶入 Domain。
+
+## 依賴方向與圖
+```
+Presentation (_components/ or src/app)
+        ↓
+Application (core/)
+        ↓
+Domain (domain.*)
+        ↑
+Infrastructure (infra.* implements ports)
+```
+
+Context mapping (high-level):
+`workforce.module` ↔ Workspace、Account、Settlement
+
+## 防線（Hard Rules）
+- 禁止從其他模組直接 import 內部路徑（`core/*`, `domain.*/*`, `infra.*/*`, `_components/*`）。
+- 禁止在 Domain 層引入 I/O、SDK、framework side effects。
+- 禁止在 Infrastructure 層編寫業務規則。
+- 禁止在 Presentation 層直接呼叫 Firebase / Upstash SDK。
+
+## 模組契約檢查清單
+- [ ] 上下文邊界是否清楚（Bounded Context）
+- [ ] 核心域 / 支撐域分類是否維持一致
+- [ ] Context Mapping 是否僅透過契約互動
+- [ ] ACL 是否隔離外部資料模型
+- [ ] 核心業務邏輯是否只在 Domain/Application
+- [ ] 操作流程是否符合 Presentation → Application → Domain ← Infrastructure
+- [ ] 模組間契約（DTO / Event）是否向後相容
+````
+
+## File: src/modules/workforce.module/README.md
+````markdown
+# workforce.module
+
+**Bounded Context:** Workforce Scheduling  
+**Layer:** Bridge (SaaS ↔ Workspace)
+
+## Purpose
+
+`workforce.module` is the Bridge context between the SaaS layer and the Workspace layer.
+It answers the question: **"Who is doing the work, when, and at what capacity?"**
+
+It handles workforce capacity planning, scheduling, and allocation of accounts to workspace work items.
+
+> **Boundary vs `workspace.module`:**  
+> `workforce.module` = "Who does what, and when?" (scheduling, capacity, person-to-work allocation)  
+> `workspace.module` = "What is the workspace and what work is planned?" (project scope, structure, WBS, issues)  
+>  
+> Assigning a person to a task / planning capacity for a sprint → `workforce.module`  
+> Creating a task / issue / WBS item / workspace settings → `workspace.module`  
+>  
+> Note: This module bridges SaaS accounts (people, HR) with workspace work items (tasks, milestones). Neither `workspace.module` nor `account.module` owns allocation scheduling.
+
+## What this module owns
+
+| Concern | Description |
+|---------|-------------|
+| WorkforceSchedule | Capacity plan for an org account's members |
+| WorkAllocation | Assignment of an account to workspace work items |
+| CapacityConstraint | Limits on how much work can be assigned per period |
+
+## What this module does NOT own
+
+| Concern | Owned by |
+|---------|----------|
+| Workspace settings / access control | `workspace.module` |
+| Work items / milestones definition | `work.module` |
+| Account / membership governance | `account.module` |
+
+## Cross-module dependencies
+
+| Module | Direction | Reason |
+|--------|-----------|--------|
+| `account.module` | → | Members being scheduled are Accounts |
+| `workspace.module` | → | Work is scoped to a workspace |
+| `work.module` | → | Allocations reference Work Items |
+
+## Standard 4-layer structure
+
+```
+workforce.module/
+├── index.ts
+├── domain.workforce/
+│   ├── _entity.ts
+│   ├── _value-objects.ts
+│   ├── _ports.ts
+│   └── _events.ts
+├── core/
+├── infra.firestore/
+└── _components/
+```
+
+## Domain Governance（必填）
+
+### 1. 上下文邊界（Bounded Context）
+- 本模組邊界：**Workforce / 人力排程與能力匹配**。
+- 僅允許透過 `src/modules/workforce.module/index.ts` 對外暴露能力；禁止跨模組直連 `core/`、`domain.*`、`infra.*`、`_components/`。
+
+### 2. 核心域與支撐域識別
+- 本模組定位：**核心域**。
+- 核心能力放在 `domain.*` + `core/`；跨域整合、通知、搜尋等配套能力視為支撐能力，由應用層編排。
+
+### 3. 上下文映射（Context Mapping）
+- 主要上下游關聯：**Workspace、Account、Settlement**。
+- 跨上下文資料交換需使用 DTO／事件，不共享對方內部實體。
+
+### 4. 防腐層（Anti-Corruption Layer）
+- 外部系統（Firebase / Upstash / 外部 API）必須封裝在 `infra.*`。
+- 使用 Mapper / Adapter 將外部資料格式轉換為本域 Value Object 與 Entity，避免污染領域模型。
+
+### 5. 核心業務邏輯
+- 不變條件（invariants）與規則放在 `domain.*`（Entity / VO / Domain Service）。
+- `core/_use-cases.ts` 僅做流程協調：載入 → 套用規則 → 透過 Port 持久化 → 發布事件。
+
+### 6. 操作流程
+1. Presentation（`_components/` 或 `src/app`）呼叫模組公開 Action/Query。
+2. Application（`core/`）執行用例並調用 Domain。
+3. Domain 計算狀態變更與事件。
+4. Infrastructure（`infra.*`）透過 Port 落地 I/O。
+
+### 7. 模組間契約
+- 同步契約：`index.ts` 匯出的 Action / Query / DTO。
+- 非同步契約：Domain Event payload（版本化、向後相容）。
+- 契約變更需先更新 README 與呼叫端，避免破壞既有流程。
+````
+
 ## File: src/modules/workspace.module/_components/create-workspace-dialog.tsx
 ````typescript
 "use client";
@@ -56729,269 +59218,197 @@ export function CreateWorkspaceDialog({
 }
 ````
 
-## File: src/modules/workspace.module/_components/daily-log-card.tsx
+## File: src/modules/workspace.module/_components/daily-log-dialog.tsx
 ````typescript
 "use client";
 /**
- * DailyLogCard — shows a single daily log entry with edit/delete actions.
- * Wave 45: core card. Wave 52: social reactions (like + bookmark).
- * Wave 55: comment thread (collaboration.module).
+ * DailyLogDialog — create/edit dialog for daily log entries.
+ * Wave 45.
  */
 
 import { useState } from "react";
-import { Calendar, Pencil, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/design-system/primitives/ui/alert-dialog";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/design-system/primitives/ui/dialog";
+import { Button } from "@/design-system/primitives/ui/button";
+import { Input } from "@/design-system/primitives/ui/input";
+import { Label } from "@/design-system/primitives/ui/label";
+import { Textarea } from "@/design-system/primitives/ui/textarea";
 import { useTranslation } from "@/shared/i18n";
-import { FirestoreDailyLogRepository } from "@/modules/workspace.module/infra.firestore/_daily-log-repository";
-import { deleteDailyLog } from "@/modules/workspace.module/core/_daily-log-use-cases";
-import type { DailyLogDTO } from "@/modules/workspace.module/core/_daily-log-use-cases";
-import { useCurrentAccount } from "@/modules/account.module";
-import { SocialActionsBar } from "@/modules/social.module/_components/social-actions-bar";
-import { CommentThread } from "@/modules/collaboration.module/_components/comment-thread";
+import { createDailyLog, updateDailyLog, type DailyLogDTO } from "@/modules/workspace.module";
 
-let _repo: FirestoreDailyLogRepository | null = null;
-function getRepo() {
-  if (!_repo) _repo = new FirestoreDailyLogRepository();
-  return _repo;
+interface DailyLogDialogProps {
+  workspaceId: string;
+  authorId: string;
+  existingLog?: DailyLogDTO;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSaved: () => void;
 }
 
-interface DailyLogCardProps {
-  log: DailyLogDTO;
-  onEdit: () => void;
-  onDeleted: () => void;
-}
-
-export function DailyLogCard({ log, onEdit, onDeleted }: DailyLogCardProps) {
+export function DailyLogDialog({
+  workspaceId,
+  authorId,
+  existingLog,
+  open,
+  onOpenChange,
+  onSaved,
+}: DailyLogDialogProps) {
   const t = useTranslation("zh-TW");
-  const { account } = useCurrentAccount();
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const todayStr = new Date().toISOString().slice(0, 10);
 
-  const handleDelete = async () => {
-    setDeleting(true);
+  const [date, setDate] = useState(existingLog?.date ?? todayStr);
+  const [content, setContent] = useState(existingLog?.content ?? "");
+  const [photoURLs, setPhotoURLs] = useState<string[]>(
+    existingLog?.photoURLs ? [...existingLog.photoURLs] : [],
+  );
+  const [newUrl, setNewUrl] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleOpenChange = (o: boolean) => {
+    if (o) {
+      setDate(existingLog?.date ?? todayStr);
+      setContent(existingLog?.content ?? "");
+      setPhotoURLs(existingLog?.photoURLs ? [...existingLog.photoURLs] : []);
+      setNewUrl("");
+      setError(null);
+    }
+    onOpenChange(o);
+  };
+
+  const addUrl = () => {
+    const trimmed = newUrl.trim();
+    if (!trimmed || !/^https?:\/\//i.test(trimmed)) return;
+    setPhotoURLs((prev) => [...prev, trimmed]);
+    setNewUrl("");
+  };
+
+  const handleSave = async () => {
+    if (!content.trim()) {
+      setError(t("workspace.daily.contentRequired"));
+      return;
+    }
+    setSaving(true);
+    setError(null);
     try {
-      await deleteDailyLog(getRepo(), log.id);
-      setDeleteOpen(false);
-      onDeleted();
+      let result;
+      if (existingLog) {
+        result = await updateDailyLog(existingLog.id, content.trim(), photoURLs);
+      } else {
+        result = await createDailyLog(
+          crypto.randomUUID(),
+          workspaceId,
+          date,
+          content.trim(),
+          photoURLs,
+          authorId,
+        );
+      }
+      if (!result.ok) throw result.error;
+      onSaved();
+      onOpenChange(false);
+    } catch {
+      setError(t("workspace.daily.saveFailed"));
     } finally {
-      setDeleting(false);
+      setSaving(false);
     }
   };
 
   return (
-    <>
-      <div className="group rounded-2xl border border-border/50 bg-card p-4 shadow-sm transition-colors hover:bg-card/80">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 flex-1 flex-col">
-            <div className="flex items-center gap-2">
-              <Calendar className="size-3.5 shrink-0 text-muted-foreground" />
-              <span className="text-xs font-semibold text-muted-foreground">{log.date}</span>
-            </div>
-            <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{log.content}</p>
-          </div>
-          <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-            <button
-              type="button"
-              onClick={onEdit}
-              className="rounded-md p-1 hover:bg-muted"
-              aria-label="Edit"
-            >
-              <Pencil className="size-4 text-muted-foreground" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setDeleteOpen(true)}
-              className="rounded-md p-1 hover:bg-destructive/10"
-              aria-label="Delete"
-            >
-              <Trash2 className="size-4 text-destructive/70" />
-            </button>
-          </div>
-        </div>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-md rounded-2xl">
+        <DialogHeader>
+          <DialogTitle>
+            {existingLog ? t("workspace.daily.editEntry") : t("workspace.daily.addEntry")}
+          </DialogTitle>
+        </DialogHeader>
 
-        {log.photoURLs.length > 0 && (
-          <div className="mt-3 flex gap-2 overflow-x-auto">
-            {log.photoURLs.map((url, idx) => (
-              <img
-                key={idx}
-                src={/^https?:\/\//i.test(url) ? url : ""}
-                alt={t("tasks.attachmentPreviewAlt")}
-                className="h-24 w-24 shrink-0 rounded-xl border object-cover"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+        <div className="space-y-4 py-2">
+          {/* Date */}
+          {!existingLog && (
+            <div className="grid gap-1.5">
+              <Label htmlFor="dl-date">{t("workspace.daily.date")}</Label>
+              <Input
+                id="dl-date"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="rounded-xl"
               />
-            ))}
-          </div>
-        )}
+            </div>
+          )}
 
-        {/* Social reactions — Wave 52 */}
-        <div className="mt-3 flex items-center justify-between border-t border-border/30 pt-3">
-          <SocialActionsBar
-            targetId={log.id}
-            targetType="daily-log"
-            currentAccountId={account?.id}
-          />
-        </div>
-
-        {/* Comment thread — Wave 55 */}
-        <CommentThread
-          artifactType="daily-log"
-          artifactId={log.id}
-          defaultCollapsed
-        />
-      </div>
-
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent className="max-w-sm rounded-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("workspace.daily.deleteTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>{t("workspace.daily.deleteDescription")}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={deleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {t("common.delete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
-  );
-}
-````
-
-## File: src/modules/workspace.module/_components/daily-workspace-view.tsx
-````typescript
-"use client";
-/**
- * DailyWorkspaceView — workspace daily log feed.
- * Wave 45: capability-gated daily log view (requires "daily" capability).
- *
- * Source: workspace.slice/domain.daily/_components/
- */
-
-import { useCallback, useEffect, useState } from "react";
-import { BookOpen, Loader2, Plus } from "lucide-react";
-import { Button } from "@/design-system/primitives/ui/button";
-import { useTranslation } from "@/shared/i18n";
-import { useCurrentAccount } from "@/modules/account.module";
-import { FirestoreDailyLogRepository } from "@/modules/workspace.module/infra.firestore/_daily-log-repository";
-import { getDailyLogs } from "@/modules/workspace.module/core/_daily-log-use-cases";
-import type { DailyLogDTO } from "@/modules/workspace.module/core/_daily-log-use-cases";
-import { DailyLogCard } from "./daily-log-card";
-import { DailyLogDialog } from "./daily-log-dialog";
-
-let _repo: FirestoreDailyLogRepository | null = null;
-function getRepo() {
-  if (!_repo) _repo = new FirestoreDailyLogRepository();
-  return _repo;
-}
-
-interface DailyWorkspaceViewProps {
-  workspaceId: string;
-}
-
-export function DailyWorkspaceView({ workspaceId }: DailyWorkspaceViewProps) {
-  const t = useTranslation("zh-TW");
-  const { account } = useCurrentAccount();
-  const [logs, setLogs] = useState<DailyLogDTO[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [editLog, setEditLog] = useState<DailyLogDTO | null>(null);
-
-  const fetchLogs = useCallback(async () => {
-    setLoading(true);
-    try {
-      const result = await getDailyLogs(getRepo(), workspaceId);
-      if (result.ok) setLogs(result.value);
-    } finally {
-      setLoading(false);
-    }
-  }, [workspaceId]);
-
-  useEffect(() => { void fetchLogs(); }, [fetchLogs]);
-
-  return (
-    <div className="flex h-full flex-col space-y-4 duration-500 animate-in fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-border/40 pb-4">
-        <div className="flex items-center gap-3">
-          <BookOpen className="size-5 text-primary" />
-          <h1 className="text-lg font-bold tracking-tight">{t("workspace.daily.title")}</h1>
-        </div>
-        <Button
-          size="sm"
-          className="gap-2 text-xs font-bold uppercase tracking-widest"
-          onClick={() => setCreateOpen(true)}
-        >
-          <Plus className="size-4" />
-          {t("workspace.daily.addEntry")}
-        </Button>
-      </div>
-
-      {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="size-8 animate-spin text-muted-foreground" />
-        </div>
-      ) : logs.length > 0 ? (
-        <div className="space-y-3">
-          {logs.map((log) => (
-            <DailyLogCard
-              key={log.id}
-              log={log}
-              onEdit={() => setEditLog(log)}
-              onDeleted={fetchLogs}
+          {/* Content */}
+          <div className="grid gap-1.5">
+            <Label htmlFor="dl-content">{t("workspace.daily.content")}</Label>
+            <Textarea
+              id="dl-content"
+              rows={4}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder={t("workspace.daily.contentPlaceholder")}
+              className="resize-none rounded-xl"
             />
-          ))}
+          </div>
+
+          {/* Photos */}
+          <div className="grid gap-1.5">
+            <Label>{t("workspace.daily.photos")}</Label>
+            {photoURLs.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {photoURLs.map((url, idx) => (
+                  <div key={idx} className="relative">
+                    <img
+                      src={/^https?:\/\//i.test(url) ? url : ""}
+                      alt=""
+                      className="h-16 w-16 rounded-lg border object-cover"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPhotoURLs((p) => p.filter((_, i) => i !== idx))}
+                      className="absolute -right-1 -top-1 rounded-full bg-destructive p-0.5"
+                      aria-label="Remove photo"
+                    >
+                      <Trash2 className="size-3 text-white" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Input
+                value={newUrl}
+                onChange={(e) => setNewUrl(e.target.value)}
+                placeholder={t("tasks.attachments.urlPlaceholder")}
+                className="rounded-xl text-xs"
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addUrl(); } }}
+              />
+              <Button type="button" size="sm" variant="outline" onClick={addUrl} className="shrink-0">
+                <Plus className="size-4" />
+              </Button>
+            </div>
+          </div>
+
+          {error && <p className="text-xs text-destructive">{error}</p>}
         </div>
-      ) : (
-        <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border/40 bg-muted/5 px-6 py-16 text-center">
-          <BookOpen className="mb-4 size-12 text-muted-foreground opacity-10" />
-          <h3 className="text-lg font-bold">{t("workspace.daily.empty")}</h3>
-          <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
-            {t("workspace.daily.emptyHint")}
-          </p>
-          <Button
-            size="lg"
-            className="mt-8 rounded-full px-8 text-xs font-bold uppercase tracking-widest shadow-lg"
-            onClick={() => setCreateOpen(true)}
-          >
-            {t("workspace.daily.addEntry")}
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+            {t("common.cancel")}
           </Button>
-        </div>
-      )}
-
-      <DailyLogDialog
-        workspaceId={workspaceId}
-        authorId={account?.id ?? ""}
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        onSaved={fetchLogs}
-      />
-
-      {editLog && (
-        <DailyLogDialog
-          workspaceId={workspaceId}
-          authorId={account?.id ?? ""}
-          existingLog={editLog}
-          open={!!editLog}
-          onOpenChange={(o) => { if (!o) setEditLog(null); }}
-          onSaved={() => { setEditLog(null); void fetchLogs(); }}
-        />
-      )}
-    </div>
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? t("common.saving") : t("common.save")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 ````
@@ -57068,377 +59485,6 @@ export function EditorView({ slug: _slug, workspaceId }: EditorViewProps) {
           </p>
         </main>
       </div>
-    </div>
-  );
-}
-````
-
-## File: src/modules/workspace.module/_components/issues-view.tsx
-````typescript
-"use client";
-/**
- * IssuesView — workspace issue tracking CRUD view.
- * Wave 46: capability-gated (requires "issues" capability).
- *
- * Source: workspace.slice/domain.issues/_components/issues-view.tsx
- */
-
-import { useCallback, useEffect, useState } from "react";
-import {
-  AlertTriangle,
-  Loader2,
-  Plus,
-  CheckCircle2,
-  Circle,
-  Clock,
-  XCircle,
-  Pencil,
-  Trash2,
-} from "lucide-react";
-import { Badge } from "@/design-system/primitives/ui/badge";
-import { Button } from "@/design-system/primitives/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/design-system/primitives/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/design-system/primitives/ui/dialog";
-import { Input } from "@/design-system/primitives/ui/input";
-import { Label } from "@/design-system/primitives/ui/label";
-import { Textarea } from "@/design-system/primitives/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/design-system/primitives/ui/select";
-import { useTranslation } from "@/shared/i18n";
-import { useCurrentAccount } from "@/modules/account.module";
-import { FirestoreIssueRepository } from "@/modules/workspace.module/infra.firestore/_issue-repository";
-import {
-  getIssues,
-  createIssue,
-  updateIssue,
-  deleteIssue,
-} from "@/modules/workspace.module/core/_issue-use-cases";
-import type { IssueDTO } from "@/modules/workspace.module/core/_issue-use-cases";
-import type { IssueSeverity, IssueStatus } from "@/modules/workspace.module/domain.issues/_entity";
-
-let _repo: FirestoreIssueRepository | null = null;
-function getRepo() {
-  if (!_repo) _repo = new FirestoreIssueRepository();
-  return _repo;
-}
-
-const SEVERITIES: IssueSeverity[] = ["critical", "high", "medium", "low"];
-
-function statusIcon(status: IssueStatus) {
-  switch (status) {
-    case "resolved": return <CheckCircle2 className="size-4 text-green-500" />;
-    case "in-progress": return <Clock className="size-4 text-blue-500" />;
-    case "closed": return <XCircle className="size-4 text-muted-foreground" />;
-    default: return <Circle className="size-4 text-orange-400" />;
-  }
-}
-
-function severityVariant(s: IssueSeverity): "default" | "secondary" | "destructive" | "outline" {
-  switch (s) {
-    case "critical": return "destructive";
-    case "high": return "default";
-    case "medium": return "outline";
-    default: return "secondary";
-  }
-}
-
-interface IssueFormDialogProps {
-  workspaceId: string;
-  reporterId: string;
-  editIssue?: IssueDTO;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSaved: () => void;
-}
-
-function IssueFormDialog({ workspaceId, reporterId, editIssue, open, onOpenChange, onSaved }: IssueFormDialogProps) {
-  const t = useTranslation("zh-TW");
-  const [title, setTitle] = useState(editIssue?.title ?? "");
-  const [description, setDescription] = useState(editIssue?.description ?? "");
-  const [severity, setSeverity] = useState<IssueSeverity>(editIssue?.severity ?? "medium");
-  const [status, setStatus] = useState<IssueStatus>(editIssue?.status ?? "open");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleOpenChange = (o: boolean) => {
-    if (o) {
-      setTitle(editIssue?.title ?? "");
-      setDescription(editIssue?.description ?? "");
-      setSeverity(editIssue?.severity ?? "medium");
-      setStatus(editIssue?.status ?? "open");
-      setError(null);
-    }
-    onOpenChange(o);
-  };
-
-  const handleSave = async () => {
-    if (!title.trim()) { setError(t("workspace.issues.titleRequired")); return; }
-    setSaving(true);
-    setError(null);
-    try {
-      let result;
-      if (editIssue) {
-        result = await updateIssue(getRepo(), editIssue.id, {
-          title: title.trim(),
-          description: description.trim() || null,
-          severity,
-          status,
-        });
-      } else {
-        result = await createIssue(
-          getRepo(),
-          crypto.randomUUID(),
-          workspaceId,
-          title.trim(),
-          severity,
-          reporterId,
-          description.trim() || undefined,
-        );
-      }
-      if (!result.ok) throw result.error;
-      onSaved();
-      onOpenChange(false);
-    } catch {
-      setError(t("workspace.issues.saveFailed"));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-sm rounded-2xl">
-        <DialogHeader>
-          <DialogTitle>
-            {editIssue ? t("workspace.issues.editIssue") : t("workspace.issues.createIssue")}
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3 py-2">
-          <div className="grid gap-1.5">
-            <Label>{t("workspace.issues.titleLabel")}</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} className="rounded-xl" />
-          </div>
-          <div className="grid gap-1.5">
-            <Label>{t("workspace.issues.descriptionLabel")}</Label>
-            <Textarea
-              rows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={t("workspace.issues.descriptionPlaceholder")}
-              className="resize-none rounded-xl text-sm"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1.5">
-              <Label>{t("workspace.issues.severityLabel")}</Label>
-              <Select value={severity} onValueChange={(v) => setSeverity(v as IssueSeverity)}>
-                <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {SEVERITIES.map((s) => (
-                    <SelectItem key={s} value={s}>{t(`workspace.issues.severity.${s}`)}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {editIssue && (
-              <div className="grid gap-1.5">
-                <Label>{t("workspace.issues.statusLabel")}</Label>
-                <Select value={status} onValueChange={(v) => setStatus(v as IssueStatus)}>
-                  <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {(["open", "in-progress", "resolved", "closed"] as IssueStatus[]).map((s) => (
-                      <SelectItem key={s} value={s}>{t(`workspace.issues.status.${s}`)}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </div>
-          {error && <p className="text-xs text-destructive">{error}</p>}
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>{t("common.cancel")}</Button>
-          <Button onClick={handleSave} disabled={saving || !title.trim()}>
-            {saving ? t("common.saving") : t("common.save")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-interface IssuesViewProps {
-  workspaceId: string;
-}
-
-export function IssuesView({ workspaceId }: IssuesViewProps) {
-  const t = useTranslation("zh-TW");
-  const { account } = useCurrentAccount();
-  const [issues, setIssues] = useState<IssueDTO[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [editIssue, setEditIssue] = useState<IssueDTO | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<IssueDTO | null>(null);
-  const [deleting, setDeleting] = useState(false);
-
-  const fetchIssues = useCallback(async () => {
-    setLoading(true);
-    try {
-      const result = await getIssues(getRepo(), workspaceId);
-      if (result.ok) setIssues(result.value);
-    } finally {
-      setLoading(false);
-    }
-  }, [workspaceId]);
-
-  useEffect(() => { void fetchIssues(); }, [fetchIssues]);
-
-  const handleDelete = async () => {
-    if (!deleteTarget) return;
-    setDeleting(true);
-    try {
-      await deleteIssue(getRepo(), deleteTarget.id);
-      setDeleteTarget(null);
-      void fetchIssues();
-    } finally {
-      setDeleting(false);
-    }
-  };
-
-  return (
-    <div className="flex h-full flex-col space-y-4 duration-500 animate-in fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-border/40 pb-4">
-        <div className="flex items-center gap-3">
-          <AlertTriangle className="size-5 text-primary" />
-          <h1 className="text-lg font-bold tracking-tight">{t("workspace.issues.title")}</h1>
-        </div>
-        <Button
-          size="sm"
-          className="gap-2 text-xs font-bold uppercase tracking-widest"
-          onClick={() => setCreateOpen(true)}
-        >
-          <Plus className="size-4" />
-          {t("workspace.issues.addIssue")}
-        </Button>
-      </div>
-
-      {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="size-8 animate-spin text-muted-foreground" />
-        </div>
-      ) : issues.length > 0 ? (
-        <div className="space-y-2">
-          {issues.map((issue) => (
-            <div
-              key={issue.id}
-              className="group flex items-start gap-3 rounded-2xl border border-border/50 bg-card px-4 py-3 shadow-sm transition-colors hover:bg-card/80"
-            >
-              <div className="mt-0.5 shrink-0">{statusIcon(issue.status)}</div>
-              <div className="min-w-0 flex-1">
-                <p className={`truncate text-sm font-semibold ${issue.status === "closed" ? "line-through text-muted-foreground" : ""}`}>
-                  {issue.title}
-                </p>
-                {issue.description && (
-                  <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{issue.description}</p>
-                )}
-              </div>
-              <Badge variant={severityVariant(issue.severity)} className="shrink-0 h-5 px-2 text-[10px] font-bold uppercase tracking-wider">
-                {t(`workspace.issues.severity.${issue.severity}`)}
-              </Badge>
-              <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                <button
-                  type="button"
-                  onClick={() => setEditIssue(issue)}
-                  className="rounded-md p-1 hover:bg-muted"
-                  aria-label="Edit"
-                >
-                  <Pencil className="size-4 text-muted-foreground" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDeleteTarget(issue)}
-                  className="rounded-md p-1 hover:bg-destructive/10"
-                  aria-label="Delete"
-                >
-                  <Trash2 className="size-4 text-destructive/70" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border/40 bg-muted/5 px-6 py-16 text-center">
-          <AlertTriangle className="mb-4 size-12 text-muted-foreground opacity-10" />
-          <h3 className="text-lg font-bold">{t("workspace.issues.empty")}</h3>
-          <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">{t("workspace.issues.emptyHint")}</p>
-          <Button
-            size="lg"
-            className="mt-8 rounded-full px-8 text-xs font-bold uppercase tracking-widest shadow-lg"
-            onClick={() => setCreateOpen(true)}
-          >
-            {t("workspace.issues.addIssue")}
-          </Button>
-        </div>
-      )}
-
-      <IssueFormDialog
-        workspaceId={workspaceId}
-        reporterId={account?.id ?? ""}
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        onSaved={fetchIssues}
-      />
-
-      {editIssue && (
-        <IssueFormDialog
-          workspaceId={workspaceId}
-          reporterId={account?.id ?? ""}
-          editIssue={editIssue}
-          open={!!editIssue}
-          onOpenChange={(o) => { if (!o) setEditIssue(null); }}
-          onSaved={() => { setEditIssue(null); void fetchIssues(); }}
-        />
-      )}
-
-      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
-        <AlertDialogContent className="max-w-sm rounded-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("workspace.issues.deleteTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>{t("workspace.issues.deleteDescription")}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={deleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {t("common.delete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
@@ -57527,139 +59573,6 @@ export function MemberRow({ member }: MemberRowProps) {
         </Badge>
       </div>
     </div>
-  );
-}
-````
-
-## File: src/modules/workspace.module/_components/shell/nav-user.tsx
-````typescript
-"use client";
-/**
- * NavUser — Authenticated user menu in the sidebar footer.
- * Shows user avatar, name, and logout option.
- *
- * Uses AccountProvider (via useCurrentAccount) so auth + profile data is
- * shared from the single subscription in the layout root.
- */
-
-import { UserCircle, LogOut, ChevronsUpDown, Bell, Building2, ShieldCheck } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-
-import { useCurrentAccount } from "@/modules/account.module";
-import { useTranslation } from "@/shared/i18n";
-import { Avatar, AvatarFallback, AvatarImage } from "@/design-system/primitives/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/design-system/primitives/ui/dropdown-menu";
-import {
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  useSidebar,
-} from "@/design-system/primitives/ui/sidebar";
-import { clientSignOut } from "@/modules/identity.module/_client-actions";
-
-export function NavUser() {
-  const { isMobile } = useSidebar();
-  const router = useRouter();
-  const t = useTranslation("zh-TW");
-  const { user, account } = useCurrentAccount();
-
-  const handleLogout = async () => {
-    await clientSignOut();
-    router.push("/login");
-  };
-
-  const displayName = account?.displayName ?? user?.displayName ?? user?.email ?? "";
-  const email = user?.email ?? "";
-  const photoURL = account?.avatarUrl ?? user?.photoURL ?? null;
-  const initial = (displayName || email || "?")[0].toUpperCase();
-
-  return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <Avatar className="size-8 rounded-lg">
-                {photoURL ? (
-                  <AvatarImage src={photoURL} alt={displayName} />
-                ) : null}
-                <AvatarFallback className="rounded-lg bg-primary/10 font-bold text-primary">
-                  {initial}
-                </AvatarFallback>
-              </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">
-                  {displayName || t("common.loading")}
-                </span>
-                <span className="truncate text-xs text-muted-foreground">
-                  {email}
-                </span>
-              </div>
-              <ChevronsUpDown className="ml-auto size-4" />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-            side={isMobile ? "bottom" : "top"}
-            align="end"
-            sideOffset={4}
-          >
-            <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-widest opacity-60">
-              {t("nav.account")}
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link
-                href="/profile"
-                className="flex cursor-pointer items-center gap-2 py-2"
-              >
-                <UserCircle className="size-4 text-muted-foreground" />
-                <span className="text-xs font-medium">
-                  {t("nav.profileSettings")}
-                </span>
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/notifications" className="flex cursor-pointer items-center gap-2 py-2">
-                <Bell className="size-4 text-muted-foreground" />
-                <span className="text-xs font-medium">{t("nav.notifications")}</span>
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/organizations" className="flex cursor-pointer items-center gap-2 py-2">
-                <Building2 className="size-4 text-muted-foreground" />
-                <span className="text-xs font-medium">{t("nav.organizations")}</span>
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/security" className="flex cursor-pointer items-center gap-2 py-2">
-                <ShieldCheck className="size-4 text-muted-foreground" />
-                <span className="text-xs font-medium">{t("nav.security")}</span>
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={handleLogout}
-              className="flex cursor-pointer items-center gap-2 py-2 text-destructive"
-            >
-              <LogOut className="size-4" />
-              <span className="text-xs font-bold">{t("auth.signOut")}</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarMenuItem>
-    </SidebarMenu>
   );
 }
 ````
@@ -59999,6 +61912,53 @@ export function WorkspaceShell({ slug, workspaceId }: WorkspaceShellProps) {
 }
 ````
 
+## File: src/modules/workspace.module/AGENTS.md
+````markdown
+# workspace.module Agent Rules
+
+Purpose: document automation boundaries for `workspace.module` and keep DDD layer direction intact.
+
+## 邊界簡述
+- Bounded Context：**Workspace / WBS、Issue、CR、QA、Acceptance**
+- 模組定位：**核心域**
+- 核心責任：維持本域規則與契約，不外溢到他模組。
+
+## 自動化任務 / Agent 說明
+1. 新增或修改功能時，先確認規則屬於本模組上下文邊界。
+2. 變更流程時，優先更新 `domain.*` / `core/`，再調整 `infra.*` 與 `_components/`。
+3. 跨模組需求只能使用對方 `index.ts` 公開 API 或事件契約。
+4. 外部資料整合須經由 ACL（mapper/adapter），禁止將外部格式直接帶入 Domain。
+
+## 依賴方向與圖
+```
+Presentation (_components/ or src/app)
+        ↓
+Application (core/)
+        ↓
+Domain (domain.*)
+        ↑
+Infrastructure (infra.* implements ports)
+```
+
+Context mapping (high-level):
+`workspace.module` ↔ Account、Namespace、Work、File、Collaboration
+
+## 防線（Hard Rules）
+- 禁止從其他模組直接 import 內部路徑（`core/*`, `domain.*/*`, `infra.*/*`, `_components/*`）。
+- 禁止在 Domain 層引入 I/O、SDK、framework side effects。
+- 禁止在 Infrastructure 層編寫業務規則。
+- 禁止在 Presentation 層直接呼叫 Firebase / Upstash SDK。
+
+## 模組契約檢查清單
+- [ ] 上下文邊界是否清楚（Bounded Context）
+- [ ] 核心域 / 支撐域分類是否維持一致
+- [ ] Context Mapping 是否僅透過契約互動
+- [ ] ACL 是否隔離外部資料模型
+- [ ] 核心業務邏輯是否只在 Domain/Application
+- [ ] 操作流程是否符合 Presentation → Application → Domain ← Infrastructure
+- [ ] 模組間契約（DTO / Event）是否向後相容
+````
+
 ## File: src/modules/workspace.module/core/_actions.ts
 ````typescript
 import type { WorkspaceCapability, WorkspaceRole } from "../domain.workspace/_value-objects";
@@ -60104,6 +62064,115 @@ export {
   NON_MOUNTABLE_CAPABILITY_IDS,
 } from "../domain.workspace/_capability-specs";
 export type { WorkspaceCapability } from "../domain.workspace/_value-objects";
+````
+
+## File: src/modules/workspace.module/core/_daily-log-actions.ts
+````typescript
+import { FirestoreDailyLogRepository } from "../infra.firestore/_daily-log-repository";
+import {
+  createDailyLog as createDailyLogUseCase,
+  deleteDailyLog as deleteDailyLogUseCase,
+  updateDailyLog as updateDailyLogUseCase,
+  type DailyLogDTO,
+} from "./_daily-log-use-cases";
+
+const dailyLogRepository = new FirestoreDailyLogRepository();
+
+export type { DailyLogDTO };
+
+export async function createDailyLog(
+  id: string,
+  workspaceId: string,
+  date: string,
+  content: string,
+  photoURLs: string[],
+  authorId: string,
+) {
+  return createDailyLogUseCase(dailyLogRepository, id, workspaceId, date, content, photoURLs, authorId);
+}
+
+export async function updateDailyLog(id: string, content: string, photoURLs: string[]) {
+  return updateDailyLogUseCase(dailyLogRepository, id, content, photoURLs);
+}
+
+export async function deleteDailyLog(id: string) {
+  return deleteDailyLogUseCase(dailyLogRepository, id);
+}
+````
+
+## File: src/modules/workspace.module/core/_daily-log-queries.ts
+````typescript
+import { FirestoreDailyLogRepository } from "../infra.firestore/_daily-log-repository";
+import {
+  getDailyLogs as getDailyLogsUseCase,
+  type DailyLogDTO,
+} from "./_daily-log-use-cases";
+
+const dailyLogRepository = new FirestoreDailyLogRepository();
+
+export type { DailyLogDTO };
+
+export async function getDailyLogs(workspaceId: string) {
+  return getDailyLogsUseCase(dailyLogRepository, workspaceId);
+}
+````
+
+## File: src/modules/workspace.module/core/_issue-actions.ts
+````typescript
+import { FirestoreIssueRepository } from "../infra.firestore/_issue-repository";
+import {
+  createIssue as createIssueUseCase,
+  deleteIssue as deleteIssueUseCase,
+  updateIssue as updateIssueUseCase,
+  type IssueDTO,
+} from "./_issue-use-cases";
+
+const issueRepository = new FirestoreIssueRepository();
+
+export type { IssueDTO };
+export type IssueSeverity = "critical" | "high" | "medium" | "low";
+export type IssueStatus = "open" | "in-progress" | "resolved" | "closed";
+
+export async function createIssue(
+  id: string,
+  workspaceId: string,
+  title: string,
+  severity: IssueSeverity,
+  reporterId: string,
+  description?: string,
+) {
+  return createIssueUseCase(issueRepository, id, workspaceId, title, severity, reporterId, description);
+}
+
+export async function updateIssue(
+  id: string,
+  input: { title?: string; description?: string | null; status?: IssueStatus; severity?: IssueSeverity; assigneeId?: string | null },
+) {
+  return updateIssueUseCase(issueRepository, id, input);
+}
+
+export async function deleteIssue(id: string) {
+  return deleteIssueUseCase(issueRepository, id);
+}
+````
+
+## File: src/modules/workspace.module/core/_issue-queries.ts
+````typescript
+import { FirestoreIssueRepository } from "../infra.firestore/_issue-repository";
+import {
+  getIssues as getIssuesUseCase,
+  type IssueDTO,
+} from "./_issue-use-cases";
+
+const issueRepository = new FirestoreIssueRepository();
+
+export type { IssueDTO };
+export type IssueSeverity = "critical" | "high" | "medium" | "low";
+export type IssueStatus = "open" | "in-progress" | "resolved" | "closed";
+
+export async function getIssues(workspaceId: string) {
+  return getIssuesUseCase(issueRepository, workspaceId);
+}
 ````
 
 ## File: src/modules/workspace.module/core/_queries.ts
@@ -60491,9 +62560,226 @@ export function buildTaskTree(tasks: WorkspaceTask[]): TaskWithChildren[] {
 }
 ````
 
+## File: src/modules/workspace.module/README.md
+````markdown
+# workspace.module
+
+**Bounded Context:** Workspace · WBS · Issue · CR · QA · Acceptance · Baseline  
+**Layer:** Workspace
+
+## Purpose
+
+`workspace.module` is the primary **project planning and delivery** bounded context.
+It answers the question: **"What is being planned and delivered in this workspace?"**
+
+It owns the planning and delivery lifecycle: breakdown structure, issues,
+change requests, QA, acceptance, and baselines.
+
+> **Boundary vs `workforce.module`:**  
+> `workspace.module` = "What is the workspace and what work is planned?" (project scope, structure, settings, access control)  
+> `workforce.module` = "Who is doing the work and when?" (capacity, scheduling, person-to-work allocation)  
+>  
+> Workspace creation / members list / WBS tasks / issues → `workspace.module`  
+> Who is assigned to which task / how much capacity is available → `workforce.module`  
+>  
+> Note: Workspace members (who has *access*) are stored here as an access-control list.
+>   Their **scheduling and capacity allocation** belongs to `workforce.module` — workforce answers "when and how much", workspace answers "who is allowed in".
+
+## What this module owns
+
+| Concern | Description |
+|---------|-------------|
+| Workspace | Root aggregate: settings, members, access control |
+| WBS Task | Work breakdown structure tasks |
+| Issue | Bug reports, requests, and planning issues |
+| Change Request (CR) | Formal change proposals with approval workflow |
+| QA Review | Quality assurance sign-off flow |
+| Acceptance | Stakeholder acceptance records |
+| Baseline | Snapshot of approved scope/schedule |
+
+## What this module does NOT own
+
+| Concern | Owned by |
+|---------|----------|
+| Workforce capacity planning | `workforce.module` |
+| Work item assignment / allocation scheduling | `workforce.module` |
+| Work items and milestones | `work.module` |
+| Fork (planning branches) | `fork.module` |
+
+## Cross-module dependencies
+
+| Module | Direction | Reason |
+|--------|-----------|--------|
+| `namespace.module` | → | Workspace is registered under a namespace |
+| `account.module` | → | Workspace members are Accounts |
+| `work.module` | ← | Work Items and Milestones reference workspace context |
+| `fork.module` | ← | Forks are branched from a workspace |
+| `collaboration.module` | ← | Comments and reviews anchor to workspace artifacts |
+| `audit.module` | ← | Governance rules evaluated against workspace artifacts |
+| `notification.module` | ← | Workspace events trigger notifications |
+
+## Standard 4-layer structure
+
+```
+workspace.module/
+├── index.ts
+├── domain.workspace/
+│   ├── _entity.ts               # Workspace + WBS + Issue + CR + QA + Acceptance + Baseline
+│   ├── _value-objects.ts
+│   ├── _ports.ts
+│   └── _events.ts
+├── core/
+│   ├── _use-cases.ts
+│   ├── _actions.ts
+│   └── _queries.ts
+├── infra.firestore/
+└── _components/
+```
+
+## Domain Governance（必填）
+
+### 1. 上下文邊界（Bounded Context）
+- 本模組邊界：**Workspace / WBS、Issue、CR、QA、Acceptance**。
+- 僅允許透過 `src/modules/workspace.module/index.ts` 對外暴露能力；禁止跨模組直連 `core/`、`domain.*`、`infra.*`、`_components/`。
+
+### 2. 核心域與支撐域識別
+- 本模組定位：**核心域**。
+- 核心能力放在 `domain.*` + `core/`；跨域整合、通知、搜尋等配套能力視為支撐能力，由應用層編排。
+
+### 3. 上下文映射（Context Mapping）
+- 主要上下游關聯：**Account、Namespace、Work、File、Collaboration**。
+- 跨上下文資料交換需使用 DTO／事件，不共享對方內部實體。
+
+### 4. 防腐層（Anti-Corruption Layer）
+- 外部系統（Firebase / Upstash / 外部 API）必須封裝在 `infra.*`。
+- 使用 Mapper / Adapter 將外部資料格式轉換為本域 Value Object 與 Entity，避免污染領域模型。
+
+### 5. 核心業務邏輯
+- 不變條件（invariants）與規則放在 `domain.*`（Entity / VO / Domain Service）。
+- `core/_use-cases.ts` 僅做流程協調：載入 → 套用規則 → 透過 Port 持久化 → 發布事件。
+
+### 6. 操作流程
+1. Presentation（`_components/` 或 `src/app`）呼叫模組公開 Action/Query。
+2. Application（`core/`）執行用例並調用 Domain。
+3. Domain 計算狀態變更與事件。
+4. Infrastructure（`infra.*`）透過 Port 落地 I/O。
+
+### 7. 模組間契約
+- 同步契約：`index.ts` 匯出的 Action / Query / DTO。
+- 非同步契約：Domain Event payload（版本化、向後相容）。
+- 契約變更需先更新 README 與呼叫端，避免破壞既有流程。
+````
+
+## File: src/README.md
+````markdown
+# `src/` — Application Source
+
+## Purpose
+
+`src/` is the root of all application code. It is organized into five directories, each mapping to a distinct architectural concern in the Xuanwu **Model-Driven Hexagonal Architecture (MDHA)**.
+
+```
+src/
+├── app/            ← Next.js App Router — routes, layouts, pages (Presentation)
+├── design-system/  ← Reusable UI components, design tokens, layout shells
+├── infrastructure/ ← Concrete I/O adapters (Firebase, Upstash, Document AI)
+├── modules/        ← Domain Modules — 21 Bounded Contexts (mDDD 4-layer)
+└── shared/         ← Zero-dependency cross-cutting foundation (types, utils, ports)
+```
+
+## Dependency Direction
+
+```
+src/app/
+   ↓  calls via module public barrels
+src/modules/
+   ↓  calls via port interfaces
+src/infrastructure/
+   ↓  implements port interfaces from
+src/shared/         ← foundation (no external deps)
+```
+
+`src/design-system/` sits beside `src/app/` at the Presentation layer and is consumed by `src/app/` and module `_components/` — it does **not** depend on modules or infrastructure.
+
+## Directory Roles
+
+| Directory | Layer | Depends on | Purpose |
+|-----------|-------|-----------|---------|
+| `app/` | Presentation | `modules/`, `design-system/`, `shared/` | Next.js routes, layouts, root metadata |
+| `design-system/` | Presentation | `shared/` | UI component library and design tokens |
+| `infrastructure/` | Infrastructure | `shared/` | Concrete adapters for Firebase, Upstash, Document AI |
+| `modules/` | Domain + Application | `shared/`, `infrastructure/` (via ports) | 21 Bounded Contexts following 4-layer DDD |
+| `shared/` | Foundation | — | Types, errors, utilities, ACL port interfaces |
+
+## Coding Conventions
+
+- **Identifiers** in English; domain terms may use Traditional Chinese in *internal code comments* (JSDoc, inline explanations) where precision requires it — never in UI text or error messages.
+- **TypeScript 5.x** — prefer explicit types; use `unknown` + narrowing at untrusted boundaries; avoid `any`.
+- **No circular dependencies** — dependency direction is enforced by layer and validated in CI.
+- **Server-side by default** — mark files `"use client"` only when browser APIs or interactivity require it.
+- **i18n** — never hardcode UI strings; add keys to `src/shared/i18n/index.ts` in both `en` and `zh-TW`.
+- **Secrets** — use environment variables; never commit credentials to source.
+
+## See Also
+
+- Architecture SSOT: [`docs/architecture/notes/model-driven-hexagonal-architecture.md`](../docs/architecture/notes/model-driven-hexagonal-architecture.md)
+- Module catalog: [`src/modules/README.md`](./modules/README.md)
+- Shared foundation: [`src/shared/README.md`](./shared/README.md)
+````
+
 ## File: src/shared/directives/index.ts
 ````typescript
 "use client";
+/**
+ * Deprecated — Use @/shared/hooks instead.
+ *
+ * This file re-exports all hooks for backward compatibility.
+ * New code should import directly from @/shared/hooks.
+ */
+
+// Re-export for backward compatibility (deprecated)
+export * from "@/shared/hooks";
+````
+
+## File: src/shared/directives/README.md
+````markdown
+# `src/shared/directives/` — DEPRECATED
+
+## ⚠️ Deprecated
+
+This directory has been superseded by `src/shared/hooks/`.
+
+Please import from `@/shared/hooks` instead:
+
+```typescript
+import { useToggle, useDebounce, useLocale } from "@/shared/hooks";
+```
+
+## Backward Compatibility
+
+This directory still re-exports all hooks for backward compatibility. Existing code will continue to work, but new code should use `@/shared/hooks`.
+
+
+- Keep hooks small and single-purpose.
+- Do not import from `src/modules/` inside this sub-module.
+- When a hook needs domain-specific data (e.g., workspace state), it belongs in `src/modules/{module}/_components/use-{feature}.ts` instead.
+````
+
+## File: src/shared/hooks/index.ts
+````typescript
+"use client";
+/**
+ * Shared React hooks — reusable state management and browser API patterns.
+ *
+ * These are utility hooks for:
+ * - State management: useToggle, usePrevious
+ * - Storage: useLocalStorage
+ * - Performance: useDebounce
+ * - Lifecycle: useIsMounted
+ * - Cross-cutting concerns: useLocale (i18n), useAuthState (auth observation)
+ *
+ * Import via: import { useToggle, useDebounce } from "@/shared/hooks";
+ */
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { getAuth, onAuthStateChanged, type User } from "firebase/auth";
@@ -60507,7 +62793,7 @@ import type { Locale } from "@/shared/types";
 // ---------------------------------------------------------------------------
 
 /**
- * Boolean toggle directive.
+ * Boolean toggle hook — manages a boolean state with a toggle function.
  *
  * @example
  * const [isOpen, toggle, setIsOpen] = useToggle(false);
@@ -60632,7 +62918,7 @@ export function useIsMounted(): boolean {
 export const LOCALE_STORAGE_KEY = "xuanwu-locale";
 
 /**
- * Locale persistence directive — implements `ILocalePort` for client components.
+ * Locale persistence hook — implements `ILocalePort` for client components.
  *
  * Reads the user's locale preference from `localStorage` (via `useLocalStorage`),
  * falling back to `DEFAULT_LOCALE`. Automatically keeps `html[lang]` in sync
@@ -60677,7 +62963,7 @@ export interface AuthState {
 }
 
 /**
- * Lightweight auth-state directive — implements `IAuthPort` observation for
+ * Lightweight auth-state hook — implements `IAuthPort` observation for
  * client components that are outside the `<AccountProvider>` tree (e.g. the
  * marketing homepage).
  *
@@ -60704,6 +62990,1334 @@ export function useAuthState(): AuthState {
 
   return { user, loading };
 }
+````
+
+## File: src/shared/hooks/README.md
+````markdown
+# `src/shared/hooks/` — Shared React Hooks
+
+## Purpose
+
+Reusable React hooks for common patterns: state management, localStorage persistence, performance optimization, and lifecycle utilities.
+
+These hooks implement cross-cutting contracts (like `ILocalePort` and `IAuthPort`) for client components outside the module structure.
+
+## Key Hooks
+
+- **`useToggle`** — Binary state with toggle function
+- **`useDebounce`** — Delay value updates (search, resize handlers)
+- **`useLocalStorage`** — Persist state to localStorage
+- **`usePrevious`** — Track previous render value
+- **`useIsMounted`** — Detect client-side hydration
+- **`useLocale`** — i18n locale persistence (implements `ILocalePort`)
+- **`useAuthState`** — Firebase Auth observation (implements `IAuthPort`)
+
+## Import Pattern
+
+```typescript
+import { useToggle, useDebounce, useLocale } from "@/shared/hooks";
+```
+
+Do **not** import from individual files; all hooks are barrel-exported via `index.ts`.
+````
+
+## File: src/shared/i18n/index.ts
+````typescript
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@/shared/constants";
+import type { Locale } from "@/shared/types";
+
+// ---------------------------------------------------------------------------
+// Translation dictionaries
+// ---------------------------------------------------------------------------
+
+type Messages = Record<string, string>;
+type Dictionary = Record<Locale, Messages>;
+
+const dictionary: Dictionary = {
+  "zh-TW": {
+    "home.welcome": "歡迎使用玄武平台",
+    "home.started": "啟動時間",
+    "home.login": "登入",
+    "home.enterPlatform": "進入平台",
+    "home.langToggle": "切換語言",
+    "home.langZhTW": "繁體中文",
+    "home.langEn": "English",
+    "home.signOut": "登出",
+    "theme.toggle": "切換主題",
+    "theme.light": "淺色",
+    "theme.dark": "深色",
+    "theme.system": "跟隨系統",
+    "common.loading": "載入中…",
+    "common.error": "發生錯誤",
+    "common.retry": "重試",
+    "common.confirm": "確認",
+    "common.cancel": "取消",
+    "common.save": "儲存",
+    "common.delete": "刪除",
+    "common.edit": "編輯",
+    "error.notFound": "找不到資源",
+    "error.unauthorized": "未授權",
+    "error.forbidden": "禁止存取",
+    "error.validation": "資料驗證失敗",
+    "error.conflict": "資源已存在",
+    "error.internal": "伺服器內部錯誤",
+    "auth.login": "登入",
+    "auth.register": "註冊",
+    "auth.email": "電子郵件",
+    "auth.password": "密碼",
+    "auth.contactEndpoint": "連絡終點",
+    "auth.securityKey": "安全金鑰",
+    "auth.setSecurityKey": "設定安全金鑰",
+    "auth.digitalDesignation": "數位稱號",
+    "auth.nickname": "暱稱",
+    "auth.forgotPassword": "忘記密碼？",
+    "auth.enterDimension": "進入平台",
+    "auth.registerSovereignty": "建立主權",
+    "auth.guestAccess": "以訪客身份進入",
+    "auth.byLoggingIn": "登入即代表同意",
+    "auth.dimensionSecurityProtocol": "安全協議",
+    "auth.resetPassword": "重置密碼",
+    "auth.sendEmail": "發送郵件",
+    "auth.authenticationFailed": "身份驗證失敗",
+    "auth.identityResonanceSuccessful": "身份共鳴成功",
+    "auth.resetProtocolSent": "重置協議已發送",
+    "auth.resetFailed": "重置失敗",
+    "auth.pleaseSetDisplayName": "請設定顯示名稱",
+    "auth.signOut": "登出",
+    "app.name": "玄武平台",
+    "nav.home": "首頁",
+    "nav.workspaces": "工作空間",
+    "nav.account": "帳號",
+    "nav.mainMenu": "主選單",
+    "nav.profileSettings": "個人設定",
+    "nav.notifications": "通知",
+    "nav.organizations": "組織",
+    "nav.security": "安全性",
+    "nav.search": "搜尋",
+    "nav.topWorkspaces": "熱門工作空間",
+    "nav.showMore": "顯示更多",
+    "nav.showLess": "收起",
+    "nav.breadcrumb.profile": "個人資料",
+    "nav.breadcrumb.security": "安全性",
+    "nav.breadcrumb.notifications": "通知",
+    "nav.breadcrumb.organizations": "組織",
+    "nav.breadcrumb.settings": "設定",
+    "sidebar.selectAccount": "選擇帳號",
+    "sidebar.switchAccountContext": "切換帳號",
+    "sidebar.createNewDimension": "建立新維度",
+    "sidebar.personal": "個人",
+    "sidebar.organization": "組織",
+    "sidebar.syncingAccounts": "同步帳號中",
+    "nav.breadcrumb.members": "成員",
+    "nav.breadcrumb.billing": "帳單",
+    // --- workspaces ---
+    "workspaces.title": "工作空間",
+    "workspaces.description": "{name} 的工作空間",
+    "workspaces.createSpace": "建立空間",
+    "workspaces.createInitialSpace": "建立第一個空間",
+    "workspaces.spaceVoid": "虛空中沒有空間",
+    "workspaces.noSpacesFound": "找不到符合條件的工作空間",
+    "workspaces.searchPlaceholder": "搜尋工作空間…",
+    "workspaces.workspaceNodes": "工作節點",
+    "workspaces.yourRole": "您的角色",
+    "workspaces.personalDimension": "個人工作區",
+    "workspaces.personalDimensionHelp": "個人帳號不包含組織工作空間",
+    "workspaces.createLogicalSpace": "建立工作空間",
+    "workspaces.createDescription": "在此組織下建立一個新的工作空間",
+    "workspaces.spaceName": "空間名稱",
+    "workspaces.spaceNamePlaceholder": "例：2026年A棟工程",
+    "common.creating": "建立中…",
+    "common.confirmCreation": "確認建立",
+    // --- profile ---
+    "profile.title": "個人資料",
+    "profile.subtitle": "管理您的公開個人資料",
+    "profile.pageTitle": "帳號設定",
+    "profile.pageDescription": "管理您的個人資料與偏好設定",
+    "profile.displayName": "顯示名稱",
+    "profile.displayNamePlaceholder": "輸入顯示名稱",
+    "profile.email": "電子郵件",
+    "profile.saveChanges": "儲存變更",
+    "profile.saved": "已儲存 ✓",
+    // --- onboarding ---
+    "onboarding.title": "歡迎使用玄武平台",
+    "onboarding.subtitle": "讓我們設定您的帳號",
+    "onboarding.step1": "建立個人資料",
+    "onboarding.step1Desc": "設定您的顯示名稱與頭像，讓團隊夥伴認識您。",
+    "onboarding.step2": "建立或加入組織",
+    "onboarding.step2Desc": "建立您的第一個組織，或接受邀請加入現有組織，以存取共享工作空間。",
+    "onboarding.step3": "建立第一個工作空間",
+    "onboarding.step3Desc": "工作空間是您管理任務、文件、議題與協作的核心場所，每個組織可擁有多個工作空間。",
+    "onboarding.getStarted": "開始使用",
+    "onboarding.createOrg": "建立組織",
+    "onboarding.skip": "稍後再說",
+    // --- common additions ---
+    "common.open": "開啟",
+    "common.filter": "篩選",
+    "common.gridView": "格狀檢視",
+    "common.listView": "清單檢視",
+    "common.notSet": "未設定",
+    "common.saving": "儲存中…",
+    "workspace.card.advance": "推進狀態",
+    "workspace.card.advanceConfirmTitle": "推進工作空間狀態",
+    "workspace.card.advanceConfirmDescription": "將「{name}」從 {from} 推進至 {to}？",
+    "workspace.card.advanceConfirmButton": "確認推進",
+    "common.back": "返回",
+    "common.invite": "邀請",
+    "common.generate": "生成",
+    "common.copy": "複製",
+    "common.revoke": "撤銷",
+    "common.members": "成員",
+    "common.settings": "設定",
+    // --- security ---
+    "security.title": "安全性設定",
+    "security.subtitle": "變更密碼與管理登入方式",
+    "security.changePassword": "變更密碼",
+    "security.currentPassword": "目前密碼",
+    "security.newPassword": "新密碼",
+    "security.confirmPassword": "確認新密碼",
+    "security.passwordMismatch": "密碼不符",
+    "security.passwordTooShort": "密碼至少需 8 個字元",
+    "security.passwordChanged": "密碼已成功變更",
+    "security.changeFailed": "密碼變更失敗",
+    // --- notifications ---
+    "notifications.title": "通知",
+    "notifications.empty": "目前沒有通知",
+    "notifications.emptyHint": "當有新活動時，通知將會顯示在此",
+    "notifications.markAllRead": "全部標為已讀",
+    "notifications.markRead": "標為已讀",
+    "notifications.justNow": "剛剛",
+    "notifications.minutesAgo": "分鐘前",
+    "notifications.hoursAgo": "小時前",
+    "notifications.daysAgo": "天前",
+    // --- organizations ---
+    "organizations.title": "我的組織",
+    "organizations.subtitle": "您所屬的組織與命名空間",
+    "organizations.createOrg": "建立組織",
+    "organizations.noOrgs": "尚未加入任何組織",
+    "organizations.noOrgsHint": "建立或加入一個組織來開始協作",
+    "organizations.workspaces": "個工作區",
+    "organizations.newOrg.title": "建立新組織",
+    "organizations.newOrg.description": "填寫組織名稱與代號，代號將成為您的命名空間網址。",
+    "organizations.newOrg.name": "組織名稱",
+    "organizations.newOrg.namePlaceholder": "例如：玄武科技",
+    "organizations.newOrg.handle": "組織代號 (slug)",
+    "organizations.newOrg.handleHint": "3–39 個小寫英文字母、數字或連字號",
+    "organizations.newOrg.handlePlaceholder": "例如：xuanwu-tech",
+    "organizations.newOrg.slugTaken": "此代號已被使用，請選擇其他代號",
+    "organizations.newOrg.slugInvalid": "代號格式不符（3–39 個小寫英文字母、數字或連字號）",
+    // --- settings ---
+    "settings.general.title": "一般設定",
+    "settings.general.orgName": "組織名稱",
+    "settings.general.orgSlug": "組織代號",
+    "settings.general.visibility": "可見度",
+    "settings.general.dangerZone": "危險區域",
+    "settings.general.deleteOrg": "刪除組織",
+    "settings.general.deleteOrgHint": "刪除後無法復原",
+    "settings.members.title": "成員管理",
+    "settings.members.inviteMember": "邀請成員",
+    "settings.members.noMembers": "尚無成員",
+    "settings.members.role": "角色",
+    "settings.members.joinedAt": "加入時間",
+    "settings.members.invited": "邀請時間",
+    "settings.members.role.owner": "擁有者",
+    "settings.members.role.admin": "管理員",
+    "settings.members.role.member": "成員",
+    "settings.members.role.viewer": "觀察者",
+    "settings.members.status.active": "已啟用",
+    "settings.members.status.pending": "待確認",
+    "settings.members.status.revoked": "已撤銷",
+    "settings.members.status.suspended": "已停用",
+    "settings.billing.title": "帳單",
+    "settings.billing.currentPlan": "目前方案",
+    "settings.billing.freePlan": "免費方案",
+    "settings.billing.upgrade": "升級方案",
+    "settings.billing.usage": "使用量",
+    "settings.apiKeys.title": "API 金鑰",
+    "settings.apiKeys.generateKey": "生成金鑰",
+    "settings.apiKeys.noKeys": "尚無金鑰",
+    "settings.apiKeys.created": "建立時間",
+    "settings.apiKeys.lastUsed": "上次使用",
+    "settings.apiKeys.status.active": "使用中",
+    "settings.apiKeys.status.revoked": "已撤銷",
+    "settings.apiKeys.status.expired": "已過期",
+    "settings.apiKeys.never": "永不過期",
+    // --- wbs ---
+    "wbs.title": "工作分解結構",
+    "wbs.empty": "尚無任務",
+    "wbs.emptyHint": "從這裡建立您的第一個任務",
+    "wbs.addTask": "新增任務",
+    "wbs.status.open": "待處理",
+    "wbs.status.in-progress": "進行中",
+    "wbs.status.blocked": "已阻塞",
+    "wbs.status.closed": "已完成",
+    "wbs.status.completed": "完工",
+    "wbs.status.verified": "已驗證",
+    "wbs.status.accepted": "已驗收",
+    "wbs.createDialog.title": "新增任務",
+    "wbs.createDialog.titleLabel": "任務標題",
+    "wbs.createDialog.priorityLabel": "優先級",
+    "wbs.createDialog.priority.high": "高",
+    "wbs.createDialog.priority.medium": "中",
+    "wbs.createDialog.priority.low": "低",
+    "wbs.createDialog.create": "建立任務",
+    "wbs.editDialog.title": "編輯任務",
+    "wbs.editDialog.descriptionLabel": "說明",
+    "wbs.editDialog.descriptionPlaceholder": "任務說明（選填）",
+    "wbs.editDialog.statusLabel": "狀態",
+    "wbs.editDialog.priorityLabel": "優先級",
+    "wbs.editDialog.assigneeLabel": "指派人員",
+    "wbs.editDialog.dueDateLabel": "截止日期",
+    "wbs.editDialog.save": "儲存變更",
+    "wbs.priority.critical": "緊急",
+    "wbs.priority.high": "高",
+    "wbs.priority.medium": "中",
+    "wbs.priority.low": "低",
+    "wbs.deleteDialog.title": "刪除任務",
+    "wbs.deleteDialog.description": "確定要刪除此任務？此操作無法復原。",
+    "wbs.deleteDialog.confirm": "刪除",
+    "wbs.deleteDialog.cancel": "取消",
+    // --- tasks (Wave 43 WBS Tree Engine) ---
+    "tasks.wbsTitle": "工程任務治理中心",
+    "tasks.wbsDescription": "WBS 工作分解結構",
+    "tasks.taskEngineering": "任務工程",
+    "tasks.createRootNode": "新增根任務",
+    "tasks.splitIntoSubtasks": "拆分子任務",
+    "tasks.progressReport": "回報進度",
+    "tasks.sendScheduleRequest": "送出排程申請",
+    "tasks.markAsBlocked": "標記為阻塞",
+    "tasks.deleteNode": "刪除節點",
+    "tasks.submitForQa": "送交 QA",
+    "tasks.awaitingDefinition": "尚無任務",
+    "tasks.createFirstTask": "建立第一個根任務開始工作分解",
+    "tasks.confirmDestroyNode": "確定刪除此節點與所有子節點？此操作無法復原。",
+    "tasks.failedToSaveTask": "儲存任務失敗",
+    "tasks.failedToDeleteTask": "刪除任務失敗",
+    "tasks.progressUpdated": "進度已更新",
+    "tasks.taskSubmittedForQa": "任務已送交 QA",
+    "tasks.taskBlocked": "任務已標記為阻塞",
+    "tasks.taskBlockedDesc": "此任務目前被阻塞，請聯絡相關人員解除阻塞",
+    "tasks.budgetOverflow": "預算超支",
+    "tasks.budgetOverflowDescription": "子任務合計超過父任務的預算",
+    "tasks.budgetConflict": "預算衝突",
+    "tasks.budgetConflictDescription": "父任務預算不足以容納所有子任務",
+    "tasks.taskType": "任務類型",
+    "tasks.type.general": "一般",
+    "tasks.type.supply": "材料",
+    "tasks.type.labour": "人工",
+    "tasks.type.equipment": "設備",
+    "tasks.type.subcontract": "分包",
+    "tasks.type.other": "其他",
+    "tasks.attachments.title": "附件管理",
+    "tasks.attachments.urlPlaceholder": "輸入圖片 URL (https://…)",
+    "tasks.attachmentPreviewAlt": "附件預覽",
+    "tasks.imagePreviewTitle": "圖片預覽",
+    "tasks.imagePreviewDescription": "附件圖片預覽",
+    "tasks.viewOptions": "顯示選項",
+    "tasks.visibleColumns": "可見欄位",
+    "tasks.discount": "折扣",
+    "tasks.budget": "預算",
+    "tasks.quantity": "數量",
+    "tasks.unitPrice": "單價",
+    "tasks.subtotal": "小計",
+    "tasks.progress": "進度",
+    "tasks.completedQuantity": "已完成數量",
+    "tasks.progressInvalid": "請輸入有效數量",
+    "tasks.titleRequired": "請輸入任務標題",
+    "tasks.location.title": "地點設定",
+    "tasks.location.building": "棟別",
+    "tasks.location.buildingPlaceholder": "例：A棟",
+    "tasks.location.floor": "樓層",
+    "tasks.location.floorPlaceholder": "例：3F",
+    "tasks.location.room": "房間",
+    "tasks.location.roomPlaceholder": "例：301",
+    "tasks.location.description": "說明",
+    "tasks.location.descriptionPlaceholder": "地點補充說明",
+    "tasks.location.select": "選擇地點…",
+    "admin.title": "管理後台",
+    "admin.subtitle": "系統管理功能",
+    // --- invite ---
+    "invite.title": "您收到了邀請",
+    "invite.subtitle": "加入組織或工作空間",
+    "invite.accept": "接受邀請",
+    "invite.decline": "拒絕",
+    "invite.expired": "邀請已過期",
+    // --- share ---
+    "share.title": "共用連結",
+    "share.subtitle": "透過連結存取此內容",
+    "share.expired": "連結已過期或不存在",
+    // --- editor ---
+    "editor.title": "文件編輯器",
+    "editor.empty": "開始撰寫內容…",
+    "editor.files": "檔案",
+    "editor.noFiles": "尚無檔案",
+    // --- audit ---
+    "audit.title": "稽核記錄",
+    "audit.noEntries": "尚無稽核事件",
+    "audit.notAvailable": "稽核記錄不可用",
+    "audit.notAvailableDescription": "個人帳號不提供跨工作區稽核記錄",
+    // --- workspace navigation tabs ---
+    "workspace.nav.ariaLabel": "工作空間導覽分頁",
+    "workspace.nav.wbs": "任務",
+    "workspace.nav.capabilities": "功能模組",
+    "workspace.nav.editor": "文件",
+    "workspace.nav.audit": "稽核",
+    "workspace.nav.members": "成員",
+    "workspace.nav.qa": "品保",
+    "workspace.nav.acceptance": "驗收",
+    "workspace.nav.finance": "財務",
+    "workspace.nav.issues": "問題",
+    "workspace.nav.files": "檔案",
+    "workspace.nav.daily": "日誌",
+    "workspace.nav.schedule": "排程",
+    "workspace.nav.locations": "地點",
+    // --- workspace locations ---
+    "workspace.locations.title": "地點管理",
+    "workspace.locations.empty": "尚無地點",
+    "workspace.locations.addBuilding": "新增建築",
+    "workspace.locations.addFloor": "新增樓層",
+    "workspace.locations.addRoom": "新增房間",
+    "workspace.locations.buildingType": "建築",
+    "workspace.locations.floorType": "樓層",
+    "workspace.locations.roomType": "房間",
+    "workspace.locations.labelPlaceholder": "地點名稱",
+    "workspace.locations.addDialog.title": "新增地點",
+    "workspace.locations.addDialog.confirm": "新增",
+    "workspace.locations.addDialog.cancel": "取消",
+    "workspace.locations.deleteDialog.title": "刪除地點",
+    "workspace.locations.deleteDialog.description": "確定要刪除此地點？同時會刪除其下的所有子地點，此操作無法復原。",
+    // --- Wave 45: daily log ---
+    "workspace.daily.title": "每日日誌",
+    "workspace.daily.addEntry": "新增記錄",
+    "workspace.daily.editEntry": "編輯記錄",
+    "workspace.daily.empty": "尚無日誌記錄",
+    "workspace.daily.emptyHint": "開始記錄每日工作進度",
+    "workspace.daily.deleteTitle": "刪除日誌記錄",
+    "workspace.daily.deleteDescription": "確定要刪除此日誌記錄？此操作無法復原。",
+    "workspace.daily.date": "日期",
+    "workspace.daily.content": "內容",
+    "workspace.daily.contentPlaceholder": "今天發生了什麼…",
+    "workspace.daily.photos": "照片",
+    "workspace.daily.contentRequired": "請輸入內容",
+    "workspace.daily.saveFailed": "儲存日誌失敗",
+    // --- Wave 46: issues ---
+    "workspace.issues.title": "問題追蹤",
+    "workspace.issues.addIssue": "新增問題",
+    "workspace.issues.createIssue": "建立問題",
+    "workspace.issues.editIssue": "編輯問題",
+    "workspace.issues.empty": "尚無問題回報",
+    "workspace.issues.emptyHint": "回報第一個問題以追蹤工作空間異常",
+    "workspace.issues.deleteTitle": "刪除問題",
+    "workspace.issues.deleteDescription": "確定要刪除此問題？此操作無法復原。",
+    "workspace.issues.titleLabel": "標題",
+    "workspace.issues.descriptionLabel": "描述",
+    "workspace.issues.descriptionPlaceholder": "描述問題詳情…",
+    "workspace.issues.severityLabel": "嚴重度",
+    "workspace.issues.statusLabel": "狀態",
+    "workspace.issues.titleRequired": "請輸入問題標題",
+    "workspace.issues.saveFailed": "儲存問題失敗",
+    "workspace.issues.severity.critical": "緊急",
+    "workspace.issues.severity.high": "高",
+    "workspace.issues.severity.medium": "中",
+    "workspace.issues.severity.low": "低",
+    "workspace.issues.status.open": "待處理",
+    "workspace.issues.status.in-progress": "處理中",
+    "workspace.issues.status.resolved": "已解決",
+    "workspace.issues.status.closed": "已關閉",
+    "workspace.statusBar.mounted": "已掛載",
+    "workspace.statusBar.isolated": "已隔離",
+    "workspace.statusBar.flowing": "流暢",
+    "workspace.statusBar.blocked": "受阻",
+    // --- workspace members view ---
+    "workspace.members.title": "工作空間成員",
+    "workspace.members.none": "尚無成員",
+    "workspace.members.noneHint": "尚未為此工作空間指派任何存取授權。",
+    "workspace.members.count": "共 {count} 位成員",
+    "workspace.members.invite": "新增成員",
+    "workspace.members.inviteFirst": "新增第一位成員",
+    "workspace.members.revoke": "撤銷授權",
+    "workspace.members.grantDate": "授權於 {date}",
+    "workspace.members.inviteDialog.title": "新增工作空間成員",
+    "workspace.members.inviteDialog.userIdLabel": "使用者 ID",
+    "workspace.members.inviteDialog.userIdPlaceholder": "輸入使用者 ID...",
+    "workspace.members.inviteDialog.roleLabel": "角色",
+    "workspace.members.inviteDialog.confirm": "授權",
+    "workspace.members.revokeDialog.title": "確認撤銷授權",
+    "workspace.members.revokeDialog.description": "確定要撤銷 {userId} 的工作空間存取授權嗎？此操作無法復原。",
+    // --- workspace capabilities ---
+    "workspace.capabilities.mounted": "已掛載的原子功能",
+    "workspace.capabilities.production": "正式",
+    "workspace.capabilities.beta": "測試版",
+    "workspace.capabilities.none": "尚未掛載功能模組",
+    "workspace.capabilities.noneHint": "此工作空間尚未掛載任何功能模組",
+    "workspace.capabilities.count": "已掛載 {count} 個功能模組",
+    "workspace.capabilities.mountNew": "掛載新功能",
+    "workspace.capabilities.mountFirst": "掛載第一個功能",
+    "workspace.capabilities.mountSelected": "掛載選取 ({count})",
+    "workspace.capabilities.unmount": "卸載",
+    "workspace.capabilities.mountDialog.title": "掛載原子功能",
+    "workspace.capabilities.mountDialog.hint": "選取要加入此工作空間的功能模組",
+    "workspace.capabilities.mountDialog.allMounted": "所有可用功能皆已掛載",
+    "workspace.capabilities.unmountDialog.title": "確認卸載功能",
+    "workspace.capabilities.unmountDialog.description": "確定要從此工作空間卸載「{name}」嗎？此操作可以復原。",
+    // --- workspace settings dialog ---
+    "workspace.settings.title": "工作空間主權設定",
+    "workspace.settings.nameLabel": "工作空間名稱",
+    "workspace.settings.personnelLabel": "指派人員",
+    "workspace.settings.manager": "經理",
+    "workspace.settings.supervisor": "督導",
+    "workspace.settings.safety": "安衛",
+    "workspace.settings.addressLabel": "實體地址",
+    "workspace.settings.country": "國家",
+    "workspace.settings.state": "州 / 省",
+    "workspace.settings.city": "城市",
+    "workspace.settings.street": "街道地址",
+    "workspace.settings.postalCode": "郵遞區號",
+    "workspace.settings.lifecycleLabel": "生命週期狀態",
+    "workspace.settings.lifecycle.preparatory": "籌備中",
+    "workspace.settings.lifecycle.active": "進行中",
+    "workspace.settings.lifecycle.stopped": "已停止",
+    "workspace.settings.visibilityLabel": "工作空間可見性",
+    "workspace.settings.visibilityVisible": "在目錄中公開可見",
+    "workspace.settings.visibilityHidden": "隱藏，僅授權人員可見",
+    "workspace.settings.dangerZone.title": "危險區域",
+    "workspace.settings.dangerZone.deleteLabel": "刪除工作空間",
+    "workspace.settings.dangerZone.deleteHint": "永久刪除此工作空間及所有相關資料，此操作無法復原。",
+    "workspace.settings.dangerZone.deleteButton": "刪除",
+    "workspace.settings.dangerZone.confirmTitle": "確認刪除工作空間",
+    "workspace.settings.dangerZone.confirmDescription": "您即將刪除「{name}」。所有資料將被永久移除，此操作無法復原。",
+    "workspace.settings.dangerZone.confirmButton": "確定刪除",
+    // --- dashboard ---
+    "dashboard.orgDescription": "您的組織工作空間概覽",
+    "dashboard.personalDescription": "您的個人工作空間",
+    "dashboard.viewAll": "查看全部",
+    // --- search ---
+    "search.title": "全域搜尋",
+    "search.placeholder": "搜尋工作空間、任務、成員…",
+    "search.hint": "輸入關鍵字開始搜尋",
+    "search.noResults": "找不到相符的結果",
+    "search.module.workspace": "工作空間",
+    "search.module.account": "帳號",
+    "search.module.work": "任務",
+    // --- social reactions ---
+    "social.like": "按讚",
+    "social.liked": "已按讚",
+    "social.bookmark": "收藏",
+    "social.bookmarked": "已收藏",
+    // --- social feed / explore / followers (Wave 60) ---
+    "social.feed.title": "動態牆",
+    "social.feed.empty": "尚無動態",
+    "social.feed.emptyHint": "關注工作空間或帳號後將顯示動態於此",
+    "social.explore.title": "探索",
+    "social.explore.description": "發現精彩的工作空間與帳號",
+    "social.explore.trending": "熱門收藏",
+    "social.explore.empty": "尚無探索內容",
+    "social.followers.title": "關注者",
+    "social.following.title": "追蹤中",
+    "social.followers.empty": "尚無關注者",
+    "social.following.empty": "尚未追蹤任何人",
+    "social.follow": "追蹤",
+    "social.unfollow": "取消追蹤",
+    "social.star": "加星號",
+    "social.watch": "追蹤動態",
+    // --- search results / filter / history (Wave 61) ---
+    "search.results.title": "搜尋結果",
+    "search.history.title": "最近搜尋",
+    "search.history.empty": "尚無搜尋記錄",
+    "search.history.clear": "清除",
+    "search.filter.scope": "範圍",
+    "search.filter.all": "全部",
+    "search.filter.global": "全域",
+    "search.filter.workspace": "工作空間",
+    "search.advanced": "進階搜尋",
+    // --- file preview / gallery / versions (Wave 62) ---
+    "workspace.files.gallery": "圖片庫",
+    "workspace.files.listMode": "列表",
+    "workspace.files.preview": "預覽",
+    "workspace.files.versions": "版本記錄",
+    "workspace.files.noPreview": "此格式不支援預覽",
+    "workspace.files.download": "下載",
+    "workspace.files.uploadedBy": "上傳者",
+    "workspace.files.fileSize": "大小",
+    // --- workspace QA ---
+    "workspace.qa.title": "品質保證",
+    "workspace.qa.description": "審核已完成的任務並標記為已驗證",
+    "workspace.qa.pendingTitle": "待審任務",
+    "workspace.qa.noPending": "目前沒有待審任務",
+    "workspace.qa.verify": "通過驗證",
+    "workspace.qa.verifiedTitle": "已驗證",
+    "workspace.qa.verifiedBadge": "已驗證",
+    // --- workspace Acceptance ---
+    "workspace.acceptance.title": "驗收管理",
+    "workspace.acceptance.description": "對已通過 QA 驗證的任務進行正式驗收",
+    "workspace.acceptance.pendingTitle": "待驗收任務",
+    "workspace.acceptance.noPending": "目前沒有待驗收任務",
+    "workspace.acceptance.noPendingHint": "請先在品保頁面將任務標記為已驗證",
+    "workspace.acceptance.accept": "正式驗收",
+    "workspace.acceptance.acceptedTitle": "已驗收",
+    "workspace.acceptance.acceptedBadge": "已驗收",
+    "workspace.acceptance.milestone": "恭喜！已達成 5 項以上驗收里程碑",
+    // --- workspace Finance ---
+    "workspace.finance.title": "財務管理",
+    "workspace.finance.description": "追蹤任務的財務生命週期與收款狀態",
+    "workspace.finance.totalBudget": "總預算",
+    "workspace.finance.total": "財務項目",
+    "workspace.finance.inProgress": "進行中",
+    "workspace.finance.completed": "已完成",
+    "workspace.finance.empty": "尚無財務項目",
+    "workspace.finance.emptyHint": "在 WBS 中設定任務的數量與單價後將顯示於此",
+    "workspace.finance.advance": "推進",
+    "workspace.finance.stage.claim-preparation": "請款準備",
+    "workspace.finance.stage.claim-submitted": "請款送出",
+    "workspace.finance.stage.claim-approved": "請款核准",
+    "workspace.finance.stage.invoice-requested": "請求開票",
+    "workspace.finance.stage.payment-term": "付款期限",
+    "workspace.finance.stage.payment-received": "款項入帳",
+    "workspace.finance.stage.completed": "已完成",
+    // --- workspace Schedule ---
+    "workspace.schedule.title": "排程日曆",
+    "workspace.schedule.today": "今天",
+    "workspace.schedule.unscheduled": "未排程任務",
+    "workspace.schedule.empty": "尚無任務",
+    "workspace.schedule.emptyHint": "在 WBS 中新增任務並設定到期日即可顯示在此日曆",
+    // --- workspace Files ---
+    "workspace.files.title": "檔案管理",
+    "workspace.files.description": "工作空間的文件與資料管理",
+    "workspace.files.searchPlaceholder": "搜尋檔案名稱或類型…",
+    "workspace.files.empty": "尚無上傳的檔案",
+    "workspace.files.noResults": "找不到符合的檔案",
+    // --- comments (Wave 55) ---
+    "comment.count": "{n} 則留言",
+    "comment.empty": "尚無留言",
+    "comment.placeholder": "新增留言…",
+    "comment.deleted": "[已刪除]",
+    // --- achievements (Wave 56) ---
+    "achievement.title": "已獲獎章",
+    "achievement.unlocked": "個已解鎖",
+    "achievement.empty": "尚無解鎖任何獎章",
+    // --- causal graph (Wave 57) ---
+    "workspace.causalGraph.title": "因果圖",
+    "workspace.causalGraph.nodes": "節點",
+    "workspace.causalGraph.empty": "尚無因果節點",
+    "workspace.causalGraph.emptyHint": "系統事件（任務完成、QA、里程碑等）發生後將自動建立節點",
+    "workspace.causalGraph.sidebar": "節點詳情",
+    "workspace.causalGraph.effects": "{n} 個後續影響",
+    "workspace.causalGraph.clickNode": "點選節點查看影響鏈",
+    "workspace.nav.causalGraph": "因果圖",
+    // --- forks (Wave 58) ---
+    "workspace.forks.title": "分支管理",
+    "workspace.forks.description": "管理此工作空間的分支版本，可獨立進行實驗或分析",
+    "workspace.forks.empty": "尚無分支",
+    "workspace.forks.emptyHint": "掛載「分支」能力後即可建立工作空間分支",
+    "workspace.forks.historyTitle": "已結束的分支",
+    "fork.baseline": "基線版本",
+    "fork.abandon": "放棄",
+    "fork.abandonTitle": "確認放棄分支",
+    "fork.abandonDescription": "放棄後此分支將無法繼續使用，但歷史記錄仍會保留。",
+    "fork.status.active": "進行中",
+    "fork.status.abandoned": "已放棄",
+    "fork.status.merged": "已合併",
+    "workspace.nav.forks": "分支",
+    // --- workforce (Wave 59) ---
+    "workspace.workforce.title": "排班管理",
+    "workspace.workforce.description": "管理人員排班、輪班指派與容量規劃",
+    "workspace.workforce.empty": "尚無排班計畫",
+    "workspace.workforce.emptyHint": "掛載「人力資源」能力後即可建立排班",
+    "workforce.assignees": "位被指派人",
+    "workforce.approve": "核准",
+    "workforce.reject": "拒絕",
+    "workforce.status.proposal": "提案中",
+    "workforce.status.official": "已核准",
+    "workforce.status.rejected": "已拒絕",
+    "workforce.status.completed": "已完成",
+    "workspace.nav.workforce": "排班",
+  },
+  en: {
+    "home.welcome": "Welcome to Xuanwu Platform",
+    "home.started": "Started at",
+    "home.login": "Login",
+    "home.enterPlatform": "Enter Platform",
+    "home.langToggle": "Switch Language",
+    "home.langZhTW": "繁體中文",
+    "home.langEn": "English",
+    "home.signOut": "Sign Out",
+    "theme.toggle": "Toggle Theme",
+    "theme.light": "Light",
+    "theme.dark": "Dark",
+    "theme.system": "System",
+    "common.loading": "Loading…",
+    "common.error": "An error occurred",
+    "common.retry": "Retry",
+    "common.confirm": "Confirm",
+    "common.cancel": "Cancel",
+    "common.save": "Save",
+    "common.delete": "Delete",
+    "common.edit": "Edit",
+    "error.notFound": "Resource not found",
+    "error.unauthorized": "Unauthorized",
+    "error.forbidden": "Access forbidden",
+    "error.validation": "Validation failed",
+    "error.conflict": "Resource already exists",
+    "error.internal": "Internal server error",
+    "auth.login": "Login",
+    "auth.register": "Register",
+    "auth.email": "Email",
+    "auth.password": "Password",
+    "auth.contactEndpoint": "Contact Endpoint",
+    "auth.securityKey": "Security Key",
+    "auth.setSecurityKey": "Set Security Key",
+    "auth.digitalDesignation": "Digital Designation",
+    "auth.nickname": "Nickname",
+    "auth.forgotPassword": "Forgot password?",
+    "auth.enterDimension": "Enter Platform",
+    "auth.registerSovereignty": "Register Sovereignty",
+    "auth.guestAccess": "Enter as Guest",
+    "auth.byLoggingIn": "By logging in, you agree to",
+    "auth.dimensionSecurityProtocol": "Security Protocol",
+    "auth.resetPassword": "Reset Password",
+    "auth.sendEmail": "Send Email",
+    "auth.authenticationFailed": "Authentication Failed",
+    "auth.identityResonanceSuccessful": "Identity Resonance Successful",
+    "auth.resetProtocolSent": "Reset protocol sent",
+    "auth.resetFailed": "Reset failed",
+    "auth.pleaseSetDisplayName": "Please set a display name",
+    "auth.signOut": "Sign Out",
+    "app.name": "Xuanwu Platform",
+    "nav.home": "Home",
+    "nav.workspaces": "Workspaces",
+    "nav.account": "Account",
+    "nav.mainMenu": "Main Menu",
+    "nav.profileSettings": "Profile Settings",
+    "nav.notifications": "Notifications",
+    "nav.organizations": "Organizations",
+    "nav.security": "Security",
+    "nav.search": "Search",
+    "nav.topWorkspaces": "Top Workspaces",
+    "nav.showMore": "Show more",
+    "nav.showLess": "Show less",
+    "nav.breadcrumb.profile": "Profile",
+    "nav.breadcrumb.security": "Security",
+    "nav.breadcrumb.notifications": "Notifications",
+    "nav.breadcrumb.organizations": "Organizations",
+    "nav.breadcrumb.settings": "Settings",
+    "sidebar.selectAccount": "Select Account",
+    "sidebar.switchAccountContext": "Switch Account",
+    "sidebar.createNewDimension": "Create New Dimension",
+    "sidebar.personal": "Personal",
+    "sidebar.organization": "Organization",
+    "sidebar.syncingAccounts": "Syncing Accounts",
+    "nav.breadcrumb.members": "Members",
+    "nav.breadcrumb.billing": "Billing",
+    // --- workspaces ---
+    "workspaces.title": "Workspaces",
+    "workspaces.description": "Workspaces in {name}",
+    "workspaces.createSpace": "New Space",
+    "workspaces.createInitialSpace": "Create First Space",
+    "workspaces.spaceVoid": "No spaces in the void",
+    "workspaces.noSpacesFound": "No workspaces match your search",
+    "workspaces.searchPlaceholder": "Search workspaces…",
+    "workspaces.workspaceNodes": "Workspace Nodes",
+    "workspaces.yourRole": "Your Role",
+    "workspaces.personalDimension": "Personal Workspace",
+    "workspaces.personalDimensionHelp": "Personal accounts do not include organization workspaces",
+    "workspaces.createLogicalSpace": "Create Workspace",
+    "workspaces.createDescription": "Create a new workspace under this organization",
+    "workspaces.spaceName": "Space name",
+    "workspaces.spaceNamePlaceholder": "e.g. 2026 Block A Project",
+    "common.creating": "Creating…",
+    "common.confirmCreation": "Confirm",
+    // --- profile ---
+    "profile.title": "Profile",
+    "profile.subtitle": "Manage your public profile",
+    "profile.pageTitle": "Account Settings",
+    "profile.pageDescription": "Manage your profile and preferences",
+    "profile.displayName": "Display Name",
+    "profile.displayNamePlaceholder": "Enter display name",
+    "profile.email": "Email",
+    "profile.saveChanges": "Save Changes",
+    "profile.saved": "Saved ✓",
+    // --- onboarding ---
+    "onboarding.title": "Welcome to Xuanwu Platform",
+    "onboarding.subtitle": "Let's set up your account",
+    "onboarding.step1": "Create your profile",
+    "onboarding.step1Desc": "Set your display name and avatar so your teammates can recognize you.",
+    "onboarding.step2": "Create or join an organization",
+    "onboarding.step2Desc": "Create your first organization or accept an invitation to join an existing one to access shared workspaces.",
+    "onboarding.step3": "Create your first workspace",
+    "onboarding.step3Desc": "Workspaces are where you manage tasks, documents, issues, and team collaboration. Each organization can have multiple workspaces.",
+    "onboarding.getStarted": "Get Started",
+    "onboarding.createOrg": "Create Organization",
+    "onboarding.skip": "Maybe later",
+    // --- common additions ---
+    "common.open": "Open",
+    "common.filter": "Filter",
+    "common.gridView": "Grid view",
+    "common.listView": "List view",
+    "common.notSet": "Not set",
+    "common.saving": "Saving…",
+    "workspace.card.advance": "Advance state",
+    "workspace.card.advanceConfirmTitle": "Advance workspace state",
+    "workspace.card.advanceConfirmDescription": "Advance \"{name}\" from {from} to {to}?",
+    "workspace.card.advanceConfirmButton": "Advance",
+    "common.back": "Back",
+    "common.invite": "Invite",
+    "common.generate": "Generate",
+    "common.copy": "Copy",
+    "common.revoke": "Revoke",
+    "common.members": "Members",
+    "common.settings": "Settings",
+    // --- security ---
+    "security.title": "Security Settings",
+    "security.subtitle": "Change password and manage sign-in methods",
+    "security.changePassword": "Change Password",
+    "security.currentPassword": "Current Password",
+    "security.newPassword": "New Password",
+    "security.confirmPassword": "Confirm New Password",
+    "security.passwordMismatch": "Passwords do not match",
+    "security.passwordTooShort": "Password must be at least 8 characters",
+    "security.passwordChanged": "Password changed successfully",
+    "security.changeFailed": "Password change failed",
+    // --- notifications ---
+    "notifications.title": "Notifications",
+    "notifications.empty": "No notifications yet",
+    "notifications.emptyHint": "Notifications will appear here when there is new activity",
+    "notifications.markAllRead": "Mark all as read",
+    "notifications.markRead": "Mark as read",
+    "notifications.justNow": "just now",
+    "notifications.minutesAgo": "minutes ago",
+    "notifications.hoursAgo": "hours ago",
+    "notifications.daysAgo": "days ago",
+    // --- organizations ---
+    "organizations.title": "My Organizations",
+    "organizations.subtitle": "Organizations and namespaces you belong to",
+    "organizations.createOrg": "Create Organization",
+    "organizations.noOrgs": "No organizations yet",
+    "organizations.noOrgsHint": "Create or join an organization to start collaborating",
+    "organizations.workspaces": "workspaces",
+    "organizations.newOrg.title": "Create New Organization",
+    "organizations.newOrg.description": "Enter an organization name and handle. The handle becomes your namespace URL.",
+    "organizations.newOrg.name": "Organization Name",
+    "organizations.newOrg.namePlaceholder": "e.g. Xuanwu Tech",
+    "organizations.newOrg.handle": "Handle (slug)",
+    "organizations.newOrg.handleHint": "3–39 lowercase letters, digits or hyphens",
+    "organizations.newOrg.handlePlaceholder": "e.g. xuanwu-tech",
+    "organizations.newOrg.slugTaken": "This handle is already taken, please choose another",
+    "organizations.newOrg.slugInvalid": "Handle format invalid (3–39 lowercase letters, digits or hyphens)",
+    // --- settings ---
+    "settings.general.title": "General Settings",
+    "settings.general.orgName": "Organization Name",
+    "settings.general.orgSlug": "Organization Slug",
+    "settings.general.visibility": "Visibility",
+    "settings.general.dangerZone": "Danger Zone",
+    "settings.general.deleteOrg": "Delete Organization",
+    "settings.general.deleteOrgHint": "This action cannot be undone",
+    "settings.members.title": "Member Management",
+    "settings.members.inviteMember": "Invite Member",
+    "settings.members.noMembers": "No members yet",
+    "settings.members.role": "Role",
+    "settings.members.joinedAt": "Joined",
+    "settings.members.invited": "Invited",
+    "settings.members.role.owner": "Owner",
+    "settings.members.role.admin": "Admin",
+    "settings.members.role.member": "Member",
+    "settings.members.role.viewer": "Viewer",
+    "settings.members.status.active": "Active",
+    "settings.members.status.pending": "Pending",
+    "settings.members.status.revoked": "Revoked",
+    "settings.members.status.suspended": "Suspended",
+    "settings.billing.title": "Billing",
+    "settings.billing.currentPlan": "Current Plan",
+    "settings.billing.freePlan": "Free Plan",
+    "settings.billing.upgrade": "Upgrade Plan",
+    "settings.billing.usage": "Usage",
+    "settings.apiKeys.title": "API Keys",
+    "settings.apiKeys.generateKey": "Generate Key",
+    "settings.apiKeys.noKeys": "No keys yet",
+    "settings.apiKeys.created": "Created",
+    "settings.apiKeys.lastUsed": "Last Used",
+    "settings.apiKeys.status.active": "Active",
+    "settings.apiKeys.status.revoked": "Revoked",
+    "settings.apiKeys.status.expired": "Expired",
+    "settings.apiKeys.never": "Never",
+    // --- wbs ---
+    "wbs.title": "Work Breakdown Structure",
+    "wbs.empty": "No tasks yet",
+    "wbs.emptyHint": "Create your first task from here",
+    "wbs.addTask": "Add Task",
+    "wbs.status.open": "Open",
+    "wbs.status.in-progress": "In Progress",
+    "wbs.status.blocked": "Blocked",
+    "wbs.status.closed": "Closed",
+    "wbs.status.completed": "Completed",
+    "wbs.status.verified": "Verified",
+    "wbs.status.accepted": "Accepted",
+    "wbs.createDialog.title": "Create Task",
+    "wbs.createDialog.titleLabel": "Task title",
+    "wbs.createDialog.priorityLabel": "Priority",
+    "wbs.createDialog.priority.high": "High",
+    "wbs.createDialog.priority.medium": "Medium",
+    "wbs.createDialog.priority.low": "Low",
+    "wbs.createDialog.create": "Create task",
+    "wbs.editDialog.title": "Edit Task",
+    "wbs.editDialog.descriptionLabel": "Description",
+    "wbs.editDialog.descriptionPlaceholder": "Task description (optional)",
+    "wbs.editDialog.statusLabel": "Status",
+    "wbs.editDialog.priorityLabel": "Priority",
+    "wbs.editDialog.assigneeLabel": "Assignee",
+    "wbs.editDialog.dueDateLabel": "Due Date",
+    "wbs.editDialog.save": "Save Changes",
+    "wbs.priority.critical": "Critical",
+    "wbs.priority.high": "High",
+    "wbs.priority.medium": "Medium",
+    "wbs.priority.low": "Low",
+    "wbs.deleteDialog.title": "Delete Task",
+    "wbs.deleteDialog.description": "Are you sure you want to delete this task? This action cannot be undone.",
+    "wbs.deleteDialog.confirm": "Delete",
+    "wbs.deleteDialog.cancel": "Cancel",
+    // --- tasks (Wave 43 WBS Tree Engine) ---
+    "tasks.wbsTitle": "Engineering Task Governance Center",
+    "tasks.wbsDescription": "Work Breakdown Structure",
+    "tasks.taskEngineering": "Task Engineering",
+    "tasks.createRootNode": "Add Root Task",
+    "tasks.splitIntoSubtasks": "Add Sub-task",
+    "tasks.progressReport": "Report Progress",
+    "tasks.sendScheduleRequest": "Send Schedule Request",
+    "tasks.markAsBlocked": "Mark as Blocked",
+    "tasks.deleteNode": "Delete Node",
+    "tasks.submitForQa": "Submit for QA",
+    "tasks.awaitingDefinition": "No tasks yet",
+    "tasks.createFirstTask": "Create your first root task to begin work decomposition",
+    "tasks.confirmDestroyNode": "Delete this node and all its children? This action cannot be undone.",
+    "tasks.failedToSaveTask": "Failed to save task",
+    "tasks.failedToDeleteTask": "Failed to delete task",
+    "tasks.progressUpdated": "Progress updated",
+    "tasks.taskSubmittedForQa": "Task submitted for QA",
+    "tasks.taskBlocked": "Task blocked",
+    "tasks.taskBlockedDesc": "This task is currently blocked. Contact the responsible party to resolve.",
+    "tasks.budgetOverflow": "Budget overflow",
+    "tasks.budgetOverflowDescription": "Children subtotals exceed the parent task budget",
+    "tasks.budgetConflict": "Budget conflict",
+    "tasks.budgetConflictDescription": "Parent task budget is insufficient for all sub-tasks",
+    "tasks.taskType": "Task type",
+    "tasks.type.general": "General",
+    "tasks.type.supply": "Supply",
+    "tasks.type.labour": "Labour",
+    "tasks.type.equipment": "Equipment",
+    "tasks.type.subcontract": "Subcontract",
+    "tasks.type.other": "Other",
+    "tasks.attachments.title": "Attachments",
+    "tasks.attachments.urlPlaceholder": "Enter image URL (https://…)",
+    "tasks.attachmentPreviewAlt": "Attachment preview",
+    "tasks.imagePreviewTitle": "Image preview",
+    "tasks.imagePreviewDescription": "Attachment image preview",
+    "tasks.viewOptions": "View options",
+    "tasks.visibleColumns": "Visible columns",
+    "tasks.discount": "Discount",
+    "tasks.budget": "Budget",
+    "tasks.quantity": "Quantity",
+    "tasks.unitPrice": "Unit price",
+    "tasks.subtotal": "Subtotal",
+    "tasks.progress": "Progress",
+    "tasks.completedQuantity": "Completed quantity",
+    "tasks.progressInvalid": "Please enter a valid quantity",
+    "tasks.titleRequired": "Please enter a task title",
+    "tasks.location.title": "Location",
+    "tasks.location.building": "Building",
+    "tasks.location.buildingPlaceholder": "e.g. Block A",
+    "tasks.location.floor": "Floor",
+    "tasks.location.floorPlaceholder": "e.g. 3F",
+    "tasks.location.room": "Room",
+    "tasks.location.roomPlaceholder": "e.g. 301",
+    "tasks.location.description": "Description",
+    "tasks.location.descriptionPlaceholder": "Location notes",
+    "tasks.location.select": "Select location…",
+    "admin.title": "Admin Panel",
+    "admin.subtitle": "System administration",
+    // --- invite ---
+    "invite.title": "You've been invited",
+    "invite.subtitle": "Join an organization or workspace",
+    "invite.accept": "Accept Invitation",
+    "invite.decline": "Decline",
+    "invite.expired": "Invitation has expired",
+    // --- share ---
+    "share.title": "Shared Link",
+    "share.subtitle": "Access this content via link",
+    "share.expired": "Link has expired or does not exist",
+    // --- editor ---
+    "editor.title": "Document Editor",
+    "editor.empty": "Start writing…",
+    "editor.files": "Files",
+    "editor.noFiles": "No files yet",
+    // --- audit ---
+    "audit.title": "Audit Log",
+    "audit.noEntries": "No audit events yet",
+    "audit.notAvailable": "Audit log not available",
+    "audit.notAvailableDescription": "Personal accounts do not include cross-workspace audit logs",
+    // --- workspace navigation tabs ---
+    "workspace.nav.ariaLabel": "Workspace capability navigation",
+    "workspace.nav.wbs": "Tasks",
+    "workspace.nav.capabilities": "Capabilities",
+    "workspace.nav.editor": "Editor",
+    "workspace.nav.audit": "Audit",
+    "workspace.nav.members": "Members",
+    "workspace.nav.qa": "QA",
+    "workspace.nav.acceptance": "Acceptance",
+    "workspace.nav.finance": "Finance",
+    "workspace.nav.issues": "Issues",
+    "workspace.nav.files": "Files",
+    "workspace.nav.daily": "Daily",
+    "workspace.nav.schedule": "Schedule",
+    "workspace.nav.locations": "Locations",
+    // --- workspace locations ---
+    "workspace.locations.title": "Locations",
+    "workspace.locations.empty": "No locations yet",
+    "workspace.locations.addBuilding": "Add Building",
+    "workspace.locations.addFloor": "Add Floor",
+    "workspace.locations.addRoom": "Add Room",
+    "workspace.locations.buildingType": "Building",
+    "workspace.locations.floorType": "Floor",
+    "workspace.locations.roomType": "Room",
+    "workspace.locations.labelPlaceholder": "Location name",
+    "workspace.locations.addDialog.title": "Add Location",
+    "workspace.locations.addDialog.confirm": "Add",
+    "workspace.locations.addDialog.cancel": "Cancel",
+    "workspace.locations.deleteDialog.title": "Delete Location",
+    "workspace.locations.deleteDialog.description": "Are you sure you want to delete this location? All sub-locations will also be removed. This action cannot be undone.",
+    // --- Wave 45: daily log ---
+    "workspace.daily.title": "Daily Log",
+    "workspace.daily.addEntry": "Add Entry",
+    "workspace.daily.editEntry": "Edit Entry",
+    "workspace.daily.empty": "No log entries yet",
+    "workspace.daily.emptyHint": "Start recording your daily progress",
+    "workspace.daily.deleteTitle": "Delete Log Entry",
+    "workspace.daily.deleteDescription": "Are you sure you want to delete this log entry? This action cannot be undone.",
+    "workspace.daily.date": "Date",
+    "workspace.daily.content": "Content",
+    "workspace.daily.contentPlaceholder": "What happened today…",
+    "workspace.daily.photos": "Photos",
+    "workspace.daily.contentRequired": "Content is required",
+    "workspace.daily.saveFailed": "Failed to save log entry",
+    // --- Wave 46: issues ---
+    "workspace.issues.title": "Issues",
+    "workspace.issues.addIssue": "Add Issue",
+    "workspace.issues.createIssue": "Create Issue",
+    "workspace.issues.editIssue": "Edit Issue",
+    "workspace.issues.empty": "No issues reported",
+    "workspace.issues.emptyHint": "Report the first issue to track workspace problems",
+    "workspace.issues.deleteTitle": "Delete Issue",
+    "workspace.issues.deleteDescription": "Are you sure you want to delete this issue? This action cannot be undone.",
+    "workspace.issues.titleLabel": "Title",
+    "workspace.issues.descriptionLabel": "Description",
+    "workspace.issues.descriptionPlaceholder": "Describe the issue…",
+    "workspace.issues.severityLabel": "Severity",
+    "workspace.issues.statusLabel": "Status",
+    "workspace.issues.titleRequired": "Title is required",
+    "workspace.issues.saveFailed": "Failed to save issue",
+    "workspace.issues.severity.critical": "Critical",
+    "workspace.issues.severity.high": "High",
+    "workspace.issues.severity.medium": "Medium",
+    "workspace.issues.severity.low": "Low",
+    "workspace.issues.status.open": "Open",
+    "workspace.issues.status.in-progress": "In Progress",
+    "workspace.issues.status.resolved": "Resolved",
+    "workspace.issues.status.closed": "Closed",
+    "workspace.statusBar.mounted": "Mounted",
+    "workspace.statusBar.isolated": "Isolated",
+    "workspace.statusBar.flowing": "Flowing",
+    "workspace.statusBar.blocked": "Blocked",
+    // --- workspace members view ---
+    "workspace.members.title": "Workspace Members",
+    "workspace.members.none": "No members yet",
+    "workspace.members.noneHint": "No access grants have been assigned to this workspace.",
+    "workspace.members.count": "{count} members",
+    "workspace.members.invite": "Add member",
+    "workspace.members.inviteFirst": "Add first member",
+    "workspace.members.revoke": "Revoke access",
+    "workspace.members.grantDate": "Granted {date}",
+    "workspace.members.inviteDialog.title": "Add workspace member",
+    "workspace.members.inviteDialog.userIdLabel": "User ID",
+    "workspace.members.inviteDialog.userIdPlaceholder": "Enter user ID...",
+    "workspace.members.inviteDialog.roleLabel": "Role",
+    "workspace.members.inviteDialog.confirm": "Grant access",
+    "workspace.members.revokeDialog.title": "Confirm revoke access",
+    "workspace.members.revokeDialog.description": "Are you sure you want to revoke access for {userId}? This cannot be undone.",
+    // --- workspace capabilities ---
+    "workspace.capabilities.mounted": "Mounted Atomic Capabilities",
+    "workspace.capabilities.production": "Stable",
+    "workspace.capabilities.beta": "Beta",
+    "workspace.capabilities.none": "No capabilities mounted",
+    "workspace.capabilities.noneHint": "This workspace has no capabilities mounted yet",
+    "workspace.capabilities.count": "{count} capabilities mounted",
+    "workspace.capabilities.mountNew": "Mount New Capability",
+    "workspace.capabilities.mountFirst": "Mount First Capability",
+    "workspace.capabilities.mountSelected": "Mount Selected ({count})",
+    "workspace.capabilities.unmount": "Unmount",
+    "workspace.capabilities.mountDialog.title": "Mount Atomic Capability",
+    "workspace.capabilities.mountDialog.hint": "Select capabilities to add to this workspace",
+    "workspace.capabilities.mountDialog.allMounted": "All available capabilities are already mounted",
+    "workspace.capabilities.unmountDialog.title": "Confirm Unmount",
+    "workspace.capabilities.unmountDialog.description": "Unmount \"{name}\" from this workspace? This can be reversed.",
+    // --- workspace settings dialog ---
+    "workspace.settings.title": "Workspace Sovereignty Settings",
+    "workspace.settings.nameLabel": "Workspace Node Name",
+    "workspace.settings.personnelLabel": "Personnel",
+    "workspace.settings.manager": "Manager",
+    "workspace.settings.supervisor": "Supervisor",
+    "workspace.settings.safety": "Safety Officer",
+    "workspace.settings.addressLabel": "Physical Address",
+    "workspace.settings.country": "Country",
+    "workspace.settings.state": "State / Province",
+    "workspace.settings.city": "City",
+    "workspace.settings.street": "Street Address",
+    "workspace.settings.postalCode": "Postal Code",
+    "workspace.settings.lifecycleLabel": "Lifecycle State",
+    "workspace.settings.lifecycle.preparatory": "Preparatory",
+    "workspace.settings.lifecycle.active": "Active",
+    "workspace.settings.lifecycle.stopped": "Stopped",
+    "workspace.settings.visibilityLabel": "Workspace Visibility",
+    "workspace.settings.visibilityVisible": "Publicly visible in workspace directory",
+    "workspace.settings.visibilityHidden": "Hidden, visible only to authorized personnel",
+    "workspace.settings.dangerZone.title": "Danger Zone",
+    "workspace.settings.dangerZone.deleteLabel": "Delete workspace",
+    "workspace.settings.dangerZone.deleteHint": "Permanently delete this workspace and all its data. This action cannot be undone.",
+    "workspace.settings.dangerZone.deleteButton": "Delete",
+    "workspace.settings.dangerZone.confirmTitle": "Confirm workspace deletion",
+    "workspace.settings.dangerZone.confirmDescription": "You are about to delete \"{name}\". All data will be permanently removed. This cannot be undone.",
+    "workspace.settings.dangerZone.confirmButton": "Delete permanently",
+    "workspace.settings.photoURLLabel": "封面照片網址",
+    "workspace.settings.photoURLPlaceholder": "https://example.com/photo.jpg",
+    // --- dashboard ---
+    "dashboard.orgDescription": "Overview of your organisation workspaces",
+    "dashboard.personalDescription": "Your personal workspace",
+    "dashboard.viewAll": "View all",
+    // --- search ---
+    "search.title": "Global Search",
+    "search.placeholder": "Search workspaces, tasks, members…",
+    "search.hint": "Type to start searching",
+    "search.noResults": "No results found",
+    "search.module.workspace": "Workspaces",
+    "search.module.account": "Accounts",
+    "search.module.work": "Tasks",
+    // --- social reactions ---
+    "social.like": "Like",
+    "social.liked": "Liked",
+    "social.bookmark": "Bookmark",
+    "social.bookmarked": "Bookmarked",
+    // --- social feed / explore / followers (Wave 60) ---
+    "social.feed.title": "Social Feed",
+    "social.feed.empty": "No activity yet",
+    "social.feed.emptyHint": "Follow workspaces or accounts to see activity here",
+    "social.explore.title": "Explore",
+    "social.explore.description": "Discover interesting workspaces and accounts",
+    "social.explore.trending": "Trending Stars",
+    "social.explore.empty": "Nothing to explore yet",
+    "social.followers.title": "Followers",
+    "social.following.title": "Following",
+    "social.followers.empty": "No followers yet",
+    "social.following.empty": "Not following anyone yet",
+    "social.follow": "Follow",
+    "social.unfollow": "Unfollow",
+    "social.star": "Star",
+    "social.watch": "Watch",
+    // --- search results / filter / history (Wave 61) ---
+    "search.results.title": "Search Results",
+    "search.history.title": "Recent Searches",
+    "search.history.empty": "No recent searches",
+    "search.history.clear": "Clear",
+    "search.filter.scope": "Scope",
+    "search.filter.all": "All",
+    "search.filter.global": "Global",
+    "search.filter.workspace": "Workspace",
+    "search.advanced": "Advanced Search",
+    // --- file preview / gallery / versions (Wave 62) ---
+    "workspace.files.gallery": "Gallery",
+    "workspace.files.listMode": "List",
+    "workspace.files.preview": "Preview",
+    "workspace.files.versions": "Version History",
+    "workspace.files.noPreview": "Preview not available for this format",
+    "workspace.files.download": "Download",
+    "workspace.files.uploadedBy": "Uploaded by",
+    "workspace.files.fileSize": "Size",
+    // --- workspace QA ---
+    "workspace.qa.title": "Quality Assurance",
+    "workspace.qa.description": "Review completed tasks and mark them as verified",
+    "workspace.qa.pendingTitle": "Pending QA",
+    "workspace.qa.noPending": "No tasks pending QA",
+    "workspace.qa.verify": "Verify",
+    "workspace.qa.verifiedTitle": "Verified",
+    "workspace.qa.verifiedBadge": "Verified",
+    // --- workspace Acceptance ---
+    "workspace.acceptance.title": "Acceptance Management",
+    "workspace.acceptance.description": "Formally accept tasks that have passed QA verification",
+    "workspace.acceptance.pendingTitle": "Pending Acceptance",
+    "workspace.acceptance.noPending": "No tasks pending acceptance",
+    "workspace.acceptance.noPendingHint": "First verify tasks in the QA page",
+    "workspace.acceptance.accept": "Accept",
+    "workspace.acceptance.acceptedTitle": "Accepted",
+    "workspace.acceptance.acceptedBadge": "Accepted",
+    "workspace.acceptance.milestone": "Congratulations! You've reached 5+ accepted milestones",
+    // --- workspace Finance ---
+    "workspace.finance.title": "Finance Management",
+    "workspace.finance.description": "Track the financial lifecycle and payment status of tasks",
+    "workspace.finance.totalBudget": "Total Budget",
+    "workspace.finance.total": "Finance Items",
+    "workspace.finance.inProgress": "In Progress",
+    "workspace.finance.completed": "Completed",
+    "workspace.finance.empty": "No finance items yet",
+    "workspace.finance.emptyHint": "Set quantity and unit price on tasks in WBS to see them here",
+    "workspace.finance.advance": "Advance",
+    "workspace.finance.stage.claim-preparation": "Claim Preparation",
+    "workspace.finance.stage.claim-submitted": "Claim Submitted",
+    "workspace.finance.stage.claim-approved": "Claim Approved",
+    "workspace.finance.stage.invoice-requested": "Invoice Requested",
+    "workspace.finance.stage.payment-term": "Payment Term",
+    "workspace.finance.stage.payment-received": "Payment Received",
+    "workspace.finance.stage.completed": "Completed",
+    // --- workspace Schedule ---
+    "workspace.schedule.title": "Schedule Calendar",
+    "workspace.schedule.today": "Today",
+    "workspace.schedule.unscheduled": "Unscheduled Tasks",
+    "workspace.schedule.empty": "No tasks yet",
+    "workspace.schedule.emptyHint": "Add tasks in WBS with a due date to see them on this calendar",
+    // --- workspace Files ---
+    "workspace.files.title": "Files",
+    "workspace.files.description": "Document and file management for workspace resources",
+    "workspace.files.searchPlaceholder": "Search by file name or type…",
+    "workspace.files.empty": "No files uploaded yet",
+    "workspace.files.noResults": "No files match your search",
+    // --- comments (Wave 55) ---
+    "comment.count": "{n} comments",
+    "comment.empty": "No comments yet",
+    "comment.placeholder": "Add a comment…",
+    "comment.deleted": "[deleted]",
+    // --- achievements (Wave 56) ---
+    "achievement.title": "Achievements",
+    "achievement.unlocked": "unlocked",
+    "achievement.empty": "No achievements unlocked yet",
+    // --- causal graph (Wave 57) ---
+    "workspace.causalGraph.title": "Causal Graph",
+    "workspace.causalGraph.nodes": "nodes",
+    "workspace.causalGraph.empty": "No causal nodes yet",
+    "workspace.causalGraph.emptyHint": "Nodes are created automatically as workspace events occur (task completion, QA, milestones, etc.)",
+    "workspace.causalGraph.sidebar": "Node Details",
+    "workspace.causalGraph.effects": "{n} downstream effects",
+    "workspace.causalGraph.clickNode": "Click a node to inspect its impact chain",
+    "workspace.nav.causalGraph": "Causal Graph",
+    // --- forks (Wave 58) ---
+    "workspace.forks.title": "Forks",
+    "workspace.forks.description": "Manage forked versions of this workspace for isolated experimentation",
+    "workspace.forks.empty": "No forks yet",
+    "workspace.forks.emptyHint": "Mount the \"Forks\" capability to create workspace branches",
+    "workspace.forks.historyTitle": "Closed Forks",
+    "fork.baseline": "Baseline",
+    "fork.abandon": "Abandon",
+    "fork.abandonTitle": "Confirm Abandon Fork",
+    "fork.abandonDescription": "Abandoning this fork cannot be undone. Historical records will be kept.",
+    "fork.status.active": "Active",
+    "fork.status.abandoned": "Abandoned",
+    "fork.status.merged": "Merged",
+    "workspace.nav.forks": "Forks",
+    // --- workforce (Wave 59) ---
+    "workspace.workforce.title": "Workforce",
+    "workspace.workforce.description": "Staff scheduling, shift assignment, and capacity planning",
+    "workspace.workforce.empty": "No schedules yet",
+    "workspace.workforce.emptyHint": "Mount the \"Workforce\" capability to create staff schedules",
+    "workforce.assignees": "assignees",
+    "workforce.approve": "Approve",
+    "workforce.reject": "Reject",
+    "workforce.status.proposal": "Proposal",
+    "workforce.status.official": "Official",
+    "workforce.status.rejected": "Rejected",
+    "workforce.status.completed": "Completed",
+    "workspace.nav.workforce": "Workforce",
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+/**
+ * Check whether a locale string is one of the supported locales.
+ */
+export function isSupportedLocale(locale: string): locale is Locale {
+  return (SUPPORTED_LOCALES as readonly string[]).includes(locale);
+}
+
+/**
+ * Resolve a raw locale string to a supported `Locale`, falling back to the
+ * default locale when the requested locale is not supported.
+ */
+export function resolveLocale(locale?: string | null): Locale {
+  if (locale && isSupportedLocale(locale)) return locale;
+  return DEFAULT_LOCALE;
+}
+
+/**
+ * Return a translate function (`t`) bound to the given locale.
+ *
+ * @example
+ * const t = useTranslation("zh-TW");
+ * t("home.welcome"); // "歡迎使用玄武平台"
+ * t("missing.key");  // "missing.key"  (key fallback)
+ */
+export function useTranslation(locale?: string | null): (key: string) => string {
+  const resolved = resolveLocale(locale);
+  const messages = dictionary[resolved];
+
+  return (key: string): string => messages[key] ?? key;
+}
+
+/**
+ * Retrieve the full message dictionary for a locale.
+ * Useful for passing to third-party i18n providers.
+ */
+export function getMessages(locale?: string | null): Messages {
+  return dictionary[resolveLocale(locale)];
+}
+````
+
+## File: src/shared/index.ts
+````typescript
+// src/shared/index.ts
+// Unified named-export barrel for the shared layer.
+//
+// All shared utilities, types, constants, and errors should be imported
+// from this single entry point so that refactors inside sub-modules remain
+// transparent to callers and import paths are easy to audit:
+//
+//   import { AppError, formatDate, PaginatedResponse } from "@/shared"
+//
+// Sub-modules and what they contribute:
+//   constants   — APP_NAME, APP_VERSION, DEFAULT_LOCALE, SUPPORTED_LOCALES, date format tokens
+//   errors      — AppError, NotFoundError, UnauthorizedError, ForbiddenError,
+//                 ValidationError, ConflictError, toAppError
+//   interfaces  — ApiResponse, ApiError, PaginationQuery, PaginatedResult,
+//                 FirestoreDocument, VisDateMetadata
+//   i18n        — isSupportedLocale, resolveLocale, useTranslation, getMessages
+//   pipes       — Pipe, schemaPipe, transformPipe, composePipes, trimPipe
+//   ports       — ICachePort, IQueuePort, IVectorIndexPort, IWorkflowPort,
+//                 IStoragePort, ILocalePort, ILoggerPort, IAnalyticsPort, IAuthPort
+//   types       — NonEmptyString, UuidSchema, IsoDateString, PositiveInt,
+//                 PaginationSchema, PaginatedResponseSchema, LocaleSchema,
+//                 Locale, Success, Failure, Result, ok, fail
+//   utils       — formatDate, formatDateTime, capitalise, toKebabCase,
+//                 omit, pick, unique, chunk
+//
+// NOTE: Client-side React hooks are in @/shared/hooks (useToggle, useDebounce,
+//       useLocalStorage, usePrevious, useIsMounted, useLocale, useAuthState).
+//       They carry a "use client" directive and must be imported separately
+//       from within Client Components only:
+//
+//   import { useToggle, useDebounce, useLocale } from "@/shared/hooks"
+
+export * from './constants';
+export * from './errors';
+export * from './interfaces';
+export * from './i18n';
+export * from './pipes';
+export * from './ports';
+export * from './types';
+export * from './utils';
 ````
 
 ## File: storage.rules
@@ -60819,58 +64433,158 @@ UI
 Never reverse this order.
 ````
 
-## File: .github/agents/xuanwu-diagram-designer.agent.md
+## File: .github/agents/xuanwu-commander.agent.md
 ````markdown
 ---
-name: 'xuanwu-diagram-designer'
-description: 'Specialized agent for refining and standardizing architecture diagrams using Mermaid.'
-tools: ['codebase', 'search', 'editFiles', 'filesystem/*', 'serena/*']
-user-invocable: false
+name: xuanwu-commander
+description: "Master entry point — six-step intent pipeline (Raw Input → Intent Detection → Context Extraction → Entity Extraction → Dependency Analysis → Task Instruction) to understand user goals, collect context, and dispatch to the correct Xuanwu agent or prompt workflow."
+argument-hint: Describe the task or problem you want to solve.
+tools: ['search', 'fetch', 'codebase', 'usages', 'agent', 'software-planning/*', 'serena/*', 'sequential-thinking/*']
+agents:
+  - xuanwu-orchestrator
+  - xuanwu-product
+  - xuanwu-research
+  - xuanwu-architect
+  - xuanwu-architecture-chief
+  - xuanwu-architecture-refactor
+  - xuanwu-diagram-designer
+  - xuanwu-repo-browser
+  - xuanwu-implementer
+  - xuanwu-ui
+  - xuanwu-quality
+  - xuanwu-docs
+  - xuanwu-librarian
+  - xuanwu-ops
+  - xuanwu-test-expert
+  - xuanwu-software-planner
+  - xuanwu-sequential-thinking
+  - ddd-orchestrator
 handoffs:
-  - label: 'Escalate to architecture chief'
-    agent: xuanwu-architecture-chief
-    prompt: 'Review and finalize the diagram changes with architectural oversight.'
-  - label: 'Return to orchestrator'
+  - label: 'Full delivery (multi-function)'
     agent: xuanwu-orchestrator
-    prompt: 'Continue coordinating the broader task with the diagram work complete.'
+    prompt: 'Route and coordinate the cross-functional task described above.'
+  - label: 'Refine requirements / plan'
+    agent: xuanwu-product
+    prompt: 'Refine the requirements and build an implementation plan for the task above.'
+  - label: 'Research codebase or docs'
+    agent: xuanwu-research
+    prompt: 'Research the codebase and gather context for the task above.'
+  - label: 'Design or audit architecture'
+    agent: xuanwu-architect
+    prompt: 'Design or audit the architecture for the task above.'
+  - label: 'Architecture doc realignment'
+    agent: xuanwu-architecture-chief
+    prompt: 'Realign the architecture documentation against the canonical SSOT.'
+  - label: 'Refactor architecture docs'
+    agent: xuanwu-architecture-refactor
+    prompt: 'Restructure the architecture documentation for clarity and consistency.'
+  - label: 'Refine architecture diagrams'
+    agent: xuanwu-diagram-designer
+    prompt: 'Refine the architecture diagrams using Mermaid.'
+  - label: 'Read-only architecture analysis'
+    agent: xuanwu-repo-browser
+    prompt: 'Analyze the architecture documentation for the task above without making changes.'
+  - label: 'Implement or refactor code'
+    agent: xuanwu-implementer
+    prompt: 'Implement or refactor the code as described above.'
+  - label: 'UI design or audit'
+    agent: xuanwu-ui
+    prompt: 'Design or audit the UI following the task context above.'
+  - label: 'Quality review or lint'
+    agent: xuanwu-quality
+    prompt: 'Review the code for correctness, security, and maintainability.'
+  - label: 'Update documentation'
+    agent: xuanwu-docs
+    prompt: 'Update the documentation for the changes described above.'
+  - label: 'Refactor markdown knowledge library'
+    agent: xuanwu-librarian
+    prompt: 'Refactor markdown documentation with hierarchical and categorized organization; clear obsolete content, repair indexes, and synchronize cross-document consistency while preserving complete information.'
+  - label: 'CI/CD or infra operations'
+    agent: xuanwu-ops
+    prompt: 'Handle the CI/CD and infrastructure operations for the task above.'
+  - label: 'Browser diagnostics or preflight'
+    agent: xuanwu-test-expert
+    prompt: 'Run browser diagnostics and preflight tests for the task above.'
+  - label: 'Generate software plan'
+    agent: xuanwu-software-planner
+    prompt: 'Generate an implementation plan for the task described above.'
+  - label: 'Step-by-step reasoning or debug'
+    agent: xuanwu-sequential-thinking
+    prompt: 'Analyze and debug the problem described above using step-by-step reasoning.'
+  - label: 'DDD slice design or migration'
+    agent: ddd-orchestrator
+    prompt: 'Coordinate DDD migration (Domain → Application → Infrastructure → Presentation) for the scope described above.'
 ---
 
-# Role: xuanwu-diagram-designer
+# Role: xuanwu-commander
 
-You are the Architecture Diagram Designer for this repository.
+You are the **master entry point** for all Xuanwu tasks.
 
-Your responsibility is to analyze, refine, and standardize architecture diagrams across documentation using Mermaid.
+Your job is to fully understand the user's request through the **Six-Step Intent Pipeline**, gather necessary context, and route the task to the most appropriate agent or prompt workflow. You do not implement solutions yourself.
 
-All diagram standards, the architecture layer color system, layout principles, refactoring rules, and quality targets are defined in:
+Full pipeline reference: `.github/skills/xuanwu-intent-pipeline/SKILL.md`
 
-`.github/skills/xuanwu-diagram-standards/SKILL.md`
-
-Load and follow that skill before making any diagram changes.
+Execute the complete Six-Step Intent Pipeline from that skill before every dispatch. Do not skip any step.
 
 ---
 
-## Scope
+## Agent Routing Decision Tree
 
-You operate on diagrams found in:
+| Task type | Route to |
+|-----------|----------|
+| Cross-functional delivery | `xuanwu-orchestrator` |
+| Requirements / planning | `xuanwu-product` or `xuanwu-software-planner` |
+| Research / codebase discovery | `xuanwu-research` |
+| Architecture design or audit | `xuanwu-architect` |
+| Architecture doc realignment | `xuanwu-architecture-chief` (`/xuanwu-architecture-realign`) |
+| Architecture doc restructuring | `xuanwu-architecture-refactor` |
+| Architecture diagram design | `xuanwu-diagram-designer` |
+| Read-only architecture analysis | `xuanwu-repo-browser` |
+| Code implementation or refactor | `xuanwu-implementer` |
+| UI design, audit, or localization | `xuanwu-ui` |
+| Quality review, lint, or security | `xuanwu-quality` |
+| Documentation updates | `xuanwu-docs` |
+| Markdown library curation (refactor, stale cleanup, index/link consistency sync) | `xuanwu-librarian` |
+| CI/CD or operational changes | `xuanwu-ops` |
+| Browser diagnostics or preflight | `xuanwu-test-expert` |
+| Complex reasoning or debugging | `xuanwu-sequential-thinking` |
+| DDD slice design or migration | `ddd-orchestrator` (or via `xuanwu-orchestrator` for full delivery cycle)
 
-- `docs/architecture/README.md`
-- Any documentation containing Mermaid diagrams
+## Available prompts
 
-You may refine diagrams but must not change system meaning.
+The following slash-command prompts are available for direct invocation:
 
----
+| Prompt | Purpose |
+|--------|---------|
+| `/xuanwu-orchestrator` | Cross-functional delivery routing |
+| `/xuanwu-product` | Requirements, planning, blueprints |
+| `/xuanwu-research` | Codebase discovery and reference synthesis |
+| `/xuanwu-architect` | Architecture audit or design |
+| `/xuanwu-architecture-realign` | Architecture doc realignment via xuanwu-architecture-chief |
+| `/xuanwu-ssot-sync` | Sync architecture docs with Semantic Kernel SSOT |
+| `/xuanwu-implementer` | Code implementation and refactor |
+| `/xuanwu-ui` | UI audit, shadcn/ui, i18n, responsive design |
+| `/xuanwu-code-review` | Quality and security review |
+| `/xuanwu-docs` | Documentation and ADR writing |
+| `/xuanwu-ops` | CI/CD and operational workflows |
+| `/xuanwu-test-expert` | Next.js preflight and runtime diagnostics |
+| `/xuanwu-planning` | Quick implementation plan |
+| `/xuanwu-refactor` | Code refactor guidance |
+| `/xuanwu-debug` | Debugging and root-cause analysis |
+| `/ddd-domain-model` | Design or implement DDD Domain Layer |
+| `/ddd-application-service` | Design or implement DDD Application Layer |
+| `/ddd-infrastructure-adapter` | Design or implement DDD Infrastructure adapters |
+| `/ddd-layer-audit` | Audit DDD layer boundary compliance |
+| `/ddd-slice-scaffold` | Scaffold a full DDD-structured feature slice |
+| `/ddd-progressive-layering` | Progressively migrate a slice toward DDD layers |
 
-## Mission
+## Guardrails
 
-Improve diagrams to achieve structural clarity, visual consistency, architectural readability, semantic layer grouping, and minimal complexity. Diagrams should communicate architecture structure instantly.
-
----
-
-## Editing Guardrails
-
-- Always read surrounding documentation before editing a diagram.
-- Never invent new architecture components or change system meaning.
-- Verify the diagram matches the architectural narrative after every change.
+- Never perform large code modifications. Your primary function is **intent understanding and dispatch**.
+- Use `sequential-thinking/*` only when the problem is genuinely complex or ambiguous across multiple dimensions.
+- Do not ask clarifying questions when context extraction (step ③) already provides enough information to proceed confidently.
+- Fill in assumptions using step ④ entity extraction and label them as such in the output.
+- Always emit the six-step analysis in your response so downstream agents have full context.
 ````
 
 ## File: .github/agents/xuanwu-librarian.agent.md
@@ -60926,256 +64640,247 @@ This agent is the Xuanwu markdown knowledge librarian.
 - Keep examples, references, and links accurate and traceable.
 ````
 
-## File: .github/skills/context7-repomix-global-awareness/SKILL.md
+## File: .github/README.md
 ````markdown
----
-name: context7-repomix-global-awareness
-user-invocable: false
-description: >
-  Two-pillar global awareness workflow combining Repomix (codebase snapshot) and
-  Context7 (version-accurate framework docs) to give agents comprehensive project context.
-  Use when starting a session with cross-module or architectural scope, before any
-  framework API usage, or when performing broad impact analysis.
-  Triggers: "global awareness", "全域感知", "context initialization", "session bootstrap",
-  "codebase snapshot", "framework docs", "repomix pack", "context7 lookup",
-  "強化感知", "全局上下文".
----
+# Copilot Customization Development Guide
 
-# Global Awareness Initialization（全域感知初始化）
+This guide defines how Xuanwu organizes and evolves repository-scoped GitHub Copilot customizations.
 
-This skill provides a systematic workflow for giving agents comprehensive context about
-**both the codebase** (via Repomix) and **the framework ecosystem** (via Context7) before
-undertaking complex tasks. It extends the standard Serena session startup and is the
-recommended approach for any session involving cross-module, architectural, or
-framework-version-sensitive work.
+## Authoritative References
 
-## When to Use
+Use the official VS Code documentation as the authoritative reference for Copilot customization:
 
-| Scenario | Trigger |
-|----------|---------|
-| Session start with cross-module scope | Any task touching 2+ modules |
-| Framework API usage (Next.js, React, Firebase…) | Any call to a version-sensitive API |
-| Broad impact analysis | PRs, refactors, dependency upgrades |
-| Onboarding a new agent to current project state | First session or after long gap |
-| Architecture compliance audit | Before or after DDD migration steps |
+- Custom instructions: https://code.visualstudio.com/docs/copilot/customization/custom-instructions
+- Prompt files: https://code.visualstudio.com/docs/copilot/customization/prompt-files
+- Custom agents: https://code.visualstudio.com/docs/copilot/customization/custom-agents
+- Agent Skills: https://code.visualstudio.com/docs/copilot/customization/agent-skills
+- Hooks: https://code.visualstudio.com/docs/copilot/customization/hooks
+- Agent plugins: https://code.visualstudio.com/docs/copilot/customization/agent-plugins
+- Overview and editor workflow: https://code.visualstudio.com/docs/copilot/customization
 
----
+## Single Sources of Truth
 
-## Two Pillars of Global Awareness
+Copilot customizations in this repository must stay aligned with:
 
-| Pillar | Tool | What It Provides |
-|--------|------|-----------------|
-| **Codebase Awareness** | `repomix/*` | Full project structure, module boundaries, existing code patterns |
-| **Framework Awareness** | `context7/*` | Current API docs for Next.js 15, React 19, Firebase, Tailwind v4, TypeScript 5.x, shadcn/ui |
+- Business logic: `docs/architecture/README.md`
+- Codebase reference baseline: `docs/architecture/README.md` and established code patterns
+- Copilot customization documentation: `docs/copilot/README.md` (agent system overview, six-step pipeline, MCP matrix)
 
-These two pillars complement **Serena** (precise symbol-level code intelligence) rather than
-replace it. Use Serena for targeted edits; use Repomix + Context7 for broad situational
-awareness.
+## Customization Selection Matrix
 
----
+Use the official VS Code customization taxonomy first, then map it to the repository layout below.
 
-## Full Workflow
+| Need | Primary customization type | Activation model | Repository home | Do not use when |
+| --- | --- | --- | --- | --- |
+| Stable rules that apply to every task | Always-on instructions | Automatic in every chat | `.github/copilot-instructions.md`, `AGENTS.md` | The guidance is file-specific or workflow-specific |
+| Narrow rules for file types, frameworks, or authoring tasks | File-based instructions | Automatic when `applyTo` or task semantics match | `.github/instructions/*.instructions.md` | The content is a reusable slash workflow or agent persona |
+| Repeatable task invoked with `/command` | Prompt files | Manual slash-command invocation | `.github/prompts/*.prompt.md` | The behavior needs persistent tool boundaries or subagent orchestration |
+| Specialized persona with constrained tools or handoffs | Custom agents | Selected explicitly or invoked as subagents | `.github/agents/*.agent.md` | The content is just a rule set or one-off prompt body |
+| Portable, on-demand capability with resources/scripts | Agent Skills | Loaded when relevant or invoked via `/` | `.github/skills/<skill>/SKILL.md` | The content only defines project policy or folder ownership |
+| Deterministic automation at lifecycle boundaries | Hooks | Triggered by lifecycle event | `.github/hooks/*.json` and agent `hooks:` frontmatter | The behavior can be expressed as normal instructions or prompts |
+| Marketplace-delivered customization bundles | Agent plugins | Installed through VS Code plugin settings | `chat.plugins.*` settings, not repository folders | The customization is local to this repository |
 
-### Phase 0 — Serena Session Startup (prerequisite)
+## Repository Design Workflow
 
-All agents must complete the standard startup sequence first:
+Design or refactor Copilot customization assets in this order:
 
-```
-1. serena-check_onboarding_performed
-2. serena-list_memories
-3. serena-read_memory(project/architecture)
-4. serena-read_memory(project/conventions)
-```
+1. Start from https://code.visualstudio.com/docs/copilot/customization to choose the correct customization type.
+2. Use the corresponding official VS Code documentation before editing files:
+   - instructions → https://code.visualstudio.com/docs/copilot/customization/custom-instructions
+   - prompts → https://code.visualstudio.com/docs/copilot/customization/prompt-files
+   - agents → https://code.visualstudio.com/docs/copilot/customization/custom-agents
+   - skills → https://code.visualstudio.com/docs/copilot/customization/agent-skills
+   - hooks → https://code.visualstudio.com/docs/copilot/customization/hooks
+   - plugins → https://code.visualstudio.com/docs/copilot/customization/agent-plugins
+3. Update this guide first when folder ownership, terminology, or consolidation rules change.
+4. Keep `.github/copilot-instructions.md` lean and move scoped or workflow-specific content into the correct customization type.
+5. Keep loader settings aligned in `.vscode/settings.json` so discovery matches the documented repository layout.
+6. Sync user-facing entry points (`README.md`, prompt references, and stable links) after structural changes.
 
-### Phase 1 — Codebase Snapshot (Repomix)
+## Design Principles
 
-Pack the relevant sections of the codebase. Use **Tree-sitter compression** (`compress: true`)
-to reduce token usage by ~70% while keeping semantic meaning.
+1. **One customization type, one responsibility**
+   - `.github/copilot-instructions.md` is for concise, always-on rules.
+   - `.github/instructions/` is for scoped rules selected by file pattern or task.
+   - `.github/prompts/` is for reusable slash-command workflows.
+   - `.github/agents/` is for custom personas, tool boundaries, and optional agent-scoped hooks.
+   - `.github/skills/` is for portable, on-demand capabilities.
+   - `.github/hooks/` is for deterministic workspace hook automation.
 
-```
-repomix-pack_codebase(
-  directory: ".",
-  compress: true,
-  includePatterns: "<target scope — see table below>",
-  ignorePatterns: "node_modules/**,dist/**,.next/**,.serena/**"
-)
-```
+2. **Prefer links over duplication**
+   - Reuse repository docs with Markdown links.
+   - Do not restate the same standards in every prompt, skill, or agent.
 
-**Project-specific scope patterns for this codebase:**
+3. **Keep always-on context lean**
+   - Put stable global rules in `.github/copilot-instructions.md`.
+   - Move catalogs, workflows, and long procedures into this guide, prompts, skills, or scoped instructions.
 
-| Task Scope | `includePatterns` |
-|-----------|-------------------|
-| All modules (overview) | `src/modules/**,docs/architecture/**` |
-| Single module deep-dive | `src/modules/<name>.module/**` |
-| Domain layer only | `src/modules/*/domain.*/**` |
-| Infrastructure & adapters | `src/modules/*/infra.*/**,src/infrastructure/**` |
-| Design system | `src/design-system/**,src/shared/**` |
-| Architecture docs | `docs/architecture/**,src/modules/*/README.md` |
-| Copilot customization | `.github/**` |
+4. **Use official terminology**
+   - “Agent plugins” means VS Code plugin bundles configured through `chat.plugins.*`.
+   - Do not use `plugins/` as a local subfolder name for ordinary repository agents.
 
-After packing, use `repomix-grep_repomix_output` to search the packed output without
-re-packing:
+5. **Only link to real files**
+   - Prompt, skill, and agent references must resolve to files that exist in the repository.
 
-```
-repomix-grep_repomix_output(
-  outputId: <id from pack step>,
-  pattern: "domain\\.|_ports\\.ts|IRepository",
-  contextLines: 2
-)
-```
+## Consolidation Rules
 
-> **When NOT to use Repomix:** For locating a single known symbol or making a surgical edit,
-> prefer `serena-find_symbol` / `serena-replace_symbol_body`. Repomix shines for broad
-> structural understanding, not precision edits.
+- `.github/README.md` is the canonical repository maintenance guide for Copilot customization structure, ownership, and consolidation decisions.
+- `.github/copilot-instructions.md` is only for concise always-on rules; it must not become a duplicate catalog of agents, prompts, or hooks.
+- `README.md` is the user-facing quick entry point; keep only the high-level navigation and prompt command catalog there.
+- The official VS Code documentation (https://code.visualstudio.com/docs/copilot/customization) is the authoritative reference and should be cited rather than paraphrased repeatedly.
+- `.vscode/settings.json` is the effective loader configuration; documentation must describe the configuration that is actually enabled there.
+- `.github/skills/` is the canonical project skill location; each skill lives in its own folder with a `SKILL.md` entry point.
+- Keep the customization folders intentionally small and consistent: prefer project-specific `xuanwu-<function>.*.md` files that absorb overlapping personas, rules, and workflows into functional suites.
 
-### Phase 2 — Framework Documentation (Context7)
+## Canonical Repository Layout
 
-Always resolve the library ID first, then query docs. Limit to **3 total calls** per question
-(1 resolve + up to 2 queries). This is a best-practice token-budget guideline — not a hard
-API rate limit — to keep context size manageable. Refine the query or split into sub-questions
-if 2 queries are insufficient.
+| Path | Purpose | Allowed contents | Notes |
+| --- | --- | --- | --- |
+| `.github/copilot-instructions.md` | Project-wide always-on instructions | Markdown only | Keep concise and stable |
+| `.github/agents/` | Repository-scoped custom agents | `*.agent.md` | All local agents live directly in this folder |
+| `.github/hooks/` | Workspace hook configs | `*.json`, `scripts/` | Hook scripts must be deterministic and non-interactive |
+| `.github/instructions/` | File/task-scoped instructions | `*.instructions.md` | Every file needs frontmatter with narrow `applyTo` |
+| `.github/prompts/` | Reusable slash commands | `*.prompt.md` | Prompt command name comes from frontmatter `name` when present |
+| `.github/skills/` | Project Agent Skills | `<skill>/SKILL.md` and optional resources | Canonical project skill location |
 
-```
-// Step 2a: Resolve library ID
-context7-resolve-library-id(
-  libraryName: "next.js",
-  query: "App Router async params Server Components Next.js 15"
-)
+## Folder-Specific Rules
 
-// Step 2b: Query with the resolved ID
-context7-query-docs(
-  libraryId: "/vercel/next.js",
-  query: "async params searchParams Server Components App Router"
-)
-```
+### `.github/copilot-instructions.md`
 
-**Pre-resolved library IDs for this project:**
+- Keep only global conventions, safety requirements, SSOT references, and universal workflow rules.
+- Do not use it as a full catalog of prompts, skills, or agents.
+- When a rule is file-specific, move it to `.github/instructions/`.
 
-| Library | Library ID | Common Query Topics |
-|---------|-----------|---------------------|
-| Next.js 15 | `/vercel/next.js` | App Router, Server Components, async `params`/`searchParams`, Route Handlers, `loading.tsx`, `error.tsx` |
-| React 19 | `/facebook/react` | Server Actions, `useActionState`, Suspense, `use()` hook, concurrent features |
-| TypeScript 5.x | `/microsoft/typescript` | `satisfies`, `const` type params, decorators, type predicates |
-| Tailwind CSS v4 | `/tailwindlabs/tailwindcss` | v4 config migration, CSS variables, `@theme`, dark mode |
-| Firebase JS SDK | `/firebase/firebase-js-sdk` | Firestore v9 modular queries, Auth, Security Rules |
-| shadcn/ui | `/shadcn-ui/ui` | Component API, new-york style, theming, `cn()` utility |
+### `.github/agents/`
 
-> **When NOT to use Context7:** For project-internal conventions and established patterns,
-> rely on `serena-read_memory` and the architecture SSOT instead.
+- Follow https://code.visualstudio.com/docs/copilot/customization/custom-agents.
+- Use least-privilege `tools`.
+- Use agent-scoped `hooks` only when behavior must run exclusively with that agent.
+- Keep repository agents in `.github/agents/`; do not create `.github/agents/plugins/`.
+- If a bundled plugin is needed, manage it through VS Code plugin settings rather than this folder. For the plugin model, see https://code.visualstudio.com/docs/copilot/customization/agent-plugins and treat marketplace or `chat.plugins.paths` bundles as plugins; treat `.github/agents/*.agent.md` files as repository agents.
 
-### Phase 3 — Synthesize and Annotate
+**Sub-agent design (`user-invocable: false`):**
 
-After gathering both pillars:
+Agents marked `user-invocable: false` are sub-agents — they are intentionally excluded from the VS Code agent picker. They are only invoked via `handoffs` from a parent agent. This is the correct and supported design per the [VS Code sub-agents documentation](https://code.visualstudio.com/docs/copilot/agents/subagents). Do not change this setting to `true` unless a sub-agent should become a direct user entry-point.
 
-1. **Cross-reference existing code vs. current API**: Does the codebase use deprecated
-   patterns from older framework versions?
-2. **Identify framework-version conflicts**: Are there `async params` patterns required by
-   Next.js 15 that existing code hasn't adopted?
-3. **Build a session context summary** containing:
-   - Active module boundaries (from Repomix)
-   - Framework constraints that apply to the current task (from Context7)
-   - Any breaking changes relevant to the work at hand
+| Context | Sub-agent behavior |
+|---------|-------------------|
+| VS Code Copilot Chat (desktop/browser) | Not shown in agent picker; invoked only via parent handoffs |
+| GitHub Copilot Coding Agent | All agents including sub-agents are available via the `task` tool regardless of `user-invocable` |
 
----
+The "Not configured for user selection" label shown in the VS Code Copilot UI for these agents is **expected and intentional**.
 
-## Extended Startup Sequence
+**MCP tool assignment guide (add only what the agent genuinely needs):**
 
-When the task requires global awareness, extend the Serena startup sequence with phases 1–3:
+| MCP tool | Assign to |
+|----------|-----------|
+| `serena/*` | All repository agents that touch code or docs |
+| `agent-memory/*` | `xuanwu-research` (knowledge gathering), `xuanwu-orchestrator` (session context) |
+| `context7/*` | `xuanwu-research` (version-accurate framework docs) |
+| `repomix/*` | `xuanwu-research`, `xuanwu-docs`, `xuanwu-architect`, `xuanwu-architecture-chief`, `xuanwu-repo-browser` |
+| `markitdown/*` | `xuanwu-research`, `xuanwu-docs` (URL/file → Markdown conversion) |
+| `sequential-thinking/*` | `xuanwu-software-planner`, `xuanwu-sequential-thinking`, `xuanwu-product`, `xuanwu-architect`, `ddd-orchestrator`, `xuanwu-quality` |
+| | `xuanwu-commander` also includes `sequential-thinking/*` for complex ambiguous requests |
+| `software-planning/*` | `xuanwu-orchestrator`, `xuanwu-commander`, `xuanwu-software-planner` |
+| `playwright/*` | `xuanwu-ui`, `xuanwu-test-expert` (browser automation) |
+| `next-devtools/*` | `xuanwu-ui`, `xuanwu-test-expert`, `xuanwu-architect`, `xuanwu-quality` (Next.js diagnostics) |
+| `shadcn/*` | `xuanwu-ui`, `xuanwu-implementer` (component registry) |
+| `firebase-mcp-server/*` | `xuanwu-implementer`, `xuanwu-ops`, `xuanwu-quality`, `ddd-infrastructure` (Firebase inspection) |
+| `filesystem/*` | Agents that need direct file I/O beyond `editFiles` |
 
-```
-Standard Serena startup (all agents, always):
-  1. serena-check_onboarding_performed
-  2. serena-list_memories
-  3. serena-read_memory(project/architecture)
-  4. serena-read_memory(project/conventions)
+### `.github/hooks/`
 
-Extended with global awareness (when scope is cross-module or framework-sensitive):
-  5. repomix-pack_codebase (compressed, targeted scope)
-  6. context7-resolve-library-id + context7-query-docs (only for version-sensitive APIs)
-  7. Synthesize: cross-reference Repomix structure with Context7 API constraints
-```
+- Follow https://code.visualstudio.com/docs/copilot/customization/hooks.
+- Store workspace hook config in `.github/hooks/*.json`.
+- Keep helper scripts in `.github/hooks/scripts/` or `scripts/hooks/`.
+- Hook commands must be deterministic, reviewable, and safe to run repeatedly.
+- Workspace-wide Serena lifecycle automation lives in `.github/hooks/serena-session-lifecycle.json` with helper scripts in `.github/hooks/scripts/`.
 
-> Steps 5–7 add context but cost tokens. Invoke only when the task scope justifies it.
-> Single-file edits with known APIs do not need steps 5–7.
+### `.github/instructions/`
 
----
+- Follow https://code.visualstudio.com/docs/copilot/customization/custom-instructions.
+- Every file must include YAML frontmatter with `name`, `description`, and `applyTo`.
+- Scope `applyTo` as narrowly as possible.
+- Keep instructions imperative, testable, and free of duplicated catalog content.
 
-## Tool Decision Matrix
+### `.github/prompts/`
 
-| Need | Best Tool | Reason |
-|------|-----------|--------|
-| Find a specific class or function | `serena-find_symbol` | Precise, indexed lookup |
-| Understand module structure broadly | `repomix-pack_codebase` (compress=true) | Full tree snapshot with low token cost |
-| Current API signature for a framework | `context7-query-docs` | Version-accurate, avoids stale training data |
-| Edit a specific method or class | `serena-replace_symbol_body` | Safe, surgical, language-server-backed |
-| Inspect a remote or external repo | `repomix-pack_remote_repository` | Clone-free analysis |
-| Cross-file pattern search in local repo | `serena-search_for_pattern` | Indexed, precise |
-| Cross-file pattern search in packed output | `repomix-grep_repomix_output` | No re-pack needed |
-| Project conventions and architecture facts | `serena-read_memory` | Pre-indexed project memory |
+- Follow https://code.visualstudio.com/docs/copilot/customization/prompt-files.
+- Every prompt should have a discoverable `name` and `description`.
+- Prefer linking to docs instead of embedding long policy text.
+- `README.md` must stay synchronized with the actual prompt file set and frontmatter names.
 
----
+### `.github/skills/`
 
-## GitHub Copilot Browser Agent Setup
+- Follow https://code.visualstudio.com/docs/copilot/customization/agent-skills.
+- Each skill must live in its own folder with a `SKILL.md`.
+- The `name` field in frontmatter **must match** the parent directory name exactly.
+- Skill descriptions must clearly say what the skill does and when to use it (max 1024 chars).
+- Set `user-invocable: false` for background knowledge skills that should auto-load but not appear in the `/` menu.
+- Set `argument-hint` for user-invocable skills that accept additional context after the slash command.
+- Repository skill discovery points to `.github/skills/`; each skill has its own folder with a `SKILL.md` entry point.
 
-When using GitHub Copilot agents through the **browser interface** (github.com → Copilot →
-Coding Agent), both Context7 and Repomix must be registered in the Coding Agent MCP
-configuration.
+## Current Consolidation Decisions
 
-### Verification Checklist
+The repository now follows these consolidation rules:
 
-- [ ] Copy `.github/copilot/mcp-coding-agent.json` into
-  [Settings → Copilot → Coding agent → MCP configuration](https://github.com/7Spade/xuanwu-platform/settings/copilot/coding_agent)
-- [ ] Add required Copilot environment secrets:
+1. All local custom agents live directly under `.github/agents/`.
+2. The former `.github/agents/plugins/` pattern is retired because it conflicts with VS Code “agent plugins”.
+3. `.github/skills/` is the canonical project skill location for VS Code settings.
+4. Stable repository references used by prompts must exist under `docs/` or other committed paths.
+5. `README.md` remains the user-facing entry point and must keep its prompt command table synchronized with `.github/prompts/`.
+6. The canonical project-specific agent suite is `xuanwu-orchestrator`, `xuanwu-product`, `xuanwu-research`, `xuanwu-architect`, `xuanwu-implementer`, `xuanwu-ui`, `xuanwu-quality`, `xuanwu-docs`, `xuanwu-librarian`, `xuanwu-ops`, and `xuanwu-test-expert`. Supplementary agents extending the suite: `xuanwu-commander` (six-step intent pipeline and single dispatch), `xuanwu-software-planner` (implementation planning), `xuanwu-sequential-thinking` (step-by-step reasoning), `xuanwu-architecture-chief` (architecture doc refinement), `xuanwu-architecture-refactor` (doc structure refactoring — subagent only, `user-invocable: false`), `xuanwu-diagram-designer` (Mermaid diagram refinement — subagent only, `user-invocable: false`), and `xuanwu-repo-browser` (read-only architecture analysis — subagent only, `user-invocable: false`). The architecture sub-cluster (`xuanwu-architecture-chief`, `xuanwu-architecture-refactor`, `xuanwu-diagram-designer`, `xuanwu-repo-browser`) is reachable via the `/xuanwu-architecture-realign` prompt or directly from `xuanwu-commander` and `xuanwu-orchestrator`. DDD sub-cluster: `ddd-orchestrator` (DDD delivery coordinator), `ddd-domain-modeler` (Domain Layer — subagent only, `user-invocable: false`), `ddd-application-layer` (Application Layer — subagent only, `user-invocable: false`), and `ddd-infrastructure` (Infrastructure Layer — subagent only, `user-invocable: false`) — reachable via `/ddd-slice-scaffold` or from `xuanwu-orchestrator`.
+7. The canonical instruction suite is `xuanwu-customization-authoring`, `xuanwu-code-quality`, `xuanwu-application-architecture`, `xuanwu-typescript-platform`, `xuanwu-github-workflows`, `xuanwu-task-tracking`, and `xuanwu-test-expert`. Additional scoped instructions: `xuanwu-coding-style` (`**/*.{ts,tsx,js,jsx}`), `xuanwu-documentation` (`**/*.md`), `xuanwu-repo-structure` (`src/**/*.{ts,tsx,js,jsx}`), `xuanwu-security` (`**/*.{ts,tsx,js,jsx,json,yaml,yml}`), `xuanwu-ddd-layers` (`src/**/*.{ts,tsx,js,jsx}` — 4-layer DDD boundary enforcement), and `xuanwu-ddd-progressive-migration` (`src/**/*.{ts,tsx,js,jsx}` — incremental migration workflow toward layered DDD).
+8. The canonical prompt suite is `xuanwu-orchestrator`, `xuanwu-product`, `xuanwu-research`, `xuanwu-architect`, `xuanwu-docs`, `xuanwu-implementer`, `xuanwu-ui`, `xuanwu-ops`, and `xuanwu-test-expert`. Additional prompts: `xuanwu-planning` (quick implementation plan via `xuanwu-software-planner`), `xuanwu-refactor` (refactor guidance via `xuanwu-implementer`), `xuanwu-code-review` (code review via `xuanwu-quality`), `xuanwu-debug` (debugging via `xuanwu-sequential-thinking`), `xuanwu-architecture-realign` (architecture doc realignment via `xuanwu-architecture-chief`), and `xuanwu-ssot-sync` (sync architecture docs with Semantic Kernel SSOT via `xuanwu-architecture-chief`). DDD prompts: `ddd-domain-model`, `ddd-application-service`, `ddd-infrastructure-adapter`, `ddd-layer-audit`, `ddd-slice-scaffold`, and `ddd-progressive-layering`.
+9. `breakdown-plan` is the canonical planning and backlog decomposition skill; merged wrappers `create-implementation-plan` and `gen-specs-as-issues` were removed.
+10. `refactor` is the canonical refactor skill (including planning mode); merged wrapper `refactor-plan` was removed.
+11. `prompt-builder` is the canonical Copilot customization and exemplar prompt-authoring skill; merged wrappers `copilot-instructions-blueprint-generator` and `code-exemplars-blueprint-generator` were removed.
+12. `breakdown-epic-pm` is the canonical requirements authoring skill (PRD + tech-spec modes); merged wrapper `create-specification` was removed.
+13. `next-best-practices` is the canonical Next.js skill family entrypoint; merged wrappers `next-cache-components` and `next-upgrade` were removed.
+14. `agent-governance` is the canonical agent safety and governance skill; merged wrappers `agentic-eval` and `ai-prompt-engineering-safety-review` were removed.
+15. `ddd-architecture` is the DDD architecture skill providing 4-layer patterns, agent kit (ddd-orchestrator, ddd-domain-modeler, ddd-application-layer, ddd-infrastructure), prompt commands, and implementation examples.
+16. `ddd-progressive-layering` is the DDD migration skill for moving existing slices toward the 4-layer model with compatibility seams, ordered extraction steps, and low-risk refactor guidance.
+17. `xuanwu-intent-pipeline` is the six-step intelligent understanding pipeline skill (① Raw Input → ② Intent Detection → ③ Context Extraction → ④ Entity Extraction → ⑤ Dependency Analysis → ⑥ Task Instruction) embedded in `xuanwu-commander` and available to all entry-point agents.
+18. Serena lifecycle enforcement is split across `.github/copilot-instructions.md`, `.github/hooks/serena-session-lifecycle.json`, and the repository entry agents/prompts. Agents that can originate repository work must expose `serena/*`.
+19. `context7-repomix-global-awareness` is the canonical two-pillar global awareness skill that combines Repomix (codebase snapshot) and Context7 (version-accurate framework docs) to give agents comprehensive project context. It extends the standard Serena startup sequence for cross-module, architectural, or framework-version-sensitive sessions. Primary users: `xuanwu-research`, `xuanwu-architect`, `xuanwu-orchestrator`. Set `user-invocable: false` — auto-loaded by agents.
+20. `vercel-react-best-practices` is the Vercel-sourced React and Next.js performance optimization skill (40+ rules: Server Components, memoization, code splitting, Image/Font, bundle analysis, streaming). Set `user-invocable: false` — auto-loaded when working on React/Next.js performance.
+21. `vercel-composition-patterns` is the Vercel-sourced React composition skill (compound components, slot composition, `asChild`, render props, controlled vs. uncontrolled). Set `user-invocable: false` — auto-loaded when designing component APIs.
+22. `shadcn` is the project-aware shadcn/ui skill for Xuanwu. Reads `components.json` config, documents correct import aliases (`@/design-system/primitives`), CLI commands, and MCP server usage. Set `user-invocable: false` — auto-loaded when working with shadcn/ui components.
+23. `xuanwu-diagram-standards` is the diagram methodology skill that is the single source of truth for all Xuanwu Mermaid diagram standards: architecture layer color system, layout principles, preferred diagram types, refactoring rules, and quality targets. Referenced by `xuanwu-diagram-designer` agent and `xuanwu-architecture-chief` agent instead of repeating inline content.
 
-  | Secret Name | Purpose |
-  |-------------|---------|
-  | `COPILOT_MCP_REDIS_URL` | `agent-memory` cross-session recall |
-  | `COPILOT_MCP_OPENAI_API_KEY` | `agent-memory` embeddings/generation |
+## Required Reference Documents for Customizations
 
-- [ ] Confirm `.github/workflows/copilot-setup-steps.yml` has the `copilot-setup-steps` job
-  that installs `uv` via `astral-sh/setup-uv@v5` (required for `serena`, `markitdown`,
-  `agent-memory` MCP servers)
-- [ ] After agent runs: verify Context7 resolved a library ID successfully and Repomix
-  produced a packed output ID before querying
+These documents are stable link targets for prompts and agents that need repository context:
 
-### Expected Tool Calls in a Global-Aware Session
+- `docs/architecture/README.md`
+- `docs/architecture/catalog/business-entities.md`
+- `docs/architecture/glossary/business-terms.md`
+- `docs/architecture/adr/README.md`
+- `docs/copilot/README.md`
 
-```
-Session start
-  └─ serena-check_onboarding_performed ✓
-  └─ serena-list_memories ✓
-  └─ serena-read_memory(project/architecture) ✓
-  └─ serena-read_memory(project/conventions) ✓
-  └─ repomix-pack_codebase (compressed, scoped) → outputId
-  └─ repomix-grep_repomix_output (search key patterns) → structure summary
-  └─ context7-resolve-library-id (for relevant framework) → libraryId
-  └─ context7-query-docs (version-sensitive API) → doc excerpts
-  └─ [synthesize context] → proceed with task
-```
+## Change Workflow
 
----
+When adding or reorganizing Copilot customization files:
 
-## Agents Using This Skill
+1. Update this guide first if folder policy or ownership changes.
+2. Apply the smallest structural change that restores compliance.
+3. Sync `README.md` and any dependent references.
+4. Run repository validation commands when available:
+   - `npm run lint`
+   - `npm run typecheck`
+   - `npm run test`
+   - `npm run check`
+5. Use VS Code diagnostics to inspect loaded instructions, prompts, agents, hooks, and skills:
+   - `Chat: Open Chat Customizations`
+   - Chat view → right-click → `Diagnostics`
 
-| Agent | When to invoke |
-|-------|---------------|
-| `xuanwu-research` | Primary user — all research and context-gathering sessions |
-| `xuanwu-architect` | Before system design or impact analysis sessions |
-| `xuanwu-orchestrator` | When initializing complex cross-functional delivery |
-| `xuanwu-implementer` | Before implementing against version-sensitive framework APIs |
-| `xuanwu-quality` | When auditing framework API compliance |
+## Review Checklist
 
----
-
-## References
-
-- MCP Context7 memory: `.serena/memories/mcp/context7.md`
-- MCP Repomix memory: `.serena/memories/mcp/repomix.md`
-- MCP Coding Agent config: `.github/copilot/mcp-coding-agent.json`
-- VS Code MCP config: `.vscode/mcp.json`
-- Serena session startup: `docs/copilot/README.md` (Serena 協同最大化 section)
-- Architecture SSOT: `docs/architecture/README.md`
-- Agent MCP assignments: `.github/README.md` (MCP tool assignment guide)
+- Are folder purposes still distinct and non-overlapping?
+- Does every linked file actually exist?
+- Is `.github/copilot-instructions.md` still concise?
+- Does `README.md` reflect actual slash commands and customization locations?
+- Are hooks and agents using official VS Code terminology correctly?
 ````
 
 ## File: .github/workflows/repomix-copilot-pack.yml
@@ -61259,301 +64964,6 @@ jobs:
             artifacts/repomix-copilot.xml.gz
           compression-level: 9
           retention-days: 7
-````
-
-## File: .serena/memories/design-system.md
-````markdown
-# design-system — File Index
-
-**層次**: 設計系統 / Design System
-**職責**: 提供 UI 元件的五層結構（primitives → components → patterns → tokens → layout）加上 providers，確保設計一致性。
-**架構**: Five-tier hierarchy — `primitives`（raw shadcn/ui 元件）→ `components`（專案特定包裝）→ `patterns`（高階 UI 複合體）→ `tokens`（設計常數）→ `layout`（結構版面殼層）；`providers/` 放 React context providers。
-**匯入規則**: 從對應層次匯入，例如 `import { Button } from "@/design-system/primitives"`，或直接使用 `@/design-system` barrel。
-
----
-
-## `src/design-system/index.ts`
-**描述**: 設計系統公開 API barrel，五層全匯出入口（primitives / components / patterns / tokens / layout）。
-**函數清單**:
-- `export * from './primitives'` — raw shadcn/ui 元件層
-- `export * from './components'` — 專案特定包裝元件層
-- `export * from './patterns'` — 高階 UI 複合體層
-- `export * from './tokens'` — 設計 token 常數層
-- `export * from './layout'` — Layout 層（base shell + page-specific layouts）
-
----
-
-## Primitives 層（`src/design-system/primitives/`）
-
-### `src/design-system/primitives/index.ts`
-**描述**: Primitives 層 barrel，匯出所有 shadcn/ui 元件及 hooks。
-**函數清單**:
-- `export * from './ui/*'` — 所有 shadcn/ui 元件（56 個）
-- `export * from './hooks/use-mobile'` — `useIsMobile` hook
-- `export { cn } from './lib/utils'` — Tailwind class 合併工具
-
-### `src/design-system/primitives/lib/utils.ts`
-**描述**: Tailwind CSS class 合併工具 — 組合 `clsx` 和 `tailwind-merge`。
-**函數清單**:
-- `function cn(...inputs: ClassValue[]): string` — 合併並去重 Tailwind CSS class names
-
-### `src/design-system/primitives/hooks/use-mobile.ts`
-**描述**: 回應式行動裝置偵測 hook — 監聽 window resize，判斷目前視窗是否為行動裝置寬度（< 768px）。
-**函數清單**:
-- `function useIsMobile(): boolean` — 回傳目前是否為行動裝置視窗寬度
-
----
-
-## Primitives UI 元件（`src/design-system/primitives/ui/`）
-
-> 以下 56 個元件均為 shadcn/ui（New York style）自動生成元件，直接包裝對應的 Radix UI primitives 或第三方套件，並套用 Tailwind CSS 樣式。
-
-### `accordion.tsx` — 手風琴展開/收合元件（Radix UI Accordion）
-- `Accordion`, `AccordionItem`, `AccordionTrigger`, `AccordionContent`
-
-### `alert-dialog.tsx` — 警告對話框元件，用於需要確認的破壞性操作（Radix UI AlertDialog）
-- `AlertDialog`, `AlertDialogTrigger`, `AlertDialogContent`, `AlertDialogHeader`, `AlertDialogFooter`, `AlertDialogTitle`, `AlertDialogDescription`, `AlertDialogAction`, `AlertDialogCancel`
-
-### `alert.tsx` — 靜態提示訊息橫幅（variant: default/destructive）
-- `Alert`, `AlertTitle`, `AlertDescription`
-
-### `aspect-ratio.tsx` — 固定寬高比容器（Radix UI AspectRatio）
-- `AspectRatio`
-
-### `avatar.tsx` — 使用者頭像（圖片 + 備援文字縮寫）
-- `Avatar`, `AvatarImage`, `AvatarFallback`
-
-### `badge.tsx` — 狀態/標籤 badge（variant: default/secondary/destructive/outline）
-- `Badge`, `badgeVariants`
-
-### `breadcrumb.tsx` — 頁面導覽 breadcrumb
-- `Breadcrumb`, `BreadcrumbList`, `BreadcrumbItem`, `BreadcrumbLink`, `BreadcrumbPage`, `BreadcrumbSeparator`, `BreadcrumbEllipsis`
-
-### `button-group.tsx` — 按鈕群組容器
-- `ButtonGroup`
-
-### `button.tsx` — 主要按鈕元件（variant: default/destructive/outline/secondary/ghost/link）
-- `Button`, `buttonVariants`
-
-### `calendar.tsx` — 日期選擇器日曆（react-day-picker）
-- `Calendar`
-
-### `card.tsx` — 卡片容器
-- `Card`, `CardHeader`, `CardFooter`, `CardTitle`, `CardDescription`, `CardContent`
-
-### `carousel.tsx` — 輪播元件（Embla Carousel）
-- `Carousel`, `CarouselContent`, `CarouselItem`, `CarouselPrevious`, `CarouselNext`
-
-### `chart.tsx` — 圖表容器與工具（Recharts 包裝）
-- `ChartContainer`, `ChartTooltip`, `ChartTooltipContent`, `ChartLegend`, `ChartLegendContent`, `ChartStyle`
-
-### `checkbox.tsx` — 核取方塊（Radix UI Checkbox）
-- `Checkbox`
-
-### `collapsible.tsx` — 可收合/展開區塊（Radix UI Collapsible）
-- `Collapsible`, `CollapsibleTrigger`, `CollapsibleContent`
-
-### `combobox.tsx` — 可搜尋下拉選單（Command + Popover 組合）
-- `Combobox`
-
-### `command.tsx` — 命令面板/鍵盤導航搜尋（cmdk）
-- `Command`, `CommandDialog`, `CommandInput`, `CommandList`, `CommandEmpty`, `CommandGroup`, `CommandItem`, `CommandShortcut`, `CommandSeparator`
-
-### `context-menu.tsx` — 右鍵選單（Radix UI ContextMenu）
-- `ContextMenu`, `ContextMenuTrigger`, `ContextMenuContent`, `ContextMenuItem`, `ContextMenuCheckboxItem`, `ContextMenuRadioItem`, `ContextMenuLabel`, `ContextMenuSeparator`, `ContextMenuShortcut`, `ContextMenuGroup`, `ContextMenuPortal`, `ContextMenuSub`, `ContextMenuSubContent`, `ContextMenuSubTrigger`, `ContextMenuRadioGroup`
-
-### `dialog.tsx` — 模態對話框（Radix UI Dialog）
-- `Dialog`, `DialogPortal`, `DialogOverlay`, `DialogTrigger`, `DialogClose`, `DialogContent`, `DialogHeader`, `DialogFooter`, `DialogTitle`, `DialogDescription`
-
-### `direction.tsx` — 文字方向提供者（RTL/LTR）
-- `DirectionProvider`
-
-### `drawer.tsx` — 抽屜/底部滑入面板（Vaul）
-- `Drawer`, `DrawerPortal`, `DrawerOverlay`, `DrawerTrigger`, `DrawerClose`, `DrawerContent`, `DrawerHeader`, `DrawerFooter`, `DrawerTitle`, `DrawerDescription`
-
-### `dropdown-menu.tsx` — 下拉式選單（Radix UI DropdownMenu）
-- `DropdownMenu`, `DropdownMenuTrigger`, `DropdownMenuContent`, `DropdownMenuItem`, `DropdownMenuCheckboxItem`, `DropdownMenuRadioItem`, `DropdownMenuLabel`, `DropdownMenuSeparator`, `DropdownMenuShortcut`, `DropdownMenuGroup`, `DropdownMenuPortal`, `DropdownMenuSub`, `DropdownMenuSubContent`, `DropdownMenuSubTrigger`, `DropdownMenuRadioGroup`
-
-### `empty.tsx` — 空狀態佔位元件
-- `Empty`
-
-### `field.tsx` — 表單欄位容器（label + input + hint 組合）
-- `Field`, `FieldLabel`, `FieldHint`, `FieldError`
-
-### `form.tsx` — react-hook-form 整合表單元件
-- `Form`, `FormItem`, `FormLabel`, `FormControl`, `FormDescription`, `FormMessage`, `FormField`, `useFormField`
-
-### `hover-card.tsx` — 懸停預覽卡片（Radix UI HoverCard）
-- `HoverCard`, `HoverCardTrigger`, `HoverCardContent`
-
-### `input-group.tsx` — 輸入框群組（前綴/後綴組合）
-- `InputGroup`, `InputGroupPrefix`, `InputGroupSuffix`
-
-### `input-otp.tsx` — OTP/PIN 輸入框（input-otp）
-- `InputOTP`, `InputOTPGroup`, `InputOTPSlot`, `InputOTPSeparator`
-
-### `input.tsx` — 基礎文字輸入框
-- `Input`
-
-### `item.tsx` — 通用清單項目元件
-- `Item`, `ItemIcon`, `ItemLabel`, `ItemBadge`
-
-### `kbd.tsx` — 鍵盤按鍵顯示元件
-- `Kbd`
-
-### `label.tsx` — 表單標籤（Radix UI Label）
-- `Label`
-
-### `menubar.tsx` — 選單列（Radix UI Menubar）
-- `Menubar`, `MenubarMenu`, `MenubarTrigger`, `MenubarContent`, `MenubarItem`, `MenubarSeparator`, `MenubarLabel`, `MenubarCheckboxItem`, `MenubarRadioGroup`, `MenubarRadioItem`, `MenubarPortal`, `MenubarSubContent`, `MenubarSubTrigger`, `MenubarGroup`, `MenubarSub`, `MenubarShortcut`
-
-### `native-select.tsx` — 原生 HTML `<select>` 包裝
-- `NativeSelect`
-
-### `navigation-menu.tsx` — 導覽選單（Radix UI NavigationMenu）
-- `NavigationMenu`, `NavigationMenuList`, `NavigationMenuItem`, `NavigationMenuContent`, `NavigationMenuTrigger`, `NavigationMenuLink`, `NavigationMenuIndicator`, `NavigationMenuViewport`
-
-### `pagination.tsx` — 分頁導覽元件
-- `Pagination`, `PaginationContent`, `PaginationItem`, `PaginationLink`, `PaginationPrevious`, `PaginationNext`, `PaginationEllipsis`
-
-### `popover.tsx` — 浮動彈出層（Radix UI Popover）
-- `Popover`, `PopoverTrigger`, `PopoverContent`, `PopoverAnchor`
-
-### `progress.tsx` — 進度條（Radix UI Progress）
-- `Progress`
-
-### `radio-group.tsx` — 單選按鈕群組（Radix UI RadioGroup）
-- `RadioGroup`, `RadioGroupItem`
-
-### `resizable.tsx` — 可調整大小的面板群組（react-resizable-panels）
-- `ResizablePanelGroup`, `ResizablePanel`, `ResizableHandle`
-
-### `scroll-area.tsx` — 自訂滾動區域（Radix UI ScrollArea）
-- `ScrollArea`, `ScrollBar`
-
-### `select.tsx` — 下拉選擇器（Radix UI Select）
-- `Select`, `SelectGroup`, `SelectValue`, `SelectTrigger`, `SelectContent`, `SelectLabel`, `SelectItem`, `SelectSeparator`, `SelectScrollUpButton`, `SelectScrollDownButton`
-
-### `separator.tsx` — 分隔線（Radix UI Separator）
-- `Separator`
-
-### `sheet.tsx` — 側邊抽屜（Radix UI Dialog 變體）
-- `Sheet`, `SheetPortal`, `SheetOverlay`, `SheetTrigger`, `SheetClose`, `SheetContent`, `SheetHeader`, `SheetFooter`, `SheetTitle`, `SheetDescription`
-
-### `sidebar.tsx` — 側邊欄完整元件（帶 context, hook, 折疊狀態管理）
-- `Sidebar`, `SidebarProvider`, `SidebarTrigger`, `SidebarContent`, `SidebarGroup`, `SidebarGroupLabel`, `SidebarGroupContent`, `SidebarMenu`, `SidebarMenuItem`, `SidebarMenuButton`, `SidebarMenuSub`, `SidebarMenuSubItem`, `SidebarMenuSubButton`, `SidebarMenuBadge`, `SidebarMenuSkeleton`, `SidebarMenuAction`, `SidebarSeparator`, `SidebarHeader`, `SidebarFooter`, `SidebarInset`, `SidebarRail`, `useSidebar`
-
-### `skeleton.tsx` — 載入佔位骨架屏
-- `Skeleton`
-
-### `slider.tsx` — 滑桿輸入（Radix UI Slider）
-- `Slider`
-
-### `sonner.tsx` — Toast 通知（Sonner）
-- `Toaster`
-
-### `spinner.tsx` — 載入旋轉指示器
-- `Spinner`
-
-### `switch.tsx` — 開關切換（Radix UI Switch）
-- `Switch`
-
-### `table.tsx` — 資料表格
-- `Table`, `TableHeader`, `TableBody`, `TableFooter`, `TableHead`, `TableRow`, `TableCell`, `TableCaption`
-
-### `tabs.tsx` — 分頁標籤（Radix UI Tabs）
-- `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`
-
-### `textarea.tsx` — 多行文字輸入框
-- `Textarea`
-
-### `toggle-group.tsx` — 切換按鈕群組（Radix UI ToggleGroup）
-- `ToggleGroup`, `ToggleGroupItem`
-
-### `toggle.tsx` — 單一切換按鈕（Radix UI Toggle）
-- `Toggle`, `toggleVariants`
-
-### `tooltip.tsx` — 工具提示（Radix UI Tooltip）
-- `Tooltip`, `TooltipTrigger`, `TooltipContent`, `TooltipProvider`
-
----
-
-## Components 層（`src/design-system/components/`）
-
-### `src/design-system/components/index.ts`
-**描述**: Components 層 barrel — 專案特定包裝元件，建立在 primitives 之上，加入專案 i18n、主題、UX 規範。目前尚未定義元件（`export {}`）。
-**函數清單**:
-- *(目前為空，待擴充)*
-
----
-
-## Patterns 層（`src/design-system/patterns/`）
-
-### `src/design-system/patterns/index.ts`
-**描述**: Patterns 層 barrel — 高階 UI 複合體，將 primitives 和 components 組合成可重複使用的互動模式（如登入表單、資料表格頁、Modal 流程）。目前尚未定義 patterns（`export {}`）。
-**函數清單**:
-- *(目前為空，待擴充)*
-
----
-
-## Tokens 層（`src/design-system/tokens/`）
-
-### `src/design-system/tokens/index.ts`
-**描述**: Tokens 層 barrel — 設計 token 常數（色彩、間距、字體、圓角、陰影、z-index、動畫時長）。這些值與 `globals.css`/`tailwind.config.ts` 的 CSS custom properties 同步。目前尚未定義 token（`export {}`）。
-**函數清單**:
-- *(目前為空，待擴充；預計匯出 colorBrand、spacingBase 等常數)*
-
----
-
-## Layout 層（`src/design-system/layout/`）
-
-**職責**: 頁面結構 chrome（header slot + `<main>` + footer slot）與頁面專用 Layout 組合。按 `base/`（全局共用）+ `[page]/`（頁面專用）子目錄結構組織。
-**設計原則**: `src/app/` 只做路由對應與頁面組裝，不持有 Layout 結構；Layout 狀態（locale、auth）由頁面 Layout 元件擁有，不下沉到 `app/`。
-
-### `src/design-system/layout/index.ts`
-**描述**: Layout 層 barrel — 統一匯出 base/ 和所有頁面 Layout。
-
-### `src/design-system/layout/base/index.ts`
-**描述**: Base 層 barrel — 匯出全局共用結構元件。
-
-### `src/design-system/layout/base/root-shell.tsx`
-**描述**: 全局頁面結構 chrome（Client Component）。接受可選的 `header` 和 `footer` slot，以 flexbox 垂直排列 header/main/footer。讓頁面專用 Layout 注入特定 header，避免重複 HTML 結構。
-**函數清單**:
-- `function RootShell({ children, header?, footer? }): JSX.Element` — 全局結構 chrome；header/footer 為可選 ReactNode slot
-
-### `src/design-system/layout/marketing/index.ts`
-**描述**: Marketing Layout 層 barrel — 匯出首頁 Layout 和 Header 元件。
-**函數清單**:
-- `export * from './home-layout'`
-- `export * from './marketing-header'`
-- `export * from './mode-toggle'`
-
-### `src/design-system/layout/marketing/home-layout.tsx`
-**描述**: 首頁（`/`）頁面專用 Layout（Client Component）。擁有 `useLocale`（語系狀態）和 `useAuthState`（認證狀態），並將它們作為 props 傳入 `MarketingHeader`。組合 `RootShell` + `MarketingHeader`。
-**函數清單**:
-- `function HomeLayout({ children }): JSX.Element` — 首頁 Layout；擁有 locale + auth 狀態，傳入 MarketingHeader
-
-### `src/design-system/layout/marketing/marketing-header.tsx`
-**描述**: 首頁黏性行銷 Header（純展示元件，狀態由 props 注入）。包含：品牌 logo、語系下拉選單（Globe 圖示）、深色模式切換（`ModeToggle`）、認證感知 CTA 按鈕（未登入→「登入」`/login?callbackUrl=/`，已登入→「進入平台」`/workspaces`）。
-**函數清單**:
-- `interface MarketingHeaderProps` — `{ locale, onLocaleChange, isAuthenticated? }`
-- `function MarketingHeader({ locale, onLocaleChange, isAuthenticated }): JSX.Element` — 純展示黏性 header
-
-### `src/design-system/layout/marketing/mode-toggle.tsx`
-**描述**: 深色模式切換按鈕（Client Component）。使用 `next-themes` 的 `useTheme` + shadcn/ui `DropdownMenu`，提供 Light / Dark / System 三種選項。
-**函數清單**:
-- `function ModeToggle({ locale? }): JSX.Element` — 主題切換下拉按鈕（Sun/Moon 圖示）
-
----
-
-## Providers 層（`src/design-system/providers/`）
-
-**職責**: React Context Provider 包裝，供 `src/app/layout.tsx` 在根節點掛載。
-
-### `src/design-system/providers/theme-provider.tsx`
-**描述**: `next-themes` ThemeProvider 包裝（Client Component）。遵循 shadcn/ui 深色模式指南配置。掛載在 `src/app/layout.tsx` 根 layout 中，讓所有頁面共享主題支援。配置：`attribute="class"`、`defaultTheme="system"`、`enableSystem`。
-**函數清單**:
-- `function ThemeProvider({ children, ...props }: ThemeProviderProps): JSX.Element` — next-themes Provider 包裝；於根 layout 使用
 ````
 
 ## File: docs/architecture/adr/20260316-status-semantic-disambiguation.md
@@ -64226,165 +67636,925 @@ Workspace 進入 `stopped` 狀態時，其下的 active Fork 應如何處理？F
 - **Copilot 客製化**：[`docs/copilot/README.md`](../copilot/README.md)
 ````
 
-## File: src/app/(main)/onboarding/page.tsx
+## File: src/app/AGENTS.md
+````markdown
+# `src/app/` Agent Rules
+
+Purpose: keep route files thin, enforce Server Component defaults, and prevent direct infrastructure access from the Presentation layer.
+
+This file is mandatory guidance for any agent editing files under `src/app/`.
+
+---
+
+## 0. Non-negotiable Principles
+
+1. `src/app/` is the **Presentation Layer** — no business logic here.
+2. All mutations flow through Server Actions defined in module `core/_actions.ts`.
+3. All data fetching flows through module query functions in `core/_queries.ts`.
+4. Firebase, Upstash, and other SDK imports are **forbidden** in route files.
+5. React components are Server Components by default; add `"use client"` only when required.
+
+---
+
+## 1. Dependency Directions
+
+```
+src/app/ (page.tsx, layout.tsx)
+   ↓  imports from (allowed)
+src/modules/<name>.module/index.ts    ← public barrel only
+src/design-system/                    ← UI primitives, patterns, layout
+src/shared/                           ← utilities, i18n, errors
+
+src/app/ MUST NOT import from:
+   src/infrastructure/   ← adapters belong to module infra layer
+   src/modules/*/core/   ← only via public index.ts barrel
+   src/modules/*/domain.*/ ← never directly
+```
+
+---
+
+## 2. Boundary Gate (Run Before Any Edit)
+
+1. Does this page/layout call a module public function from `index.ts`?
+2. Is any mutation defined in a Server Action in the owning module, not inlined in the route?
+3. Does data fetching use module query functions, not raw SDK calls?
+4. Is `"use client"` added only when truly required by browser interaction?
+5. Does the route have `metadata` or `generateMetadata()` if it is a public page?
+6. Does any new user-facing string have a key in `src/shared/i18n/`?
+
+---
+
+## 3. Red Lines (Hard Fail)
+
+Agent must stop and report when any of the following appears in `src/app/`:
+
+1. `import { db } from "@/infrastructure/firebase"` or any infrastructure SDK.
+2. Any Firestore SDK method (`getDocs`, `getDoc`, `addDoc`, `updateDoc`, `deleteDoc`, `onSnapshot`, `collection`, etc.) called directly in a route file.
+3. Business logic or invariant enforcement inside `page.tsx` or `layout.tsx`.
+4. Cross-module import from another module's internal path (not via `index.ts`).
+5. Hardcoded UI text strings (use `src/shared/i18n/` keys instead).
+
+---
+
+## 4. Route File Pattern
+
+```
+(group)/
+└── route-name/
+    ├── page.tsx        ← Server Component; fetches via module query; renders layout
+    ├── layout.tsx      ← Shell (nav, sidebar, auth guard) — required for auth groups
+    ├── loading.tsx     ← Suspense fallback
+    └── error.tsx       ← Error boundary for async routes
+```
+
+New route groups require a `layout.tsx` when they share a navigation shell or authentication guard.
+````
+
+## File: src/app/README.md
+````markdown
+# `src/app/` — Next.js App Router
+
+## Purpose
+
+`src/app/` is the **Presentation Layer** entry point. It defines all user-facing routes using Next.js 15 App Router file-based conventions: `page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`.
+
+This directory owns **routing and layout composition only**. Business logic must live in `src/modules/`.
+
+## Route Structure
+
+```
+src/app/
+├── layout.tsx          ← Root layout (ThemeProvider, global metadata)
+├── page.tsx            ← Home page (/)
+├── globals.css         ← Global CSS reset and design tokens
+│
+├── (admin)/            ← Admin panel routes — /admin/*
+├── (auth)/             ← Authentication routes
+│   ├── login/          ← /login
+│   ├── register/       ← /register
+│   └── forgot-password/← /forgot-password
+├── (invite)/           ← Invitation acceptance flow — /invite/*
+├── (main)/             ← Authenticated app shell
+│   ├── (account)/      ← Account settings — /settings/*
+│   ├── [slug]/         ← Workspace/namespace dynamic route — /:slug/*
+│   ├── firebase-check/ ← Firebase health check endpoint
+│   └── onboarding/     ← First-time user setup — /onboarding
+├── (marketing)/        ← Public marketing pages
+└── (shared)/           ← Public sharing routes — /share/*
+```
+
+**Route groups** (`(name)/`) organize routes logically without adding URL path segments.
+
+## Coding Conventions
+
+- **Server Components by default** — add `"use client"` only when browser APIs (event listeners, `useState`, `useEffect`) are needed.
+- **Server Actions** — mutations must be implemented in `src/modules/<name>.module/core/_actions.ts` and imported, not inlined in `page.tsx`.
+- **Data fetching** — read operations must call module query functions (`_queries.ts`); never call Firestore/Upstash SDKs directly from pages.
+- **Layouts** — each route group should have its own `layout.tsx` when it needs a shared shell (navigation, sidebar, auth guard).
+- **Metadata** — export a `metadata` object or `generateMetadata()` function from every public-facing `page.tsx`.
+- **Error boundaries** — add `error.tsx` to routes that perform async data fetching.
+- **i18n** — all user-visible strings must come from `src/shared/i18n/`; never hardcode UI text.
+
+## Import Rules
+
+```typescript
+// ✅ Correct — call module public API
+import { getWorkspaceBySlug } from "@/modules/workspace.module";
+
+// ✅ Correct — use design system components
+import { Button } from "@/design-system/primitives";
+
+// ✅ Correct — use shared utilities
+import { formatDate } from "@/shared";
+
+// ❌ Wrong — bypass module layer; call infrastructure directly
+import { db } from "@/infrastructure/firebase";
+```
+
+## See Also
+
+- Module application layer: [`src/modules/README.md`](../modules/README.md)
+- Design system components: [`src/design-system/README.md`](../design-system/README.md)
+````
+
+## File: src/design-system/AGENTS.md
+````markdown
+# `src/design-system/` Agent Rules
+
+Purpose: keep UI components domain-agnostic and enforce the five-tier hierarchy.
+
+This file is mandatory guidance for any agent editing files under `src/design-system/`.
+
+---
+
+## 0. Non-negotiable Principles
+
+1. `src/design-system/` is **pure UI** — no domain logic, no business rules.
+2. Components receive all data as **props or React context** — never call use cases or adapters.
+3. No imports from `src/modules/` or `src/infrastructure/` are allowed here.
+4. Place new components in the correct tier (see hierarchy below).
+5. Use `"use client"` only when browser interaction or refs are genuinely required.
+
+---
+
+## 1. Dependency Direction
+
+```
+src/design-system/
+   ↓  may import from
+src/shared/    ← utilities, tokens, i18n (cn, formatDate, …)
+
+src/design-system/ MUST NOT import from:
+   src/modules/        ← domain logic lives in modules
+   src/infrastructure/ ← I/O adapters are never a UI concern
+```
+
+---
+
+## 2. Five-Tier Placement Checklist
+
+Before placing a new component, answer: which tier does it belong to?
+
+| Tier | Rule |
+|------|------|
+| `primitives/` | Raw shadcn/ui component or a direct CVA extension of one |
+| `components/` | Composite of 2+ primitives with project-specific logic |
+| `patterns/` | Multi-step UI flow (e.g. multi-field form, wizard step) |
+| `layout/` | Full-page structural shell (navigation, sidebar, content area) |
+| `tokens/` | Design-token constant — not a component, only a typed value export |
+
+---
+
+## 3. Boundary Gate (Run Before Any Edit)
+
+1. Does this component import from `src/modules/` or `src/infrastructure/`? → **Stop.**
+2. Does it contain business invariants or conditional domain logic? → Move to module `_components/`.
+3. Is `"use client"` added without browser-specific API usage? → Remove it.
+4. Does a new user-visible string use the i18n dictionary? → Add key to **both** `en` and `zh-TW` in `src/shared/i18n/index.ts`.
+5. Is the new component placed in the correct tier?
+
+---
+
+## 4. Red Lines (Hard Fail)
+
+Agent must stop and report when any of the following appears:
+
+1. `import ... from "@/modules/..."` in any design-system file.
+2. `import ... from "@/infrastructure/..."` in any design-system file.
+3. Business rule or invariant enforcement inside a component.
+4. Default export (use named exports only).
+5. Mutation or data-fetching logic inside a design-system component.
+````
+
+## File: src/design-system/layout/dashboard/index.ts
 ````typescript
-import type { Metadata } from "next";
-import Link from "next/link";
-import { Building2, Layers, UserCircle, ArrowRight } from "lucide-react";
-import { useTranslation } from "@/shared/i18n";
-import { Button } from "@/design-system/primitives/ui/button";
+/**
+ * src/design-system/layout/dashboard/index.ts
+ *
+ * Dashboard layout shell components that aggregate data from multiple domains.
+ * These components are the presentation layer for the authenticated dashboard.
+ *
+ * - DashboardSidebar: Main sidebar orchestrating navigation and account switching
+ * - NavMain: Primary navigation (hardcoded routes)
+ * - NavTopWorkspaces: Workspace list from workspace.module
+ * - NavUser: User profile menu from account.module + identity.module
+ * - ShellHeader: Sticky header with breadcrumbs and search from search.module
+ */
+
+export { DashboardShell, type DashboardShellProps } from "./dashboard-shell";
+export { DashboardSidebar } from "./dashboard-sidebar";
+export { NavMain } from "./nav-main";
+export { NavTopWorkspaces } from "./nav-top-workspaces";
+export { NavUser } from "./nav-user";
+export { ShellHeader } from "./shell-header";
+````
+
+## File: src/design-system/layout/dashboard/nav-main.tsx
+````typescript
+"use client";
+/**
+ * NavMain — Primary navigation items in the sidebar.
+ *
+ * Items are derived from the 16 domain modules:
+ *  - Home          → account-level dashboard
+ *  - Workspaces    → workspace.module (core project management)
+ *  - Notifications → notification.module (alerts + mentions)
+ *  - Organizations → namespace.module + account.module (org management)
+ *  - Search        → search.module (global search)
+ */
+
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/design-system/primitives/ui/card";
+  Bell,
+  Building2,
+  LayoutDashboard,
+  Layers,
+  Search,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "開始使用 — 玄武平台",
-};
+import { useTranslation } from "@/shared/i18n";
+import {
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+} from "@/design-system/primitives/ui/sidebar";
 
-export default function OnboardingPage() {
+const HOME_ROUTE = "/dashboard";
+
+const NAV_ITEMS = [
+  { href: HOME_ROUTE, icon: LayoutDashboard, labelKey: "nav.home" },
+  { href: "/workspaces", icon: Layers, labelKey: "nav.workspaces" },
+  { href: "/notifications", icon: Bell, labelKey: "nav.notifications" },
+  { href: "/organizations", icon: Building2, labelKey: "nav.organizations" },
+  { href: "/search", icon: Search, labelKey: "nav.search" },
+] as const;
+
+export function NavMain() {
+  const pathname = usePathname();
   const t = useTranslation("zh-TW");
 
-  const steps = [
-    {
-      num: 1,
-      icon: UserCircle,
-      title: t("onboarding.step1"),
-      desc: t("onboarding.step1Desc"),
-      href: "/profile",
-      cta: t("onboarding.getStarted"),
-    },
-    {
-      num: 2,
-      icon: Building2,
-      title: t("onboarding.step2"),
-      desc: t("onboarding.step2Desc"),
-      href: "/organizations",
-      cta: t("onboarding.createOrg"),
-    },
-    {
-      num: 3,
-      icon: Layers,
-      title: t("onboarding.step3"),
-      desc: t("onboarding.step3Desc"),
-      href: "/workspaces",
-      cta: t("nav.workspaces"),
-    },
-  ] as const;
-
   return (
-    <div className="flex min-h-[80vh] flex-col items-center justify-center p-6">
-      <div className="w-full max-w-lg space-y-8 duration-700 animate-in fade-in slide-in-from-bottom-4">
-        {/* Logo / icon */}
-        <div className="flex flex-col items-center gap-3 text-center">
-          <div className="select-none text-5xl">🐢</div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("onboarding.title")}</h1>
-          <p className="text-sm text-muted-foreground">{t("onboarding.subtitle")}</p>
-        </div>
-
-        {/* Step cards */}
-        <div className="space-y-3">
-          {steps.map(({ num, icon: Icon, title, desc, href, cta }) => (
-            <Card
-              key={num}
-              className="border-border/60 bg-card/80 shadow-sm transition-colors hover:border-primary/30 hover:bg-card"
-            >
-              <CardHeader className="pb-2 pt-4">
-                <div className="flex items-center gap-3">
-                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-black text-primary">
-                    {num}
-                  </span>
-                  <Icon className="size-4 shrink-0 text-muted-foreground" />
-                  <CardTitle className="text-sm font-bold">{title}</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="pb-4">
-                <CardDescription className="mb-3 text-xs">{desc}</CardDescription>
-                <Button asChild size="sm" variant="outline" className="h-8 rounded-xl text-xs">
-                  <Link href={href}>
-                    {cta}
-                    <ArrowRight className="ml-1.5 size-3" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Skip */}
-        <div className="flex justify-center">
-          <Button asChild variant="ghost" size="sm" className="text-xs text-muted-foreground">
-            <Link href="/dashboard">{t("onboarding.skip")}</Link>
-          </Button>
-        </div>
-      </div>
-    </div>
+    <SidebarMenu>
+      {NAV_ITEMS.map(({ href, icon: Icon, labelKey }) => (
+        <SidebarMenuItem key={href}>
+          <SidebarMenuButton
+            asChild
+            isActive={
+              pathname === href ||
+              (href !== HOME_ROUTE && pathname.startsWith(href))
+            }
+          >
+            <Link href={href}>
+              <Icon />
+              <span className="font-semibold">{t(labelKey)}</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      ))}
+    </SidebarMenu>
   );
 }
 ````
 
-## File: src/design-system/layout/marketing/home-layout.tsx
+## File: src/design-system/layout/dashboard/nav-top-workspaces.tsx
 ````typescript
 "use client";
-
-import type { ReactNode } from "react";
-import { useRouter } from "next/navigation";
-import { useLocale, useAuthState } from "@/shared/directives";
-import { RootShell } from "@/design-system/layout/base";
-import { clientSignOut } from "@/modules/identity.module/_client-actions";
-import { MarketingHeader } from "./marketing-header";
-
-interface HomeLayoutProps {
-  /** Page body content (rendered inside RootShell main area). */
-  children: ReactNode;
-}
-
 /**
- * HomeLayout — page-specific layout for the marketing homepage (`/`).
+ * NavTopWorkspaces — sidebar section listing the top workspaces (up to 10)
+ * for the currently active account.
  *
- * Composes:
- *   - `RootShell`       — structural chrome (base/)
- *   - `MarketingHeader` — sticky top nav with locale toggle + auth CTA
- *
- * Owns the `useLocale` state and `useAuthState` so `page.tsx` only handles
- * routing and page-level content composition.
- *
- * Auth flow:
- *   - Unauthenticated: header shows "Login" button.
- *   - Authenticated:   header shows user avatar + dropdown (Enter Platform / Sign Out).
+ * Behaviour:
+ *  - Shows the first 2 workspaces immediately.
+ *  - Workspaces 3–10 are revealed when the user clicks "Show more".
+ *  - Clicking any workspace navigates to its WBS view.
+ *  - A loading skeleton is shown while workspaces are fetching.
  */
-export function HomeLayout({ children }: HomeLayoutProps) {
-  const [locale, setLocale] = useLocale();
-  const { user, loading } = useAuthState();
-  const router = useRouter();
 
-  async function handleSignOut() {
-    const result = await clientSignOut();
-    if (result.ok) {
-      router.push("/");
-      router.refresh();
-    }
+import { Layers, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+
+import { useTranslation } from "@/shared/i18n";
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/design-system/primitives/ui/sidebar";
+import { useCurrentAccount } from "@/modules/account.module";
+
+import { useWorkspaces, type UseWorkspacesResult } from "@/modules/workspace.module/_components/use-workspaces";
+
+const INITIAL_VISIBLE = 2;
+const MAX_VISIBLE = 10;
+
+export function NavTopWorkspaces() {
+  const t = useTranslation("zh-TW");
+  const { account, activeAccount } = useCurrentAccount();
+
+  const dimensionId = activeAccount?.id ?? account?.id ?? null;
+  const slug = (activeAccount?.handle ?? account?.handle ?? dimensionId) ?? "";
+
+  const { workspaces, loading } = useWorkspaces(dimensionId);
+  const [expanded, setExpanded] = useState(false);
+
+  const capped = workspaces.slice(0, MAX_VISIBLE);
+  const visible = expanded ? capped : capped.slice(0, INITIAL_VISIBLE);
+  const hasMore = capped.length > INITIAL_VISIBLE;
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground">
+        <Loader2 className="size-3 animate-spin" />
+        <span className="truncate">{t("nav.topWorkspaces")}</span>
+      </div>
+    );
+  }
+
+  if (capped.length === 0) {
+    return null;
   }
 
   return (
-    <RootShell
-      header={
-        <MarketingHeader
-          locale={locale}
-          onLocaleChange={setLocale}
-          isAuthenticated={!loading && !!user}
-          user={user}
-          onSignOut={handleSignOut}
-        />
-      }
-    >
-      {children}
-    </RootShell>
+    <SidebarMenu>
+      {visible.map((ws) => (
+        <SidebarMenuItem key={ws.id}>
+          <SidebarMenuButton asChild>
+            <Link href={`/${slug}/${ws.id}/wbs`}>
+              <Layers />
+              <span className="truncate">{ws.name}</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      ))}
+
+      {hasMore && (
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            onClick={() => setExpanded((v) => !v)}
+            className="text-muted-foreground"
+          >
+            <span className="text-xs font-medium">
+              {expanded ? t("nav.showLess") : t("nav.showMore")}
+            </span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      )}
+    </SidebarMenu>
   );
 }
+````
+
+## File: src/design-system/layout/dashboard/nav-user.tsx
+````typescript
+"use client";
+/**
+ * NavUser — Authenticated user menu in the sidebar footer.
+ * Shows user avatar, name, and logout option.
+ *
+ * Aggregates from:
+ * - account.module: useCurrentAccount() → user profile data
+ * - identity.module: clientSignOut() → Firebase logout
+ * - next/navigation: useRouter → post-logout navigation
+ */
+
+import { UserCircle, LogOut, ChevronsUpDown, Bell, Building2, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+import { useCurrentAccount } from "@/modules/account.module";
+import { useTranslation } from "@/shared/i18n";
+import { Avatar, AvatarFallback, AvatarImage } from "@/design-system/primitives/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/design-system/primitives/ui/dropdown-menu";
+import {
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  useSidebar,
+} from "@/design-system/primitives/ui/sidebar";
+import { clientSignOut } from "@/modules/identity.module/_client-actions";
+
+export function NavUser() {
+  const { isMobile } = useSidebar();
+  const router = useRouter();
+  const t = useTranslation("zh-TW");
+  const { user, account } = useCurrentAccount();
+
+  const handleLogout = async () => {
+    await clientSignOut();
+    router.push("/login");
+  };
+
+  const displayName = account?.displayName ?? user?.displayName ?? user?.email ?? "";
+  const email = user?.email ?? "";
+  const photoURL = account?.avatarUrl ?? user?.photoURL ?? null;
+  const initial = (displayName || email || "?")[0].toUpperCase();
+
+  return (
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuButton
+              size="lg"
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+            >
+              <Avatar className="size-8 rounded-lg">
+                {photoURL ? (
+                  <AvatarImage src={photoURL} alt={displayName} />
+                ) : null}
+                <AvatarFallback className="rounded-lg bg-primary/10 font-bold text-primary">
+                  {initial}
+                </AvatarFallback>
+              </Avatar>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-semibold">
+                  {displayName || t("common.loading")}
+                </span>
+                <span className="truncate text-xs text-muted-foreground">
+                  {email}
+                </span>
+              </div>
+              <ChevronsUpDown className="ml-auto size-4" />
+            </SidebarMenuButton>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+            side={isMobile ? "bottom" : "top"}
+            align="end"
+            sideOffset={4}
+          >
+            <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-widest opacity-60">
+              {t("nav.account")}
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link
+                href="/profile"
+                className="flex cursor-pointer items-center gap-2 py-2"
+              >
+                <UserCircle className="size-4 text-muted-foreground" />
+                <span className="text-xs font-medium">
+                  {t("nav.profileSettings")}
+                </span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/notifications" className="flex cursor-pointer items-center gap-2 py-2">
+                <Bell className="size-4 text-muted-foreground" />
+                <span className="text-xs font-medium">{t("nav.notifications")}</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/organizations" className="flex cursor-pointer items-center gap-2 py-2">
+                <Building2 className="size-4 text-muted-foreground" />
+                <span className="text-xs font-medium">{t("nav.organizations")}</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/security" className="flex cursor-pointer items-center gap-2 py-2">
+                <ShieldCheck className="size-4 text-muted-foreground" />
+                <span className="text-xs font-medium">{t("nav.security")}</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="flex cursor-pointer items-center gap-2 py-2 text-destructive"
+            >
+              <LogOut className="size-4" />
+              <span className="text-xs font-bold">{t("auth.signOut")}</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </SidebarMenuItem>
+    </SidebarMenu>
+  );
+}
+````
+
+## File: src/design-system/layout/dashboard/shell-header.tsx
+````typescript
+"use client";
+/**
+ * ShellHeader — Sticky header for authenticated pages.
+ * Shows sidebar trigger, breadcrumb navigation, and top-right controls.
+ *
+ * Aggregates from:
+ * - search.module: GlobalSearchDialog component
+ * - next/navigation: usePathname → breadcrumb segments
+ * - shared/i18n: breadcrumb labels
+ */
+
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Search } from "lucide-react";
+
+import { useTranslation } from "@/shared/i18n";
+import { Separator } from "@/design-system/primitives/ui/separator";
+import { SidebarTrigger } from "@/design-system/primitives/ui/sidebar";
+import { Button } from "@/design-system/primitives/ui/button";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/design-system/primitives/ui/breadcrumb";
+import { GlobalSearchDialog } from "@/modules/search.module";
+
+/** Maps a URL segment to its i18n key. Falls back to capitalising the segment. */
+const SEGMENT_I18N_KEYS: Record<string, string> = {
+  dashboard: "nav.home",
+  workspaces: "nav.workspaces",
+  onboarding: "onboarding.title",
+  profile: "nav.breadcrumb.profile",
+  security: "nav.breadcrumb.security",
+  notifications: "nav.breadcrumb.notifications",
+  organizations: "nav.breadcrumb.organizations",
+  settings: "nav.breadcrumb.settings",
+  members: "nav.breadcrumb.members",
+  billing: "nav.breadcrumb.billing",
+};
+
+function usePageBreadcrumbs(pathname: string, t: (key: string) => string) {
+  const segments = pathname.split("/").filter(Boolean);
+  return segments.map((seg, i) => {
+    const i18nKey = SEGMENT_I18N_KEYS[seg];
+    const label = i18nKey
+      ? t(i18nKey)
+      : seg.charAt(0).toUpperCase() + seg.slice(1);
+    return {
+      label,
+      href: "/" + segments.slice(0, i + 1).join("/"),
+      isLast: i === segments.length - 1,
+    };
+  });
+}
+
+export function ShellHeader() {
+  const pathname = usePathname();
+  const t = useTranslation("zh-TW");
+  const breadcrumbs = usePageBreadcrumbs(pathname, t);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  // Cmd+K / Ctrl+K keyboard shortcut
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      e.preventDefault();
+      setSearchOpen((prev) => !prev);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
+
+  return (
+    <>
+      <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 bg-background/70 ring-1 ring-border/55 backdrop-blur-xl sm:h-16">
+        <div className="flex min-w-0 flex-1 items-center gap-2 px-2 sm:px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <Breadcrumb className="min-w-0 flex-1">
+            <BreadcrumbList className="flex-nowrap overflow-x-auto">
+              {breadcrumbs.length === 0 ? (
+                <BreadcrumbItem>
+                  <BreadcrumbPage className="font-semibold">
+                    {t("nav.home")}
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              ) : (
+                breadcrumbs.flatMap((crumb) =>
+                  crumb.isLast
+                    ? [
+                        <BreadcrumbItem key={crumb.href}>
+                          <BreadcrumbPage className="max-w-[46vw] truncate font-semibold capitalize tracking-tight sm:max-w-none">
+                            {crumb.label}
+                          </BreadcrumbPage>
+                        </BreadcrumbItem>,
+                      ]
+                    : [
+                        <BreadcrumbItem
+                          key={crumb.href}
+                          className="hidden md:block"
+                        >
+                          <BreadcrumbLink asChild>
+                            <Link
+                              href={crumb.href}
+                              className="capitalize tracking-tight"
+                            >
+                              {crumb.label}
+                            </Link>
+                          </BreadcrumbLink>
+                        </BreadcrumbItem>,
+                        <BreadcrumbSeparator
+                          key={`sep-${crumb.href}`}
+                          className="hidden md:block"
+                        />,
+                      ]
+                )
+              )}
+            </BreadcrumbList>
+          </Breadcrumb>
+
+          {/* Cmd+K search trigger */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSearchOpen(true)}
+            className="hidden h-8 gap-2 rounded-lg px-3 text-xs text-muted-foreground sm:flex"
+            aria-label={t("search.placeholder")}
+          >
+            <Search className="size-3.5" />
+            <span className="hidden lg:inline">{t("search.placeholder")}</span>
+            <kbd className="pointer-events-none ml-1 hidden rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium opacity-60 select-none lg:inline-block">
+              {typeof window !== "undefined" && /Mac|iPhone|iPad/i.test(navigator.platform)
+                ? "⌘K"
+                : "Ctrl+K"}
+            </kbd>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSearchOpen(true)}
+            className="size-8 sm:hidden"
+            aria-label={t("search.placeholder")}
+          >
+            <Search className="size-4" />
+          </Button>
+        </div>
+      </header>
+      <GlobalSearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
+    </>
+  );
+}
+````
+
+## File: src/design-system/README.md
+````markdown
+# `src/design-system/` — UI Component Library
+
+## Purpose
+
+`src/design-system/` is the **shared UI component library and design token system** for Xuanwu Platform. It provides a five-tier hierarchy of reusable, domain-agnostic components that are consumed by `src/app/` pages and module `_components/`.
+
+This directory has **no knowledge of domain logic** — it is purely presentational.
+
+## Five-Tier Hierarchy
+
+```
+src/design-system/
+├── primitives/   ← Raw shadcn/ui components (Button, Input, Dialog, …)
+├── components/   ← Project-specific composite components (SearchField, …)
+├── patterns/     ← Higher-order UI composites (LoginForm, …)
+├── layout/       ← Structural layout shells and page-specific wrappers
+│   ├── base/     ← Generic base layouts
+│   └── marketing/← Marketing page layouts
+├── tokens/       ← Design-token constants (colours, spacing, typography)
+└── providers/    ← React context providers (ThemeProvider, …)
+```
+
+Import from the most specific tier available:
+
+```typescript
+import { Button }        from "@/design-system/primitives";   // raw primitive
+import { SearchField }   from "@/design-system/components";   // composite component
+import { LoginForm }     from "@/design-system/patterns";     // higher-order pattern
+import { HomeLayout }    from "@/design-system/layout/marketing";
+import { colorBrand }    from "@/design-system/tokens";       // design token
+```
+
+Or import from the top-level barrel (all tiers re-exported):
+
+```typescript
+import { Button, SearchField, colorBrand } from "@/design-system";
+```
+
+## Tier Responsibilities
+
+| Tier | Location | Purpose |
+|------|----------|---------|
+| `primitives/` | `primitives/ui/` | shadcn/ui base components; extend but do not modify internals |
+| `components/` | `components/` | Project-specific wrappers and composed primitives |
+| `patterns/` | `patterns/` | Multi-step or form-level UI composites (reuse across features) |
+| `layout/` | `layout/` | Page-level structural shells (nav, sidebar, page container) |
+| `tokens/` | `tokens/` | Design-token constants consumed by Tailwind and components |
+| `providers/` | `providers/` | React context providers (theme, locale); not re-exported from barrel |
+
+## Coding Conventions
+
+- **Server Components by default** — add `"use client"` only when event handlers, refs, or browser APIs are required.
+- **Shadcn/ui foundation** — extend shadcn/ui components via the `cn()` utility and `class-variance-authority` variants; do not modify files in `primitives/ui/` directly — re-export with extensions instead.
+- **Tailwind CSS** — use utility classes; avoid inline `style` props unless for dynamic values that cannot be expressed as utilities.
+- **No domain logic** — components receive all data as props or via React context; they must not call use cases, Server Actions, or infrastructure adapters.
+- **No module imports** — this directory must not import from `src/modules/` or `src/infrastructure/`.
+- **Named exports only** — avoid default exports to keep tree-shaking and refactoring predictable.
+
+## Import Rules
+
+```typescript
+// ✅ Correct — import from shared for utilities
+import { cn } from "@/shared/utils";
+
+// ❌ Wrong — design system must not depend on domain modules
+import { useWorkspace } from "@/modules/workspace.module";
+
+// ❌ Wrong — design system must not depend on infrastructure
+import { redis } from "@/infrastructure/upstash";
+```
+
+## See Also
+
+- App routes: [`src/app/README.md`](../app/README.md)
+- Shared utilities: [`src/shared/README.md`](../shared/README.md)
+````
+
+## File: src/infrastructure/AGENTS.md
+````markdown
+# `src/infrastructure/` Agent Rules
+
+Purpose: keep adapters free of business logic, enforce port-interface contracts, and prevent circular dependencies between infrastructure and modules.
+
+This file is mandatory guidance for any agent editing files under `src/infrastructure/`.
+
+---
+
+## 0. Non-negotiable Principles
+
+1. Infrastructure adapters implement **port interfaces** — they never own business rules.
+2. No import from `src/modules/` is allowed in this directory.
+3. SDK credentials come from environment variables only — never hardcode.
+4. Firebase Admin SDK and Upstash adapters are **server-only** — mark with `import "server-only"`.
+5. Catch SDK errors at the adapter boundary and re-throw as typed `AppError` subclasses.
+
+---
+
+## 1. Dependency Direction
+
+```
+src/infrastructure/
+   ↓  implements
+src/shared/ports/   ← port interfaces (ICachePort, IQueuePort, IVectorIndexPort, IWorkflowPort)
+
+src/infrastructure/ MUST NOT import from:
+   src/modules/    ← modules depend on infrastructure, not the reverse
+   src/app/        ← route layer depends on modules, not adapters
+```
+
+---
+
+## 2. Boundary Gate (Run Before Any Edit)
+
+1. Does this adapter file import from `src/modules/`? → **Stop.**
+2. Does the adapter contain conditional domain logic or invariant enforcement? → Move to module domain layer.
+3. Are SDK credentials read from `process.env.*`? → If hardcoded, refuse.
+4. Is the file server-only? → Add `import "server-only"` if it uses Admin SDK or Upstash with write access.
+5. Does the adapter correctly implement the port interface contract (same method signatures)?
+
+---
+
+## 3. Adding a New Adapter
+
+Follow this sequence:
+
+1. Identify or define the **port interface** in `src/shared/ports/` (cross-cutting) or `src/modules/<name>.module/domain.*/_ports.ts` (module-scoped).
+2. Create the adapter file in `src/infrastructure/<service>/` (cross-cutting) or `src/modules/<name>.module/infra.<adapter>/` (module-scoped).
+3. Implement all port interface methods with no domain logic.
+4. Export a named constant or factory function from the adapter file.
+5. Add the export to the sub-directory `index.ts` barrel.
+
+---
+
+## 4. Red Lines (Hard Fail)
+
+Agent must stop and report when any of the following appears:
+
+1. `import ... from "@/modules/..."` in any infrastructure file.
+2. Business invariant or conditional domain rule inside an adapter.
+3. Hardcoded Firebase project ID, API key, or Upstash token in source code.
+4. Firebase Admin SDK used in a Client Component or client-side barrel export.
+5. Adapter method that modifies aggregate state directly without going through a domain use case.
+````
+
+## File: src/infrastructure/README.md
+````markdown
+# `src/infrastructure/` — Concrete Adapters
+
+## Purpose
+
+`src/infrastructure/` provides **concrete implementations of port interfaces** defined in `src/shared/ports/` and in each module's `domain.*/_ports.ts`. It contains all external I/O: Firebase (Firestore, Storage, Auth), Upstash (Redis, QStash, Vector, Workflow), and Google Document AI / Genkit.
+
+Infrastructure adapters have **no business logic** — they translate between domain port contracts and third-party SDK calls.
+
+## Directory Structure
+
+```
+src/infrastructure/
+├── firebase/           ← Firebase platform adapters
+│   ├── app.ts          ← Firebase app initialization (client + admin)
+│   ├── admin/          ← Firebase Admin SDK helpers (server-only)
+│   ├── client/         ← Firebase Web SDK helpers (client-safe)
+│   └── index.ts        ← Barrel re-exports
+│
+├── upstash/            ← Upstash serverless service adapters
+│   ├── redis.ts        ← Redis cache (implements ICachePort)
+│   ├── qstash.ts       ← Task queue (implements IQueuePort)
+│   ├── vector.ts       ← Vector index for semantic search (implements IVectorIndexPort)
+│   ├── workflow.ts     ← Durable workflows (implements IWorkflowPort)
+│   ├── box.ts          ← Blob / sandbox storage adapter
+│   └── index.ts        ← Barrel re-exports
+│
+└── document-ai/        ← Google Document AI + Genkit ML pipeline
+    ├── genkit.ts       ← Genkit LLM integration
+    ├── flows/          ← Document parsing and extraction workflows
+    ├── schemas/        ← Zod schemas for Document AI responses
+    └── index.ts        ← Barrel re-exports
+```
+
+## Dependency Direction
+
+```
+src/infrastructure/
+   ↓  implements port interfaces from
+src/shared/ports/              ← ICachePort, IQueuePort, IVectorIndexPort, IWorkflowPort
+src/modules/<name>.module/domain.*/_ports.ts  ← module-scoped repository ports
+
+src/infrastructure/ MUST NOT import from:
+   src/modules/               ← adapters are injected into modules, not the reverse
+   src/app/                   ← infrastructure is not a Next.js concern
+```
+
+Module-level infrastructure adapters (`infra.<adapter>/`) live **inside each module** when the port is module-scoped (e.g. Firestore repository for a single aggregate). This directory hosts **cross-cutting adapters** shared by multiple modules.
+
+## Port → Adapter Mapping
+
+| Port Interface | Location | Concrete Adapter | SDK |
+|---------------|----------|-----------------|-----|
+| `ICachePort` | `src/shared/ports/` | `redis` | Upstash Redis |
+| `IQueuePort` | `src/shared/ports/` | `qstash` | Upstash QStash |
+| `IVectorIndexPort` | `src/shared/ports/` | `vector` | Upstash Vector |
+| `IWorkflowPort` | `src/shared/ports/` | `workflow` | Upstash Workflow |
+| Firebase Admin | (no interface) | `admin/*` | Firebase Admin SDK |
+| Firebase Client | (no interface) | `client/*` | Firebase Web SDK |
+| Document AI | (no interface) | `document-ai/*` | Google Document AI + Genkit |
+
+## Coding Conventions
+
+- **Server-only** — Firebase Admin and Upstash adapters must be imported only in Server Components, Server Actions, or Route Handlers; mark files with `import "server-only"` where appropriate.
+- **No business logic** — adapters translate port contracts to SDK calls; domain rules belong in `src/modules/*/domain.*`.
+- **Named exports only** — each adapter file exports a named constant or function; avoid default exports.
+- **Environment variables** — SDK initialization must read credentials from `process.env.*`; never hardcode keys.
+- **Error wrapping** — catch SDK errors at the adapter boundary and re-throw as typed `AppError` subclasses from `src/shared/errors/`.
+
+## Import Rules
+
+```typescript
+// ✅ Correct — use the Upstash Redis adapter (server-side only)
+import { redis } from "@/infrastructure/upstash";
+
+// ✅ Correct — use Firebase Admin in a Server Action
+import { adminDb } from "@/infrastructure/firebase/admin";
+
+// ❌ Wrong — infrastructure must not call domain use cases
+import { createWorkspaceUseCase } from "@/modules/workspace.module";
+```
+
+## See Also
+
+- Port interfaces: [`src/shared/ports/`](../shared/README.md)
+- Module-scoped adapters: [`src/modules/README.md`](../modules/README.md)
+- Architecture SSOT: [`docs/architecture/notes/model-driven-hexagonal-architecture.md`](../../docs/architecture/notes/model-driven-hexagonal-architecture.md)
 ````
 
 ## File: src/modules/account.module/_components/account-provider.tsx
@@ -64411,15 +68581,15 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { getAuth, onAuthStateChanged, type User } from "firebase/auth";
 
-import { getFirebaseApp } from "@/infrastructure/firebase/app";
+import { getFirebaseAuth, onAuthStateChanged, type User } from "@/infrastructure/firebase/client";
 import {
   getAccountById,
   getOrganizationsByOwnerId,
+  getUserRoleInOrganization,
   type AccountDTO,
-} from "@/modules/account.module/core/_use-cases";
-import { FirestoreAccountRepository } from "@/modules/account.module/infra.firestore/_repository";
+  type MemberRole,
+} from "@/modules/account.module";
 
 // ---------------------------------------------------------------------------
 // Context value type
@@ -64441,6 +68611,11 @@ export interface AccountContextValue {
    * Defaults to the personal account once loaded.
    */
   activeAccount: AccountDTO | null;
+  /**
+   * The current user's role in the activeAccount.
+   * Null for personal accounts; MemberRole ("owner"|"admin"|"member"|"viewer") for orgs.
+   */
+  activeAccountRole: MemberRole | null;
   /** Switch the active account context. Pass null to reset to personal. */
   setActiveAccount: (account: AccountDTO | null) => void;
   /** Re-fetch the list of organizations for the current user. */
@@ -64458,6 +68633,7 @@ const AccountContext = createContext<AccountContextValue>({
   loading: true,
   orgsLoading: false,
   activeAccount: null,
+  activeAccountRole: null,
   setActiveAccount: () => undefined,
   refreshOrganizations: () => Promise.resolve(),
 });
@@ -64473,17 +68649,26 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [orgsLoading, setOrgsLoading] = useState(false);
   const [activeAccount, setActiveAccountState] = useState<AccountDTO | null>(null);
+  const [activeAccountRole, setActiveAccountRole] = useState<MemberRole | null>(null);
 
   const setActiveAccount = useCallback((next: AccountDTO | null) => {
     setActiveAccountState(next);
-  }, []);
+    // When switching to an org, fetch the user's role in that org.
+    // Personal account always has null role.
+    if (next && next.accountType === "organization" && user) {
+      getUserRoleInOrganization(user.uid, next.id).then((result: any) => {
+        setActiveAccountRole(result.ok ? result.value : null);
+      });
+    } else {
+      setActiveAccountRole(null);
+    }
+  }, [user]);
 
   const refreshOrganizations = useCallback(async () => {
     if (!user) return;
     setOrgsLoading(true);
     try {
-      const repo = new FirestoreAccountRepository();
-      const orgsResult = await getOrganizationsByOwnerId(repo, user.uid);
+      const orgsResult = await getOrganizationsByOwnerId(user.uid);
       setOrganizations(orgsResult.ok ? orgsResult.value : []);
     } finally {
       setOrgsLoading(false);
@@ -64491,7 +68676,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   useEffect(() => {
-    const auth = getAuth(getFirebaseApp());
+    const auth = getFirebaseAuth();
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
@@ -64505,10 +68690,8 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const repo = new FirestoreAccountRepository();
-
         // Load personal account
-        const result = await getAccountById(repo, firebaseUser.uid);
+        const result = await getAccountById(firebaseUser.uid);
         const personalAccount = result.ok ? result.value : null;
         setAccount(personalAccount);
 
@@ -64518,7 +68701,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         // Load owned organizations
         setOrgsLoading(true);
         try {
-          const orgsResult = await getOrganizationsByOwnerId(repo, firebaseUser.uid);
+          const orgsResult = await getOrganizationsByOwnerId(firebaseUser.uid);
           setOrganizations(orgsResult.ok ? orgsResult.value : []);
         } finally {
           setOrgsLoading(false);
@@ -64544,6 +68727,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         loading,
         orgsLoading,
         activeAccount,
+        activeAccountRole,
         setActiveAccount,
         refreshOrganizations,
       }}
@@ -64566,6 +68750,287 @@ export function AccountProvider({ children }: { children: ReactNode }) {
 export function useCurrentAccount(): AccountContextValue {
   return useContext(AccountContext);
 }
+````
+
+## File: src/modules/account.module/core/_queries.ts
+````typescript
+import { FirestoreAccountRepository } from "../infra.firestore/_repository";
+import {
+  getAccountById as getAccountByIdUseCase,
+  getOrgMembersByHandle as getOrgMembersByHandleUseCase,
+  getOrganizationsByOwnerId as getOrganizationsByOwnerIdUseCase,
+  getPublicProfile as getPublicProfileUseCase,
+  getUserRoleInOrganization as getUserRoleInOrganizationUseCase,
+  type AccountDTO,
+  type MemberDTO,
+  type PublicProfileDTO,
+} from "./_use-cases";
+import type { MemberRole } from "../domain.account/_value-objects";
+
+const accountRepository = new FirestoreAccountRepository();
+
+export type { AccountDTO, MemberDTO, PublicProfileDTO };
+export type { MemberRole };
+
+export async function getAccountById(id: string) {
+  return getAccountByIdUseCase(accountRepository, id);
+}
+
+export async function getPublicProfile(id: string) {
+  return getPublicProfileUseCase(accountRepository, id);
+}
+
+export async function getOrgMembersByHandle(handle: string) {
+  return getOrgMembersByHandleUseCase(accountRepository, handle);
+}
+
+export async function getOrganizationsByOwnerId(ownerId: string) {
+  return getOrganizationsByOwnerIdUseCase(accountRepository, ownerId);
+}
+
+export async function getUserRoleInOrganization(userId: string, orgId: string) {
+  return getUserRoleInOrganizationUseCase(accountRepository, userId, orgId);
+}
+````
+
+## File: src/modules/AGENTS.md
+````markdown
+# src/modules Agent Guardrails
+
+Purpose: prevent boundary mistakes across Domain Modules and enforce predictable, reviewable changes.
+
+This file is mandatory guidance for any agent editing code under src/modules.
+
+---
+
+## 0. Non-negotiable Principles
+
+1. One module = one Bounded Context.
+2. Keep cohesion high: logic that changes for the same business reason stays in the same module.
+3. Dependency direction must be one-way by layer:
+	- Presentation -> Application -> Domain
+	- Infrastructure implements Domain ports
+4. Cross-module access must go through public API only:
+	- Allowed: src/modules/<target>.module/index.ts exports
+	- Forbidden: direct import from another module's core, domain.*, infra.*, _components
+5. Cross-context side effects are event or application orchestration concerns, not direct domain coupling.
+
+---
+
+## 1. Boundary Gate (Run Before Any Edit)
+
+Before writing code, the agent must answer all checks below:
+
+1. Which module owns this business rule?
+2. Is the target file in the owning module?
+3. Does this edit introduce any cross-module import?
+4. If yes, is it from target module public index barrel only?
+5. Does the change keep layer direction valid?
+6. Is this behavior same-context synchronous invariant, or cross-context eventual propagation?
+
+If any answer is unclear, stop and clarify before editing.
+
+---
+
+## 2. Red Lines (Hard Fail)
+
+Agent must stop and report when any of the following appears:
+
+1. Importing another module internals:
+	- src/modules/<other>.module/core/*
+	- src/modules/<other>.module/domain.*/*
+	- src/modules/<other>.module/infra.*/*
+	- src/modules/<other>.module/_components/*
+2. Placing Account-specific business logic in workspace.module (or inverse).
+3. Placing Infrastructure concerns in Presentation or Domain.
+4. Using shortcuts that bypass existing public use-cases and DTO contracts.
+5. UI-driven quick fix that silently changes bounded context ownership.
+
+---
+
+## 3. Account vs Workspace Ownership Rule
+
+Use this as the default arbiter:
+
+1. account.module owns:
+	- account identity and profile
+	- accountType personal|organization semantics
+	- active account context switching
+	- membership model and account governance
+2. workspace.module owns:
+	- workspace lifecycle and workspace ACL usage
+	- WBS, issue, CR, QA, acceptance, baseline
+	- planning and delivery context bound to workspace
+3. Workspace UI may consume current account context, but must not own account business rules.
+
+---
+
+## 4. Safe Integration Pattern Across Modules
+
+When module A needs data from module B:
+
+1. Read from module B public API barrel only.
+2. Keep module B behavior in B; do not duplicate rules in A.
+3. Prefer DTOs and explicit use-cases over internal repository usage.
+4. For side effects crossing contexts, use events/application orchestration.
+5. Document assumptions where consistency is eventual.
+
+---
+
+## 5. Consistency and Event Flow Rule
+
+1. Aggregate invariants: enforce synchronously inside owning context before persistence.
+2. Standard use-case flow:
+	- load aggregate -> apply domain rules -> persist -> emit domain event
+3. Cross-context updates default to eventual consistency unless explicitly documented otherwise.
+4. Do not fake strong consistency by directly mutating another module internals.
+
+---
+
+## 6. Pre-Commit Checklist (Required)
+
+1. No forbidden cross-module internal imports added.
+2. Any new cross-module dependency uses public barrel import.
+3. Changed logic matches owning bounded context.
+4. Layer direction remains valid after edit.
+5. i18n and docs are updated if user-facing behavior changed.
+6. At least one validation command has been run.
+
+---
+
+## 7. Incident Pattern to Avoid
+
+Never repeat this pattern:
+
+1. Detect boundary issue.
+2. Delete component immediately.
+3. Forget replacement in correct owning module.
+
+Correct sequence:
+
+1. Confirm ownership.
+2. Design replacement target path.
+3. Migrate wiring safely.
+4. Remove old file last.
+5. Validate runtime and imports.
+
+---
+
+## 8. Default Agent Behavior
+
+When uncertain, prefer explicitness over speed:
+
+1. Explain ownership decision first.
+2. Propose minimal safe migration steps.
+3. Execute in small verifiable diffs.
+4. Report what changed, why, and what remains.
+
+This repository values architectural correctness above fast but risky edits.
+
+## Module Documentation Contract
+
+When an agent edits any `src/modules/*.module` directory, it must keep both files present and updated:
+
+- `README.md` must clearly include:
+  1. Bounded Context
+  2. Core vs Supporting Domain
+  3. Context Mapping
+  4. Anti-Corruption Layer
+  5. Core Business Logic
+  6. Operational Flow
+  7. Inter-module Contracts
+- `AGENTS.md` must include:
+  - automation tasks / agent behavior,
+  - dependency direction diagram,
+  - boundary summary and hard red lines.
+````
+
+## File: src/modules/governance.module/README.md
+````markdown
+# governance.module
+
+**Bounded Context:** Governance / 授權與政策控制
+
+## Purpose
+
+This module owns the `governance.module` bounded context and exposes public contracts through `index.ts`.
+
+## Domain Governance（必填）
+
+### 1. 上下文邊界（Bounded Context）
+- 本模組邊界：**Governance / 授權與政策控制**。
+- 僅允許透過 `src/modules/governance.module/index.ts` 對外暴露能力；禁止跨模組直連 `core/`、`domain.*`、`infra.*`、`_components/`。
+
+### 2. 核心域與支撐域識別
+- 本模組定位：**支撐域**。
+- 核心能力放在 `domain.*` + `core/`；跨域整合、通知、搜尋等配套能力視為支撐能力，由應用層編排。
+
+### 3. 上下文映射（Context Mapping）
+- 主要上下游關聯：**Identity、Account、All modules**。
+- 跨上下文資料交換需使用 DTO／事件，不共享對方內部實體。
+
+### 4. 防腐層（Anti-Corruption Layer）
+- 外部系統（Firebase / Upstash / 外部 API）必須封裝在 `infra.*`。
+- 使用 Mapper / Adapter 將外部資料格式轉換為本域 Value Object 與 Entity，避免污染領域模型。
+
+### 5. 核心業務邏輯
+- 不變條件（invariants）與規則放在 `domain.*`（Entity / VO / Domain Service）。
+- `core/_use-cases.ts` 僅做流程協調：載入 → 套用規則 → 透過 Port 持久化 → 發布事件。
+
+### 6. 操作流程
+1. Presentation（`_components/` 或 `src/app`）呼叫模組公開 Action/Query。
+2. Application（`core/`）執行用例並調用 Domain。
+3. Domain 計算狀態變更與事件。
+4. Infrastructure（`infra.*`）透過 Port 落地 I/O。
+
+### 7. 模組間契約
+- 同步契約：`index.ts` 匯出的 Action / Query / DTO。
+- 非同步契約：Domain Event payload（版本化、向後相容）。
+- 契約變更需先更新 README 與呼叫端，避免破壞既有流程。
+````
+
+## File: src/modules/knowledge.module/README.md
+````markdown
+# knowledge.module
+
+**Bounded Context:** Knowledge / 知識卡與版本化內容
+
+## Purpose
+
+This module owns the `knowledge.module` bounded context and exposes public contracts through `index.ts`.
+
+## Domain Governance（必填）
+
+### 1. 上下文邊界（Bounded Context）
+- 本模組邊界：**Knowledge / 知識卡與版本化內容**。
+- 僅允許透過 `src/modules/knowledge.module/index.ts` 對外暴露能力；禁止跨模組直連 `core/`、`domain.*`、`infra.*`、`_components/`。
+
+### 2. 核心域與支撐域識別
+- 本模組定位：**支撐域**。
+- 核心能力放在 `domain.*` + `core/`；跨域整合、通知、搜尋等配套能力視為支撐能力，由應用層編排。
+
+### 3. 上下文映射（Context Mapping）
+- 主要上下游關聯：**Search、Vector Ingestion、Workspace**。
+- 跨上下文資料交換需使用 DTO／事件，不共享對方內部實體。
+
+### 4. 防腐層（Anti-Corruption Layer）
+- 外部系統（Firebase / Upstash / 外部 API）必須封裝在 `infra.*`。
+- 使用 Mapper / Adapter 將外部資料格式轉換為本域 Value Object 與 Entity，避免污染領域模型。
+
+### 5. 核心業務邏輯
+- 不變條件（invariants）與規則放在 `domain.*`（Entity / VO / Domain Service）。
+- `core/_use-cases.ts` 僅做流程協調：載入 → 套用規則 → 透過 Port 持久化 → 發布事件。
+
+### 6. 操作流程
+1. Presentation（`_components/` 或 `src/app`）呼叫模組公開 Action/Query。
+2. Application（`core/`）執行用例並調用 Domain。
+3. Domain 計算狀態變更與事件。
+4. Infrastructure（`infra.*`）透過 Port 落地 I/O。
+
+### 7. 模組間契約
+- 同步契約：`index.ts` 匯出的 Action / Query / DTO。
+- 非同步契約：Domain Event payload（版本化、向後相容）。
+- 契約變更需先更新 README 與呼叫端，避免破壞既有流程。
 ````
 
 ## File: src/modules/namespace.module/_components/create-org-dialog.tsx
@@ -64600,35 +69065,12 @@ import { Button } from "@/design-system/primitives/ui/button";
 import { Input } from "@/design-system/primitives/ui/input";
 import { Label } from "@/design-system/primitives/ui/label";
 import { useTranslation } from "@/shared/i18n";
-import { useCurrentAccount } from "@/modules/account.module";
-import type { AccountDTO } from "@/modules/account.module";
-import { createOrganizationAccount } from "@/modules/account.module";
-import { FirestoreAccountRepository } from "@/modules/account.module/infra.firestore/_repository";
+import {
+  createOrganizationAccount,
+  useCurrentAccount,
+  type AccountDTO,
+} from "@/modules/account.module";
 import { registerNamespace } from "@/modules/namespace.module";
-import { FirestoreNamespaceRepository } from "@/modules/namespace.module/infra.firestore/_repository";
-import { FirestoreNamespaceSlugAvailabilityAdapter } from "@/modules/namespace.module/infra.firestore/_slug-availability";
-
-// ---------------------------------------------------------------------------
-// Lazy-init singletons (avoids re-creating on each render)
-// ---------------------------------------------------------------------------
-
-let _accountRepo: FirestoreAccountRepository | null = null;
-function getAccountRepo() {
-  if (!_accountRepo) _accountRepo = new FirestoreAccountRepository();
-  return _accountRepo;
-}
-
-let _nsRepo: FirestoreNamespaceRepository | null = null;
-function getNsRepo() {
-  if (!_nsRepo) _nsRepo = new FirestoreNamespaceRepository();
-  return _nsRepo;
-}
-
-let _slugPort: FirestoreNamespaceSlugAvailabilityAdapter | null = null;
-function getSlugPort() {
-  if (!_slugPort) _slugPort = new FirestoreNamespaceSlugAvailabilityAdapter();
-  return _slugPort;
-}
 
 // ---------------------------------------------------------------------------
 // Slug helpers
@@ -64706,7 +69148,6 @@ export function CreateOrgDialog({
       // 1. Create the org Account (Application use case — account.module)
       const orgId = crypto.randomUUID();
       const accountResult = await createOrganizationAccount(
-        getAccountRepo(),
         orgId,
         user.uid,
         nameTrimmed,
@@ -64721,8 +69162,6 @@ export function CreateOrgDialog({
       //    and returns fail() if the slug is taken.
       //    ownerId == orgId (the namespace is owned by the org account, not the user).
       const nsResult = await registerNamespace(
-        getNsRepo(),
-        getSlugPort(),
         orgId,
         slugValue,
         "organization",
@@ -64830,101 +69269,29 @@ export function CreateOrgDialog({
 }
 ````
 
-## File: src/modules/namespace.module/_components/organizations-view.tsx
+## File: src/modules/namespace.module/index.ts
 ````typescript
-"use client";
-/**
- * OrganizationsView — lists the current user's organizations with a
- * create-org CTA that opens an inline dialog.
- *
- * DDD chain:
- *   Presentation (this view)
- *     ← Application context: organizations[] via AccountProvider
- *     → CreateOrgDialog (Presentation) → Application use cases (create account + namespace)
- *
- * Data source fixed: uses organizations[] from AccountProvider context
- * (AccountDTO[]) instead of namespace lookup by personal account ID.
- */
+// namespace.module — Public API barrel
+// Bounded Context: Namespace / 命名空間
+//
+// Exports: DTOs, application use cases, port interfaces.
+// NEVER export entities, value objects, repositories, or domain events directly.
 
-import { useState } from "react";
-import { Building2, Plus, Loader2 } from "lucide-react";
+export type { NamespaceDTO, WorkspacePathDTO } from "./core/_queries";
 
-import { Button } from "@/design-system/primitives/ui/button";
-import { useTranslation } from "@/shared/i18n";
-import { useCurrentAccount } from "@/modules/account.module";
-import type { AccountDTO } from "@/modules/account.module";
+export {
+  getNamespaceBySlug,
+  getNamespaceByOwnerId,
+  resolveWorkspacePath,
+} from "./core/_queries";
+export { bindWorkspaceToNamespace, registerNamespace } from "./core/_actions";
 
-import { OrgCard } from "./org-card";
-import { CreateOrgDialog } from "./create-org-dialog";
-
-export function OrganizationsView() {
-  const t = useTranslation("zh-TW");
-  const { loading: authLoading, orgsLoading, organizations, refreshOrganizations } =
-    useCurrentAccount();
-
-  const loading = authLoading || orgsLoading;
-  const [createOpen, setCreateOpen] = useState(false);
-
-  const handleOrgCreated = async (_org: AccountDTO) => {
-    // Re-fetch the org list from Firestore so the new card appears immediately.
-    await refreshOrganizations();
-  };
-
-  return (
-    <div className="mx-auto max-w-4xl space-y-6 duration-500 animate-in fade-in">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Building2 className="size-6 text-primary" />
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">{t("organizations.title")}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{t("organizations.subtitle")}</p>
-          </div>
-        </div>
-        <Button
-          className="gap-2 px-4 text-[11px] font-bold uppercase tracking-widest"
-          onClick={() => setCreateOpen(true)}
-        >
-          <Plus className="size-4" />
-          {t("organizations.createOrg")}
-        </Button>
-      </div>
-
-      {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="size-8 animate-spin text-muted-foreground" />
-        </div>
-      ) : organizations.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {organizations.map((org) => (
-            <OrgCard key={org.id} org={org} />
-          ))}
-        </div>
-      ) : (
-        /* Empty state */
-        <div className="flex flex-col items-center rounded-3xl border-2 border-dashed border-border/40 bg-muted/5 px-6 py-16 text-center">
-          <Building2 className="mb-4 size-12 text-muted-foreground opacity-10" />
-          <h3 className="text-lg font-bold">{t("organizations.noOrgs")}</h3>
-          <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
-            {t("organizations.noOrgsHint")}
-          </p>
-          <Button
-            size="lg"
-            className="mt-8 rounded-full px-8 text-xs font-bold uppercase tracking-widest shadow-lg"
-            onClick={() => setCreateOpen(true)}
-          >
-            {t("organizations.createOrg")}
-          </Button>
-        </div>
-      )}
-
-      <CreateOrgDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        onCreated={handleOrgCreated}
-      />
-    </div>
-  );
-}
+export type {
+  INamespaceRepository,
+  INamespaceSlugAvailabilityPort,
+} from "./domain.namespace/_ports";
+export { useNamespaceBySlug } from "./_components/use-namespace-by-slug";
+export type { UseNamespaceBySlugResult } from "./_components/use-namespace-by-slug";
 ````
 
 ## File: src/modules/search.module/_components/global-search-dialog.tsx
@@ -65361,6 +69728,138 @@ export function SearchResultsView({ initialQuery = "" }: SearchResultsViewProps)
 }
 ````
 
+## File: src/modules/subscription.module/README.md
+````markdown
+# subscription.module
+
+**Bounded Context:** Subscription / 訂閱、配額、方案生命週期
+
+## Purpose
+
+This module owns the `subscription.module` bounded context and exposes public contracts through `index.ts`.
+
+## Domain Governance（必填）
+
+### 1. 上下文邊界（Bounded Context）
+- 本模組邊界：**Subscription / 訂閱、配額、方案生命週期**。
+- 僅允許透過 `src/modules/subscription.module/index.ts` 對外暴露能力；禁止跨模組直連 `core/`、`domain.*`、`infra.*`、`_components/`。
+
+### 2. 核心域與支撐域識別
+- 本模組定位：**支撐域**。
+- 核心能力放在 `domain.*` + `core/`；跨域整合、通知、搜尋等配套能力視為支撐能力，由應用層編排。
+
+### 3. 上下文映射（Context Mapping）
+- 主要上下游關聯：**Account、Settlement、Governance**。
+- 跨上下文資料交換需使用 DTO／事件，不共享對方內部實體。
+
+### 4. 防腐層（Anti-Corruption Layer）
+- 外部系統（Firebase / Upstash / 外部 API）必須封裝在 `infra.*`。
+- 使用 Mapper / Adapter 將外部資料格式轉換為本域 Value Object 與 Entity，避免污染領域模型。
+
+### 5. 核心業務邏輯
+- 不變條件（invariants）與規則放在 `domain.*`（Entity / VO / Domain Service）。
+- `core/_use-cases.ts` 僅做流程協調：載入 → 套用規則 → 透過 Port 持久化 → 發布事件。
+
+### 6. 操作流程
+1. Presentation（`_components/` 或 `src/app`）呼叫模組公開 Action/Query。
+2. Application（`core/`）執行用例並調用 Domain。
+3. Domain 計算狀態變更與事件。
+4. Infrastructure（`infra.*`）透過 Port 落地 I/O。
+
+### 7. 模組間契約
+- 同步契約：`index.ts` 匯出的 Action / Query / DTO。
+- 非同步契約：Domain Event payload（版本化、向後相容）。
+- 契約變更需先更新 README 與呼叫端，避免破壞既有流程。
+````
+
+## File: src/modules/taxonomy.module/README.md
+````markdown
+# taxonomy.module
+
+**Bounded Context:** Taxonomy / 分類法、標籤、詞彙
+
+## Purpose
+
+This module owns the `taxonomy.module` bounded context and exposes public contracts through `index.ts`.
+
+## Domain Governance（必填）
+
+### 1. 上下文邊界（Bounded Context）
+- 本模組邊界：**Taxonomy / 分類法、標籤、詞彙**。
+- 僅允許透過 `src/modules/taxonomy.module/index.ts` 對外暴露能力；禁止跨模組直連 `core/`、`domain.*`、`infra.*`、`_components/`。
+
+### 2. 核心域與支撐域識別
+- 本模組定位：**支撐域**。
+- 核心能力放在 `domain.*` + `core/`；跨域整合、通知、搜尋等配套能力視為支撐能力，由應用層編排。
+
+### 3. 上下文映射（Context Mapping）
+- 主要上下游關聯：**Search、Knowledge、Workspace**。
+- 跨上下文資料交換需使用 DTO／事件，不共享對方內部實體。
+
+### 4. 防腐層（Anti-Corruption Layer）
+- 外部系統（Firebase / Upstash / 外部 API）必須封裝在 `infra.*`。
+- 使用 Mapper / Adapter 將外部資料格式轉換為本域 Value Object 與 Entity，避免污染領域模型。
+
+### 5. 核心業務邏輯
+- 不變條件（invariants）與規則放在 `domain.*`（Entity / VO / Domain Service）。
+- `core/_use-cases.ts` 僅做流程協調：載入 → 套用規則 → 透過 Port 持久化 → 發布事件。
+
+### 6. 操作流程
+1. Presentation（`_components/` 或 `src/app`）呼叫模組公開 Action/Query。
+2. Application（`core/`）執行用例並調用 Domain。
+3. Domain 計算狀態變更與事件。
+4. Infrastructure（`infra.*`）透過 Port 落地 I/O。
+
+### 7. 模組間契約
+- 同步契約：`index.ts` 匯出的 Action / Query / DTO。
+- 非同步契約：Domain Event payload（版本化、向後相容）。
+- 契約變更需先更新 README 與呼叫端，避免破壞既有流程。
+````
+
+## File: src/modules/vector-ingestion.module/README.md
+````markdown
+# vector-ingestion.module
+
+**Bounded Context:** Vector Ingestion / 向量化與索引管線
+
+## Purpose
+
+This module owns the `vector-ingestion.module` bounded context and exposes public contracts through `index.ts`.
+
+## Domain Governance（必填）
+
+### 1. 上下文邊界（Bounded Context）
+- 本模組邊界：**Vector Ingestion / 向量化與索引管線**。
+- 僅允許透過 `src/modules/vector-ingestion.module/index.ts` 對外暴露能力；禁止跨模組直連 `core/`、`domain.*`、`infra.*`、`_components/`。
+
+### 2. 核心域與支撐域識別
+- 本模組定位：**支撐域**。
+- 核心能力放在 `domain.*` + `core/`；跨域整合、通知、搜尋等配套能力視為支撐能力，由應用層編排。
+
+### 3. 上下文映射（Context Mapping）
+- 主要上下游關聯：**Knowledge、Search、File**。
+- 跨上下文資料交換需使用 DTO／事件，不共享對方內部實體。
+
+### 4. 防腐層（Anti-Corruption Layer）
+- 外部系統（Firebase / Upstash / 外部 API）必須封裝在 `infra.*`。
+- 使用 Mapper / Adapter 將外部資料格式轉換為本域 Value Object 與 Entity，避免污染領域模型。
+
+### 5. 核心業務邏輯
+- 不變條件（invariants）與規則放在 `domain.*`（Entity / VO / Domain Service）。
+- `core/_use-cases.ts` 僅做流程協調：載入 → 套用規則 → 透過 Port 持久化 → 發布事件。
+
+### 6. 操作流程
+1. Presentation（`_components/` 或 `src/app`）呼叫模組公開 Action/Query。
+2. Application（`core/`）執行用例並調用 Domain。
+3. Domain 計算狀態變更與事件。
+4. Infrastructure（`infra.*`）透過 Port 落地 I/O。
+
+### 7. 模組間契約
+- 同步契約：`index.ts` 匯出的 Action / Query / DTO。
+- 非同步契約：Domain Event payload（版本化、向後相容）。
+- 契約變更需先更新 README 與呼叫端，避免破壞既有流程。
+````
+
 ## File: src/modules/work.module/index.ts
 ````typescript
 // work.module — Public API barrel
@@ -65561,6 +70060,257 @@ export function CreateWorkItemDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+````
+
+## File: src/modules/workspace.module/_components/daily-log-card.tsx
+````typescript
+"use client";
+/**
+ * DailyLogCard — shows a single daily log entry with edit/delete actions.
+ * Wave 45: core card. Wave 52: social reactions (like + bookmark).
+ * Wave 55: comment thread (collaboration.module).
+ */
+
+import { useState } from "react";
+import { Calendar, Pencil, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/design-system/primitives/ui/alert-dialog";
+import { useTranslation } from "@/shared/i18n";
+import { useCurrentAccount } from "@/modules/account.module";
+import { CommentThread } from "@/modules/collaboration.module";
+import { SocialActionsBar } from "@/modules/social.module";
+import { deleteDailyLog, type DailyLogDTO } from "@/modules/workspace.module";
+
+interface DailyLogCardProps {
+  log: DailyLogDTO;
+  onEdit: () => void;
+  onDeleted: () => void;
+}
+
+export function DailyLogCard({ log, onEdit, onDeleted }: DailyLogCardProps) {
+  const t = useTranslation("zh-TW");
+  const { account } = useCurrentAccount();
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await deleteDailyLog(log.id);
+      setDeleteOpen(false);
+      onDeleted();
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="group rounded-2xl border border-border/50 bg-card p-4 shadow-sm transition-colors hover:bg-card/80">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 flex-1 flex-col">
+            <div className="flex items-center gap-2">
+              <Calendar className="size-3.5 shrink-0 text-muted-foreground" />
+              <span className="text-xs font-semibold text-muted-foreground">{log.date}</span>
+            </div>
+            <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{log.content}</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+            <button
+              type="button"
+              onClick={onEdit}
+              className="rounded-md p-1 hover:bg-muted"
+              aria-label="Edit"
+            >
+              <Pencil className="size-4 text-muted-foreground" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setDeleteOpen(true)}
+              className="rounded-md p-1 hover:bg-destructive/10"
+              aria-label="Delete"
+            >
+              <Trash2 className="size-4 text-destructive/70" />
+            </button>
+          </div>
+        </div>
+
+        {log.photoURLs.length > 0 && (
+          <div className="mt-3 flex gap-2 overflow-x-auto">
+            {log.photoURLs.map((url, idx) => (
+              <img
+                key={idx}
+                src={/^https?:\/\//i.test(url) ? url : ""}
+                alt={t("tasks.attachmentPreviewAlt")}
+                className="h-24 w-24 shrink-0 rounded-xl border object-cover"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Social reactions — Wave 52 */}
+        <div className="mt-3 flex items-center justify-between border-t border-border/30 pt-3">
+          <SocialActionsBar
+            targetId={log.id}
+            targetType="daily-log"
+            currentAccountId={account?.id}
+          />
+        </div>
+
+        {/* Comment thread — Wave 55 */}
+        <CommentThread
+          artifactType="daily-log"
+          artifactId={log.id}
+          defaultCollapsed
+        />
+      </div>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent className="max-w-sm rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("workspace.daily.deleteTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("workspace.daily.deleteDescription")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("common.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+````
+
+## File: src/modules/workspace.module/_components/daily-workspace-view.tsx
+````typescript
+"use client";
+/**
+ * DailyWorkspaceView — workspace daily log feed.
+ * Wave 45: capability-gated daily log view (requires "daily" capability).
+ *
+ * Source: workspace.slice/domain.daily/_components/
+ */
+
+import { useCallback, useEffect, useState } from "react";
+import { BookOpen, Loader2, Plus } from "lucide-react";
+import { Button } from "@/design-system/primitives/ui/button";
+import { useTranslation } from "@/shared/i18n";
+import { useCurrentAccount } from "@/modules/account.module";
+import { getDailyLogs, type DailyLogDTO } from "@/modules/workspace.module";
+import { DailyLogCard } from "./daily-log-card";
+import { DailyLogDialog } from "./daily-log-dialog";
+
+interface DailyWorkspaceViewProps {
+  workspaceId: string;
+}
+
+export function DailyWorkspaceView({ workspaceId }: DailyWorkspaceViewProps) {
+  const t = useTranslation("zh-TW");
+  const { account } = useCurrentAccount();
+  const [logs, setLogs] = useState<DailyLogDTO[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editLog, setEditLog] = useState<DailyLogDTO | null>(null);
+
+  const fetchLogs = useCallback(async () => {
+    setLoading(true);
+    try {
+      const result = await getDailyLogs(workspaceId);
+      if (result.ok) setLogs(result.value);
+    } finally {
+      setLoading(false);
+    }
+  }, [workspaceId]);
+
+  useEffect(() => { void fetchLogs(); }, [fetchLogs]);
+
+  return (
+    <div className="flex h-full flex-col space-y-4 duration-500 animate-in fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-border/40 pb-4">
+        <div className="flex items-center gap-3">
+          <BookOpen className="size-5 text-primary" />
+          <h1 className="text-lg font-bold tracking-tight">{t("workspace.daily.title")}</h1>
+        </div>
+        <Button
+          size="sm"
+          className="gap-2 text-xs font-bold uppercase tracking-widest"
+          onClick={() => setCreateOpen(true)}
+        >
+          <Plus className="size-4" />
+          {t("workspace.daily.addEntry")}
+        </Button>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : logs.length > 0 ? (
+        <div className="space-y-3">
+          {logs.map((log) => (
+            <DailyLogCard
+              key={log.id}
+              log={log}
+              onEdit={() => setEditLog(log)}
+              onDeleted={fetchLogs}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border/40 bg-muted/5 px-6 py-16 text-center">
+          <BookOpen className="mb-4 size-12 text-muted-foreground opacity-10" />
+          <h3 className="text-lg font-bold">{t("workspace.daily.empty")}</h3>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+            {t("workspace.daily.emptyHint")}
+          </p>
+          <Button
+            size="lg"
+            className="mt-8 rounded-full px-8 text-xs font-bold uppercase tracking-widest shadow-lg"
+            onClick={() => setCreateOpen(true)}
+          >
+            {t("workspace.daily.addEntry")}
+          </Button>
+        </div>
+      )}
+
+      <DailyLogDialog
+        workspaceId={workspaceId}
+        authorId={account?.id ?? ""}
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onSaved={fetchLogs}
+      />
+
+      {editLog && (
+        <DailyLogDialog
+          workspaceId={workspaceId}
+          authorId={account?.id ?? ""}
+          existingLog={editLog}
+          open={!!editLog}
+          onOpenChange={(o) => { if (!o) setEditLog(null); }}
+          onSaved={() => { setEditLog(null); void fetchLogs(); }}
+        />
+      )}
+    </div>
   );
 }
 ````
@@ -65770,315 +70520,366 @@ export function DashboardView() {
 }
 ````
 
-## File: src/modules/workspace.module/_components/shell/nav-main.tsx
+## File: src/modules/workspace.module/_components/issues-view.tsx
 ````typescript
 "use client";
 /**
- * NavMain — Primary navigation items in the sidebar.
+ * IssuesView — workspace issue tracking CRUD view.
+ * Wave 46: capability-gated (requires "issues" capability).
  *
- * Items are derived from the 16 domain modules:
- *  - Home          → account-level dashboard
- *  - Workspaces    → workspace.module (core project management)
- *  - Notifications → notification.module (alerts + mentions)
- *  - Organizations → namespace.module + account.module (org management)
- *  - Search        → search.module (global search)
- */
-
-import {
-  Bell,
-  Building2,
-  LayoutDashboard,
-  Layers,
-  Search,
-} from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-
-import { useTranslation } from "@/shared/i18n";
-import {
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-} from "@/design-system/primitives/ui/sidebar";
-
-const HOME_ROUTE = "/dashboard";
-
-const NAV_ITEMS = [
-  { href: HOME_ROUTE, icon: LayoutDashboard, labelKey: "nav.home" },
-  { href: "/workspaces", icon: Layers, labelKey: "nav.workspaces" },
-  { href: "/notifications", icon: Bell, labelKey: "nav.notifications" },
-  { href: "/organizations", icon: Building2, labelKey: "nav.organizations" },
-  { href: "/search", icon: Search, labelKey: "nav.search" },
-] as const;
-
-export function NavMain() {
-  const pathname = usePathname();
-  const t = useTranslation("zh-TW");
-
-  return (
-    <SidebarMenu>
-      {NAV_ITEMS.map(({ href, icon: Icon, labelKey }) => (
-        <SidebarMenuItem key={href}>
-          <SidebarMenuButton
-            asChild
-            isActive={
-              pathname === href ||
-              (href !== HOME_ROUTE && pathname.startsWith(href))
-            }
-          >
-            <Link href={href}>
-              <Icon />
-              <span className="font-semibold">{t(labelKey)}</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      ))}
-    </SidebarMenu>
-  );
-}
-````
-
-## File: src/modules/workspace.module/_components/shell/nav-top-workspaces.tsx
-````typescript
-"use client";
-/**
- * NavTopWorkspaces — sidebar section listing the top workspaces (up to 10)
- * for the currently active account.
- *
- * Behaviour:
- *  - Shows the first 2 workspaces immediately.
- *  - Workspaces 3–10 are revealed when the user clicks "Show more".
- *  - Clicking any workspace navigates to its WBS view.
- *  - A loading skeleton is shown while workspaces are fetching.
- */
-
-import { Layers, Loader2 } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
-
-import { useTranslation } from "@/shared/i18n";
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/design-system/primitives/ui/sidebar";
-import { useCurrentAccount } from "@/modules/account.module";
-
-import { useWorkspaces } from "../use-workspaces";
-
-const INITIAL_VISIBLE = 2;
-const MAX_VISIBLE = 10;
-
-export function NavTopWorkspaces() {
-  const t = useTranslation("zh-TW");
-  const { account, activeAccount } = useCurrentAccount();
-
-  const dimensionId = activeAccount?.id ?? account?.id ?? null;
-  const slug = (activeAccount?.handle ?? account?.handle ?? dimensionId) ?? "";
-
-  const { workspaces, loading } = useWorkspaces(dimensionId);
-  const [expanded, setExpanded] = useState(false);
-
-  const capped = workspaces.slice(0, MAX_VISIBLE);
-  const visible = expanded ? capped : capped.slice(0, INITIAL_VISIBLE);
-  const hasMore = capped.length > INITIAL_VISIBLE;
-
-  if (loading) {
-    return (
-      <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground">
-        <Loader2 className="size-3 animate-spin" />
-        <span className="truncate">{t("nav.topWorkspaces")}</span>
-      </div>
-    );
-  }
-
-  if (capped.length === 0) {
-    return null;
-  }
-
-  return (
-    <SidebarMenu>
-      {visible.map((ws) => (
-        <SidebarMenuItem key={ws.id}>
-          <SidebarMenuButton asChild>
-            <Link href={`/${slug}/${ws.id}/wbs`}>
-              <Layers />
-              <span className="truncate">{ws.name}</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      ))}
-
-      {hasMore && (
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            onClick={() => setExpanded((v) => !v)}
-            className="text-muted-foreground"
-          >
-            <span className="text-xs font-medium">
-              {expanded ? t("nav.showLess") : t("nav.showMore")}
-            </span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      )}
-    </SidebarMenu>
-  );
-}
-````
-
-## File: src/modules/workspace.module/_components/shell/shell-header.tsx
-````typescript
-"use client";
-/**
- * ShellHeader — Sticky header for authenticated pages.
- * Shows sidebar trigger, breadcrumb navigation, and top-right controls.
- * Wave 47: Cmd+K global search dialog trigger.
+ * Source: workspace.slice/domain.issues/_components/issues-view.tsx
  */
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Search } from "lucide-react";
-
-import { useTranslation } from "@/shared/i18n";
-import { Separator } from "@/design-system/primitives/ui/separator";
-import { SidebarTrigger } from "@/design-system/primitives/ui/sidebar";
+import {
+  AlertTriangle,
+  Loader2,
+  Plus,
+  CheckCircle2,
+  Circle,
+  Clock,
+  XCircle,
+  Pencil,
+  Trash2,
+} from "lucide-react";
+import { Badge } from "@/design-system/primitives/ui/badge";
 import { Button } from "@/design-system/primitives/ui/button";
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/design-system/primitives/ui/breadcrumb";
-import { GlobalSearchDialog } from "@/modules/search.module/_components/global-search-dialog";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/design-system/primitives/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/design-system/primitives/ui/dialog";
+import { Input } from "@/design-system/primitives/ui/input";
+import { Label } from "@/design-system/primitives/ui/label";
+import { Textarea } from "@/design-system/primitives/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/design-system/primitives/ui/select";
+import { useTranslation } from "@/shared/i18n";
+import { useCurrentAccount } from "@/modules/account.module";
+import {
+  createIssue,
+  deleteIssue,
+  getIssues,
+  updateIssue,
+  type IssueDTO,
+  type IssueSeverity,
+  type IssueStatus,
+} from "@/modules/workspace.module";
 
-/** Maps a URL segment to its i18n key. Falls back to capitalising the segment. */
-const SEGMENT_I18N_KEYS: Record<string, string> = {
-  dashboard: "nav.home",
-  workspaces: "nav.workspaces",
-  onboarding: "onboarding.title",
-  profile: "nav.breadcrumb.profile",
-  security: "nav.breadcrumb.security",
-  notifications: "nav.breadcrumb.notifications",
-  organizations: "nav.breadcrumb.organizations",
-  settings: "nav.breadcrumb.settings",
-  members: "nav.breadcrumb.members",
-  billing: "nav.breadcrumb.billing",
-};
+const SEVERITIES: IssueSeverity[] = ["critical", "high", "medium", "low"];
 
-function usePageBreadcrumbs(pathname: string, t: (key: string) => string) {
-  const segments = pathname.split("/").filter(Boolean);
-  return segments.map((seg, i) => {
-    const i18nKey = SEGMENT_I18N_KEYS[seg];
-    const label = i18nKey
-      ? t(i18nKey)
-      : seg.charAt(0).toUpperCase() + seg.slice(1);
-    return {
-      label,
-      href: "/" + segments.slice(0, i + 1).join("/"),
-      isLast: i === segments.length - 1,
-    };
-  });
+function statusIcon(status: IssueStatus) {
+  switch (status) {
+    case "resolved": return <CheckCircle2 className="size-4 text-green-500" />;
+    case "in-progress": return <Clock className="size-4 text-blue-500" />;
+    case "closed": return <XCircle className="size-4 text-muted-foreground" />;
+    default: return <Circle className="size-4 text-orange-400" />;
+  }
 }
 
-export function ShellHeader() {
-  const pathname = usePathname();
+function severityVariant(s: IssueSeverity): "default" | "secondary" | "destructive" | "outline" {
+  switch (s) {
+    case "critical": return "destructive";
+    case "high": return "default";
+    case "medium": return "outline";
+    default: return "secondary";
+  }
+}
+
+interface IssueFormDialogProps {
+  workspaceId: string;
+  reporterId: string;
+  editIssue?: IssueDTO;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSaved: () => void;
+}
+
+function IssueFormDialog({ workspaceId, reporterId, editIssue, open, onOpenChange, onSaved }: IssueFormDialogProps) {
   const t = useTranslation("zh-TW");
-  const breadcrumbs = usePageBreadcrumbs(pathname, t);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [title, setTitle] = useState(editIssue?.title ?? "");
+  const [description, setDescription] = useState(editIssue?.description ?? "");
+  const [severity, setSeverity] = useState<IssueSeverity>(editIssue?.severity ?? "medium");
+  const [status, setStatus] = useState<IssueStatus>(editIssue?.status ?? "open");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Cmd+K / Ctrl+K keyboard shortcut
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-      e.preventDefault();
-      setSearchOpen((prev) => !prev);
+  const handleOpenChange = (o: boolean) => {
+    if (o) {
+      setTitle(editIssue?.title ?? "");
+      setDescription(editIssue?.description ?? "");
+      setSeverity(editIssue?.severity ?? "medium");
+      setStatus(editIssue?.status ?? "open");
+      setError(null);
     }
-  }, []);
+    onOpenChange(o);
+  };
 
-  useEffect(() => {
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleKeyDown]);
+  const handleSave = async () => {
+    if (!title.trim()) { setError(t("workspace.issues.titleRequired")); return; }
+    setSaving(true);
+    setError(null);
+    try {
+      let result;
+      if (editIssue) {
+        result = await updateIssue(editIssue.id, {
+          title: title.trim(),
+          description: description.trim() || null,
+          severity,
+          status,
+        });
+      } else {
+        result = await createIssue(
+          crypto.randomUUID(),
+          workspaceId,
+          title.trim(),
+          severity,
+          reporterId,
+          description.trim() || undefined,
+        );
+      }
+      if (!result.ok) throw result.error;
+      onSaved();
+      onOpenChange(false);
+    } catch {
+      setError(t("workspace.issues.saveFailed"));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
-    <>
-      <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 bg-background/70 ring-1 ring-border/55 backdrop-blur-xl sm:h-16">
-        <div className="flex min-w-0 flex-1 items-center gap-2 px-2 sm:px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
-          <Breadcrumb className="min-w-0 flex-1">
-            <BreadcrumbList className="flex-nowrap overflow-x-auto">
-              {breadcrumbs.length === 0 ? (
-                <BreadcrumbItem>
-                  <BreadcrumbPage className="font-semibold">
-                    {t("nav.home")}
-                  </BreadcrumbPage>
-                </BreadcrumbItem>
-              ) : (
-                breadcrumbs.flatMap((crumb) =>
-                  crumb.isLast
-                    ? [
-                        <BreadcrumbItem key={crumb.href}>
-                          <BreadcrumbPage className="max-w-[46vw] truncate font-semibold capitalize tracking-tight sm:max-w-none">
-                            {crumb.label}
-                          </BreadcrumbPage>
-                        </BreadcrumbItem>,
-                      ]
-                    : [
-                        <BreadcrumbItem
-                          key={crumb.href}
-                          className="hidden md:block"
-                        >
-                          <BreadcrumbLink asChild>
-                            <Link
-                              href={crumb.href}
-                              className="capitalize tracking-tight"
-                            >
-                              {crumb.label}
-                            </Link>
-                          </BreadcrumbLink>
-                        </BreadcrumbItem>,
-                        <BreadcrumbSeparator
-                          key={`sep-${crumb.href}`}
-                          className="hidden md:block"
-                        />,
-                      ]
-                )
-              )}
-            </BreadcrumbList>
-          </Breadcrumb>
-
-          {/* Cmd+K search trigger */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setSearchOpen(true)}
-            className="hidden h-8 gap-2 rounded-lg px-3 text-xs text-muted-foreground sm:flex"
-            aria-label={t("search.placeholder")}
-          >
-            <Search className="size-3.5" />
-            <span className="hidden lg:inline">{t("search.placeholder")}</span>
-            <kbd className="pointer-events-none ml-1 hidden rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium opacity-60 select-none lg:inline-block">
-              {typeof window !== "undefined" && /Mac|iPhone|iPad/i.test(navigator.platform)
-                ? "⌘K"
-                : "Ctrl+K"}
-            </kbd>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-sm rounded-2xl">
+        <DialogHeader>
+          <DialogTitle>
+            {editIssue ? t("workspace.issues.editIssue") : t("workspace.issues.createIssue")}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 py-2">
+          <div className="grid gap-1.5">
+            <Label>{t("workspace.issues.titleLabel")}</Label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} className="rounded-xl" />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>{t("workspace.issues.descriptionLabel")}</Label>
+            <Textarea
+              rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder={t("workspace.issues.descriptionPlaceholder")}
+              className="resize-none rounded-xl text-sm"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label>{t("workspace.issues.severityLabel")}</Label>
+              <Select value={severity} onValueChange={(v) => setSeverity(v as IssueSeverity)}>
+                <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {SEVERITIES.map((s) => (
+                    <SelectItem key={s} value={s}>{t(`workspace.issues.severity.${s}`)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {editIssue && (
+              <div className="grid gap-1.5">
+                <Label>{t("workspace.issues.statusLabel")}</Label>
+                <Select value={status} onValueChange={(v) => setStatus(v as IssueStatus)}>
+                  <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(["open", "in-progress", "resolved", "closed"] as IssueStatus[]).map((s) => (
+                      <SelectItem key={s} value={s}>{t(`workspace.issues.status.${s}`)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+          {error && <p className="text-xs text-destructive">{error}</p>}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>{t("common.cancel")}</Button>
+          <Button onClick={handleSave} disabled={saving || !title.trim()}>
+            {saving ? t("common.saving") : t("common.save")}
           </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface IssuesViewProps {
+  workspaceId: string;
+}
+
+export function IssuesView({ workspaceId }: IssuesViewProps) {
+  const t = useTranslation("zh-TW");
+  const { account } = useCurrentAccount();
+  const [issues, setIssues] = useState<IssueDTO[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editIssue, setEditIssue] = useState<IssueDTO | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<IssueDTO | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const fetchIssues = useCallback(async () => {
+    setLoading(true);
+    try {
+      const result = await getIssues(workspaceId);
+      if (result.ok) setIssues(result.value);
+    } finally {
+      setLoading(false);
+    }
+  }, [workspaceId]);
+
+  useEffect(() => { void fetchIssues(); }, [fetchIssues]);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteIssue(deleteTarget.id);
+      setDeleteTarget(null);
+      void fetchIssues();
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="flex h-full flex-col space-y-4 duration-500 animate-in fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-border/40 pb-4">
+        <div className="flex items-center gap-3">
+          <AlertTriangle className="size-5 text-primary" />
+          <h1 className="text-lg font-bold tracking-tight">{t("workspace.issues.title")}</h1>
+        </div>
+        <Button
+          size="sm"
+          className="gap-2 text-xs font-bold uppercase tracking-widest"
+          onClick={() => setCreateOpen(true)}
+        >
+          <Plus className="size-4" />
+          {t("workspace.issues.addIssue")}
+        </Button>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : issues.length > 0 ? (
+        <div className="space-y-2">
+          {issues.map((issue) => (
+            <div
+              key={issue.id}
+              className="group flex items-start gap-3 rounded-2xl border border-border/50 bg-card px-4 py-3 shadow-sm transition-colors hover:bg-card/80"
+            >
+              <div className="mt-0.5 shrink-0">{statusIcon(issue.status)}</div>
+              <div className="min-w-0 flex-1">
+                <p className={`truncate text-sm font-semibold ${issue.status === "closed" ? "line-through text-muted-foreground" : ""}`}>
+                  {issue.title}
+                </p>
+                {issue.description && (
+                  <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{issue.description}</p>
+                )}
+              </div>
+              <Badge variant={severityVariant(issue.severity)} className="shrink-0 h-5 px-2 text-[10px] font-bold uppercase tracking-wider">
+                {t(`workspace.issues.severity.${issue.severity}`)}
+              </Badge>
+              <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                <button
+                  type="button"
+                  onClick={() => setEditIssue(issue)}
+                  className="rounded-md p-1 hover:bg-muted"
+                  aria-label="Edit"
+                >
+                  <Pencil className="size-4 text-muted-foreground" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeleteTarget(issue)}
+                  className="rounded-md p-1 hover:bg-destructive/10"
+                  aria-label="Delete"
+                >
+                  <Trash2 className="size-4 text-destructive/70" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border/40 bg-muted/5 px-6 py-16 text-center">
+          <AlertTriangle className="mb-4 size-12 text-muted-foreground opacity-10" />
+          <h3 className="text-lg font-bold">{t("workspace.issues.empty")}</h3>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">{t("workspace.issues.emptyHint")}</p>
           <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSearchOpen(true)}
-            className="size-8 sm:hidden"
-            aria-label={t("search.placeholder")}
+            size="lg"
+            className="mt-8 rounded-full px-8 text-xs font-bold uppercase tracking-widest shadow-lg"
+            onClick={() => setCreateOpen(true)}
           >
-            <Search className="size-4" />
+            {t("workspace.issues.addIssue")}
           </Button>
         </div>
-      </header>
-      <GlobalSearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
-    </>
+      )}
+
+      <IssueFormDialog
+        workspaceId={workspaceId}
+        reporterId={account?.id ?? ""}
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onSaved={fetchIssues}
+      />
+
+      {editIssue && (
+        <IssueFormDialog
+          workspaceId={workspaceId}
+          reporterId={account?.id ?? ""}
+          editIssue={editIssue}
+          open={!!editIssue}
+          onOpenChange={(o) => { if (!o) setEditIssue(null); }}
+          onSaved={() => { setEditIssue(null); void fetchIssues(); }}
+        />
+      )}
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+        <AlertDialogContent className="max-w-sm rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("workspace.issues.deleteTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("workspace.issues.deleteDescription")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("common.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 }
 ````
@@ -67323,212 +72124,192 @@ export function WorkspaceGrantsView({ workspaceId }: WorkspaceGrantsViewProps) {
 }
 ````
 
-## File: src/modules/workspace.module/index.ts
+## File: src/modules/workspace.module/_components/workspaces-view.tsx
 ````typescript
-// workspace.module — Public API barrel
-// Bounded Context: Workspace · WBS · Issue · Change Request · QA · Acceptance · Baseline
-//
-// Exports: DTOs, application use cases, port interfaces.
-// NEVER export entities, value objects, repositories, or domain events directly.
+"use client";
+/**
+ * WorkspacesView — grid view of all workspaces for a given namespace/slug.
+ *
+ * Source: workspace.slice/core/_components/workspaces-view.tsx
+ * Adapted: fetches real workspace data using useWorkspaces + useCurrentAccount
+ * instead of relying on server-side props. This follows the source pattern
+ * (client-side subscription) and avoids needing Admin SDK for SSR auth.
+ */
 
-export type { WorkspaceDTO, WorkspaceGrantDTO, GrantWorkspaceAccessInput } from "./core/_actions";
-export type { WorkspaceRole } from "./core/_use-cases";
+import { Terminal, LayoutGrid, List, Search, Plus, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 
-export {
-  createWorkspace,
-  advanceWorkspaceLifecycle,
-  grantWorkspaceAccess,
-  revokeWorkspaceAccess,
-  updateWorkspaceRole,
-  deleteWorkspace,
-  mountCapabilities,
-  unmountCapability,
-  updateWorkspaceSettings,
-} from "./core/_actions";
-export {
-  filterVisibleWorkspaces,
-  getWorkspaceById,
-  getWorkspacesByDimension,
-} from "./core/_queries";
+import { useTranslation } from "@/shared/i18n";
+import { Button } from "@/design-system/primitives/ui/button";
+import { Input } from "@/design-system/primitives/ui/input";
+import { useCurrentAccount } from "@/modules/account.module";
+import type { WorkspaceDTO } from "@/modules/workspace.module";
 
-// Pure domain utilities (no I/O)
-export {
-  summarizeWorkflowBlockers,
-  deriveWorkflowBlockersFromSources,
-  applyWorkflowBlocked,
-  applyWorkflowUnblocked,
-} from "./domain.workspace/workflow-blockers-state";
-export type { WorkflowBlockersState, WorkflowBlockersSummary } from "./domain.workspace/workflow-blockers-state";
+import { useWorkspaces } from "./use-workspaces";
+import { WorkspaceCard } from "./workspace-card";
+import { CreateWorkspaceDialog } from "./create-workspace-dialog";
 
-export type {
-  IWorkspaceRepository,
-  IWorkspaceGrantRepository,
-} from "./domain.workspace/_ports";
+interface WorkspacesViewProps {
+  /** The namespace slug, e.g. "my-org". Used to build workspace hrefs. */
+  slug: string;
+  /**
+   * The account (dimension) ID whose workspaces to fetch.
+   * When omitted, defaults to the currently active account (org or personal).
+   * Pass this explicitly from AccountWorkspacesPage to respect the active
+   * account context rather than always falling back to the personal account.
+   */
+  dimensionId?: string;
+}
 
-// Presentation components (client-only)
-export { useWorkspace } from "./_components/use-workspace";
-export { WorkspaceNavTabs } from "./_components/workspace-nav-tabs";
-export { WorkspaceShell } from "./_components/workspace-shell";
-export { WorkspaceStatusBar } from "./_components/workspace-status-bar";
-export { WorkspaceCapabilitiesView } from "./_components/workspace-capabilities-view";
-export { WorkspaceGrantsView } from "./_components/workspace-grants-view";
-export { WorkspaceSettingsDialog } from "./_components/workspace-settings-dialog";
-export { CAPABILITY_SPECS, NON_MOUNTABLE_CAPABILITY_IDS } from "./core/_capabilities";
-export type { WorkspaceCapability } from "./core/_capabilities";
-````
+function filterWorkspaces(workspaces: WorkspaceDTO[], query: string): WorkspaceDTO[] {
+  if (!query.trim()) return workspaces;
+  const q = query.toLowerCase();
+  return workspaces.filter(
+    (w) =>
+      w.name.toLowerCase().includes(q) ||
+      w.slug?.toLowerCase().includes(q)
+  );
+}
 
-## File: .github/agents/xuanwu-commander.agent.md
-````markdown
----
-name: xuanwu-commander
-description: "Master entry point — six-step intent pipeline (Raw Input → Intent Detection → Context Extraction → Entity Extraction → Dependency Analysis → Task Instruction) to understand user goals, collect context, and dispatch to the correct Xuanwu agent or prompt workflow."
-argument-hint: Describe the task or problem you want to solve.
-tools: ['search', 'fetch', 'codebase', 'usages', 'agent', 'software-planning/*', 'serena/*', 'sequential-thinking/*']
-agents:
-  - xuanwu-orchestrator
-  - xuanwu-product
-  - xuanwu-research
-  - xuanwu-architect
-  - xuanwu-architecture-chief
-  - xuanwu-architecture-refactor
-  - xuanwu-diagram-designer
-  - xuanwu-repo-browser
-  - xuanwu-implementer
-  - xuanwu-ui
-  - xuanwu-quality
-  - xuanwu-docs
-  - xuanwu-librarian
-  - xuanwu-ops
-  - xuanwu-test-expert
-  - xuanwu-software-planner
-  - xuanwu-sequential-thinking
-  - ddd-orchestrator
-handoffs:
-  - label: 'Full delivery (multi-function)'
-    agent: xuanwu-orchestrator
-    prompt: 'Route and coordinate the cross-functional task described above.'
-  - label: 'Refine requirements / plan'
-    agent: xuanwu-product
-    prompt: 'Refine the requirements and build an implementation plan for the task above.'
-  - label: 'Research codebase or docs'
-    agent: xuanwu-research
-    prompt: 'Research the codebase and gather context for the task above.'
-  - label: 'Design or audit architecture'
-    agent: xuanwu-architect
-    prompt: 'Design or audit the architecture for the task above.'
-  - label: 'Architecture doc realignment'
-    agent: xuanwu-architecture-chief
-    prompt: 'Realign the architecture documentation against the canonical SSOT.'
-  - label: 'Refactor architecture docs'
-    agent: xuanwu-architecture-refactor
-    prompt: 'Restructure the architecture documentation for clarity and consistency.'
-  - label: 'Refine architecture diagrams'
-    agent: xuanwu-diagram-designer
-    prompt: 'Refine the architecture diagrams using Mermaid.'
-  - label: 'Read-only architecture analysis'
-    agent: xuanwu-repo-browser
-    prompt: 'Analyze the architecture documentation for the task above without making changes.'
-  - label: 'Implement or refactor code'
-    agent: xuanwu-implementer
-    prompt: 'Implement or refactor the code as described above.'
-  - label: 'UI design or audit'
-    agent: xuanwu-ui
-    prompt: 'Design or audit the UI following the task context above.'
-  - label: 'Quality review or lint'
-    agent: xuanwu-quality
-    prompt: 'Review the code for correctness, security, and maintainability.'
-  - label: 'Update documentation'
-    agent: xuanwu-docs
-    prompt: 'Update the documentation for the changes described above.'
-  - label: 'Refactor markdown knowledge library'
-    agent: xuanwu-librarian
-    prompt: 'Refactor markdown documentation with hierarchical and categorized organization; clear obsolete content, repair indexes, and synchronize cross-document consistency while preserving complete information.'
-  - label: 'CI/CD or infra operations'
-    agent: xuanwu-ops
-    prompt: 'Handle the CI/CD and infrastructure operations for the task above.'
-  - label: 'Browser diagnostics or preflight'
-    agent: xuanwu-test-expert
-    prompt: 'Run browser diagnostics and preflight tests for the task above.'
-  - label: 'Generate software plan'
-    agent: xuanwu-software-planner
-    prompt: 'Generate an implementation plan for the task described above.'
-  - label: 'Step-by-step reasoning or debug'
-    agent: xuanwu-sequential-thinking
-    prompt: 'Analyze and debug the problem described above using step-by-step reasoning.'
-  - label: 'DDD slice design or migration'
-    agent: ddd-orchestrator
-    prompt: 'Coordinate DDD migration (Domain → Application → Infrastructure → Presentation) for the scope described above.'
----
+export function WorkspacesView({ slug, dimensionId }: WorkspacesViewProps) {
+  const t = useTranslation("zh-TW");
+  const { account, activeAccount } = useCurrentAccount();
+  // Priority: explicit prop → active account (org or personal) → personal account → null.
+  // This lets the caller (AccountWorkspacesPage) pin a specific dimension, while
+  // the fallback chain ensures switching accounts always shows the right workspaces.
+  const effectiveDimensionId = dimensionId ?? activeAccount?.id ?? account?.id ?? null;
+  const { workspaces, loading, error, refresh } = useWorkspaces(effectiveDimensionId);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
 
-# Role: xuanwu-commander
+  const filtered = filterWorkspaces(workspaces, searchQuery);
 
-You are the **master entry point** for all Xuanwu tasks.
+  // Error banner
+  if (error) {
+    return (
+      <div className="mx-auto max-w-7xl rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-center">
+        <p className="text-sm font-medium text-destructive">{error}</p>
+      </div>
+    );
+  }
 
-Your job is to fully understand the user's request through the **Six-Step Intent Pipeline**, gather necessary context, and route the task to the most appropriate agent or prompt workflow. You do not implement solutions yourself.
+  return (
+    <div className="mx-auto max-w-7xl space-y-6 duration-500 animate-in fade-in">
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">{t("workspaces.title")}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t("workspaces.description").replace("{name}", slug)}
+          </p>
+        </div>
+        <Button
+          className="h-10 gap-2 px-4 text-[11px] font-bold uppercase tracking-widest shadow-sm"
+          onClick={() => setCreateOpen(true)}
+        >
+          <Plus className="size-4" />
+          <span className="hidden sm:inline">{t("workspaces.createSpace")}</span>
+        </Button>
+      </div>
 
-Full pipeline reference: `.github/skills/xuanwu-intent-pipeline/SKILL.md`
+      {/* Search + view toggle */}
+      <div className="flex items-center gap-3 rounded-2xl border border-border/50 bg-card/50 p-3 shadow-sm backdrop-blur-sm">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder={t("workspaces.searchPlaceholder")}
+            className="h-10 rounded-xl border-border/40 bg-background pl-10 focus-visible:ring-primary/30"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="flex items-center rounded-lg border border-border/60 bg-background p-1 shadow-sm">
+          <Button
+            variant={viewMode === "grid" ? "secondary" : "ghost"}
+            size="sm"
+            className="size-8 p-0"
+            onClick={() => setViewMode("grid")}
+            aria-label={t("common.gridView")}
+          >
+            <LayoutGrid className="size-4" />
+          </Button>
+          <Button
+            variant={viewMode === "list" ? "secondary" : "ghost"}
+            size="sm"
+            className="size-8 p-0"
+            onClick={() => setViewMode("list")}
+            aria-label={t("common.listView")}
+          >
+            <List className="size-4" />
+          </Button>
+        </div>
+      </div>
 
-Execute the complete Six-Step Intent Pipeline from that skill before every dispatch. Do not skip any step.
+      {/* Loading skeleton */}
+      {loading && (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        </div>
+      )}
 
----
+      {/* Grid or empty state */}
+      {!loading && filtered.length === 0 ? (
+        <div className="rounded-3xl border-2 border-dashed border-border/40 bg-muted/5 px-6 py-16 text-center sm:p-24">
+          <Terminal className="mx-auto mb-6 size-12 text-muted-foreground opacity-10 sm:size-16" />
+          <h3 className="mb-2 text-2xl font-bold">{t("workspaces.spaceVoid")}</h3>
+          <p className="mx-auto mb-8 max-w-sm text-sm text-muted-foreground">
+            {t("workspaces.noSpacesFound")}
+          </p>
+          <Button
+            size="lg"
+            className="rounded-full px-8 text-xs font-bold uppercase tracking-widest shadow-lg"
+            onClick={() => setCreateOpen(true)}
+          >
+            {t("workspaces.createInitialSpace")}
+          </Button>
+        </div>
+      ) : !loading && viewMode === "grid" ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filtered.map((workspace) => (
+            <WorkspaceCard key={workspace.id} workspace={workspace} slug={slug} />
+          ))}
+        </div>
+      ) : !loading ? (
+        <div className="divide-y divide-border/40 rounded-2xl border border-border/60 bg-card/50 shadow-sm">
+          {filtered.map((workspace) => (
+            <div
+              key={workspace.id}
+              className="flex items-center justify-between gap-4 px-5 py-4"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-semibold">{workspace.name}</p>
+                {workspace.slug && (
+                  <p className="truncate text-xs text-muted-foreground">
+                    /{workspace.slug}
+                  </p>
+                )}
+              </div>
+              <Button asChild variant="ghost" size="sm">
+                <Link href={`/${slug}/${workspace.id}/wbs`}>{t("common.open")}</Link>
+              </Button>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
-## Agent Routing Decision Tree
-
-| Task type | Route to |
-|-----------|----------|
-| Cross-functional delivery | `xuanwu-orchestrator` |
-| Requirements / planning | `xuanwu-product` or `xuanwu-software-planner` |
-| Research / codebase discovery | `xuanwu-research` |
-| Architecture design or audit | `xuanwu-architect` |
-| Architecture doc realignment | `xuanwu-architecture-chief` (`/xuanwu-architecture-realign`) |
-| Architecture doc restructuring | `xuanwu-architecture-refactor` |
-| Architecture diagram design | `xuanwu-diagram-designer` |
-| Read-only architecture analysis | `xuanwu-repo-browser` |
-| Code implementation or refactor | `xuanwu-implementer` |
-| UI design, audit, or localization | `xuanwu-ui` |
-| Quality review, lint, or security | `xuanwu-quality` |
-| Documentation updates | `xuanwu-docs` |
-| Markdown library curation (refactor, stale cleanup, index/link consistency sync) | `xuanwu-librarian` |
-| CI/CD or operational changes | `xuanwu-ops` |
-| Browser diagnostics or preflight | `xuanwu-test-expert` |
-| Complex reasoning or debugging | `xuanwu-sequential-thinking` |
-| DDD slice design or migration | `ddd-orchestrator` (or via `xuanwu-orchestrator` for full delivery cycle)
-
-## Available prompts
-
-The following slash-command prompts are available for direct invocation:
-
-| Prompt | Purpose |
-|--------|---------|
-| `/xuanwu-orchestrator` | Cross-functional delivery routing |
-| `/xuanwu-product` | Requirements, planning, blueprints |
-| `/xuanwu-research` | Codebase discovery and reference synthesis |
-| `/xuanwu-architect` | Architecture audit or design |
-| `/xuanwu-architecture-realign` | Architecture doc realignment via xuanwu-architecture-chief |
-| `/xuanwu-ssot-sync` | Sync architecture docs with Semantic Kernel SSOT |
-| `/xuanwu-implementer` | Code implementation and refactor |
-| `/xuanwu-ui` | UI audit, shadcn/ui, i18n, responsive design |
-| `/xuanwu-code-review` | Quality and security review |
-| `/xuanwu-docs` | Documentation and ADR writing |
-| `/xuanwu-ops` | CI/CD and operational workflows |
-| `/xuanwu-test-expert` | Next.js preflight and runtime diagnostics |
-| `/xuanwu-planning` | Quick implementation plan |
-| `/xuanwu-refactor` | Code refactor guidance |
-| `/xuanwu-debug` | Debugging and root-cause analysis |
-| `/ddd-domain-model` | Design or implement DDD Domain Layer |
-| `/ddd-application-service` | Design or implement DDD Application Layer |
-| `/ddd-infrastructure-adapter` | Design or implement DDD Infrastructure adapters |
-| `/ddd-layer-audit` | Audit DDD layer boundary compliance |
-| `/ddd-slice-scaffold` | Scaffold a full DDD-structured feature slice |
-| `/ddd-progressive-layering` | Progressively migrate a slice toward DDD layers |
-
-## Guardrails
-
-- Never perform large code modifications. Your primary function is **intent understanding and dispatch**.
-- Use `sequential-thinking/*` only when the problem is genuinely complex or ambiguous across multiple dimensions.
-- Do not ask clarifying questions when context extraction (step ③) already provides enough information to proceed confidently.
-- Fill in assumptions using step ④ entity extraction and label them as such in the output.
-- Always emit the six-step analysis in your response so downstream agents have full context.
+      {effectiveDimensionId && (
+        <CreateWorkspaceDialog
+          dimensionId={effectiveDimensionId}
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          onCreated={() => { refresh(); }}
+        />
+      )}
+    </div>
+  );
+}
 ````
 
 ## File: .github/instructions/xuanwu-ddd-layers.instructions.md
@@ -67646,6 +72427,75 @@ UI Action
 - Business entities: `docs/architecture/catalog/business-entities.md`
 - Event catalog: `docs/architecture/catalog/event-catalog.md`
 - ADR index: `docs/architecture/adr/README.md`
+````
+
+## File: .serena/memories/INDEX.md
+````markdown
+# Serena Memories — Master Index
+
+Xuanwu Platform 所有 Serena 記憶檔案的主索引。
+
+---
+
+## 記憶分類
+
+| 分類 | 記憶檔案 | 說明 |
+|------|----------|------|
+| **App 路由** | [app/INDEX.md](./app/INDEX.md) | Next.js App Router 所有 page.tsx / layout.tsx / default.tsx |
+| **Shared 層** | [shared.md](./shared.md) | `src/shared/` 所有共用工具、類型、錯誤、i18n、Pipe、常數、directives、ports |
+| **Design System** | [design-system.md](./design-system.md) | `src/design-system/` 五層設計系統（primitives/components/patterns/tokens/layout）+ providers |
+| **Infrastructure** | [infrastructure.md](./infrastructure.md) | `src/infrastructure/firebase/` Firebase Web SDK + Admin SDK |
+| **Domain Modules** | [modules/INDEX.md](./modules/INDEX.md) | `src/modules/` 全部 22 個 Domain Module 的 .ts 檔案索引（17 已實作 + 5 scaffold） |
+| **MCP 工具** | [mcp/INDEX.md](./mcp/INDEX.md) | 已配置的 MCP servers 使用指南 |
+| **PR 歷史** | [pr-history/INDEX.md](./pr-history/INDEX.md) | 每個合併 PR 的摘要與決策記錄 |
+| **專案知識** | [project/](./project/) | 架構概覽、Domain 路由表、慣例文件、指令清單 |
+| **管理文檔** | [../docs/management/](../docs/management/) | `docs/management/` 下 11 個問題分類檔案 + 文件治理索引 |
+
+---
+
+## 快速查找
+
+### 我要找某個 ts/tsx 檔案的用途
+1. 確認檔案路徑屬於哪個分類：
+   - `src/app/**` → [app/INDEX.md](./app/INDEX.md)
+   - `src/shared/**` → [shared.md](./shared.md)
+   - `src/design-system/**` → [design-system.md](./design-system.md)
+   - `src/infrastructure/**` → [infrastructure.md](./infrastructure.md)
+   - `src/modules/**` → [modules/INDEX.md](./modules/INDEX.md) → 各模組子文件
+
+### 我要了解架構決策
+- 架構 SSOT：`docs/architecture/notes/model-driven-hexagonal-architecture.md`
+- Domain 路由表：[project/domain-lookup.md](./project/domain-lookup.md)
+- ADR 索引：`docs/architecture/adr/README.md`
+- 文件層次索引：`docs/README.md`（四層結構總覽）
+- 文件治理索引：`docs/management/documentation-index.md`
+- 問題追蹤：`docs/management/issues.md`（架構問題）、`docs/management/doc-issues.md`（文件缺陷）
+
+### 我要了解如何操作某個 MCP Server
+- [mcp/INDEX.md](./mcp/INDEX.md)
+
+---
+
+## 標準 .ts 檔案涵蓋率
+
+| 區域 | 已索引 | 總計 |
+|------|--------|------|
+| `src/app/` | ✅ 38 檔 | 38 |
+| `src/shared/` | ✅ 10 檔 | 10 |
+| `src/design-system/` | ✅ 72 檔 | 72 |
+| `src/infrastructure/` | ✅ 17 檔 | 17 |
+| `src/modules/` (×22) | ✅ 253 檔 (×17) + 5 scaffold | 253+ |
+| **總計** | **✅ 415 檔** | **415** |
+
+> *Last updated: PR copilot/update-file-consistency. Added: `src/design-system/layout/` tier (base/root-shell + marketing/home-layout/marketing-header/mode-toggle), `src/design-system/providers/theme-provider.tsx`, `src/shared/ports/index.ts` (9 ACL port interfaces), `useLocale` + `useAuthState` in `src/shared/directives/index.ts`. 0 lint errors, 0 tsc errors, 255/255 tests, 0 CodeQL alerts.*
+
+---
+
+## 維護規範
+
+- 每次新增 .ts/.tsx 檔案時，必須同步更新對應分類的記憶檔案。
+- 每個條目必須包含：**檔案名稱（File Name）**、**描述/用途（Description/Purpose）**、**簡單函數清單（Function List）**。
+- 記憶檔案以繁體中文書寫，函數名稱保持英文。
 ````
 
 ## File: .serena/memories/project/conventions.md
@@ -68070,220 +72920,6 @@ src/
 - Source configurations from: [platform-xuanwu](https://github.com/7Spade/platform-xuanwu)
 ````
 
-## File: src/app/(main)/(account)/workspaces/_account-workspaces.tsx
-````typescript
-"use client";
-/**
- * AccountWorkspacesPage — client wrapper for the account-level workspaces view.
- *
- * Derives the namespace slug from the currently active account context
- * (activeAccount → personal account → fallback to account.id) and renders
- * WorkspacesView, which handles its own data fetching via useWorkspaces.
- */
-
-import { Loader2 } from "lucide-react";
-import { useCurrentAccount } from "@/modules/account.module";
-import { WorkspacesView } from "@/modules/workspace.module/_components/workspaces-view";
-
-export function AccountWorkspacesPage() {
-  const { account, activeAccount, loading } = useCurrentAccount();
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  const effectiveAccount = activeAccount ?? account;
-  // Slug is the account handle (org handle or personal handle).
-  // Falls back to the Firestore document ID so WorkspaceCard hrefs are always valid.
-  const slug = effectiveAccount?.handle ?? effectiveAccount?.id ?? "";
-  // Pass the effective account ID as dimensionId so WorkspacesView fetches
-  // workspaces for the active org (not always the personal account).
-  const dimensionId = effectiveAccount?.id ?? "";
-
-  return <WorkspacesView slug={slug} dimensionId={dimensionId} />;
-}
-````
-
-## File: src/design-system/layout/marketing/marketing-header.tsx
-````typescript
-"use client";
-
-import Link from "next/link";
-import { Globe, LayoutDashboard, LogOut } from "lucide-react";
-import { useTranslation } from "@/shared/i18n";
-import type { Locale } from "@/shared/types";
-import { APP_NAME } from "@/shared/constants";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/design-system/primitives/ui/dropdown-menu";
-import { Button } from "@/design-system/primitives/ui/button";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/design-system/primitives/ui/avatar";
-import { ModeToggle } from "./mode-toggle";
-
-/** Slim user info needed by the header (avoids importing Firebase Auth types). */
-export interface HeaderUser {
-  displayName: string | null;
-  email: string | null;
-  photoURL: string | null;
-}
-
-export interface MarketingHeaderProps {
-  /** Active locale — controlled by the parent page. */
-  locale: Locale;
-  /** Called when the user requests a locale change. */
-  onLocaleChange: (locale: Locale) => void;
-  /**
-   * Whether the current visitor is authenticated.
-   * When `true`, the Login CTA is replaced with a user avatar + dropdown.
-   * Defaults to `false` (unauthenticated view) so SSR / loading states are safe.
-   */
-  isAuthenticated?: boolean;
-  /** Firebase user info used to render the avatar. Required when `isAuthenticated` is `true`. */
-  user?: HeaderUser | null;
-  /** Called when the user chooses "Sign Out" from the avatar dropdown. */
-  onSignOut?: () => void;
-}
-
-/** Derives 1–2 uppercase initials from displayName, then email, then "?". */
-function getInitials(displayName: string | null, email: string | null): string {
-  if (displayName) {
-    return displayName
-      .split(" ")
-      .filter((n) => n.length > 0)
-      .map((n) => n[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase();
-  }
-  if (email) {
-    return email.slice(0, 2).toUpperCase();
-  }
-  return "?";
-}
-
-/**
- * MarketingHeader — sticky top navigation for marketing / landing pages.
- *
- * Presentational: receives locale via props and delegates persistence to
- * the parent (typically via the `useLocale` directive from
- * `@/shared/directives`).
- *
- * Auth states:
- *   - Unauthenticated: shows a "Login" CTA button.
- *   - Authenticated:   shows a user avatar that opens a dropdown with
- *                      "Enter Platform" and "Sign Out" actions.
- *
- * Slots:
- *   - App name / brand (left)
- *   - Language dropdown + theme toggle + auth CTA (right)
- */
-export function MarketingHeader({
-  locale,
-  onLocaleChange,
-  isAuthenticated = false,
-  user,
-  onSignOut,
-}: MarketingHeaderProps) {
-  const t = useTranslation(locale);
-
-  return (
-    <header className="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between border-b bg-background/80 px-6 backdrop-blur">
-      <span className="text-sm font-semibold tracking-tight">{APP_NAME}</span>
-      <div className="flex items-center gap-2">
-        {/* Language selector dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              aria-label={t("home.langToggle")}
-              className="gap-1.5 text-xs"
-            >
-              <Globe className="size-3.5" />
-              {locale === "zh-TW" ? t("home.langZhTW") : t("home.langEn")}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onLocaleChange("zh-TW")}>
-              {t("home.langZhTW")}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onLocaleChange("en")}>
-              {t("home.langEn")}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {/* Dark / light / system theme toggle */}
-        <ModeToggle locale={locale} />
-
-        {/* Auth CTA: avatar + dropdown when signed in, "Login" button otherwise */}
-        {isAuthenticated ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                aria-label={user?.displayName ?? user?.email ?? "User menu"}
-                className="cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                <Avatar size="sm">
-                  {user?.photoURL && (
-                    <AvatarImage
-                      src={user.photoURL}
-                      alt={user.displayName ?? ""}
-                    />
-                  )}
-                  <AvatarFallback>
-                    {getInitials(user?.displayName ?? null, user?.email ?? null)}
-                  </AvatarFallback>
-                </Avatar>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-40">
-              <DropdownMenuItem asChild>
-                <Link
-                  href="/onboarding"
-                  className="flex w-full cursor-pointer items-center gap-2"
-                >
-                  <LayoutDashboard className="size-4" />
-                  {t("home.enterPlatform")}
-                </Link>
-              </DropdownMenuItem>
-              {onSignOut && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={onSignOut}
-                    className="cursor-pointer gap-2 text-destructive focus:text-destructive"
-                  >
-                    <LogOut className="size-4" />
-                    {t("home.signOut")}
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : (
-          <Button asChild size="sm">
-            <Link href="/login?callbackUrl=/">{t("home.login")}</Link>
-          </Button>
-        )}
-      </div>
-    </header>
-  );
-}
-````
-
 ## File: src/modules/account.module/index.ts
 ````typescript
 // account.module — Public API barrel
@@ -68309,6 +72945,8 @@ export {
   getOrgMembersByHandle,
   getPublicProfile,
   getOrganizationsByOwnerId,
+  getUserRoleInOrganization,
+  type MemberRole,
 } from "./core/_queries";
 
 // Port interfaces (for infrastructure adapter implementors)
@@ -68322,232 +72960,6 @@ export type {
 // Presentation hook — stable public API for cross-module session access
 export { useCurrentAccount } from "./_components/account-provider";
 export type { AccountContextValue } from "./_components/account-provider";
-````
-
-## File: src/modules/README.md
-````markdown
-# src/modules/
-
-`src/modules/` is the collection of all **Domain Modules（領域模組）**.
-
-Each module is an independent **Bounded Context（限界上下文）** following
-the 4-layer Modular DDD architecture.
-
----
-
-## What is a Module? / 什麼是 Module？
-
-```
-src/modules/
-└── <module-name>.module/          # Bounded Context root / 限界上下文根目錄
-    ├── index.ts                   # 🚪 Public API (barrel exports only / 僅作匯出桶)
-    │
-    ├── domain.<aggregate>/        # 🧠 Domain Layer (pure business logic / 純業務邏輯)
-    │   ├── _entity.ts             #    Aggregate Root / Entity（聚合根 / 實體）
-    │   ├── _value-objects.ts      #    Value Objects (immutable, self-validating / 不可變、自我驗證)
-    │   ├── _ports.ts              #    Port Interfaces (repository, event bus / 儲存庫、事件匯流排)
-    │   ├── _events.ts             #    Domain Events（領域事件）
-    │   └── _service.ts            #    Domain Service (cross-aggregate logic / 跨聚合邏輯)
-    │
-    ├── core/                      # ⚙️  Application Layer (use case orchestration / 用例層)
-    │   ├── _use-cases.ts          #    Use Cases (aggregate orchestration / 聚合操作協調)
-    │   ├── _actions.ts            #    Next.js Server Actions ('use server' mutations / 變更操作)
-    │   └── _queries.ts            #    Server Queries (read ops + DTO types / 讀取操作與 DTO)
-    │
-    ├── infra.<adapter>/           # 🔌 Infrastructure Layer (concrete I/O / 具體 I/O 實作)
-    │   ├── _repository.ts         #    Firestore impl of IRepository port（Port 的 Firestore 實作）
-    │   └── _mapper.ts             #    Firestore Doc ↔ Entity conversion（文件 ↔ 實體轉換）
-    │
-    └── _components/               # 🎨 Presentation Layer (UI components / UI 元件)
-        └── <ComponentName>.tsx    #    Server / Client components（伺服器 / 客戶端元件）
-```
-
----
-
-## 4-Layer Architecture / 4 層架構
-
-```
-Presentation  (_components/, src/app/)
-      │  calls via DTOs / 透過 DTO 呼叫
-      ▼
-Application   (core/_actions.ts, core/_queries.ts, core/_use-cases.ts)
-      │  delegates domain logic, calls via ports / 委派領域邏輯、透過 Port 呼叫
-      ▼
-Domain        (domain.*/_entity.ts, _value-objects.ts, _ports.ts, _events.ts, _service.ts)
-      ▲  implements / 實作
-      │
-Infrastructure (infra.<adapter>/_repository.ts)
-```
-
-| Layer 層次 | Location 位置 | EN Responsibility | 中文職責 |
-|-----------|--------------|-------------------|---------|
-| **Domain 領域層** | `domain.<aggregate>/` | Entities, Value Objects, Aggregates, Domain Events, Port Interfaces, Domain Services. **Pure — no I/O, no framework imports.** | 實體、值物件、聚合、領域事件、Port 介面、領域服務。**純粹 — 不含 I/O，不引用框架。** |
-| **Application 應用層** | `core/` | Use cases, Server Actions, Queries, DTOs. Orchestrates: load → apply domain logic → persist via port → emit event. | 用例、Server Actions、查詢、DTO。協調：載入 → 套用領域邏輯 → 透過 Port 持久化 → 發出事件。 |
-| **Infrastructure 基礎設施層** | `infra.<adapter>/` | Firestore, Storage, Genkit, external API adapters. Implements port interfaces defined in Domain. | Firestore、Storage、Genkit、外部 API 適配器。實作 Domain 層定義的 Port 介面。 |
-| **Presentation 展示層** | `_components/` | React Server / Client components. Calls Application layer only via DTOs. | React 伺服器 / 客戶端元件。僅透過 DTO 呼叫應用層。 |
-
----
-
-## Module Directory Naming Convention / 目錄命名規則
-
-| Pattern 模式 | EN Meaning | 中文說明 |
-|-------------|-----------|---------|
-| `<name>.module/` | Bounded Context / Domain Module root directory | 限界上下文 / 領域模組根目錄 |
-| `domain.<aggregate>/` | Aggregate name (e.g. `domain.org`, `domain.wbs`) | 聚合名稱（例：`domain.org`、`domain.wbs`） |
-| `infra.<adapter>/` | Adapter name (e.g. `infra.firestore`, `infra.genkit`) | 適配器名稱（例：`infra.firestore`、`infra.genkit`） |
-| `core/` | Application Layer (use cases, actions, queries) | 應用層（用例、Server Actions、查詢） |
-| `_components/` | Presentation Layer (UI components) | 展示層（UI 元件） |
-
----
-
-## Dependency Rules / 依賴規則
-
-```typescript
-// ✅ Correct / 正確：Presentation → Application (via index.ts barrel)
-import { createOrgAction } from '@/modules/org.module'
-
-// ✅ Correct / 正確：Application → Domain (same module / 同模組內)
-import { OrgEntity } from '../domain.org/_entity'
-
-// ✅ Correct / 正確：Application → Port interface (same module / 同模組內)
-import type { IOrganizationRepository } from '../domain.org/_ports'
-
-// ✅ Correct / 正確：Infrastructure implements Domain port
-import type { IOrganizationRepository } from '../domain.org/_ports'
-export class FirestoreOrgRepository implements IOrganizationRepository { ... }
-
-// ❌ Forbidden / 禁止：Presentation → Domain directly（展示層不得直接存取領域層）
-import { OrgEntity } from '@/modules/org.module/domain.org/_entity'
-
-// ❌ Forbidden / 禁止：Domain → Application or Infrastructure（領域層不得依賴上層）
-import { createOrgUseCase } from '../core/_use-cases'
-
-// ❌ Forbidden / 禁止：Application → Infrastructure directly — use ports（應用層應透過 Port，不得直接引用基礎設施）
-import { FirestoreOrgRepository } from '../infra.firestore/_repository'
-
-// ❌ Forbidden / 禁止：Cross-module internal import — use index.ts barrel（跨模組必須透過 index.ts 匯出桶）
-import { WorkspaceEntity } from '@/modules/workspace.module/domain.workspace/_entity'
-```
-
----
-
-## Public API Rule / 公開 API 規則（匯出桶）
-
-```typescript
-// ✅ src/modules/<name>.module/index.ts — public API / 唯一合法的跨模組匯入入口
-export { createOrgAction, createTeamAction } from './core/_actions'
-export { getOrgByIdQuery, getTeamsByOrgQuery } from './core/_queries'
-export type { OrgDTO, TeamDTO } from './core/_queries'
-
-// ❌ NEVER export / 禁止匯出：entities, value objects, repositories, domain events
-```
-
----
-
-## Cross-Layer Communication Pattern / 跨層通信模式
-
-```
-UI Action (React component / form)
-  └─> Server Action [Application: core/_actions.ts]
-        └─> Use Case [Application: core/_use-cases.ts]
-              ├─> Load Aggregate via IRepository port  [Domain port / 領域 Port 介面]
-              │         ↑ implemented by [Infrastructure: infra.<adapter>/_repository.ts]
-              ├─> Apply business rule on Aggregate      [Domain: _entity.ts / 領域規則]
-              ├─> Persist via IRepository.save()        [Infrastructure via port / 透過 Port 持久化]
-              └─> Emit DomainEvent via IEventBus port   [Infrastructure via port / 透過 Port 發出事件]
-```
-
----
-
-## Bounded Context, Cohesion, Consistency & Event Flow
-## 界限上下文、內聚、一致性與事件流
-
-### 1) Bounded Context must be explicit / 界限上下文必須明確
-
-- Each `<name>.module/` is one Bounded Context with a single Ubiquitous Language and single ownership boundary.
-- 每個 `<name>.module/` 都是單一 Bounded Context，必須有單一語言模型與單一擁有邊界。
-- Cross-context collaboration must go through public APIs (`index.ts`) and documented contracts (DTO / events), never internal files.
-- 跨上下文協作只能透過公開 API（`index.ts`）與已文件化契約（DTO / 事件），不得直接引用內部檔案。
-
-### 2) Cohesion and one-way dependency / 上下文內聚與依賴單向
-
-- Keep each context cohesive: business rules that change for the same reason should stay in the same module.
-- 維持上下文內聚：會因相同商業原因變更的規則，應留在同一模組。
-- Dependency direction is one-way by layer: Presentation → Application → Domain, while Infrastructure implements Domain ports.
-- 分層依賴方向必須單向：Presentation → Application → Domain，Infrastructure 僅實作 Domain ports。
-- Cross-module imports must use the target module public barrel only; importing `core/`, `domain.*`, or `infra.*` of another module is forbidden.
-- 跨模組匯入必須只走對方 public barrel；直接匯入他模組的 `core/`、`domain.*`、`infra.*` 一律禁止。
-
-### 3) Consistency and event flow / 一致性與事件流
-
-- Aggregate invariants are enforced synchronously inside the owning context before persistence.
-- 聚合不變量必須在擁有該聚合的上下文內、持久化前同步驗證。
-- A use case should follow: load aggregate → apply domain rules → persist state → emit domain event.
-- 用例流程應遵循：載入聚合 → 套用領域規則 → 持久化狀態 → 發出領域事件。
-- Cross-context effects are integration concerns and should be handled by event subscribers / application orchestration, not by direct domain coupling.
-- 跨上下文副作用屬整合責任，應由事件訂閱者或應用層協調處理，不可用直接領域耦合。
-- Treat cross-context propagation as eventually consistent unless a documented same-context transactional guarantee exists.
-- 跨上下文傳播預設採最終一致性；只有在同一上下文且有明確文件化交易保證時，才視為同步強一致。
-
----
-
-## Domain Modules in this Project / 本專案 Domain Modules 一覽
-
-| Module 模組 | Layer 層次 | EN Bounded Context | 中文限界上下文 |
-|------------|-----------|-------------------|--------------|
-| `identity.module/` | SaaS (cross-cutting) | Identity · Authentication · Sessions · Credentials | 身份識別 · 驗證 · 工作階段 · 憑證（取代直接使用 Firebase Auth） |
-| `account.module/` | SaaS | Unified Account (personal \| organization) · Profile · Team · Membership | 統一帳戶實體（個人 / 組織）· 公開檔案 · 團隊 · 成員治理 |
-| `namespace.module/` | SaaS | Namespace · Slug-to-Account binding · Path resolution | 命名空間 · Slug 綁定帳戶 · 路徑解析 |
-| `workspace.module/` | Workspace | Workspace · WBS · Issue · CR · QA · Acceptance · Baseline | 工作區 · WBS · Issue · 變更請求 · QA · 驗收 · 基準 |
-| `file.module/` | Workspace | File · FileVersion · Document Intelligence (DocParse · ObjExtract) | 檔案 · 版本管理 · 文件智能（文件解析 · 物件抽取） |
-| `work.module/` | Workspace | Work Items · Milestones · Dependencies | 工作項目 · 里程碑 · 依賴關係 |
-| `fork.module/` | Workspace | Fork Network · Planning branches · Merge-back proposals | 分叉網路 · 規劃分支 · 合併提案 |
-| `workforce.module/` | Bridge (SaaS ↔ Workspace) | Workforce Scheduling · Capacity planning · Person-to-work allocation | 工作力排班 · 人力容量規劃 · 人員配置 |
-| `settlement.module/` | SaaS | Settlement · Accounts Receivable · Accounts Payable | 結算 · 應收帳款 · 應付帳款 |
-| `notification.module/` | SaaS (cross-cutting) | Notification Engine · Inbox · Email · Mobile Push | 通知引擎 · 收件匣 · 電子郵件 · 行動推播 |
-| `social.module/` | SaaS | Social Graph (Follow/Star/Watch) · Feed · Discovery | 社交圖譜（追蹤 / 星標 / 關注）· 動態流 · 探索介面 |
-| `achievement.module/` | SaaS | Achievement Rules · Badge Unlocking (projected to account.module) | 成就規則 · 徽章解鎖（投影至 account.module） |
-| `collaboration.module/` | Workspace (cross-cutting) | Comments · Reactions · Presence · Co-editing sessions | 討論串留言 · 表情反應 · 即時在線狀態 · 共同編輯工作階段 |
-| `search.module/` | SaaS (cross-cutting) | Full-text + semantic search · Unified query surface · Suggestions | 全文 + 語義搜尋 · 統一查詢介面 · 自動完成建議 |
-| `audit.module/` | SaaS (cross-cutting) | Audit trail (immutable) · Policy automation · Compliance reports | 不可變稽核記錄 · 政策自動化 · 法規合規報告 |
-| `causal-graph.module/` | SaaS / Workspace (cross-cutting) | Causal Graph · Impact Analysis · CausalPath query | 因果圖 · 影響分析 · 因果路徑查詢 |
-
-> Each module folder contains a `README.md` documenting its bounded context, aggregates, and cross-module dependencies.
-> 每個模組資料夾均包含 `README.md`，說明其限界上下文、聚合與跨模組依賴。
->
-> **Removed modules / 已移除模組：** `org.module` (→ `account.module`)、`profile.module` (→ `account.module`)、`feature.module`（移除 — 職責不明確；執行環境功能旗標應屬於 `src/infrastructure/` 或 Firebase Remote Config）。
-
----
-
-## Future Candidate Modules / 未來候選模組（達到條件才可新增）
-
-以下模組目前屬於「條件式新增」。
-Only add when an existing module shows clear responsibility overload, boundary confusion, or foundational capability demand.
-只有當現有模組已出現明確的職責過載、邊界混雜或基礎能力需求時，才建議拆分為獨立 Domain Module。
-
-| Candidate Module 候選模組 | EN: Add When... | 中文新增條件 | EN Definition | 中文定義 |
-|--------------------------|----------------|------------|--------------|---------|
-| `subscription.module`<br>訂閱與計費 | SaaS subscription plans (Free/Pro/Enterprise), quota governance, and payment flow become independent product capabilities no longer coupled to `settlement.module` accounting fields. | SaaS 訂閱方案、配額治理、付款流程已成為獨立產品能力，不再只是 `settlement.module` 的延伸帳務欄位。 | Owns Subscription Plan, Billing Cycle, Quota Policy, Payment Provider Integration. `settlement.module` retains AR/AP accounting core. | 專責訂閱方案、計費週期、配額政策、支付供應商整合。`settlement.module` 保持 AR/AP 會計帳務核心。 |
-| `governance.module`<br>治理 · 授權政策 | Authorization logic grows significantly complex (cross-org custom roles, policy composition, fine-grained authorization matrices), causing `account.module` to absorb too many authorization rules. | 權限邏輯明顯複雜化（跨組織自定義角色、策略組合、細粒度授權矩陣），導致 `account.module` 承擔過多授權規則。 | Owns role models, policy rules, authorization decisions, and cross-org governance logic. | 專責角色模型、政策規則、授權決策、跨組織治理邏輯。 |
-| `knowledge.module`<br>核心知識領域 | The system starts treating knowledge entries and knowledge cards as core assets requiring clear version evolution and immutable history. | 系統以知識條目與知識卡片為核心資產，且需要版本演進與不可變歷史記錄。 | Owns Articles, Zettelkasten Notes, Knowledge Revision Graph. | 負責文章、Zettelkasten 知識卡片、知識修訂歷程圖。 |
-| `taxonomy.module`<br>分類與標籤領域 | Global and space-level classification and vocabulary management needs grow significantly and naming consistency becomes a system pain point. | 全域與空間層級的分類、詞彙管理需求持續擴大，命名一致性已成系統痛點。 | Manages Taxonomies, Tags, controlled vocabularies (Ontologies), and naming governance. | 管理分類樹、標籤、受控詞表（Ontologies）、命名規範。 |
-| `vector-ingestion.module`<br>向量化與處理領域 | The RAG pipeline (Chunking, Embedding, Index Push, backfill rebuild) becomes a stable workflow requiring explicit isolation of external models and index providers. | RAG 流程（分塊、嵌入、索引推送、回補重建）成為穩定工作流，需要明確隔離外部模型與索引供應商。 | Owns document chunking, vectorization, index push via `IVectorIndexPort`, with ACL wrapping external models/services. | 專責文件分塊、向量化處理、透過 `IVectorIndexPort` 推送索引，以 ACL 封裝外部模型 / 服務。 |
-
-### Split Heuristics / 拆分啟動準則
-
-- **Responsibility** — A single module simultaneously carries 2+ independent axes of change (e.g. accounting + product billing strategy). 單一模組同時承擔 2 種以上獨立變更軸。
-- **Complexity** — Core rules require an independent Ubiquitous Language and event model to stay maintainable. 核心規則需要獨立語言與事件模型才能保持可維護。
-- **Boundary** — Cross-module dependencies keep growing and can no longer be maintained through existing public barrel APIs. 跨模組依賴持續增加，且已難以透過現有 barrel API 維持清晰邊界。
-- **Integration** — External provider integrations (payments, vector DB, model services) require independent ACLs to reduce coupling and risk. 外部供應商整合需要獨立 ACL 以降低耦合與風險。
-
----
-
-## Authoritative References / 權威參考文件
-
-- Architecture SSOT / 架構唯一真相來源: [`docs/architecture/README.md`](../../docs/architecture/README.md)
-- Business Entities / 業務實體: [`docs/architecture/catalog/business-entities.md`](../../docs/architecture/catalog/business-entities.md)
-- Service Boundary / 服務邊界: [`docs/architecture/catalog/service-boundary.md`](../../docs/architecture/catalog/service-boundary.md)
-- Event Catalog / 事件目錄: [`docs/architecture/catalog/event-catalog.md`](../../docs/architecture/catalog/event-catalog.md)
 ````
 
 ## File: src/modules/workspace.module/_components/progress-report-dialog.tsx
@@ -68657,71 +73069,6 @@ export function ProgressReportDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-}
-````
-
-## File: src/modules/workspace.module/_components/shell/dashboard-sidebar.tsx
-````typescript
-"use client";
-/**
- * DashboardSidebar — Main sidebar for authenticated pages.
- *
- * Assembles the sidebar structure using SidebarProvider + Sidebar components
- * from the design system. Uses AccountSwitcher for the top-left account context,
- * NavMain for navigation and NavUser for user menu.
- */
-
-import { useTranslation } from "@/shared/i18n";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarRail,
-} from "@/design-system/primitives/ui/sidebar";
-
-import { NavMain } from "./nav-main";
-import { NavTopWorkspaces } from "./nav-top-workspaces";
-import { NavUser } from "./nav-user";
-
-export function DashboardSidebar() {
-  const t = useTranslation("zh-TW");
-
-  return (
-    <Sidebar className="border-r border-border/50">
-      <SidebarHeader className="p-2">
-      </SidebarHeader>
-
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel className="px-3 text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">
-            {t("nav.mainMenu")}
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <NavMain />
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel className="px-3 text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">
-            {t("nav.topWorkspaces")}
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <NavTopWorkspaces />
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-
-      <SidebarFooter className="p-2">
-        <NavUser />
-      </SidebarFooter>
-
-      <SidebarRail />
-    </Sidebar>
   );
 }
 ````
@@ -70056,504 +74403,72 @@ export function WorkspaceQaView({ workspaceId }: WorkspaceQaViewProps) {
 }
 ````
 
-## File: src/modules/workspace.module/_components/workspaces-view.tsx
+## File: src/modules/workspace.module/index.ts
 ````typescript
-"use client";
-/**
- * WorkspacesView — grid view of all workspaces for a given namespace/slug.
- *
- * Source: workspace.slice/core/_components/workspaces-view.tsx
- * Adapted: fetches real workspace data using useWorkspaces + useCurrentAccount
- * instead of relying on server-side props. This follows the source pattern
- * (client-side subscription) and avoids needing Admin SDK for SSR auth.
- */
-
-import { Terminal, LayoutGrid, List, Search, Plus, Loader2 } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
-
-import { useTranslation } from "@/shared/i18n";
-import { Button } from "@/design-system/primitives/ui/button";
-import { Input } from "@/design-system/primitives/ui/input";
-import { useCurrentAccount } from "@/modules/account.module";
-import type { WorkspaceDTO } from "@/modules/workspace.module";
-
-import { useWorkspaces } from "./use-workspaces";
-import { WorkspaceCard } from "./workspace-card";
-import { CreateWorkspaceDialog } from "./create-workspace-dialog";
-
-interface WorkspacesViewProps {
-  /** The namespace slug, e.g. "my-org". Used to build workspace hrefs. */
-  slug: string;
-  /**
-   * The account (dimension) ID whose workspaces to fetch.
-   * When omitted, defaults to the currently active account (org or personal).
-   * Pass this explicitly from AccountWorkspacesPage to respect the active
-   * account context rather than always falling back to the personal account.
-   */
-  dimensionId?: string;
-}
-
-function filterWorkspaces(workspaces: WorkspaceDTO[], query: string): WorkspaceDTO[] {
-  if (!query.trim()) return workspaces;
-  const q = query.toLowerCase();
-  return workspaces.filter(
-    (w) =>
-      w.name.toLowerCase().includes(q) ||
-      w.slug?.toLowerCase().includes(q)
-  );
-}
-
-export function WorkspacesView({ slug, dimensionId }: WorkspacesViewProps) {
-  const t = useTranslation("zh-TW");
-  const { account, activeAccount } = useCurrentAccount();
-  // Priority: explicit prop → active account (org or personal) → personal account → null.
-  // This lets the caller (AccountWorkspacesPage) pin a specific dimension, while
-  // the fallback chain ensures switching accounts always shows the right workspaces.
-  const effectiveDimensionId = dimensionId ?? activeAccount?.id ?? account?.id ?? null;
-  const { workspaces, loading, error, refresh } = useWorkspaces(effectiveDimensionId);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [createOpen, setCreateOpen] = useState(false);
-
-  const filtered = filterWorkspaces(workspaces, searchQuery);
-
-  // Error banner
-  if (error) {
-    return (
-      <div className="mx-auto max-w-7xl rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-center">
-        <p className="text-sm font-medium text-destructive">{error}</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="mx-auto max-w-7xl space-y-6 duration-500 animate-in fade-in">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("workspaces.title")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t("workspaces.description").replace("{name}", slug)}
-          </p>
-        </div>
-        <Button
-          className="h-10 gap-2 px-4 text-[11px] font-bold uppercase tracking-widest shadow-sm"
-          onClick={() => setCreateOpen(true)}
-        >
-          <Plus className="size-4" />
-          <span className="hidden sm:inline">{t("workspaces.createSpace")}</span>
-        </Button>
-      </div>
-
-      {/* Search + view toggle */}
-      <div className="flex items-center gap-3 rounded-2xl border border-border/50 bg-card/50 p-3 shadow-sm backdrop-blur-sm">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder={t("workspaces.searchPlaceholder")}
-            className="h-10 rounded-xl border-border/40 bg-background pl-10 focus-visible:ring-primary/30"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <div className="flex items-center rounded-lg border border-border/60 bg-background p-1 shadow-sm">
-          <Button
-            variant={viewMode === "grid" ? "secondary" : "ghost"}
-            size="sm"
-            className="size-8 p-0"
-            onClick={() => setViewMode("grid")}
-            aria-label={t("common.gridView")}
-          >
-            <LayoutGrid className="size-4" />
-          </Button>
-          <Button
-            variant={viewMode === "list" ? "secondary" : "ghost"}
-            size="sm"
-            className="size-8 p-0"
-            onClick={() => setViewMode("list")}
-            aria-label={t("common.listView")}
-          >
-            <List className="size-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Loading skeleton */}
-      {loading && (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="size-8 animate-spin text-muted-foreground" />
-        </div>
-      )}
-
-      {/* Grid or empty state */}
-      {!loading && filtered.length === 0 ? (
-        <div className="rounded-3xl border-2 border-dashed border-border/40 bg-muted/5 px-6 py-16 text-center sm:p-24">
-          <Terminal className="mx-auto mb-6 size-12 text-muted-foreground opacity-10 sm:size-16" />
-          <h3 className="mb-2 text-2xl font-bold">{t("workspaces.spaceVoid")}</h3>
-          <p className="mx-auto mb-8 max-w-sm text-sm text-muted-foreground">
-            {t("workspaces.noSpacesFound")}
-          </p>
-          <Button
-            size="lg"
-            className="rounded-full px-8 text-xs font-bold uppercase tracking-widest shadow-lg"
-            onClick={() => setCreateOpen(true)}
-          >
-            {t("workspaces.createInitialSpace")}
-          </Button>
-        </div>
-      ) : !loading && viewMode === "grid" ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map((workspace) => (
-            <WorkspaceCard key={workspace.id} workspace={workspace} slug={slug} />
-          ))}
-        </div>
-      ) : !loading ? (
-        <div className="divide-y divide-border/40 rounded-2xl border border-border/60 bg-card/50 shadow-sm">
-          {filtered.map((workspace) => (
-            <div
-              key={workspace.id}
-              className="flex items-center justify-between gap-4 px-5 py-4"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold">{workspace.name}</p>
-                {workspace.slug && (
-                  <p className="truncate text-xs text-muted-foreground">
-                    /{workspace.slug}
-                  </p>
-                )}
-              </div>
-              <Button asChild variant="ghost" size="sm">
-                <Link href={`/${slug}/${workspace.id}/wbs`}>{t("common.open")}</Link>
-              </Button>
-            </div>
-          ))}
-        </div>
-      ) : null}
-
-      {effectiveDimensionId && (
-        <CreateWorkspaceDialog
-          dimensionId={effectiveDimensionId}
-          open={createOpen}
-          onOpenChange={setCreateOpen}
-          onCreated={() => { refresh(); }}
-        />
-      )}
-    </div>
-  );
-}
-````
-
-## File: .github/README.md
-````markdown
-# Copilot Customization Development Guide
-
-This guide defines how Xuanwu organizes and evolves repository-scoped GitHub Copilot customizations.
-
-## Authoritative References
-
-Use the official VS Code documentation as the authoritative reference for Copilot customization:
-
-- Custom instructions: https://code.visualstudio.com/docs/copilot/customization/custom-instructions
-- Prompt files: https://code.visualstudio.com/docs/copilot/customization/prompt-files
-- Custom agents: https://code.visualstudio.com/docs/copilot/customization/custom-agents
-- Agent Skills: https://code.visualstudio.com/docs/copilot/customization/agent-skills
-- Hooks: https://code.visualstudio.com/docs/copilot/customization/hooks
-- Agent plugins: https://code.visualstudio.com/docs/copilot/customization/agent-plugins
-- Overview and editor workflow: https://code.visualstudio.com/docs/copilot/customization
-
-## Single Sources of Truth
-
-Copilot customizations in this repository must stay aligned with:
-
-- Business logic: `docs/architecture/README.md`
-- Codebase reference baseline: `docs/architecture/README.md` and established code patterns
-- Copilot customization documentation: `docs/copilot/README.md` (agent system overview, six-step pipeline, MCP matrix)
-
-## Customization Selection Matrix
-
-Use the official VS Code customization taxonomy first, then map it to the repository layout below.
-
-| Need | Primary customization type | Activation model | Repository home | Do not use when |
-| --- | --- | --- | --- | --- |
-| Stable rules that apply to every task | Always-on instructions | Automatic in every chat | `.github/copilot-instructions.md`, `AGENTS.md` | The guidance is file-specific or workflow-specific |
-| Narrow rules for file types, frameworks, or authoring tasks | File-based instructions | Automatic when `applyTo` or task semantics match | `.github/instructions/*.instructions.md` | The content is a reusable slash workflow or agent persona |
-| Repeatable task invoked with `/command` | Prompt files | Manual slash-command invocation | `.github/prompts/*.prompt.md` | The behavior needs persistent tool boundaries or subagent orchestration |
-| Specialized persona with constrained tools or handoffs | Custom agents | Selected explicitly or invoked as subagents | `.github/agents/*.agent.md` | The content is just a rule set or one-off prompt body |
-| Portable, on-demand capability with resources/scripts | Agent Skills | Loaded when relevant or invoked via `/` | `.github/skills/<skill>/SKILL.md` | The content only defines project policy or folder ownership |
-| Deterministic automation at lifecycle boundaries | Hooks | Triggered by lifecycle event | `.github/hooks/*.json` and agent `hooks:` frontmatter | The behavior can be expressed as normal instructions or prompts |
-| Marketplace-delivered customization bundles | Agent plugins | Installed through VS Code plugin settings | `chat.plugins.*` settings, not repository folders | The customization is local to this repository |
-
-## Repository Design Workflow
-
-Design or refactor Copilot customization assets in this order:
-
-1. Start from https://code.visualstudio.com/docs/copilot/customization to choose the correct customization type.
-2. Use the corresponding official VS Code documentation before editing files:
-   - instructions → https://code.visualstudio.com/docs/copilot/customization/custom-instructions
-   - prompts → https://code.visualstudio.com/docs/copilot/customization/prompt-files
-   - agents → https://code.visualstudio.com/docs/copilot/customization/custom-agents
-   - skills → https://code.visualstudio.com/docs/copilot/customization/agent-skills
-   - hooks → https://code.visualstudio.com/docs/copilot/customization/hooks
-   - plugins → https://code.visualstudio.com/docs/copilot/customization/agent-plugins
-3. Update this guide first when folder ownership, terminology, or consolidation rules change.
-4. Keep `.github/copilot-instructions.md` lean and move scoped or workflow-specific content into the correct customization type.
-5. Keep loader settings aligned in `.vscode/settings.json` so discovery matches the documented repository layout.
-6. Sync user-facing entry points (`README.md`, prompt references, and stable links) after structural changes.
-
-## Design Principles
-
-1. **One customization type, one responsibility**
-   - `.github/copilot-instructions.md` is for concise, always-on rules.
-   - `.github/instructions/` is for scoped rules selected by file pattern or task.
-   - `.github/prompts/` is for reusable slash-command workflows.
-   - `.github/agents/` is for custom personas, tool boundaries, and optional agent-scoped hooks.
-   - `.github/skills/` is for portable, on-demand capabilities.
-   - `.github/hooks/` is for deterministic workspace hook automation.
-
-2. **Prefer links over duplication**
-   - Reuse repository docs with Markdown links.
-   - Do not restate the same standards in every prompt, skill, or agent.
-
-3. **Keep always-on context lean**
-   - Put stable global rules in `.github/copilot-instructions.md`.
-   - Move catalogs, workflows, and long procedures into this guide, prompts, skills, or scoped instructions.
-
-4. **Use official terminology**
-   - “Agent plugins” means VS Code plugin bundles configured through `chat.plugins.*`.
-   - Do not use `plugins/` as a local subfolder name for ordinary repository agents.
-
-5. **Only link to real files**
-   - Prompt, skill, and agent references must resolve to files that exist in the repository.
-
-## Consolidation Rules
-
-- `.github/README.md` is the canonical repository maintenance guide for Copilot customization structure, ownership, and consolidation decisions.
-- `.github/copilot-instructions.md` is only for concise always-on rules; it must not become a duplicate catalog of agents, prompts, or hooks.
-- `README.md` is the user-facing quick entry point; keep only the high-level navigation and prompt command catalog there.
-- The official VS Code documentation (https://code.visualstudio.com/docs/copilot/customization) is the authoritative reference and should be cited rather than paraphrased repeatedly.
-- `.vscode/settings.json` is the effective loader configuration; documentation must describe the configuration that is actually enabled there.
-- `.github/skills/` is the canonical project skill location; each skill lives in its own folder with a `SKILL.md` entry point.
-- Keep the customization folders intentionally small and consistent: prefer project-specific `xuanwu-<function>.*.md` files that absorb overlapping personas, rules, and workflows into functional suites.
-
-## Canonical Repository Layout
-
-| Path | Purpose | Allowed contents | Notes |
-| --- | --- | --- | --- |
-| `.github/copilot-instructions.md` | Project-wide always-on instructions | Markdown only | Keep concise and stable |
-| `.github/agents/` | Repository-scoped custom agents | `*.agent.md` | All local agents live directly in this folder |
-| `.github/hooks/` | Workspace hook configs | `*.json`, `scripts/` | Hook scripts must be deterministic and non-interactive |
-| `.github/instructions/` | File/task-scoped instructions | `*.instructions.md` | Every file needs frontmatter with narrow `applyTo` |
-| `.github/prompts/` | Reusable slash commands | `*.prompt.md` | Prompt command name comes from frontmatter `name` when present |
-| `.github/skills/` | Project Agent Skills | `<skill>/SKILL.md` and optional resources | Canonical project skill location |
-
-## Folder-Specific Rules
-
-### `.github/copilot-instructions.md`
-
-- Keep only global conventions, safety requirements, SSOT references, and universal workflow rules.
-- Do not use it as a full catalog of prompts, skills, or agents.
-- When a rule is file-specific, move it to `.github/instructions/`.
-
-### `.github/agents/`
-
-- Follow https://code.visualstudio.com/docs/copilot/customization/custom-agents.
-- Use least-privilege `tools`.
-- Use agent-scoped `hooks` only when behavior must run exclusively with that agent.
-- Keep repository agents in `.github/agents/`; do not create `.github/agents/plugins/`.
-- If a bundled plugin is needed, manage it through VS Code plugin settings rather than this folder. For the plugin model, see https://code.visualstudio.com/docs/copilot/customization/agent-plugins and treat marketplace or `chat.plugins.paths` bundles as plugins; treat `.github/agents/*.agent.md` files as repository agents.
-
-**Sub-agent design (`user-invocable: false`):**
-
-Agents marked `user-invocable: false` are sub-agents — they are intentionally excluded from the VS Code agent picker. They are only invoked via `handoffs` from a parent agent. This is the correct and supported design per the [VS Code sub-agents documentation](https://code.visualstudio.com/docs/copilot/agents/subagents). Do not change this setting to `true` unless a sub-agent should become a direct user entry-point.
-
-| Context | Sub-agent behavior |
-|---------|-------------------|
-| VS Code Copilot Chat (desktop/browser) | Not shown in agent picker; invoked only via parent handoffs |
-| GitHub Copilot Coding Agent | All agents including sub-agents are available via the `task` tool regardless of `user-invocable` |
-
-The "Not configured for user selection" label shown in the VS Code Copilot UI for these agents is **expected and intentional**.
-
-**MCP tool assignment guide (add only what the agent genuinely needs):**
-
-| MCP tool | Assign to |
-|----------|-----------|
-| `serena/*` | All repository agents that touch code or docs |
-| `agent-memory/*` | `xuanwu-research` (knowledge gathering), `xuanwu-orchestrator` (session context) |
-| `context7/*` | `xuanwu-research` (version-accurate framework docs) |
-| `repomix/*` | `xuanwu-research`, `xuanwu-docs`, `xuanwu-architect`, `xuanwu-architecture-chief`, `xuanwu-repo-browser` |
-| `markitdown/*` | `xuanwu-research`, `xuanwu-docs` (URL/file → Markdown conversion) |
-| `sequential-thinking/*` | `xuanwu-software-planner`, `xuanwu-sequential-thinking`, `xuanwu-product`, `xuanwu-architect`, `ddd-orchestrator`, `xuanwu-quality` |
-| | `xuanwu-commander` also includes `sequential-thinking/*` for complex ambiguous requests |
-| `software-planning/*` | `xuanwu-orchestrator`, `xuanwu-commander`, `xuanwu-software-planner` |
-| `playwright/*` | `xuanwu-ui`, `xuanwu-test-expert` (browser automation) |
-| `next-devtools/*` | `xuanwu-ui`, `xuanwu-test-expert`, `xuanwu-architect`, `xuanwu-quality` (Next.js diagnostics) |
-| `shadcn/*` | `xuanwu-ui`, `xuanwu-implementer` (component registry) |
-| `firebase-mcp-server/*` | `xuanwu-implementer`, `xuanwu-ops`, `xuanwu-quality`, `ddd-infrastructure` (Firebase inspection) |
-| `filesystem/*` | Agents that need direct file I/O beyond `editFiles` |
-
-### `.github/hooks/`
-
-- Follow https://code.visualstudio.com/docs/copilot/customization/hooks.
-- Store workspace hook config in `.github/hooks/*.json`.
-- Keep helper scripts in `.github/hooks/scripts/` or `scripts/hooks/`.
-- Hook commands must be deterministic, reviewable, and safe to run repeatedly.
-- Workspace-wide Serena lifecycle automation lives in `.github/hooks/serena-session-lifecycle.json` with helper scripts in `.github/hooks/scripts/`.
-
-### `.github/instructions/`
-
-- Follow https://code.visualstudio.com/docs/copilot/customization/custom-instructions.
-- Every file must include YAML frontmatter with `name`, `description`, and `applyTo`.
-- Scope `applyTo` as narrowly as possible.
-- Keep instructions imperative, testable, and free of duplicated catalog content.
-
-### `.github/prompts/`
-
-- Follow https://code.visualstudio.com/docs/copilot/customization/prompt-files.
-- Every prompt should have a discoverable `name` and `description`.
-- Prefer linking to docs instead of embedding long policy text.
-- `README.md` must stay synchronized with the actual prompt file set and frontmatter names.
-
-### `.github/skills/`
-
-- Follow https://code.visualstudio.com/docs/copilot/customization/agent-skills.
-- Each skill must live in its own folder with a `SKILL.md`.
-- The `name` field in frontmatter **must match** the parent directory name exactly.
-- Skill descriptions must clearly say what the skill does and when to use it (max 1024 chars).
-- Set `user-invocable: false` for background knowledge skills that should auto-load but not appear in the `/` menu.
-- Set `argument-hint` for user-invocable skills that accept additional context after the slash command.
-- Repository skill discovery points to `.github/skills/`; each skill has its own folder with a `SKILL.md` entry point.
-
-## Current Consolidation Decisions
-
-The repository now follows these consolidation rules:
-
-1. All local custom agents live directly under `.github/agents/`.
-2. The former `.github/agents/plugins/` pattern is retired because it conflicts with VS Code “agent plugins”.
-3. `.github/skills/` is the canonical project skill location for VS Code settings.
-4. Stable repository references used by prompts must exist under `docs/` or other committed paths.
-5. `README.md` remains the user-facing entry point and must keep its prompt command table synchronized with `.github/prompts/`.
-6. The canonical project-specific agent suite is `xuanwu-orchestrator`, `xuanwu-product`, `xuanwu-research`, `xuanwu-architect`, `xuanwu-implementer`, `xuanwu-ui`, `xuanwu-quality`, `xuanwu-docs`, `xuanwu-librarian`, `xuanwu-ops`, and `xuanwu-test-expert`. Supplementary agents extending the suite: `xuanwu-commander` (six-step intent pipeline and single dispatch), `xuanwu-software-planner` (implementation planning), `xuanwu-sequential-thinking` (step-by-step reasoning), `xuanwu-architecture-chief` (architecture doc refinement), `xuanwu-architecture-refactor` (doc structure refactoring — subagent only, `user-invocable: false`), `xuanwu-diagram-designer` (Mermaid diagram refinement — subagent only, `user-invocable: false`), and `xuanwu-repo-browser` (read-only architecture analysis — subagent only, `user-invocable: false`). The architecture sub-cluster (`xuanwu-architecture-chief`, `xuanwu-architecture-refactor`, `xuanwu-diagram-designer`, `xuanwu-repo-browser`) is reachable via the `/xuanwu-architecture-realign` prompt or directly from `xuanwu-commander` and `xuanwu-orchestrator`. DDD sub-cluster: `ddd-orchestrator` (DDD delivery coordinator), `ddd-domain-modeler` (Domain Layer — subagent only, `user-invocable: false`), `ddd-application-layer` (Application Layer — subagent only, `user-invocable: false`), and `ddd-infrastructure` (Infrastructure Layer — subagent only, `user-invocable: false`) — reachable via `/ddd-slice-scaffold` or from `xuanwu-orchestrator`.
-7. The canonical instruction suite is `xuanwu-customization-authoring`, `xuanwu-code-quality`, `xuanwu-application-architecture`, `xuanwu-typescript-platform`, `xuanwu-github-workflows`, `xuanwu-task-tracking`, and `xuanwu-test-expert`. Additional scoped instructions: `xuanwu-coding-style` (`**/*.{ts,tsx,js,jsx}`), `xuanwu-documentation` (`**/*.md`), `xuanwu-repo-structure` (`src/**/*.{ts,tsx,js,jsx}`), `xuanwu-security` (`**/*.{ts,tsx,js,jsx,json,yaml,yml}`), `xuanwu-ddd-layers` (`src/**/*.{ts,tsx,js,jsx}` — 4-layer DDD boundary enforcement), and `xuanwu-ddd-progressive-migration` (`src/**/*.{ts,tsx,js,jsx}` — incremental migration workflow toward layered DDD).
-8. The canonical prompt suite is `xuanwu-orchestrator`, `xuanwu-product`, `xuanwu-research`, `xuanwu-architect`, `xuanwu-docs`, `xuanwu-implementer`, `xuanwu-ui`, `xuanwu-ops`, and `xuanwu-test-expert`. Additional prompts: `xuanwu-planning` (quick implementation plan via `xuanwu-software-planner`), `xuanwu-refactor` (refactor guidance via `xuanwu-implementer`), `xuanwu-code-review` (code review via `xuanwu-quality`), `xuanwu-debug` (debugging via `xuanwu-sequential-thinking`), `xuanwu-architecture-realign` (architecture doc realignment via `xuanwu-architecture-chief`), and `xuanwu-ssot-sync` (sync architecture docs with Semantic Kernel SSOT via `xuanwu-architecture-chief`). DDD prompts: `ddd-domain-model`, `ddd-application-service`, `ddd-infrastructure-adapter`, `ddd-layer-audit`, `ddd-slice-scaffold`, and `ddd-progressive-layering`.
-9. `breakdown-plan` is the canonical planning and backlog decomposition skill; merged wrappers `create-implementation-plan` and `gen-specs-as-issues` were removed.
-10. `refactor` is the canonical refactor skill (including planning mode); merged wrapper `refactor-plan` was removed.
-11. `prompt-builder` is the canonical Copilot customization and exemplar prompt-authoring skill; merged wrappers `copilot-instructions-blueprint-generator` and `code-exemplars-blueprint-generator` were removed.
-12. `breakdown-epic-pm` is the canonical requirements authoring skill (PRD + tech-spec modes); merged wrapper `create-specification` was removed.
-13. `next-best-practices` is the canonical Next.js skill family entrypoint; merged wrappers `next-cache-components` and `next-upgrade` were removed.
-14. `agent-governance` is the canonical agent safety and governance skill; merged wrappers `agentic-eval` and `ai-prompt-engineering-safety-review` were removed.
-15. `ddd-architecture` is the DDD architecture skill providing 4-layer patterns, agent kit (ddd-orchestrator, ddd-domain-modeler, ddd-application-layer, ddd-infrastructure), prompt commands, and implementation examples.
-16. `ddd-progressive-layering` is the DDD migration skill for moving existing slices toward the 4-layer model with compatibility seams, ordered extraction steps, and low-risk refactor guidance.
-17. `xuanwu-intent-pipeline` is the six-step intelligent understanding pipeline skill (① Raw Input → ② Intent Detection → ③ Context Extraction → ④ Entity Extraction → ⑤ Dependency Analysis → ⑥ Task Instruction) embedded in `xuanwu-commander` and available to all entry-point agents.
-18. Serena lifecycle enforcement is split across `.github/copilot-instructions.md`, `.github/hooks/serena-session-lifecycle.json`, and the repository entry agents/prompts. Agents that can originate repository work must expose `serena/*`.
-19. `context7-repomix-global-awareness` is the canonical two-pillar global awareness skill that combines Repomix (codebase snapshot) and Context7 (version-accurate framework docs) to give agents comprehensive project context. It extends the standard Serena startup sequence for cross-module, architectural, or framework-version-sensitive sessions. Primary users: `xuanwu-research`, `xuanwu-architect`, `xuanwu-orchestrator`. Set `user-invocable: false` — auto-loaded by agents.
-20. `vercel-react-best-practices` is the Vercel-sourced React and Next.js performance optimization skill (40+ rules: Server Components, memoization, code splitting, Image/Font, bundle analysis, streaming). Set `user-invocable: false` — auto-loaded when working on React/Next.js performance.
-21. `vercel-composition-patterns` is the Vercel-sourced React composition skill (compound components, slot composition, `asChild`, render props, controlled vs. uncontrolled). Set `user-invocable: false` — auto-loaded when designing component APIs.
-22. `shadcn` is the project-aware shadcn/ui skill for Xuanwu. Reads `components.json` config, documents correct import aliases (`@/design-system/primitives`), CLI commands, and MCP server usage. Set `user-invocable: false` — auto-loaded when working with shadcn/ui components.
-23. `xuanwu-diagram-standards` is the diagram methodology skill that is the single source of truth for all Xuanwu Mermaid diagram standards: architecture layer color system, layout principles, preferred diagram types, refactoring rules, and quality targets. Referenced by `xuanwu-diagram-designer` agent and `xuanwu-architecture-chief` agent instead of repeating inline content.
-
-## Required Reference Documents for Customizations
-
-These documents are stable link targets for prompts and agents that need repository context:
-
-- `docs/architecture/README.md`
-- `docs/architecture/catalog/business-entities.md`
-- `docs/architecture/glossary/business-terms.md`
-- `docs/architecture/adr/README.md`
-- `docs/copilot/README.md`
-
-## Change Workflow
-
-When adding or reorganizing Copilot customization files:
-
-1. Update this guide first if folder policy or ownership changes.
-2. Apply the smallest structural change that restores compliance.
-3. Sync `README.md` and any dependent references.
-4. Run repository validation commands when available:
-   - `npm run lint`
-   - `npm run typecheck`
-   - `npm run test`
-   - `npm run check`
-5. Use VS Code diagnostics to inspect loaded instructions, prompts, agents, hooks, and skills:
-   - `Chat: Open Chat Customizations`
-   - Chat view → right-click → `Diagnostics`
-
-## Review Checklist
-
-- Are folder purposes still distinct and non-overlapping?
-- Does every linked file actually exist?
-- Is `.github/copilot-instructions.md` still concise?
-- Does `README.md` reflect actual slash commands and customization locations?
-- Are hooks and agents using official VS Code terminology correctly?
-````
-
-## File: .serena/memories/INDEX.md
-````markdown
-# Serena Memories — Master Index
-
-Xuanwu Platform 所有 Serena 記憶檔案的主索引。
-
----
-
-## 記憶分類
-
-| 分類 | 記憶檔案 | 說明 |
-|------|----------|------|
-| **App 路由** | [app/INDEX.md](./app/INDEX.md) | Next.js App Router 所有 page.tsx / layout.tsx / default.tsx |
-| **Shared 層** | [shared.md](./shared.md) | `src/shared/` 所有共用工具、類型、錯誤、i18n、Pipe、常數、directives、ports |
-| **Design System** | [design-system.md](./design-system.md) | `src/design-system/` 五層設計系統（primitives/components/patterns/tokens/layout）+ providers |
-| **Infrastructure** | [infrastructure.md](./infrastructure.md) | `src/infrastructure/firebase/` Firebase Web SDK + Admin SDK |
-| **Domain Modules** | [modules/INDEX.md](./modules/INDEX.md) | `src/modules/` 全部 22 個 Domain Module 的 .ts 檔案索引（17 已實作 + 5 scaffold） |
-| **MCP 工具** | [mcp/INDEX.md](./mcp/INDEX.md) | 已配置的 MCP servers 使用指南 |
-| **PR 歷史** | [pr-history/INDEX.md](./pr-history/INDEX.md) | 每個合併 PR 的摘要與決策記錄 |
-| **專案知識** | [project/](./project/) | 架構概覽、Domain 路由表、慣例文件、指令清單 |
-| **管理文檔** | [../docs/management/](../docs/management/) | `docs/management/` 下 11 個問題分類檔案 + 文件治理索引 |
-
----
-
-## 快速查找
-
-### 我要找某個 ts/tsx 檔案的用途
-1. 確認檔案路徑屬於哪個分類：
-   - `src/app/**` → [app/INDEX.md](./app/INDEX.md)
-   - `src/shared/**` → [shared.md](./shared.md)
-   - `src/design-system/**` → [design-system.md](./design-system.md)
-   - `src/infrastructure/**` → [infrastructure.md](./infrastructure.md)
-   - `src/modules/**` → [modules/INDEX.md](./modules/INDEX.md) → 各模組子文件
-
-### 我要了解架構決策
-- 架構 SSOT：`docs/architecture/notes/model-driven-hexagonal-architecture.md`
-- Domain 路由表：[project/domain-lookup.md](./project/domain-lookup.md)
-- ADR 索引：`docs/architecture/adr/README.md`
-- 文件層次索引：`docs/README.md`（四層結構總覽）
-- 文件治理索引：`docs/management/documentation-index.md`
-- 問題追蹤：`docs/management/issues.md`（架構問題）、`docs/management/doc-issues.md`（文件缺陷）
-
-### 我要了解如何操作某個 MCP Server
-- [mcp/INDEX.md](./mcp/INDEX.md)
-
----
-
-## 標準 .ts 檔案涵蓋率
-
-| 區域 | 已索引 | 總計 |
-|------|--------|------|
-| `src/app/` | ✅ 38 檔 | 38 |
-| `src/shared/` | ✅ 10 檔 | 10 |
-| `src/design-system/` | ✅ 72 檔 | 72 |
-| `src/infrastructure/` | ✅ 17 檔 | 17 |
-| `src/modules/` (×22) | ✅ 253 檔 (×17) + 5 scaffold | 253+ |
-| **總計** | **✅ 415 檔** | **415** |
-
-> *Last updated: PR copilot/update-file-consistency. Added: `src/design-system/layout/` tier (base/root-shell + marketing/home-layout/marketing-header/mode-toggle), `src/design-system/providers/theme-provider.tsx`, `src/shared/ports/index.ts` (9 ACL port interfaces), `useLocale` + `useAuthState` in `src/shared/directives/index.ts`. 0 lint errors, 0 tsc errors, 255/255 tests, 0 CodeQL alerts.*
-
----
-
-## 維護規範
-
-- 每次新增 .ts/.tsx 檔案時，必須同步更新對應分類的記憶檔案。
-- 每個條目必須包含：**檔案名稱（File Name）**、**描述/用途（Description/Purpose）**、**簡單函數清單（Function List）**。
-- 記憶檔案以繁體中文書寫，函數名稱保持英文。
+// workspace.module — Public API barrel
+// Bounded Context: Workspace · WBS · Issue · Change Request · QA · Acceptance · Baseline
+//
+// Exports: DTOs, application use cases, port interfaces.
+// NEVER export entities, value objects, repositories, or domain events directly.
+
+export type { WorkspaceDTO, WorkspaceGrantDTO, GrantWorkspaceAccessInput } from "./core/_actions";
+export type { WorkspaceRole } from "./core/_use-cases";
+export type { DailyLogDTO } from "./core/_daily-log-actions";
+export type { IssueDTO, IssueSeverity, IssueStatus } from "./core/_issue-actions";
+
+export {
+  createWorkspace,
+  advanceWorkspaceLifecycle,
+  grantWorkspaceAccess,
+  revokeWorkspaceAccess,
+  updateWorkspaceRole,
+  deleteWorkspace,
+  mountCapabilities,
+  unmountCapability,
+  updateWorkspaceSettings,
+} from "./core/_actions";
+export {
+  createDailyLog,
+  updateDailyLog,
+  deleteDailyLog,
+} from "./core/_daily-log-actions";
+export {
+  createIssue,
+  updateIssue,
+  deleteIssue,
+} from "./core/_issue-actions";
+export {
+  filterVisibleWorkspaces,
+  getWorkspaceById,
+  getWorkspacesByDimension,
+} from "./core/_queries";
+export { getDailyLogs } from "./core/_daily-log-queries";
+export { getIssues } from "./core/_issue-queries";
+
+// Pure domain utilities (no I/O)
+export {
+  summarizeWorkflowBlockers,
+  deriveWorkflowBlockersFromSources,
+  applyWorkflowBlocked,
+  applyWorkflowUnblocked,
+} from "./domain.workspace/workflow-blockers-state";
+export type { WorkflowBlockersState, WorkflowBlockersSummary } from "./domain.workspace/workflow-blockers-state";
+
+export type {
+  IWorkspaceRepository,
+  IWorkspaceGrantRepository,
+} from "./domain.workspace/_ports";
+
+// Presentation components (client-only)
+export { useWorkspace } from "./_components/use-workspace";
+export { WorkspaceNavTabs } from "./_components/workspace-nav-tabs";
+export { WorkspaceShell } from "./_components/workspace-shell";
+export { WorkspaceStatusBar } from "./_components/workspace-status-bar";
+export { WorkspaceCapabilitiesView } from "./_components/workspace-capabilities-view";
+export { WorkspaceGrantsView } from "./_components/workspace-grants-view";
+export { WorkspaceSettingsDialog } from "./_components/workspace-settings-dialog";
+export { CAPABILITY_SPECS, NON_MOUNTABLE_CAPABILITY_IDS } from "./core/_capabilities";
+export type { WorkspaceCapability } from "./core/_capabilities";
 ````
 
 ## File: .serena/memories/project/architecture.md
@@ -70841,6 +74756,246 @@ Sub-agents have `user-invocable: false` — they do **not** appear in the VS Cod
     "node": "20"
   }
 }
+````
+
+## File: src/modules/README.md
+````markdown
+# src/modules/
+
+`src/modules/` is the collection of all **Domain Modules（領域模組）**.
+
+Each module is an independent **Bounded Context（限界上下文）** following
+the 4-layer Modular DDD architecture.
+
+---
+
+## What is a Module? / 什麼是 Module？
+
+```
+src/modules/
+└── <module-name>.module/          # Bounded Context root / 限界上下文根目錄
+    ├── index.ts                   # 🚪 Public API (barrel exports only / 僅作匯出桶)
+    │
+    ├── domain.<aggregate>/        # 🧠 Domain Layer (pure business logic / 純業務邏輯)
+    │   ├── _entity.ts             #    Aggregate Root / Entity（聚合根 / 實體）
+    │   ├── _value-objects.ts      #    Value Objects (immutable, self-validating / 不可變、自我驗證)
+    │   ├── _ports.ts              #    Port Interfaces (repository, event bus / 儲存庫、事件匯流排)
+    │   ├── _events.ts             #    Domain Events（領域事件）
+    │   └── _service.ts            #    Domain Service (cross-aggregate logic / 跨聚合邏輯)
+    │
+    ├── core/                      # ⚙️  Application Layer (use case orchestration / 用例層)
+    │   ├── _use-cases.ts          #    Use Cases (aggregate orchestration / 聚合操作協調)
+    │   ├── _actions.ts            #    Next.js Server Actions ('use server' mutations / 變更操作)
+    │   └── _queries.ts            #    Server Queries (read ops + DTO types / 讀取操作與 DTO)
+    │
+    ├── infra.<adapter>/           # 🔌 Infrastructure Layer (concrete I/O / 具體 I/O 實作)
+    │   ├── _repository.ts         #    Firestore impl of IRepository port（Port 的 Firestore 實作）
+    │   └── _mapper.ts             #    Firestore Doc ↔ Entity conversion（文件 ↔ 實體轉換）
+    │
+    └── _components/               # 🎨 Presentation Layer (UI components / UI 元件)
+        └── <ComponentName>.tsx    #    Server / Client components（伺服器 / 客戶端元件）
+```
+
+---
+
+## 4-Layer Architecture / 4 層架構
+
+```
+Presentation  (_components/, src/app/)
+      │  calls via DTOs / 透過 DTO 呼叫
+      ▼
+Application   (core/_actions.ts, core/_queries.ts, core/_use-cases.ts)
+      │  delegates domain logic, calls via ports / 委派領域邏輯、透過 Port 呼叫
+      ▼
+Domain        (domain.*/_entity.ts, _value-objects.ts, _ports.ts, _events.ts, _service.ts)
+      ▲  implements / 實作
+      │
+Infrastructure (infra.<adapter>/_repository.ts)
+```
+
+| Layer 層次 | Location 位置 | EN Responsibility | 中文職責 |
+|-----------|--------------|-------------------|---------|
+| **Domain 領域層** | `domain.<aggregate>/` | Entities, Value Objects, Aggregates, Domain Events, Port Interfaces, Domain Services. **Pure — no I/O, no framework imports.** | 實體、值物件、聚合、領域事件、Port 介面、領域服務。**純粹 — 不含 I/O，不引用框架。** |
+| **Application 應用層** | `core/` | Use cases, Server Actions, Queries, DTOs. Orchestrates: load → apply domain logic → persist via port → emit event. | 用例、Server Actions、查詢、DTO。協調：載入 → 套用領域邏輯 → 透過 Port 持久化 → 發出事件。 |
+| **Infrastructure 基礎設施層** | `infra.<adapter>/` | Firestore, Storage, Genkit, external API adapters. Implements port interfaces defined in Domain. | Firestore、Storage、Genkit、外部 API 適配器。實作 Domain 層定義的 Port 介面。 |
+| **Presentation 展示層** | `_components/` | React Server / Client components. Calls Application layer only via DTOs. | React 伺服器 / 客戶端元件。僅透過 DTO 呼叫應用層。 |
+
+---
+
+## Module Directory Naming Convention / 目錄命名規則
+
+| Pattern 模式 | EN Meaning | 中文說明 |
+|-------------|-----------|---------|
+| `<name>.module/` | Bounded Context / Domain Module root directory | 限界上下文 / 領域模組根目錄 |
+| `domain.<aggregate>/` | Aggregate name (e.g. `domain.org`, `domain.wbs`) | 聚合名稱（例：`domain.org`、`domain.wbs`） |
+| `infra.<adapter>/` | Adapter name (e.g. `infra.firestore`, `infra.genkit`) | 適配器名稱（例：`infra.firestore`、`infra.genkit`） |
+| `core/` | Application Layer (use cases, actions, queries) | 應用層（用例、Server Actions、查詢） |
+| `_components/` | Presentation Layer (UI components) | 展示層（UI 元件） |
+
+---
+
+## Dependency Rules / 依賴規則
+
+```typescript
+// ✅ Correct / 正確：Presentation → Application (via index.ts barrel)
+import { createOrgAction } from '@/modules/org.module'
+
+// ✅ Correct / 正確：Application → Domain (same module / 同模組內)
+import { OrgEntity } from '../domain.org/_entity'
+
+// ✅ Correct / 正確：Application → Port interface (same module / 同模組內)
+import type { IOrganizationRepository } from '../domain.org/_ports'
+
+// ✅ Correct / 正確：Infrastructure implements Domain port
+import type { IOrganizationRepository } from '../domain.org/_ports'
+export class FirestoreOrgRepository implements IOrganizationRepository { ... }
+
+// ❌ Forbidden / 禁止：Presentation → Domain directly（展示層不得直接存取領域層）
+import { OrgEntity } from '@/modules/org.module/domain.org/_entity'
+
+// ❌ Forbidden / 禁止：Domain → Application or Infrastructure（領域層不得依賴上層）
+import { createOrgUseCase } from '../core/_use-cases'
+
+// ❌ Forbidden / 禁止：Application → Infrastructure directly — use ports（應用層應透過 Port，不得直接引用基礎設施）
+import { FirestoreOrgRepository } from '../infra.firestore/_repository'
+
+// ❌ Forbidden / 禁止：Cross-module internal import — use index.ts barrel（跨模組必須透過 index.ts 匯出桶）
+import { WorkspaceEntity } from '@/modules/workspace.module/domain.workspace/_entity'
+```
+
+---
+
+## Public API Rule / 公開 API 規則（匯出桶）
+
+```typescript
+// ✅ src/modules/<name>.module/index.ts — public API / 唯一合法的跨模組匯入入口
+export { createOrgAction, createTeamAction } from './core/_actions'
+export { getOrgByIdQuery, getTeamsByOrgQuery } from './core/_queries'
+export type { OrgDTO, TeamDTO } from './core/_queries'
+
+// ❌ NEVER export / 禁止匯出：entities, value objects, repositories, domain events
+```
+
+---
+
+## Cross-Layer Communication Pattern / 跨層通信模式
+
+```
+UI Action (React component / form)
+  └─> Server Action [Application: core/_actions.ts]
+        └─> Use Case [Application: core/_use-cases.ts]
+              ├─> Load Aggregate via IRepository port  [Domain port / 領域 Port 介面]
+              │         ↑ implemented by [Infrastructure: infra.<adapter>/_repository.ts]
+              ├─> Apply business rule on Aggregate      [Domain: _entity.ts / 領域規則]
+              ├─> Persist via IRepository.save()        [Infrastructure via port / 透過 Port 持久化]
+              └─> Emit DomainEvent via IEventBus port   [Infrastructure via port / 透過 Port 發出事件]
+```
+
+---
+
+## Bounded Context, Cohesion, Consistency & Event Flow
+## 界限上下文、內聚、一致性與事件流
+
+### 1) Bounded Context must be explicit / 界限上下文必須明確
+
+- Each `<name>.module/` is one Bounded Context with a single Ubiquitous Language and single ownership boundary.
+- 每個 `<name>.module/` 都是單一 Bounded Context，必須有單一語言模型與單一擁有邊界。
+- Cross-context collaboration must go through public APIs (`index.ts`) and documented contracts (DTO / events), never internal files.
+- 跨上下文協作只能透過公開 API（`index.ts`）與已文件化契約（DTO / 事件），不得直接引用內部檔案。
+
+### 2) Cohesion and one-way dependency / 上下文內聚與依賴單向
+
+- Keep each context cohesive: business rules that change for the same reason should stay in the same module.
+- 維持上下文內聚：會因相同商業原因變更的規則，應留在同一模組。
+- Dependency direction is one-way by layer: Presentation → Application → Domain, while Infrastructure implements Domain ports.
+- 分層依賴方向必須單向：Presentation → Application → Domain，Infrastructure 僅實作 Domain ports。
+- Cross-module imports must use the target module public barrel only; importing `core/`, `domain.*`, or `infra.*` of another module is forbidden.
+- 跨模組匯入必須只走對方 public barrel；直接匯入他模組的 `core/`、`domain.*`、`infra.*` 一律禁止。
+
+### 3) Consistency and event flow / 一致性與事件流
+
+- Aggregate invariants are enforced synchronously inside the owning context before persistence.
+- 聚合不變量必須在擁有該聚合的上下文內、持久化前同步驗證。
+- A use case should follow: load aggregate → apply domain rules → persist state → emit domain event.
+- 用例流程應遵循：載入聚合 → 套用領域規則 → 持久化狀態 → 發出領域事件。
+- Cross-context effects are integration concerns and should be handled by event subscribers / application orchestration, not by direct domain coupling.
+- 跨上下文副作用屬整合責任，應由事件訂閱者或應用層協調處理，不可用直接領域耦合。
+- Treat cross-context propagation as eventually consistent unless a documented same-context transactional guarantee exists.
+- 跨上下文傳播預設採最終一致性；只有在同一上下文且有明確文件化交易保證時，才視為同步強一致。
+
+---
+
+## Domain Modules in this Project / 本專案 Domain Modules 一覽
+
+| Module 模組 | Layer 層次 | EN Bounded Context | 中文限界上下文 |
+|------------|-----------|-------------------|--------------|
+| `identity.module/` | SaaS (cross-cutting) | Identity · Authentication · Sessions · Credentials | 身份識別 · 驗證 · 工作階段 · 憑證（取代直接使用 Firebase Auth） |
+| `account.module/` | SaaS | Unified Account (personal \| organization) · Profile · Team · Membership | 統一帳戶實體（個人 / 組織）· 公開檔案 · 團隊 · 成員治理 |
+| `namespace.module/` | SaaS | Namespace · Slug-to-Account binding · Path resolution | 命名空間 · Slug 綁定帳戶 · 路徑解析 |
+| `workspace.module/` | Workspace | Workspace · WBS · Issue · CR · QA · Acceptance · Baseline | 工作區 · WBS · Issue · 變更請求 · QA · 驗收 · 基準 |
+| `file.module/` | Workspace | File · FileVersion · Document Intelligence (DocParse · ObjExtract) | 檔案 · 版本管理 · 文件智能（文件解析 · 物件抽取） |
+| `work.module/` | Workspace | Work Items · Milestones · Dependencies | 工作項目 · 里程碑 · 依賴關係 |
+| `fork.module/` | Workspace | Fork Network · Planning branches · Merge-back proposals | 分叉網路 · 規劃分支 · 合併提案 |
+| `workforce.module/` | Bridge (SaaS ↔ Workspace) | Workforce Scheduling · Capacity planning · Person-to-work allocation | 工作力排班 · 人力容量規劃 · 人員配置 |
+| `settlement.module/` | SaaS | Settlement · Accounts Receivable · Accounts Payable | 結算 · 應收帳款 · 應付帳款 |
+| `notification.module/` | SaaS (cross-cutting) | Notification Engine · Inbox · Email · Mobile Push | 通知引擎 · 收件匣 · 電子郵件 · 行動推播 |
+| `social.module/` | SaaS | Social Graph (Follow/Star/Watch) · Feed · Discovery | 社交圖譜（追蹤 / 星標 / 關注）· 動態流 · 探索介面 |
+| `achievement.module/` | SaaS | Achievement Rules · Badge Unlocking (projected to account.module) | 成就規則 · 徽章解鎖（投影至 account.module） |
+| `collaboration.module/` | Workspace (cross-cutting) | Comments · Reactions · Presence · Co-editing sessions | 討論串留言 · 表情反應 · 即時在線狀態 · 共同編輯工作階段 |
+| `search.module/` | SaaS (cross-cutting) | Full-text + semantic search · Unified query surface · Suggestions | 全文 + 語義搜尋 · 統一查詢介面 · 自動完成建議 |
+| `audit.module/` | SaaS (cross-cutting) | Audit trail (immutable) · Policy automation · Compliance reports | 不可變稽核記錄 · 政策自動化 · 法規合規報告 |
+| `causal-graph.module/` | SaaS / Workspace (cross-cutting) | Causal Graph · Impact Analysis · CausalPath query | 因果圖 · 影響分析 · 因果路徑查詢 |
+
+> Each module folder contains a `README.md` documenting its bounded context, aggregates, and cross-module dependencies.
+> 每個模組資料夾均包含 `README.md`，說明其限界上下文、聚合與跨模組依賴。
+>
+> **Removed modules / 已移除模組：** `org.module` (→ `account.module`)、`profile.module` (→ `account.module`)、`feature.module`（移除 — 職責不明確；執行環境功能旗標應屬於 `src/infrastructure/` 或 Firebase Remote Config）。
+
+---
+
+## Future Candidate Modules / 未來候選模組（達到條件才可新增）
+
+以下模組目前屬於「條件式新增」。
+Only add when an existing module shows clear responsibility overload, boundary confusion, or foundational capability demand.
+只有當現有模組已出現明確的職責過載、邊界混雜或基礎能力需求時，才建議拆分為獨立 Domain Module。
+
+| Candidate Module 候選模組 | EN: Add When... | 中文新增條件 | EN Definition | 中文定義 |
+|--------------------------|----------------|------------|--------------|---------|
+| `subscription.module`<br>訂閱與計費 | SaaS subscription plans (Free/Pro/Enterprise), quota governance, and payment flow become independent product capabilities no longer coupled to `settlement.module` accounting fields. | SaaS 訂閱方案、配額治理、付款流程已成為獨立產品能力，不再只是 `settlement.module` 的延伸帳務欄位。 | Owns Subscription Plan, Billing Cycle, Quota Policy, Payment Provider Integration. `settlement.module` retains AR/AP accounting core. | 專責訂閱方案、計費週期、配額政策、支付供應商整合。`settlement.module` 保持 AR/AP 會計帳務核心。 |
+| `governance.module`<br>治理 · 授權政策 | Authorization logic grows significantly complex (cross-org custom roles, policy composition, fine-grained authorization matrices), causing `account.module` to absorb too many authorization rules. | 權限邏輯明顯複雜化（跨組織自定義角色、策略組合、細粒度授權矩陣），導致 `account.module` 承擔過多授權規則。 | Owns role models, policy rules, authorization decisions, and cross-org governance logic. | 專責角色模型、政策規則、授權決策、跨組織治理邏輯。 |
+| `knowledge.module`<br>核心知識領域 | The system starts treating knowledge entries and knowledge cards as core assets requiring clear version evolution and immutable history. | 系統以知識條目與知識卡片為核心資產，且需要版本演進與不可變歷史記錄。 | Owns Articles, Zettelkasten Notes, Knowledge Revision Graph. | 負責文章、Zettelkasten 知識卡片、知識修訂歷程圖。 |
+| `taxonomy.module`<br>分類與標籤領域 | Global and space-level classification and vocabulary management needs grow significantly and naming consistency becomes a system pain point. | 全域與空間層級的分類、詞彙管理需求持續擴大，命名一致性已成系統痛點。 | Manages Taxonomies, Tags, controlled vocabularies (Ontologies), and naming governance. | 管理分類樹、標籤、受控詞表（Ontologies）、命名規範。 |
+| `vector-ingestion.module`<br>向量化與處理領域 | The RAG pipeline (Chunking, Embedding, Index Push, backfill rebuild) becomes a stable workflow requiring explicit isolation of external models and index providers. | RAG 流程（分塊、嵌入、索引推送、回補重建）成為穩定工作流，需要明確隔離外部模型與索引供應商。 | Owns document chunking, vectorization, index push via `IVectorIndexPort`, with ACL wrapping external models/services. | 專責文件分塊、向量化處理、透過 `IVectorIndexPort` 推送索引，以 ACL 封裝外部模型 / 服務。 |
+
+### Split Heuristics / 拆分啟動準則
+
+- **Responsibility** — A single module simultaneously carries 2+ independent axes of change (e.g. accounting + product billing strategy). 單一模組同時承擔 2 種以上獨立變更軸。
+- **Complexity** — Core rules require an independent Ubiquitous Language and event model to stay maintainable. 核心規則需要獨立語言與事件模型才能保持可維護。
+- **Boundary** — Cross-module dependencies keep growing and can no longer be maintained through existing public barrel APIs. 跨模組依賴持續增加，且已難以透過現有 barrel API 維持清晰邊界。
+- **Integration** — External provider integrations (payments, vector DB, model services) require independent ACLs to reduce coupling and risk. 外部供應商整合需要獨立 ACL 以降低耦合與風險。
+
+---
+
+## Authoritative References / 權威參考文件
+
+- Architecture SSOT / 架構唯一真相來源: [`docs/architecture/README.md`](../../docs/architecture/README.md)
+- Business Entities / 業務實體: [`docs/architecture/catalog/business-entities.md`](../../docs/architecture/catalog/business-entities.md)
+- Service Boundary / 服務邊界: [`docs/architecture/catalog/service-boundary.md`](../../docs/architecture/catalog/service-boundary.md)
+- Event Catalog / 事件目錄: [`docs/architecture/catalog/event-catalog.md`](../../docs/architecture/catalog/event-catalog.md)
+
+## Domain Governance Matrix（for all modules）
+
+Every module under `src/modules/*.module` must explicitly document these seven items in its own `README.md`:
+
+1. **Bounded Context**（上下文邊界）
+2. **Core Domain vs Supporting Domain**（核心域與支撐域）
+3. **Context Mapping**（上下文映射）
+4. **Anti-Corruption Layer**（防腐層）
+5. **Core Business Logic**（核心業務邏輯）
+6. **Operational Flow**（操作流程）
+7. **Inter-module Contracts**（模組間契約）
+
+This repository enforces this as the minimum DDD governance baseline for module-level documentation.
 ````
 
 ## File: docs/management/documentation-index.md
@@ -71960,785 +76115,6 @@ This table records the **integration relationship pattern** between every pair o
 | `workforce.module/infra.*/` | Org capacity data | SaaS org model | WBS skill/time-window terms |
 ````
 
-## File: docs/architecture/notes/model-driven-hexagonal-architecture.md
-````markdown
-# Model-Driven Hexagonal Architecture
-
-> Tags: `ssot` `architecture-core` `ddd` `hexagonal` `ports-adapters` `layer-rules`  
-> Design philosophy and development guide for the **xuanwu-platform**.  
-> This document is the primary reference for understanding how Domain-Driven Design (DDD)
-> and Hexagonal Architecture (Ports & Adapters) are unified in this project.
-
----
-
-## Table of Contents
-
-1. [Philosophy Overview](#1-philosophy-overview)
-2. [Core Concepts — MDDD Vocabulary](#2-core-concepts--mddd-vocabulary)
-   - 2.1 [Bounded Context](#21-bounded-context-限界上下文)
-   - 2.2 [Ubiquitous Language](#22-ubiquitous-language-通用語言)
-   - 2.3 [Context Mapping](#23-context-mapping-上下文映射)
-   - 2.4 [Aggregate & Aggregate Root](#24-aggregate--aggregate-root-聚合與聚合根)
-   - 2.5 [Invariants](#25-invariants-不變性約束)
-   - 2.6 [Separation of Concerns](#26-separation-of-concerns-關注點分離)
-3. [Hexagonal Architecture — Ports & Adapters](#3-hexagonal-architecture--ports--adapters)
-   - 3.1 [The Hexagon Mental Model](#31-the-hexagon-mental-model)
-   - 3.2 [Inbound Ports (Driving Side)](#32-inbound-ports-driving-side)
-   - 3.3 [Outbound Ports (Driven Side)](#33-outbound-ports-driven-side)
-   - 3.4 [Adapters](#34-adapters)
-4. [How DDD Maps onto Hexagonal Architecture](#4-how-ddd-maps-onto-hexagonal-architecture)
-5. [Xuanwu 4-Layer Implementation](#5-xuanwu-4-layer-implementation)
-   - 5.1 [Layer Definitions](#51-layer-definitions)
-   - 5.2 [Layer Diagram](#52-layer-diagram)
-   - 5.3 [Dependency Rules](#53-dependency-rules)
-   - 5.4 [File Placement Convention](#54-file-placement-convention)
-6. [Context Mapping in Xuanwu](#6-context-mapping-in-xuanwu)
-   - 6.1 [SaaS ↔ Workspace Boundary](#61-saas--workspace-boundary)
-   - 6.2 [Context Map Patterns Used](#62-context-map-patterns-used)
-7. [Port & Adapter Catalogue](#7-port--adapter-catalogue)
-   - 7.1 [Shared (Cross-Cutting) Ports](#71-shared-cross-cutting-ports)
-   - 7.2 [Module-Owned Ports](#72-module-owned-ports)
-8. [Development Guide — Working with this Architecture](#8-development-guide--working-with-this-architecture)
-   - 8.1 [Adding a New Feature](#81-adding-a-new-feature)
-   - 8.2 [Adding a New Port](#82-adding-a-new-port)
-   - 8.3 [Crossing a Bounded Context Boundary](#83-crossing-a-bounded-context-boundary)
-   - 8.4 [Common Anti-Patterns to Avoid](#84-common-anti-patterns-to-avoid)
-  - 8.5 [Consistency Boundary & Transaction Semantics](#85-consistency-boundary--transaction-semantics)
-  - 8.6 [Event Contract Versioning (Simple Rules)](#86-event-contract-versioning-simple-rules)
-  - 8.7 [Authorization Boundary](#87-authorization-boundary)
-  - 8.8 [Composition Root & Dependency Wiring](#88-composition-root--dependency-wiring)
-  - 8.9 [Read/Write Separation (CQRS)](#89-readwrite-separation-cqrs)
-  - 8.10 [Observability Baseline](#810-observability-baseline)
-9. [Quick Reference](#9-quick-reference)
-
----
-
-## 1. Philosophy Overview
-
-Xuanwu uses **Model-Driven Domain Discovery (MDDD)** as its design process and **Hexagonal Architecture (Ports & Adapters)** as its structural blueprint.
-
-### Why Model-Driven?
-
-The domain model — not the database, not the UI, not the framework — is the centre of gravity.  
-Every design decision starts with a question: **"What does the domain say?"**
-
-- Business rules live in **Entities** and **Aggregates**, not in controllers or database triggers.
-- Infrastructure details (Firebase, Redis, QStash) are plug-in concerns; they can change without touching business logic.
-- The public API of every module reflects the **Ubiquitous Language** of its Bounded Context.
-
-### Why Hexagonal?
-
-Hexagonal Architecture enforces that the domain model is surrounded by two rings:
-
-```
-         ┌─────────────────────────────────────┐
-         │         Driving Adapters             │  ← REST, React, Server Actions, CLI
-         │   (things that call the application) │
-         └───────────────────────┬─────────────┘
-                                 │ Inbound Ports
-         ┌───────────────────────▼─────────────┐
-         │         Application Core             │
-         │   (Use Cases + Domain Model)         │
-         └───────────────────────┬─────────────┘
-                                 │ Outbound Ports
-         ┌───────────────────────▼─────────────┐
-         │         Driven Adapters              │  ← Firestore, Redis, QStash, Email
-         │   (things the application calls)     │
-         └─────────────────────────────────────┘
-```
-
-The application core never imports from adapters. It defines **interfaces** (ports) that adapters implement. This is the Dependency Inversion Principle applied at the architecture level.
-
----
-
-## 2. Core Concepts — MDDD Vocabulary
-
-### 2.1 Bounded Context (限界上下文)
-
-**Definition**: A linguistic and logical boundary within which a domain model is defined and applicable. Inside the boundary, every term has exactly one meaning.
-
-> "Account" in the `account.module` means a platform user account (personal or org).  
-> "Account" in the `settlement.module` means a financial ledger account (AR/AP).  
-> Same word; different Bounded Contexts; different definitions.
-
-**In Xuanwu**: Each `src/modules/{name}.module/` directory is a Bounded Context. The `index.ts` barrel is the only public surface — all internal files are encapsulated.
-
-**Key rules**:
-- Never import internal files of another module directly.
-- If two modules need to share data, use typed contracts (DTOs) or Domain Events.
-- The module name IS the Bounded Context name.
-
-**Diagnostic question**: *"What does this word mean here?"* If the answer differs from what it means in another module, you've found a boundary.
-
----
-
-### 2.2 Ubiquitous Language (通用語言)
-
-**Definition**: The shared vocabulary used by both domain experts and developers. Code identifiers, database field names, event names, and documentation all use the same terms.
-
-**In Xuanwu**:
-- Canonical vocabulary is in [`docs/architecture/glossary/`](../glossary/).
-- Domain events follow the naming convention `{domain}.{entity}.{verb}` (e.g. `wbs.task.state_changed`).
-
-  > **⚠️ Implementation gap**: Current TypeScript code (`_events.ts` files across all modules) uses **colon-separated** event type strings at runtime (e.g., `workspace:task:state:changed`, `account:personal:created`, `settlement:created`). The dot-format names above are the **canonical target**. The colon-separated format is the current runtime reality and is a known deviation from this convention. A dedicated code migration task is required to align runtime event type strings with the `{domain}.{entity}.{verb}` format. Until that migration is complete, both formats must be considered in any cross-module event subscription logic.
-- Entity field names match the glossary terms (e.g. `assigneeId`, not `userId` or `executorId`).
-
-**Diagnostic question**: *"If a business person says 'the assignee submitted a change request', does that sentence map 1:1 to code entities without translation?"*  
-If translation is needed, align the code or the glossary.
-
----
-
-### 2.3 Context Mapping (上下文映射)
-
-**Definition**: The high-level relationship map between Bounded Contexts. It describes the direction of influence and the integration patterns between modules.
-
-**Core relationships** between contexts:
-
-| Pattern | Chinese | Description |
-|---------|---------|-------------|
-| **Upstream / Downstream** | 上游 / 下游 | Upstream shapes the model; downstream adapts to it |
-| **Anticorruption Layer (ACL)** | 防腐層 | Downstream translates upstream data to protect its own model |
-| **Partnership** | 合夥關係 | Two contexts co-evolve under mutual agreement |
-| **Customer / Supplier** | 客戶 / 供應商 | Downstream negotiates interface requirements with upstream |
-| **Conformist** | 遵奉者 | Downstream copies the upstream model without translation |
-| **Shared Kernel** | 共享核心 | Two contexts share a small, jointly-maintained sub-model |
-| **Open Host Service** | 開放主機服務 | Upstream publishes a formal, versioned API for multiple consumers |
-| **Published Language** | 已發布語言 | A well-documented exchange format between contexts (e.g. domain events) |
-
-**In Xuanwu**: See [Section 6](#6-context-mapping-in-xuanwu) for the full Context Map.
-
----
-
-### 2.4 Aggregate & Aggregate Root (聚合與聚合根)
-
-**Definition**: An **Aggregate** is a cluster of domain objects (entities + value objects) that are treated as a single unit for the purpose of data changes. The **Aggregate Root** is the single entry point — all external access to the aggregate goes through the root.
-
-**Rules**:
-1. Only the Aggregate Root has a globally stable identity (a persisted ID).
-2. External objects may only hold a reference to the Aggregate Root ID, not to internal entities.
-3. All business invariants within an Aggregate must be enforced by the Aggregate Root.
-4. Repositories load and save only Aggregate Roots.
-5. Aggregates communicate across boundaries only via Domain Events, not direct references.
-
-**Example in Xuanwu**:
-
-```
-Aggregate: Workspace
-├── Aggregate Root: Workspace (workspaceId)
-├── Entity: WorkspaceMember (memberId)  ← accessed via Workspace only
-└── Entity: BaselineHistory (historyId)  ← append-only, via Workspace.mergeBaseline()
-
-Aggregate: WBSTask
-├── Aggregate Root: WBSTask (taskId)
-├── Value Object: SkillRequirement (a string tag)
-└── Entity: TaskDependency (dependencyId)  ← accessed via WBSTask only
-
-// ✅ Cross-aggregate reference (by ID only):
-type WBSTask = {
-  workspaceId: string;  // FK to Workspace root — never a direct object reference
-  ...
-}
-```
-
-**Diagnostic question**: *"Who is responsible for this business rule?"*  
-The answer is the Aggregate Root that owns the entities involved.
-
----
-
-### 2.5 Invariants (不變性約束)
-
-**Definition**: A business rule that must always be true for the system to be in a valid state. Invariants are the domain's constitution — they cannot be violated, even temporarily.
-
-**Where invariants live**: Inside the Aggregate Root's methods, not in Application Services, not in repositories, not in UI components.
-
-**Example invariants in Xuanwu**:
-
-```typescript
-// WBSTask Aggregate Root
-class WBSTask {
-  // Invariant: a task with open Issues must be Blocked
-  resolveIssue(issueId: string): void {
-    this.issues = this.issues.filter(i => i.id !== issueId);
-    if (this.issues.every(i => i.resolved)) {
-      this.state = "in_progress";  // restores correct state
-    }
-  }
-
-  // Invariant: Accepted tasks cannot regress
-  transition(newState: TaskState): void {
-    if (this.state === "accepted") {
-      throw new TaskAlreadyAcceptedError(this.taskId);
-    }
-    // ...
-  }
-}
-
-// Namespace (Value Object-like invariant)
-// Invariant: slug is globally unique and immutable after registration
-class Namespace {
-  constructor(readonly slug: string) {
-    if (!SLUG_PATTERN.test(slug)) throw new InvalidSlugError(slug);
-  }
-  // No setter for slug — immutable
-}
-```
-
-**Diagnostic question**: *"If this rule is violated, is the system in an invalid state?"*  
-If yes, it's an invariant — protect it in the domain layer.
-
----
-
-### 2.6 Separation of Concerns (關注點分離)
-
-**Definition**: The architectural philosophy that each layer should handle only one type of concern. Business logic is the domain's concern; database access is infrastructure's concern; rendering is the UI's concern.
-
-**In Hexagonal terms**: The application core is ignorant of how data is stored or how the UI works. Infrastructure adapters are ignorant of business rules.
-
-**Layer responsibility mapping**:
-
-| Layer | Concern | Anti-pattern |
-|-------|---------|--------------|
-| **Domain** | What are the rules? | Database queries, HTTP calls, React imports |
-| **Application** | What use case is being executed? | Business invariants, direct DB queries |
-| **Infrastructure** | How is data stored/retrieved? | Business rule evaluations, UI rendering |
-| **Presentation** | What does the user see? | Database queries, domain invariant checks |
-
----
-
-## 3. Hexagonal Architecture — Ports & Adapters
-
-### 3.1 The Hexagon Mental Model
-
-The "hexagon" represents the **application core** (use cases + domain model). The shape is symbolic — what matters is that **everything outside the hexagon is a detail**:
-
-```
-                    HTTP Request   React Component   CLI Tool
-                          │               │              │
-                    ┌─────▼───────────────▼──────────────▼─────┐
-                    │          Driving Adapters                  │
-                    │    (Server Actions, Route Handlers, API)   │
-                    └─────────────────────┬──────────────────────┘
-                                         │
-                           ┌─────────────▼─────────────┐
-                           │      Inbound Port           │
-                           │  (IUseCase / ICommand)      │
-                           └─────────────┬───────────────┘
-                                         │
-              ┌──────────────────────────▼──────────────────────────┐
-              │                 Application Core                     │
-              │                                                      │
-              │   ┌──────────────────────────────────────────────┐  │
-              │   │              Domain Model                    │  │
-              │   │  (Entities · Value Objects · Aggregates ·    │  │
-              │   │   Domain Services · Domain Events)           │  │
-              │   └──────────────────────────────────────────────┘  │
-              │                                                      │
-              │   ┌──────────────────────────────────────────────┐  │
-              │   │           Use Cases / Application Services    │  │
-              │   │  (Orchestration: Load → Apply → Persist)     │  │
-              │   └──────────────────────────────────────────────┘  │
-              └──────────────────────────┬──────────────────────────┘
-                                         │
-                           ┌─────────────▼───────────────┐
-                           │      Outbound Port           │
-                           │  (IRepository / IEventBus)   │
-                           └─────────────┬────────────────┘
-                                         │
-                    ┌────────────────────▼──────────────────────────┐
-                    │             Driven Adapters                    │
-                    │  (Firestore, Redis, QStash, SMTP, Firebase)   │
-                    └────────────────────────────────────────────────┘
-```
-
-### 3.2 Inbound Ports (Driving Side)
-
-Inbound ports define **what actions the application exposes**. They are called by driving adapters.
-
-```typescript
-// Inbound port — defined in the application layer
-interface ICreateWorkspaceUseCase {
-  execute(command: CreateWorkspaceCommand): Promise<Result<WorkspaceDTO, AppError>>;
-}
-
-// Driving adapter — Server Action calls the use case via the port
-async function createWorkspaceAction(formData: FormData) {
-  const useCase = new CreateWorkspaceUseCase(workspaceRepo, eventBus);
-  const result = await useCase.execute({ displayName: formData.get("name") });
-  // ...
-}
-```
-
-### 3.3 Outbound Ports (Driven Side)
-
-Outbound ports define **what the application needs from the outside world**. They are implemented by driven adapters.
-
-```typescript
-// Outbound port — defined in the domain layer (or application layer)
-interface IWorkspaceRepository {
-  findById(workspaceId: string): Promise<Workspace | null>;
-  save(workspace: Workspace): Promise<void>;
-  delete(workspaceId: string): Promise<void>;
-}
-
-// Driven adapter — Firestore implementation
-class FirestoreWorkspaceRepository implements IWorkspaceRepository {
-  async findById(workspaceId: string) {
-    const doc = await getDoc(doc(db, "workspaces", workspaceId));
-    return doc.exists() ? WorkspaceMapper.toDomain(doc.data()) : null;
-  }
-  // ...
-}
-```
-
-### 3.4 Adapters
-
-Adapters are the glue between the hexagon and the outside world.
-
-| Adapter type | Direction | Examples |
-|-------------|-----------|---------|
-| **Primary (Driving)** | Outside → Hexagon | Server Actions, Route Handlers, React component callbacks |
-| **Secondary (Driven)** | Hexagon → Outside | Firestore repository, Redis cache, QStash publisher, SMTP adapter |
-
-**Key principle**: Adapters have no business logic. If an adapter starts making decisions, those decisions belong in the domain or application layer.
-
----
-
-## 4. How DDD Maps onto Hexagonal Architecture
-
-| DDD Concept | Hexagonal Position | Xuanwu Location |
-|-------------|-------------------|-----------------|
-| **Entities / Value Objects** | Domain Layer (inside hexagon) | `domain.{aggregate}/_entity.ts`, `_value-objects.ts` |
-| **Aggregate Root** | Domain Layer (inside hexagon) | `domain.{aggregate}/_entity.ts` |
-| **Domain Services** | Domain Layer (inside hexagon) | `domain.{aggregate}/_service.ts` |
-| **Domain Events** | Domain Layer → Event Bus port | `domain.{aggregate}/_events.ts` |
-| **Repository Interface (Port)** | Outbound Port | `domain.{aggregate}/_ports.ts` |
-| **Use Cases / Application Services** | Application Layer (inside hexagon) | `core/_use-cases.ts`, `_actions.ts`, `_queries.ts` |
-| **DTOs / Command Objects** | Application Layer boundary | `core/_dto.ts`, `_commands.ts` |
-| **Repository Implementation** | Secondary Adapter | `infra.firestore/_repository.ts` |
-| **ACL (Anticorruption Layer)** | Secondary Adapter translating foreign model | `infra.{adapter}/_mapper.ts` |
-| **Ubiquitous Language** | Pervasive (all layers) | Enforced via glossary + naming conventions |
-| **Bounded Context** | One hexagon | One `src/modules/{name}.module/` |
-| **Context Map** | Relationships between hexagons | `docs/architecture/catalog/service-boundary.md` |
-
----
-
-## 5. Xuanwu 4-Layer Implementation
-
-### 5.1 Layer Definitions
-
-```
-src/modules/{name}.module/
-├── index.ts                     ← Public API (Bounded Context contract)
-│
-├── domain.{aggregate}/          ← Domain Layer
-│   ├── _entity.ts               ← Aggregate Root + Entities
-│   ├── _value-objects.ts        ← Value Objects (immutable, self-validating)
-│   ├── _service.ts              ← Domain Services (multi-entity logic)
-│   ├── _events.ts               ← Domain Event definitions
-│   └── _ports.ts                ← Outbound Port interfaces (Repository, EventBus)
-│
-├── core/                        ← Application Layer
-│   ├── _use-cases.ts            ← Use case orchestration
-│   ├── _actions.ts              ← Server Actions (thin adapter → use case)
-│   ├── _queries.ts              ← Read queries (CQRS read side)
-│   └── _dto.ts                  ← Data Transfer Objects
-│
-├── infra.{adapter}/             ← Infrastructure Layer (Secondary Adapter)
-│   ├── _repository.ts           ← Repository implementation (Firestore, etc.)
-│   └── _mapper.ts               ← Domain ↔ Persistence mapper
-│
-└── _components/                 ← Presentation Layer (Primary Adapter)
-    ├── {feature}-view.tsx       ← Page-level component (calls Server Actions)
-    └── {widget}.tsx             ← Reusable UI component
-```
-
-### 5.2 Layer Diagram
-
-```
-┌──────────────────────────────────────────────────────────┐
-│  Presentation Layer  (_components/, src/app/)            │
-│  "What does the user see and do?"                        │
-│  Primary Adapter — calls Application layer               │
-└───────────────────────────────┬──────────────────────────┘
-                                │ calls via Server Actions / queries
-┌───────────────────────────────▼──────────────────────────┐
-│  Application Layer  (core/_use-cases.ts, _actions.ts)    │
-│  "What use case is being executed?"                      │
-│  Orchestrates: Load → Validate → Apply → Persist → Emit  │
-└────────────────────┬──────────────────────┬──────────────┘
-                     │ uses (pure calls)     │ depends on (via ports)
-     ┌───────────────▼──────┐    ┌──────────▼────────────────────────┐
-     │  Domain Layer         │    │  Outbound Ports (_ports.ts)        │
-     │  "What are the rules?"│    │  IWorkspaceRepository              │
-     │  Entities, Aggregates │    │  IEventBusPort                     │
-     │  Value Objects        │    └──────────────────┬─────────────────┘
-     │  Domain Services      │                       │ implemented by
-     │  Domain Events        │    ┌──────────────────▼─────────────────┐
-     └───────────────────────┘    │  Infrastructure Layer               │
-                                  │  "How is data stored?"              │
-                                  │  Firestore, Redis, QStash adapters  │
-                                  └─────────────────────────────────────┘
-```
-
-### 5.3 Dependency Rules
-
-| Layer | May import from | Must NOT import from |
-|-------|----------------|----------------------|
-| **Presentation** | Application (Server Actions, queries, DTOs) | Domain internals, Infrastructure |
-| **Application** | Domain (Entities, VOs, Domain Services, Ports) | Infrastructure (concrete adapters), Presentation |
-| **Domain** | Nothing — pure TypeScript | Application, Infrastructure, Presentation |
-| **Infrastructure** | Domain (Ports and Entities for mapping) | Application (orchestration logic), Presentation |
-
-The golden rule: **dependency arrows always point toward the Domain layer**. The Domain layer has zero outward dependencies.
-
-### 5.4 File Placement Convention
-
-```typescript
-// ✅ Correct placement examples
-
-// Domain layer — pure business logic
-// src/modules/workspace.module/domain.workspace/_entity.ts
-export class Workspace {
-  private constructor(readonly id: string, private state: WorkspaceState) {}
-
-  static create(props: CreateWorkspaceProps): Workspace { /* factory */ }
-  archive(): DomainEvent { /* invariant-checked mutation */ }
-}
-
-// Outbound port — defined in Domain, implemented in Infrastructure
-// src/modules/workspace.module/domain.workspace/_ports.ts
-export interface IWorkspaceRepository {
-  findById(id: string): Promise<Workspace | null>;
-  save(workspace: Workspace): Promise<void>;
-}
-
-// Application layer — orchestration (no business logic)
-// src/modules/workspace.module/core/_use-cases.ts
-export class ArchiveWorkspaceUseCase {
-  constructor(
-    private readonly repo: IWorkspaceRepository,     // ← port, not adapter
-    private readonly eventBus: IEventBusPort,
-  ) {}
-
-  async execute(workspaceId: string): Promise<Result<void, AppError>> {
-    const workspace = await this.repo.findById(workspaceId);
-    if (!workspace) return fail(new NotFoundError("workspace", workspaceId));
-    const event = workspace.archive();               // ← domain rule enforced here
-    await this.repo.save(workspace);
-    await this.eventBus.publish(event);
-    return ok(undefined);
-  }
-}
-
-// Infrastructure adapter — Firestore implementation
-// src/modules/workspace.module/infra.firestore/_repository.ts
-export class FirestoreWorkspaceRepository implements IWorkspaceRepository {
-  async findById(id: string) {
-    const snap = await getDoc(doc(db, "workspaces", id));
-    return snap.exists() ? WorkspaceMapper.toDomain(snap.data()) : null;
-  }
-  async save(workspace: Workspace) { /* ... */ }
-}
-```
-
----
-
-## 6. Context Mapping in Xuanwu
-
-### 6.1 SaaS ↔ Workspace Boundary
-
-The primary architectural boundary in Xuanwu. See [`docs/architecture/catalog/service-boundary.md`](../catalog/service-boundary.md) for the full crossing protocol.
-
-```mermaid
-graph LR
-    subgraph SAAS["⬆ SaaS Layer — Upstream"]
-        direction TB
-        id["identity.module<br/><i>Identity Provider</i>"]
-        acc["account.module<br/><i>Account / Org</i>"]
-        ns["namespace.module<br/><i>Path Resolution</i>"]
-        sett["settlement.module<br/><i>AR / AP</i>"]
-        notif["notification.module<br/><i>Inbox Routing</i>"]
-        ach["achievement.module<br/><i>Badge Engine</i>"]
-    end
-
-    subgraph WS["⬇ Workspace Layer — Downstream"]
-        direction TB
-        ws["workspace.module"]
-        work["work.module / wbs tasks / issues / CRs"]
-        file["file.module"]
-        collab["collaboration.module"]
-        fork["fork.module"]
-    end
-
-    wf["workforce.module<br/><i>Partnership Bridge</i>"]
-
-    SAAS -- "📢 Published Language\n(domain events via Event Bus)" --> WS
-    SAAS <-- "🤝 Open Host Service" --> wf
-    wf -- "WBS skill → org capacity" --> WS
-
-    style SAAS fill:#e8f4f8,stroke:#2980b9,color:#000
-    style WS   fill:#fdf2e9,stroke:#e67e22,color:#000
-    style wf   fill:#e8f8e8,stroke:#27ae60,color:#000
-```
-
-| Module pair | Pattern | ACL needed? |
-|-------------|---------|-------------|
-| `account.module` → `workspace.module` | Customer / Supplier | Yes — workspace translates org identity to workspace-scoped `WorkspaceMember` |
-| `workspace.module` → `settlement.module` | Conformist (event consumer) | No — settlement merely reacts to `wbs.task.state_changed` event |
-| `workspace.module` → `notification.module` | Open Host Service | No — notification subscribes via Event Bus without coupling to workspace model |
-| `workforce.module` ↔ `workspace.module` | Partnership (bridge) | Yes — workforce translates WBS skill requirements into org capacity queries |
-
-### 6.2 Context Map Patterns Used
-
-#### Anticorruption Layer (ACL) — 防腐層
-
-Used whenever Xuanwu consumes a model from an upstream that we don't control (Firebase Auth, external APIs) or when two modules must share data without coupling their domain models.
-
-```typescript
-// ACL Mapper: translates Firebase Auth user into identity.module's IdentityUser
-// src/modules/identity.module/infra.firebase/_mapper.ts
-
-export class FirebaseAuthMapper {
-  static toDomain(firebaseUser: FirebaseUser): IdentityUser {
-    return IdentityUser.fromFirebase({
-      uid: firebaseUser.uid,
-      email: firebaseUser.email ?? "",
-      displayName: firebaseUser.displayName ?? "",
-      // Maps Firebase photoURL → Xuanwu avatarUrl convention
-      avatarUrl: firebaseUser.photoURL ?? DEFAULT_AVATAR,
-    });
-  }
-}
-```
-
-#### Open Host Service — 開放主機服務
-
-Used by `notification.module` and `settlement.module` — they subscribe to a well-defined Event Bus contract without knowing anything about the internal model of `workspace.module` or `wbs` tasks.
-
-```typescript
-// Subscriber in notification.module — consumes events via Published Language
-// Has no import from workspace.module internals
-async function handleTaskAccepted(envelope: EventEnvelope) {
-  const { taskId, workspaceId, actorId } = envelope.payload;
-  // Works purely with the event payload — no workspace domain objects
-}
-```
-
-#### Published Language — 已發布語言
-
-All domain events follow the `EventEnvelope` schema (see `docs/architecture/catalog/event-catalog.md`). The schema is the Published Language shared across all Bounded Contexts.
-
----
-
-## 7. Port & Adapter Catalogue
-
-### 7.1 Shared (Cross-Cutting) Ports
-
-These ports are owned by `src/shared/ports/` because they are used by many modules and no single Bounded Context owns them.
-
-| Port Interface | Concern | Concrete Adapter | Location |
-|----------------|---------|-----------------|----------|
-| `ICachePort` | Key-value cache with TTL | Upstash Redis | `src/infrastructure/upstash/redis.ts` |
-| `IQueuePort` | Async message delivery | Upstash QStash | `src/infrastructure/upstash/qstash.ts` |
-| `IVectorIndexPort<T>` | Semantic similarity search | Upstash Vector | `src/infrastructure/upstash/vector.ts` |
-| `IWorkflowPort` | Durable workflow orchestration | Upstash Workflow | `src/infrastructure/upstash/workflow.ts` |
-| `IStoragePort` | Browser key-value persistence | localStorage | `src/shared/directives/use-local-storage.ts` |
-| `ILocalePort` | Locale selection + persistence | `useLocale` directive | `src/shared/directives/index.ts` |
-| `ILoggerPort` | Structured logging | Console / Cloud Logging | `src/infrastructure/logging/` |
-| `IAnalyticsPort` | User event tracking | Firebase Analytics | `src/infrastructure/firebase/client/analytics.ts` |
-| `IAuthPort` | Auth state + ID token | Firebase Admin Auth | `src/infrastructure/firebase/admin/auth/` |
-
-### 7.2 Module-Owned Ports
-
-Module-specific ports live inside the owning module's `domain.*/_ports.ts`. Examples:
-
-| Module | Port Interface | Implemented by |
-|--------|---------------|----------------|
-| `account.module` | `IAccountRepository` | `infra.firestore/_repository.ts` |
-| `workspace.module` | `IWorkspaceRepository` | `infra.firestore/_repository.ts` |
-| `workspace.module` | `IEventBusPort` | `infra.eventbus/_adapter.ts` |
-| `identity.module` | `IIdentityProvider` | `infra.firebase/_provider.ts` |
-| `notification.module` | `INotificationDeliveryPort` | `infra.firebase/_messaging.ts` |
-
----
-
-## 8. Development Guide — Working with this Architecture
-
-### 8.1 Adding a New Feature
-
-Follow the sequence: **Domain → Application → Infrastructure → Presentation**
-
-1. **Domain first**: Define or update the Aggregate Root. Encode the new business rule as an invariant method. Write unit tests for the invariant — no framework needed.
-2. **Port**: If the feature needs external I/O, define an outbound port interface in `domain.*/_ports.ts`.
-3. **Use Case**: Write the application orchestration in `core/_use-cases.ts`. Depend on port interfaces, not adapters. Write integration tests.
-4. **Adapter**: Implement the port in `infra.{adapter}/`. Wire up to the concrete technology (Firestore, Redis, etc.).
-5. **Presentation**: Create or update the Server Action in `_actions.ts` that calls the use case. Update the React component to call the action.
-
-### 8.2 Adding a New Port
-
-When you need to abstract a new infrastructure concern:
-
-1. **Decide ownership**: Is this used by multiple modules? → `src/shared/ports/index.ts`. Is it specific to one module? → `domain.*/_ports.ts`.
-2. **Define the interface** with method names matching the Ubiquitous Language (not the adapter's API names).
-3. **Register the concrete adapter** in the module's dependency composition root or via Next.js injection at the Server Action boundary.
-4. **Never instantiate the adapter in Domain or Application code** — only at the composition boundary.
-
-### 8.3 Crossing a Bounded Context Boundary
-
-**Allowed crossing mechanisms** (in priority order):
-
-1. **Domain Events via Event Bus** — preferred for all async state changes
-2. **Server Actions calling another module's public `index.ts`** — only for synchronous orchestration within the same request
-3. **Read model queries (CQRS)** — when one module needs to read another's data for display only
-
-**Never allowed**:
-```typescript
-// ❌ Importing internal domain objects across module boundaries
-import { WBSTask } from "@/modules/workspace.module/domain.wbs/_entity";
-
-// ❌ Reaching into another module's infrastructure
-import { firestoreTaskRepo } from "@/modules/workspace.module/infra.firestore/_repository";
-
-// ✅ Using the public API barrel
-import { getTask, createTask } from "@/modules/workspace.module";
-
-// ✅ Reacting to domain events
-eventBus.subscribe("wbs.task.state_changed", handleTaskStateChange);
-```
-
-### 8.4 Common Anti-Patterns to Avoid
-
-| Anti-pattern | What it looks like | Why it hurts | Fix |
-|--------------|-------------------|-------------|-----|
-| **Anemic Domain Model** | Entities have only getters; all logic is in Application Services | Invariants are scattered; domain becomes a data bag | Move logic back to the Aggregate Root |
-| **Smart Repository** | Repository contains `if (task.state === "accepted") { settlementService.create(...) }` | Business rule in Infrastructure layer | Extract to Domain Service or Use Case |
-| **Fat Action** | Server Action contains long business logic chains | Hard to test; couples Presentation to business rules | Extract a Use Case class |
-| **Layer Bypass** | Presentation component calls `getDoc(db, "workspaces", id)` directly | Breaks encapsulation; forces UI to understand DB schema | Route through a query in `core/_queries.ts` |
-| **Cross-module Domain Coupling** | Module A imports `WorkspaceEntity` from Module B's domain | Modules become entangled; B can't change without breaking A | Use DTOs + Domain Events for cross-boundary data |
-| **God Aggregate** | Workspace aggregate holds all tasks, issues, CRs, members | Performance and consistency problems | Keep aggregates small; reference by ID |
-
-### 8.5 Consistency Boundary & Transaction Semantics
-
-In Xuanwu, **Aggregate boundary = default strong consistency boundary**.
-
-- Within one Aggregate in one use case, preserve invariants atomically.
-- Across multiple Aggregates or modules, default to **event-driven eventual consistency**.
-- Do not claim cross-module strong consistency unless a dedicated transaction mechanism is explicitly designed and documented.
-
-Minimal execution guideline:
-
-1. Load Aggregate Root
-2. Apply invariant-protected domain mutation
-3. Persist Aggregate
-4. Publish Domain Event
-
-If step 4 fails, handle it as an application/infrastructure reliability concern (for example with an outbox-style mechanism), not by moving business rules into adapters.
-
-### 8.6 Event Contract Versioning (Simple Rules)
-
-Use simple, explicit event compatibility rules:
-
-- Add `version` in event metadata (e.g. `v1`, `v2`).
-- Prefer additive changes (new optional fields) over breaking field renames/removals.
-- If a breaking change is required, publish a new version and run old/new consumers in parallel for a transition window.
-
-### 8.7 Authorization Boundary
-
-Authorization is split by responsibility:
-
-- **Presentation/Application**: authenticate caller identity and enforce request-level access guard.
-- **Domain**: enforce business authorization invariants (who is allowed to do what in domain terms).
-- **Infrastructure**: enforce storage and platform security policies.
-
-Rule of thumb: if violating the rule makes the business state invalid, the rule belongs in Domain.
-
-### 8.8 Composition Root & Dependency Wiring
-
-Ports and adapters must be wired at composition boundaries only:
-
-- Allowed wiring points: Server Action boundary, Route Handler boundary, or module composition root.
-- Application/use case code depends on interfaces (ports), never concrete adapters.
-- Domain code must never instantiate adapters.
-
-```typescript
-// ✅ Compose at boundary
-const repo: IWorkspaceRepository = new FirestoreWorkspaceRepository(db);
-const eventBus: IEventBusPort = new EventBusAdapter(busClient);
-const useCase = new ArchiveWorkspaceUseCase(repo, eventBus);
-```
-
-### 8.9 Read/Write Separation (CQRS)
-
-Xuanwu uses **read/write separation**:
-
-- **Write side**: commands/use cases mutate aggregates and emit domain events.
-- **Read side**: queries/read models serve UI and reporting.
-- Read models may be denormalized and optimized for retrieval; they must not enforce domain invariants.
-
-When read freshness is temporarily behind writes, treat it as expected eventual consistency behavior unless a use case explicitly requires synchronous read-after-write guarantees.
-
-### 8.10 Observability Baseline
-
-All production-facing flows should carry minimal observability context:
-
-- `requestId`: traces one inbound request lifecycle.
-- `eventId`: traces one published/consumed domain event.
-- `module` and `useCase`: identifies ownership and execution path.
-
-At minimum, log start/fail/success for use cases and event handlers with structured fields so cross-module diagnosis is possible without inspecting raw code paths.
-
----
-
-## 9. Quick Reference
-
-### Ask Before Every File Change
-
-| Question | Action |
-|----------|--------|
-| What layer does this file belong to? | Check the table in §5.4 |
-| Does this code reference anything outside its layer? | Check the dependency rules in §5.3 |
-| Does this code use a term not in the glossary? | Add it to [`docs/architecture/glossary/`](../glossary/) first |
-| Am I crossing a Bounded Context boundary? | Use Domain Events or the public `index.ts` barrel |
-| Is this a business rule or an infrastructure detail? | Business rules → Domain; infrastructure details → Adapter |
-
-### Ports & Adapters Cheat Sheet
-
-```
-New external dependency?
-  → Define port interface first (domain or shared/ports)
-  → Write application code against the port
-  → Implement adapter last
-
-New business rule?
-  → Add invariant method to Aggregate Root
-  → Enforce it in the domain layer only
-  → Never duplicate the rule in Application or Infrastructure
-
-New cross-module data flow?
-  → Emit a Domain Event from the producing module
-  → Subscribe in the consuming module via Event Bus
-  → Use Published Language (EventEnvelope schema)
-```
-
-### Files Quick Map
-
-| Purpose | Location |
-|---------|----------|
-| Architecture decisions | `docs/architecture/adr/` |
-| Domain glossary | `docs/architecture/glossary/` |
-| Bounded context boundaries | `docs/architecture/catalog/service-boundary.md` |
-| Domain event contracts | `docs/architecture/catalog/event-catalog.md` |
-| Business entity definitions | `docs/architecture/catalog/business-entities.md` |
-| Shared ACL ports | `src/shared/ports/index.ts` |
-| Infrastructure adapters | `src/infrastructure/` |
-| Module public API | `src/modules/{name}.module/index.ts` |
-| This document | `docs/architecture/notes/model-driven-hexagonal-architecture.md` |
-
----
-
-*This document should be read in conjunction with the [Architecture SSOT](../README.md) and the [Service Boundary Contract](../catalog/service-boundary.md).*
-````
-
 ## File: docs/architecture/overview.md
 ````markdown
 # Xuanwu Architecture Overview / 架構快速參考
@@ -72808,1259 +76184,662 @@ src/
 This page intentionally stays short; detailed definitions are centralized in the architecture SSOT.
 ````
 
-## File: src/shared/i18n/index.ts
-````typescript
-import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@/shared/constants";
-import type { Locale } from "@/shared/types";
+## File: docs/architecture/notes/model-driven-hexagonal-architecture.md
+````markdown
+# Model-Driven Hexagonal Architecture
 
-// ---------------------------------------------------------------------------
-// Translation dictionaries
-// ---------------------------------------------------------------------------
+> Tags: `ssot` `architecture-core` `ddd` `hexagonal` `layer-rules` `context-map` `development-guide` `quick-reference`
+> Design philosophy and development guide for the **xuanwu-platform**.
+> Primary reference for how DDD and Hexagonal Architecture (Ports & Adapters) are unified in this project.
 
-type Messages = Record<string, string>;
-type Dictionary = Record<Locale, Messages>;
+---
 
-const dictionary: Dictionary = {
-  "zh-TW": {
-    "home.welcome": "歡迎使用玄武平台",
-    "home.started": "啟動時間",
-    "home.login": "登入",
-    "home.enterPlatform": "進入平台",
-    "home.langToggle": "切換語言",
-    "home.langZhTW": "繁體中文",
-    "home.langEn": "English",
-    "home.signOut": "登出",
-    "theme.toggle": "切換主題",
-    "theme.light": "淺色",
-    "theme.dark": "深色",
-    "theme.system": "跟隨系統",
-    "common.loading": "載入中…",
-    "common.error": "發生錯誤",
-    "common.retry": "重試",
-    "common.confirm": "確認",
-    "common.cancel": "取消",
-    "common.save": "儲存",
-    "common.delete": "刪除",
-    "common.edit": "編輯",
-    "error.notFound": "找不到資源",
-    "error.unauthorized": "未授權",
-    "error.forbidden": "禁止存取",
-    "error.validation": "資料驗證失敗",
-    "error.conflict": "資源已存在",
-    "error.internal": "伺服器內部錯誤",
-    "auth.login": "登入",
-    "auth.register": "註冊",
-    "auth.email": "電子郵件",
-    "auth.password": "密碼",
-    "auth.contactEndpoint": "連絡終點",
-    "auth.securityKey": "安全金鑰",
-    "auth.setSecurityKey": "設定安全金鑰",
-    "auth.digitalDesignation": "數位稱號",
-    "auth.nickname": "暱稱",
-    "auth.forgotPassword": "忘記密碼？",
-    "auth.enterDimension": "進入平台",
-    "auth.registerSovereignty": "建立主權",
-    "auth.guestAccess": "以訪客身份進入",
-    "auth.byLoggingIn": "登入即代表同意",
-    "auth.dimensionSecurityProtocol": "安全協議",
-    "auth.resetPassword": "重置密碼",
-    "auth.sendEmail": "發送郵件",
-    "auth.authenticationFailed": "身份驗證失敗",
-    "auth.identityResonanceSuccessful": "身份共鳴成功",
-    "auth.resetProtocolSent": "重置協議已發送",
-    "auth.resetFailed": "重置失敗",
-    "auth.pleaseSetDisplayName": "請設定顯示名稱",
-    "auth.signOut": "登出",
-    "app.name": "玄武平台",
-    "nav.home": "首頁",
-    "nav.workspaces": "工作空間",
-    "nav.account": "帳號",
-    "nav.mainMenu": "主選單",
-    "nav.profileSettings": "個人設定",
-    "nav.notifications": "通知",
-    "nav.organizations": "組織",
-    "nav.security": "安全性",
-    "nav.search": "搜尋",
-    "nav.topWorkspaces": "熱門工作空間",
-    "nav.showMore": "顯示更多",
-    "nav.showLess": "收起",
-    "nav.breadcrumb.profile": "個人資料",
-    "nav.breadcrumb.security": "安全性",
-    "nav.breadcrumb.notifications": "通知",
-    "nav.breadcrumb.organizations": "組織",
-    "nav.breadcrumb.settings": "設定",
-    "sidebar.selectAccount": "選擇帳號",
-    "sidebar.switchAccountContext": "切換帳號",
-    "sidebar.createNewDimension": "建立新維度",
-    "sidebar.personal": "個人",
-    "sidebar.organization": "組織",
-    "sidebar.syncingAccounts": "同步帳號中",
-    "nav.breadcrumb.members": "成員",
-    "nav.breadcrumb.billing": "帳單",
-    // --- workspaces ---
-    "workspaces.title": "工作空間",
-    "workspaces.description": "{name} 的工作空間",
-    "workspaces.createSpace": "建立空間",
-    "workspaces.createInitialSpace": "建立第一個空間",
-    "workspaces.spaceVoid": "虛空中沒有空間",
-    "workspaces.noSpacesFound": "找不到符合條件的工作空間",
-    "workspaces.searchPlaceholder": "搜尋工作空間…",
-    "workspaces.workspaceNodes": "工作節點",
-    "workspaces.yourRole": "您的角色",
-    "workspaces.personalDimension": "個人工作區",
-    "workspaces.personalDimensionHelp": "個人帳號不包含組織工作空間",
-    "workspaces.createLogicalSpace": "建立工作空間",
-    "workspaces.createDescription": "在此組織下建立一個新的工作空間",
-    "workspaces.spaceName": "空間名稱",
-    "workspaces.spaceNamePlaceholder": "例：2026年A棟工程",
-    "common.creating": "建立中…",
-    "common.confirmCreation": "確認建立",
-    // --- profile ---
-    "profile.title": "個人資料",
-    "profile.subtitle": "管理您的公開個人資料",
-    "profile.pageTitle": "帳號設定",
-    "profile.pageDescription": "管理您的個人資料與偏好設定",
-    "profile.displayName": "顯示名稱",
-    "profile.displayNamePlaceholder": "輸入顯示名稱",
-    "profile.email": "電子郵件",
-    "profile.saveChanges": "儲存變更",
-    "profile.saved": "已儲存 ✓",
-    // --- onboarding ---
-    "onboarding.title": "歡迎使用玄武平台",
-    "onboarding.subtitle": "讓我們設定您的帳號",
-    "onboarding.step1": "建立個人資料",
-    "onboarding.step1Desc": "設定您的顯示名稱與頭像，讓團隊夥伴認識您。",
-    "onboarding.step2": "建立或加入組織",
-    "onboarding.step2Desc": "建立您的第一個組織，或接受邀請加入現有組織，以存取共享工作空間。",
-    "onboarding.step3": "建立第一個工作空間",
-    "onboarding.step3Desc": "工作空間是您管理任務、文件、議題與協作的核心場所，每個組織可擁有多個工作空間。",
-    "onboarding.getStarted": "開始使用",
-    "onboarding.createOrg": "建立組織",
-    "onboarding.skip": "稍後再說",
-    // --- common additions ---
-    "common.open": "開啟",
-    "common.filter": "篩選",
-    "common.gridView": "格狀檢視",
-    "common.listView": "清單檢視",
-    "common.notSet": "未設定",
-    "common.saving": "儲存中…",
-    "workspace.card.advance": "推進狀態",
-    "workspace.card.advanceConfirmTitle": "推進工作空間狀態",
-    "workspace.card.advanceConfirmDescription": "將「{name}」從 {from} 推進至 {to}？",
-    "workspace.card.advanceConfirmButton": "確認推進",
-    "common.back": "返回",
-    "common.invite": "邀請",
-    "common.generate": "生成",
-    "common.copy": "複製",
-    "common.revoke": "撤銷",
-    "common.members": "成員",
-    "common.settings": "設定",
-    // --- security ---
-    "security.title": "安全性設定",
-    "security.subtitle": "變更密碼與管理登入方式",
-    "security.changePassword": "變更密碼",
-    "security.currentPassword": "目前密碼",
-    "security.newPassword": "新密碼",
-    "security.confirmPassword": "確認新密碼",
-    "security.passwordMismatch": "密碼不符",
-    "security.passwordTooShort": "密碼至少需 8 個字元",
-    "security.passwordChanged": "密碼已成功變更",
-    "security.changeFailed": "密碼變更失敗",
-    // --- notifications ---
-    "notifications.title": "通知",
-    "notifications.empty": "目前沒有通知",
-    "notifications.emptyHint": "當有新活動時，通知將會顯示在此",
-    "notifications.markAllRead": "全部標為已讀",
-    "notifications.markRead": "標為已讀",
-    "notifications.justNow": "剛剛",
-    "notifications.minutesAgo": "分鐘前",
-    "notifications.hoursAgo": "小時前",
-    "notifications.daysAgo": "天前",
-    // --- organizations ---
-    "organizations.title": "我的組織",
-    "organizations.subtitle": "您所屬的組織與命名空間",
-    "organizations.createOrg": "建立組織",
-    "organizations.noOrgs": "尚未加入任何組織",
-    "organizations.noOrgsHint": "建立或加入一個組織來開始協作",
-    "organizations.workspaces": "個工作區",
-    "organizations.newOrg.title": "建立新組織",
-    "organizations.newOrg.description": "填寫組織名稱與代號，代號將成為您的命名空間網址。",
-    "organizations.newOrg.name": "組織名稱",
-    "organizations.newOrg.namePlaceholder": "例如：玄武科技",
-    "organizations.newOrg.handle": "組織代號 (slug)",
-    "organizations.newOrg.handleHint": "3–39 個小寫英文字母、數字或連字號",
-    "organizations.newOrg.handlePlaceholder": "例如：xuanwu-tech",
-    "organizations.newOrg.slugTaken": "此代號已被使用，請選擇其他代號",
-    "organizations.newOrg.slugInvalid": "代號格式不符（3–39 個小寫英文字母、數字或連字號）",
-    // --- settings ---
-    "settings.general.title": "一般設定",
-    "settings.general.orgName": "組織名稱",
-    "settings.general.orgSlug": "組織代號",
-    "settings.general.visibility": "可見度",
-    "settings.general.dangerZone": "危險區域",
-    "settings.general.deleteOrg": "刪除組織",
-    "settings.general.deleteOrgHint": "刪除後無法復原",
-    "settings.members.title": "成員管理",
-    "settings.members.inviteMember": "邀請成員",
-    "settings.members.noMembers": "尚無成員",
-    "settings.members.role": "角色",
-    "settings.members.joinedAt": "加入時間",
-    "settings.members.invited": "邀請時間",
-    "settings.members.role.owner": "擁有者",
-    "settings.members.role.admin": "管理員",
-    "settings.members.role.member": "成員",
-    "settings.members.role.viewer": "觀察者",
-    "settings.members.status.active": "已啟用",
-    "settings.members.status.pending": "待確認",
-    "settings.members.status.revoked": "已撤銷",
-    "settings.members.status.suspended": "已停用",
-    "settings.billing.title": "帳單",
-    "settings.billing.currentPlan": "目前方案",
-    "settings.billing.freePlan": "免費方案",
-    "settings.billing.upgrade": "升級方案",
-    "settings.billing.usage": "使用量",
-    "settings.apiKeys.title": "API 金鑰",
-    "settings.apiKeys.generateKey": "生成金鑰",
-    "settings.apiKeys.noKeys": "尚無金鑰",
-    "settings.apiKeys.created": "建立時間",
-    "settings.apiKeys.lastUsed": "上次使用",
-    "settings.apiKeys.status.active": "使用中",
-    "settings.apiKeys.status.revoked": "已撤銷",
-    "settings.apiKeys.status.expired": "已過期",
-    "settings.apiKeys.never": "永不過期",
-    // --- wbs ---
-    "wbs.title": "工作分解結構",
-    "wbs.empty": "尚無任務",
-    "wbs.emptyHint": "從這裡建立您的第一個任務",
-    "wbs.addTask": "新增任務",
-    "wbs.status.open": "待處理",
-    "wbs.status.in-progress": "進行中",
-    "wbs.status.blocked": "已阻塞",
-    "wbs.status.closed": "已完成",
-    "wbs.status.completed": "完工",
-    "wbs.status.verified": "已驗證",
-    "wbs.status.accepted": "已驗收",
-    "wbs.createDialog.title": "新增任務",
-    "wbs.createDialog.titleLabel": "任務標題",
-    "wbs.createDialog.priorityLabel": "優先級",
-    "wbs.createDialog.priority.high": "高",
-    "wbs.createDialog.priority.medium": "中",
-    "wbs.createDialog.priority.low": "低",
-    "wbs.createDialog.create": "建立任務",
-    "wbs.editDialog.title": "編輯任務",
-    "wbs.editDialog.descriptionLabel": "說明",
-    "wbs.editDialog.descriptionPlaceholder": "任務說明（選填）",
-    "wbs.editDialog.statusLabel": "狀態",
-    "wbs.editDialog.priorityLabel": "優先級",
-    "wbs.editDialog.assigneeLabel": "指派人員",
-    "wbs.editDialog.dueDateLabel": "截止日期",
-    "wbs.editDialog.save": "儲存變更",
-    "wbs.priority.critical": "緊急",
-    "wbs.priority.high": "高",
-    "wbs.priority.medium": "中",
-    "wbs.priority.low": "低",
-    "wbs.deleteDialog.title": "刪除任務",
-    "wbs.deleteDialog.description": "確定要刪除此任務？此操作無法復原。",
-    "wbs.deleteDialog.confirm": "刪除",
-    "wbs.deleteDialog.cancel": "取消",
-    // --- tasks (Wave 43 WBS Tree Engine) ---
-    "tasks.wbsTitle": "工程任務治理中心",
-    "tasks.wbsDescription": "WBS 工作分解結構",
-    "tasks.taskEngineering": "任務工程",
-    "tasks.createRootNode": "新增根任務",
-    "tasks.splitIntoSubtasks": "拆分子任務",
-    "tasks.progressReport": "回報進度",
-    "tasks.sendScheduleRequest": "送出排程申請",
-    "tasks.markAsBlocked": "標記為阻塞",
-    "tasks.deleteNode": "刪除節點",
-    "tasks.submitForQa": "送交 QA",
-    "tasks.awaitingDefinition": "尚無任務",
-    "tasks.createFirstTask": "建立第一個根任務開始工作分解",
-    "tasks.confirmDestroyNode": "確定刪除此節點與所有子節點？此操作無法復原。",
-    "tasks.failedToSaveTask": "儲存任務失敗",
-    "tasks.failedToDeleteTask": "刪除任務失敗",
-    "tasks.progressUpdated": "進度已更新",
-    "tasks.taskSubmittedForQa": "任務已送交 QA",
-    "tasks.taskBlocked": "任務已標記為阻塞",
-    "tasks.taskBlockedDesc": "此任務目前被阻塞，請聯絡相關人員解除阻塞",
-    "tasks.budgetOverflow": "預算超支",
-    "tasks.budgetOverflowDescription": "子任務合計超過父任務的預算",
-    "tasks.budgetConflict": "預算衝突",
-    "tasks.budgetConflictDescription": "父任務預算不足以容納所有子任務",
-    "tasks.taskType": "任務類型",
-    "tasks.type.general": "一般",
-    "tasks.type.supply": "材料",
-    "tasks.type.labour": "人工",
-    "tasks.type.equipment": "設備",
-    "tasks.type.subcontract": "分包",
-    "tasks.type.other": "其他",
-    "tasks.attachments.title": "附件管理",
-    "tasks.attachments.urlPlaceholder": "輸入圖片 URL (https://…)",
-    "tasks.attachmentPreviewAlt": "附件預覽",
-    "tasks.imagePreviewTitle": "圖片預覽",
-    "tasks.imagePreviewDescription": "附件圖片預覽",
-    "tasks.viewOptions": "顯示選項",
-    "tasks.visibleColumns": "可見欄位",
-    "tasks.discount": "折扣",
-    "tasks.budget": "預算",
-    "tasks.quantity": "數量",
-    "tasks.unitPrice": "單價",
-    "tasks.subtotal": "小計",
-    "tasks.progress": "進度",
-    "tasks.completedQuantity": "已完成數量",
-    "tasks.progressInvalid": "請輸入有效數量",
-    "tasks.titleRequired": "請輸入任務標題",
-    "tasks.location.title": "地點設定",
-    "tasks.location.building": "棟別",
-    "tasks.location.buildingPlaceholder": "例：A棟",
-    "tasks.location.floor": "樓層",
-    "tasks.location.floorPlaceholder": "例：3F",
-    "tasks.location.room": "房間",
-    "tasks.location.roomPlaceholder": "例：301",
-    "tasks.location.description": "說明",
-    "tasks.location.descriptionPlaceholder": "地點補充說明",
-    "tasks.location.select": "選擇地點…",
-    "admin.title": "管理後台",
-    "admin.subtitle": "系統管理功能",
-    // --- invite ---
-    "invite.title": "您收到了邀請",
-    "invite.subtitle": "加入組織或工作空間",
-    "invite.accept": "接受邀請",
-    "invite.decline": "拒絕",
-    "invite.expired": "邀請已過期",
-    // --- share ---
-    "share.title": "共用連結",
-    "share.subtitle": "透過連結存取此內容",
-    "share.expired": "連結已過期或不存在",
-    // --- editor ---
-    "editor.title": "文件編輯器",
-    "editor.empty": "開始撰寫內容…",
-    "editor.files": "檔案",
-    "editor.noFiles": "尚無檔案",
-    // --- audit ---
-    "audit.title": "稽核記錄",
-    "audit.noEntries": "尚無稽核事件",
-    "audit.notAvailable": "稽核記錄不可用",
-    "audit.notAvailableDescription": "個人帳號不提供跨工作區稽核記錄",
-    // --- workspace navigation tabs ---
-    "workspace.nav.ariaLabel": "工作空間導覽分頁",
-    "workspace.nav.wbs": "任務",
-    "workspace.nav.capabilities": "功能模組",
-    "workspace.nav.editor": "文件",
-    "workspace.nav.audit": "稽核",
-    "workspace.nav.members": "成員",
-    "workspace.nav.qa": "品保",
-    "workspace.nav.acceptance": "驗收",
-    "workspace.nav.finance": "財務",
-    "workspace.nav.issues": "問題",
-    "workspace.nav.files": "檔案",
-    "workspace.nav.daily": "日誌",
-    "workspace.nav.schedule": "排程",
-    "workspace.nav.locations": "地點",
-    // --- workspace locations ---
-    "workspace.locations.title": "地點管理",
-    "workspace.locations.empty": "尚無地點",
-    "workspace.locations.addBuilding": "新增建築",
-    "workspace.locations.addFloor": "新增樓層",
-    "workspace.locations.addRoom": "新增房間",
-    "workspace.locations.buildingType": "建築",
-    "workspace.locations.floorType": "樓層",
-    "workspace.locations.roomType": "房間",
-    "workspace.locations.labelPlaceholder": "地點名稱",
-    "workspace.locations.addDialog.title": "新增地點",
-    "workspace.locations.addDialog.confirm": "新增",
-    "workspace.locations.addDialog.cancel": "取消",
-    "workspace.locations.deleteDialog.title": "刪除地點",
-    "workspace.locations.deleteDialog.description": "確定要刪除此地點？同時會刪除其下的所有子地點，此操作無法復原。",
-    // --- Wave 45: daily log ---
-    "workspace.daily.title": "每日日誌",
-    "workspace.daily.addEntry": "新增記錄",
-    "workspace.daily.editEntry": "編輯記錄",
-    "workspace.daily.empty": "尚無日誌記錄",
-    "workspace.daily.emptyHint": "開始記錄每日工作進度",
-    "workspace.daily.deleteTitle": "刪除日誌記錄",
-    "workspace.daily.deleteDescription": "確定要刪除此日誌記錄？此操作無法復原。",
-    "workspace.daily.date": "日期",
-    "workspace.daily.content": "內容",
-    "workspace.daily.contentPlaceholder": "今天發生了什麼…",
-    "workspace.daily.photos": "照片",
-    "workspace.daily.contentRequired": "請輸入內容",
-    "workspace.daily.saveFailed": "儲存日誌失敗",
-    // --- Wave 46: issues ---
-    "workspace.issues.title": "問題追蹤",
-    "workspace.issues.addIssue": "新增問題",
-    "workspace.issues.createIssue": "建立問題",
-    "workspace.issues.editIssue": "編輯問題",
-    "workspace.issues.empty": "尚無問題回報",
-    "workspace.issues.emptyHint": "回報第一個問題以追蹤工作空間異常",
-    "workspace.issues.deleteTitle": "刪除問題",
-    "workspace.issues.deleteDescription": "確定要刪除此問題？此操作無法復原。",
-    "workspace.issues.titleLabel": "標題",
-    "workspace.issues.descriptionLabel": "描述",
-    "workspace.issues.descriptionPlaceholder": "描述問題詳情…",
-    "workspace.issues.severityLabel": "嚴重度",
-    "workspace.issues.statusLabel": "狀態",
-    "workspace.issues.titleRequired": "請輸入問題標題",
-    "workspace.issues.saveFailed": "儲存問題失敗",
-    "workspace.issues.severity.critical": "緊急",
-    "workspace.issues.severity.high": "高",
-    "workspace.issues.severity.medium": "中",
-    "workspace.issues.severity.low": "低",
-    "workspace.issues.status.open": "待處理",
-    "workspace.issues.status.in-progress": "處理中",
-    "workspace.issues.status.resolved": "已解決",
-    "workspace.issues.status.closed": "已關閉",
-    "workspace.statusBar.mounted": "已掛載",
-    "workspace.statusBar.isolated": "已隔離",
-    "workspace.statusBar.flowing": "流暢",
-    "workspace.statusBar.blocked": "受阻",
-    // --- workspace members view ---
-    "workspace.members.title": "工作空間成員",
-    "workspace.members.none": "尚無成員",
-    "workspace.members.noneHint": "尚未為此工作空間指派任何存取授權。",
-    "workspace.members.count": "共 {count} 位成員",
-    "workspace.members.invite": "新增成員",
-    "workspace.members.inviteFirst": "新增第一位成員",
-    "workspace.members.revoke": "撤銷授權",
-    "workspace.members.grantDate": "授權於 {date}",
-    "workspace.members.inviteDialog.title": "新增工作空間成員",
-    "workspace.members.inviteDialog.userIdLabel": "使用者 ID",
-    "workspace.members.inviteDialog.userIdPlaceholder": "輸入使用者 ID...",
-    "workspace.members.inviteDialog.roleLabel": "角色",
-    "workspace.members.inviteDialog.confirm": "授權",
-    "workspace.members.revokeDialog.title": "確認撤銷授權",
-    "workspace.members.revokeDialog.description": "確定要撤銷 {userId} 的工作空間存取授權嗎？此操作無法復原。",
-    // --- workspace capabilities ---
-    "workspace.capabilities.mounted": "已掛載的原子功能",
-    "workspace.capabilities.production": "正式",
-    "workspace.capabilities.beta": "測試版",
-    "workspace.capabilities.none": "尚未掛載功能模組",
-    "workspace.capabilities.noneHint": "此工作空間尚未掛載任何功能模組",
-    "workspace.capabilities.count": "已掛載 {count} 個功能模組",
-    "workspace.capabilities.mountNew": "掛載新功能",
-    "workspace.capabilities.mountFirst": "掛載第一個功能",
-    "workspace.capabilities.mountSelected": "掛載選取 ({count})",
-    "workspace.capabilities.unmount": "卸載",
-    "workspace.capabilities.mountDialog.title": "掛載原子功能",
-    "workspace.capabilities.mountDialog.hint": "選取要加入此工作空間的功能模組",
-    "workspace.capabilities.mountDialog.allMounted": "所有可用功能皆已掛載",
-    "workspace.capabilities.unmountDialog.title": "確認卸載功能",
-    "workspace.capabilities.unmountDialog.description": "確定要從此工作空間卸載「{name}」嗎？此操作可以復原。",
-    // --- workspace settings dialog ---
-    "workspace.settings.title": "工作空間主權設定",
-    "workspace.settings.nameLabel": "工作空間名稱",
-    "workspace.settings.personnelLabel": "指派人員",
-    "workspace.settings.manager": "經理",
-    "workspace.settings.supervisor": "督導",
-    "workspace.settings.safety": "安衛",
-    "workspace.settings.addressLabel": "實體地址",
-    "workspace.settings.country": "國家",
-    "workspace.settings.state": "州 / 省",
-    "workspace.settings.city": "城市",
-    "workspace.settings.street": "街道地址",
-    "workspace.settings.postalCode": "郵遞區號",
-    "workspace.settings.lifecycleLabel": "生命週期狀態",
-    "workspace.settings.lifecycle.preparatory": "籌備中",
-    "workspace.settings.lifecycle.active": "進行中",
-    "workspace.settings.lifecycle.stopped": "已停止",
-    "workspace.settings.visibilityLabel": "工作空間可見性",
-    "workspace.settings.visibilityVisible": "在目錄中公開可見",
-    "workspace.settings.visibilityHidden": "隱藏，僅授權人員可見",
-    "workspace.settings.dangerZone.title": "危險區域",
-    "workspace.settings.dangerZone.deleteLabel": "刪除工作空間",
-    "workspace.settings.dangerZone.deleteHint": "永久刪除此工作空間及所有相關資料，此操作無法復原。",
-    "workspace.settings.dangerZone.deleteButton": "刪除",
-    "workspace.settings.dangerZone.confirmTitle": "確認刪除工作空間",
-    "workspace.settings.dangerZone.confirmDescription": "您即將刪除「{name}」。所有資料將被永久移除，此操作無法復原。",
-    "workspace.settings.dangerZone.confirmButton": "確定刪除",
-    // --- dashboard ---
-    "dashboard.orgDescription": "您的組織工作空間概覽",
-    "dashboard.personalDescription": "您的個人工作空間",
-    "dashboard.viewAll": "查看全部",
-    // --- search ---
-    "search.title": "全域搜尋",
-    "search.placeholder": "搜尋工作空間、任務、成員…",
-    "search.hint": "輸入關鍵字開始搜尋",
-    "search.noResults": "找不到相符的結果",
-    "search.module.workspace": "工作空間",
-    "search.module.account": "帳號",
-    "search.module.work": "任務",
-    // --- social reactions ---
-    "social.like": "按讚",
-    "social.liked": "已按讚",
-    "social.bookmark": "收藏",
-    "social.bookmarked": "已收藏",
-    // --- social feed / explore / followers (Wave 60) ---
-    "social.feed.title": "動態牆",
-    "social.feed.empty": "尚無動態",
-    "social.feed.emptyHint": "關注工作空間或帳號後將顯示動態於此",
-    "social.explore.title": "探索",
-    "social.explore.description": "發現精彩的工作空間與帳號",
-    "social.explore.trending": "熱門收藏",
-    "social.explore.empty": "尚無探索內容",
-    "social.followers.title": "關注者",
-    "social.following.title": "追蹤中",
-    "social.followers.empty": "尚無關注者",
-    "social.following.empty": "尚未追蹤任何人",
-    "social.follow": "追蹤",
-    "social.unfollow": "取消追蹤",
-    "social.star": "加星號",
-    "social.watch": "追蹤動態",
-    // --- search results / filter / history (Wave 61) ---
-    "search.results.title": "搜尋結果",
-    "search.history.title": "最近搜尋",
-    "search.history.empty": "尚無搜尋記錄",
-    "search.history.clear": "清除",
-    "search.filter.scope": "範圍",
-    "search.filter.all": "全部",
-    "search.filter.global": "全域",
-    "search.filter.workspace": "工作空間",
-    "search.advanced": "進階搜尋",
-    // --- file preview / gallery / versions (Wave 62) ---
-    "workspace.files.gallery": "圖片庫",
-    "workspace.files.listMode": "列表",
-    "workspace.files.preview": "預覽",
-    "workspace.files.versions": "版本記錄",
-    "workspace.files.noPreview": "此格式不支援預覽",
-    "workspace.files.download": "下載",
-    "workspace.files.uploadedBy": "上傳者",
-    "workspace.files.fileSize": "大小",
-    // --- workspace QA ---
-    "workspace.qa.title": "品質保證",
-    "workspace.qa.description": "審核已完成的任務並標記為已驗證",
-    "workspace.qa.pendingTitle": "待審任務",
-    "workspace.qa.noPending": "目前沒有待審任務",
-    "workspace.qa.verify": "通過驗證",
-    "workspace.qa.verifiedTitle": "已驗證",
-    "workspace.qa.verifiedBadge": "已驗證",
-    // --- workspace Acceptance ---
-    "workspace.acceptance.title": "驗收管理",
-    "workspace.acceptance.description": "對已通過 QA 驗證的任務進行正式驗收",
-    "workspace.acceptance.pendingTitle": "待驗收任務",
-    "workspace.acceptance.noPending": "目前沒有待驗收任務",
-    "workspace.acceptance.noPendingHint": "請先在品保頁面將任務標記為已驗證",
-    "workspace.acceptance.accept": "正式驗收",
-    "workspace.acceptance.acceptedTitle": "已驗收",
-    "workspace.acceptance.acceptedBadge": "已驗收",
-    "workspace.acceptance.milestone": "恭喜！已達成 5 項以上驗收里程碑",
-    // --- workspace Finance ---
-    "workspace.finance.title": "財務管理",
-    "workspace.finance.description": "追蹤任務的財務生命週期與收款狀態",
-    "workspace.finance.totalBudget": "總預算",
-    "workspace.finance.total": "財務項目",
-    "workspace.finance.inProgress": "進行中",
-    "workspace.finance.completed": "已完成",
-    "workspace.finance.empty": "尚無財務項目",
-    "workspace.finance.emptyHint": "在 WBS 中設定任務的數量與單價後將顯示於此",
-    "workspace.finance.advance": "推進",
-    "workspace.finance.stage.claim-preparation": "請款準備",
-    "workspace.finance.stage.claim-submitted": "請款送出",
-    "workspace.finance.stage.claim-approved": "請款核准",
-    "workspace.finance.stage.invoice-requested": "請求開票",
-    "workspace.finance.stage.payment-term": "付款期限",
-    "workspace.finance.stage.payment-received": "款項入帳",
-    "workspace.finance.stage.completed": "已完成",
-    // --- workspace Schedule ---
-    "workspace.schedule.title": "排程日曆",
-    "workspace.schedule.today": "今天",
-    "workspace.schedule.unscheduled": "未排程任務",
-    "workspace.schedule.empty": "尚無任務",
-    "workspace.schedule.emptyHint": "在 WBS 中新增任務並設定到期日即可顯示在此日曆",
-    // --- workspace Files ---
-    "workspace.files.title": "檔案管理",
-    "workspace.files.description": "工作空間的文件與資料管理",
-    "workspace.files.searchPlaceholder": "搜尋檔案名稱或類型…",
-    "workspace.files.empty": "尚無上傳的檔案",
-    "workspace.files.noResults": "找不到符合的檔案",
-    // --- comments (Wave 55) ---
-    "comment.count": "{n} 則留言",
-    "comment.empty": "尚無留言",
-    "comment.placeholder": "新增留言…",
-    "comment.deleted": "[已刪除]",
-    // --- achievements (Wave 56) ---
-    "achievement.title": "已獲獎章",
-    "achievement.unlocked": "個已解鎖",
-    "achievement.empty": "尚無解鎖任何獎章",
-    // --- causal graph (Wave 57) ---
-    "workspace.causalGraph.title": "因果圖",
-    "workspace.causalGraph.nodes": "節點",
-    "workspace.causalGraph.empty": "尚無因果節點",
-    "workspace.causalGraph.emptyHint": "系統事件（任務完成、QA、里程碑等）發生後將自動建立節點",
-    "workspace.causalGraph.sidebar": "節點詳情",
-    "workspace.causalGraph.effects": "{n} 個後續影響",
-    "workspace.causalGraph.clickNode": "點選節點查看影響鏈",
-    "workspace.nav.causalGraph": "因果圖",
-    // --- forks (Wave 58) ---
-    "workspace.forks.title": "分支管理",
-    "workspace.forks.description": "管理此工作空間的分支版本，可獨立進行實驗或分析",
-    "workspace.forks.empty": "尚無分支",
-    "workspace.forks.emptyHint": "掛載「分支」能力後即可建立工作空間分支",
-    "workspace.forks.historyTitle": "已結束的分支",
-    "fork.baseline": "基線版本",
-    "fork.abandon": "放棄",
-    "fork.abandonTitle": "確認放棄分支",
-    "fork.abandonDescription": "放棄後此分支將無法繼續使用，但歷史記錄仍會保留。",
-    "fork.status.active": "進行中",
-    "fork.status.abandoned": "已放棄",
-    "fork.status.merged": "已合併",
-    "workspace.nav.forks": "分支",
-    // --- workforce (Wave 59) ---
-    "workspace.workforce.title": "排班管理",
-    "workspace.workforce.description": "管理人員排班、輪班指派與容量規劃",
-    "workspace.workforce.empty": "尚無排班計畫",
-    "workspace.workforce.emptyHint": "掛載「人力資源」能力後即可建立排班",
-    "workforce.assignees": "位被指派人",
-    "workforce.approve": "核准",
-    "workforce.reject": "拒絕",
-    "workforce.status.proposal": "提案中",
-    "workforce.status.official": "已核准",
-    "workforce.status.rejected": "已拒絕",
-    "workforce.status.completed": "已完成",
-    "workspace.nav.workforce": "排班",
-  },
-  en: {
-    "home.welcome": "Welcome to Xuanwu Platform",
-    "home.started": "Started at",
-    "home.login": "Login",
-    "home.enterPlatform": "Enter Platform",
-    "home.langToggle": "Switch Language",
-    "home.langZhTW": "繁體中文",
-    "home.langEn": "English",
-    "home.signOut": "Sign Out",
-    "theme.toggle": "Toggle Theme",
-    "theme.light": "Light",
-    "theme.dark": "Dark",
-    "theme.system": "System",
-    "common.loading": "Loading…",
-    "common.error": "An error occurred",
-    "common.retry": "Retry",
-    "common.confirm": "Confirm",
-    "common.cancel": "Cancel",
-    "common.save": "Save",
-    "common.delete": "Delete",
-    "common.edit": "Edit",
-    "error.notFound": "Resource not found",
-    "error.unauthorized": "Unauthorized",
-    "error.forbidden": "Access forbidden",
-    "error.validation": "Validation failed",
-    "error.conflict": "Resource already exists",
-    "error.internal": "Internal server error",
-    "auth.login": "Login",
-    "auth.register": "Register",
-    "auth.email": "Email",
-    "auth.password": "Password",
-    "auth.contactEndpoint": "Contact Endpoint",
-    "auth.securityKey": "Security Key",
-    "auth.setSecurityKey": "Set Security Key",
-    "auth.digitalDesignation": "Digital Designation",
-    "auth.nickname": "Nickname",
-    "auth.forgotPassword": "Forgot password?",
-    "auth.enterDimension": "Enter Platform",
-    "auth.registerSovereignty": "Register Sovereignty",
-    "auth.guestAccess": "Enter as Guest",
-    "auth.byLoggingIn": "By logging in, you agree to",
-    "auth.dimensionSecurityProtocol": "Security Protocol",
-    "auth.resetPassword": "Reset Password",
-    "auth.sendEmail": "Send Email",
-    "auth.authenticationFailed": "Authentication Failed",
-    "auth.identityResonanceSuccessful": "Identity Resonance Successful",
-    "auth.resetProtocolSent": "Reset protocol sent",
-    "auth.resetFailed": "Reset failed",
-    "auth.pleaseSetDisplayName": "Please set a display name",
-    "auth.signOut": "Sign Out",
-    "app.name": "Xuanwu Platform",
-    "nav.home": "Home",
-    "nav.workspaces": "Workspaces",
-    "nav.account": "Account",
-    "nav.mainMenu": "Main Menu",
-    "nav.profileSettings": "Profile Settings",
-    "nav.notifications": "Notifications",
-    "nav.organizations": "Organizations",
-    "nav.security": "Security",
-    "nav.search": "Search",
-    "nav.topWorkspaces": "Top Workspaces",
-    "nav.showMore": "Show more",
-    "nav.showLess": "Show less",
-    "nav.breadcrumb.profile": "Profile",
-    "nav.breadcrumb.security": "Security",
-    "nav.breadcrumb.notifications": "Notifications",
-    "nav.breadcrumb.organizations": "Organizations",
-    "nav.breadcrumb.settings": "Settings",
-    "sidebar.selectAccount": "Select Account",
-    "sidebar.switchAccountContext": "Switch Account",
-    "sidebar.createNewDimension": "Create New Dimension",
-    "sidebar.personal": "Personal",
-    "sidebar.organization": "Organization",
-    "sidebar.syncingAccounts": "Syncing Accounts",
-    "nav.breadcrumb.members": "Members",
-    "nav.breadcrumb.billing": "Billing",
-    // --- workspaces ---
-    "workspaces.title": "Workspaces",
-    "workspaces.description": "Workspaces in {name}",
-    "workspaces.createSpace": "New Space",
-    "workspaces.createInitialSpace": "Create First Space",
-    "workspaces.spaceVoid": "No spaces in the void",
-    "workspaces.noSpacesFound": "No workspaces match your search",
-    "workspaces.searchPlaceholder": "Search workspaces…",
-    "workspaces.workspaceNodes": "Workspace Nodes",
-    "workspaces.yourRole": "Your Role",
-    "workspaces.personalDimension": "Personal Workspace",
-    "workspaces.personalDimensionHelp": "Personal accounts do not include organization workspaces",
-    "workspaces.createLogicalSpace": "Create Workspace",
-    "workspaces.createDescription": "Create a new workspace under this organization",
-    "workspaces.spaceName": "Space name",
-    "workspaces.spaceNamePlaceholder": "e.g. 2026 Block A Project",
-    "common.creating": "Creating…",
-    "common.confirmCreation": "Confirm",
-    // --- profile ---
-    "profile.title": "Profile",
-    "profile.subtitle": "Manage your public profile",
-    "profile.pageTitle": "Account Settings",
-    "profile.pageDescription": "Manage your profile and preferences",
-    "profile.displayName": "Display Name",
-    "profile.displayNamePlaceholder": "Enter display name",
-    "profile.email": "Email",
-    "profile.saveChanges": "Save Changes",
-    "profile.saved": "Saved ✓",
-    // --- onboarding ---
-    "onboarding.title": "Welcome to Xuanwu Platform",
-    "onboarding.subtitle": "Let's set up your account",
-    "onboarding.step1": "Create your profile",
-    "onboarding.step1Desc": "Set your display name and avatar so your teammates can recognize you.",
-    "onboarding.step2": "Create or join an organization",
-    "onboarding.step2Desc": "Create your first organization or accept an invitation to join an existing one to access shared workspaces.",
-    "onboarding.step3": "Create your first workspace",
-    "onboarding.step3Desc": "Workspaces are where you manage tasks, documents, issues, and team collaboration. Each organization can have multiple workspaces.",
-    "onboarding.getStarted": "Get Started",
-    "onboarding.createOrg": "Create Organization",
-    "onboarding.skip": "Maybe later",
-    // --- common additions ---
-    "common.open": "Open",
-    "common.filter": "Filter",
-    "common.gridView": "Grid view",
-    "common.listView": "List view",
-    "common.notSet": "Not set",
-    "common.saving": "Saving…",
-    "workspace.card.advance": "Advance state",
-    "workspace.card.advanceConfirmTitle": "Advance workspace state",
-    "workspace.card.advanceConfirmDescription": "Advance \"{name}\" from {from} to {to}?",
-    "workspace.card.advanceConfirmButton": "Advance",
-    "common.back": "Back",
-    "common.invite": "Invite",
-    "common.generate": "Generate",
-    "common.copy": "Copy",
-    "common.revoke": "Revoke",
-    "common.members": "Members",
-    "common.settings": "Settings",
-    // --- security ---
-    "security.title": "Security Settings",
-    "security.subtitle": "Change password and manage sign-in methods",
-    "security.changePassword": "Change Password",
-    "security.currentPassword": "Current Password",
-    "security.newPassword": "New Password",
-    "security.confirmPassword": "Confirm New Password",
-    "security.passwordMismatch": "Passwords do not match",
-    "security.passwordTooShort": "Password must be at least 8 characters",
-    "security.passwordChanged": "Password changed successfully",
-    "security.changeFailed": "Password change failed",
-    // --- notifications ---
-    "notifications.title": "Notifications",
-    "notifications.empty": "No notifications yet",
-    "notifications.emptyHint": "Notifications will appear here when there is new activity",
-    "notifications.markAllRead": "Mark all as read",
-    "notifications.markRead": "Mark as read",
-    "notifications.justNow": "just now",
-    "notifications.minutesAgo": "minutes ago",
-    "notifications.hoursAgo": "hours ago",
-    "notifications.daysAgo": "days ago",
-    // --- organizations ---
-    "organizations.title": "My Organizations",
-    "organizations.subtitle": "Organizations and namespaces you belong to",
-    "organizations.createOrg": "Create Organization",
-    "organizations.noOrgs": "No organizations yet",
-    "organizations.noOrgsHint": "Create or join an organization to start collaborating",
-    "organizations.workspaces": "workspaces",
-    "organizations.newOrg.title": "Create New Organization",
-    "organizations.newOrg.description": "Enter an organization name and handle. The handle becomes your namespace URL.",
-    "organizations.newOrg.name": "Organization Name",
-    "organizations.newOrg.namePlaceholder": "e.g. Xuanwu Tech",
-    "organizations.newOrg.handle": "Handle (slug)",
-    "organizations.newOrg.handleHint": "3–39 lowercase letters, digits or hyphens",
-    "organizations.newOrg.handlePlaceholder": "e.g. xuanwu-tech",
-    "organizations.newOrg.slugTaken": "This handle is already taken, please choose another",
-    "organizations.newOrg.slugInvalid": "Handle format invalid (3–39 lowercase letters, digits or hyphens)",
-    // --- settings ---
-    "settings.general.title": "General Settings",
-    "settings.general.orgName": "Organization Name",
-    "settings.general.orgSlug": "Organization Slug",
-    "settings.general.visibility": "Visibility",
-    "settings.general.dangerZone": "Danger Zone",
-    "settings.general.deleteOrg": "Delete Organization",
-    "settings.general.deleteOrgHint": "This action cannot be undone",
-    "settings.members.title": "Member Management",
-    "settings.members.inviteMember": "Invite Member",
-    "settings.members.noMembers": "No members yet",
-    "settings.members.role": "Role",
-    "settings.members.joinedAt": "Joined",
-    "settings.members.invited": "Invited",
-    "settings.members.role.owner": "Owner",
-    "settings.members.role.admin": "Admin",
-    "settings.members.role.member": "Member",
-    "settings.members.role.viewer": "Viewer",
-    "settings.members.status.active": "Active",
-    "settings.members.status.pending": "Pending",
-    "settings.members.status.revoked": "Revoked",
-    "settings.members.status.suspended": "Suspended",
-    "settings.billing.title": "Billing",
-    "settings.billing.currentPlan": "Current Plan",
-    "settings.billing.freePlan": "Free Plan",
-    "settings.billing.upgrade": "Upgrade Plan",
-    "settings.billing.usage": "Usage",
-    "settings.apiKeys.title": "API Keys",
-    "settings.apiKeys.generateKey": "Generate Key",
-    "settings.apiKeys.noKeys": "No keys yet",
-    "settings.apiKeys.created": "Created",
-    "settings.apiKeys.lastUsed": "Last Used",
-    "settings.apiKeys.status.active": "Active",
-    "settings.apiKeys.status.revoked": "Revoked",
-    "settings.apiKeys.status.expired": "Expired",
-    "settings.apiKeys.never": "Never",
-    // --- wbs ---
-    "wbs.title": "Work Breakdown Structure",
-    "wbs.empty": "No tasks yet",
-    "wbs.emptyHint": "Create your first task from here",
-    "wbs.addTask": "Add Task",
-    "wbs.status.open": "Open",
-    "wbs.status.in-progress": "In Progress",
-    "wbs.status.blocked": "Blocked",
-    "wbs.status.closed": "Closed",
-    "wbs.status.completed": "Completed",
-    "wbs.status.verified": "Verified",
-    "wbs.status.accepted": "Accepted",
-    "wbs.createDialog.title": "Create Task",
-    "wbs.createDialog.titleLabel": "Task title",
-    "wbs.createDialog.priorityLabel": "Priority",
-    "wbs.createDialog.priority.high": "High",
-    "wbs.createDialog.priority.medium": "Medium",
-    "wbs.createDialog.priority.low": "Low",
-    "wbs.createDialog.create": "Create task",
-    "wbs.editDialog.title": "Edit Task",
-    "wbs.editDialog.descriptionLabel": "Description",
-    "wbs.editDialog.descriptionPlaceholder": "Task description (optional)",
-    "wbs.editDialog.statusLabel": "Status",
-    "wbs.editDialog.priorityLabel": "Priority",
-    "wbs.editDialog.assigneeLabel": "Assignee",
-    "wbs.editDialog.dueDateLabel": "Due Date",
-    "wbs.editDialog.save": "Save Changes",
-    "wbs.priority.critical": "Critical",
-    "wbs.priority.high": "High",
-    "wbs.priority.medium": "Medium",
-    "wbs.priority.low": "Low",
-    "wbs.deleteDialog.title": "Delete Task",
-    "wbs.deleteDialog.description": "Are you sure you want to delete this task? This action cannot be undone.",
-    "wbs.deleteDialog.confirm": "Delete",
-    "wbs.deleteDialog.cancel": "Cancel",
-    // --- tasks (Wave 43 WBS Tree Engine) ---
-    "tasks.wbsTitle": "Engineering Task Governance Center",
-    "tasks.wbsDescription": "Work Breakdown Structure",
-    "tasks.taskEngineering": "Task Engineering",
-    "tasks.createRootNode": "Add Root Task",
-    "tasks.splitIntoSubtasks": "Add Sub-task",
-    "tasks.progressReport": "Report Progress",
-    "tasks.sendScheduleRequest": "Send Schedule Request",
-    "tasks.markAsBlocked": "Mark as Blocked",
-    "tasks.deleteNode": "Delete Node",
-    "tasks.submitForQa": "Submit for QA",
-    "tasks.awaitingDefinition": "No tasks yet",
-    "tasks.createFirstTask": "Create your first root task to begin work decomposition",
-    "tasks.confirmDestroyNode": "Delete this node and all its children? This action cannot be undone.",
-    "tasks.failedToSaveTask": "Failed to save task",
-    "tasks.failedToDeleteTask": "Failed to delete task",
-    "tasks.progressUpdated": "Progress updated",
-    "tasks.taskSubmittedForQa": "Task submitted for QA",
-    "tasks.taskBlocked": "Task blocked",
-    "tasks.taskBlockedDesc": "This task is currently blocked. Contact the responsible party to resolve.",
-    "tasks.budgetOverflow": "Budget overflow",
-    "tasks.budgetOverflowDescription": "Children subtotals exceed the parent task budget",
-    "tasks.budgetConflict": "Budget conflict",
-    "tasks.budgetConflictDescription": "Parent task budget is insufficient for all sub-tasks",
-    "tasks.taskType": "Task type",
-    "tasks.type.general": "General",
-    "tasks.type.supply": "Supply",
-    "tasks.type.labour": "Labour",
-    "tasks.type.equipment": "Equipment",
-    "tasks.type.subcontract": "Subcontract",
-    "tasks.type.other": "Other",
-    "tasks.attachments.title": "Attachments",
-    "tasks.attachments.urlPlaceholder": "Enter image URL (https://…)",
-    "tasks.attachmentPreviewAlt": "Attachment preview",
-    "tasks.imagePreviewTitle": "Image preview",
-    "tasks.imagePreviewDescription": "Attachment image preview",
-    "tasks.viewOptions": "View options",
-    "tasks.visibleColumns": "Visible columns",
-    "tasks.discount": "Discount",
-    "tasks.budget": "Budget",
-    "tasks.quantity": "Quantity",
-    "tasks.unitPrice": "Unit price",
-    "tasks.subtotal": "Subtotal",
-    "tasks.progress": "Progress",
-    "tasks.completedQuantity": "Completed quantity",
-    "tasks.progressInvalid": "Please enter a valid quantity",
-    "tasks.titleRequired": "Please enter a task title",
-    "tasks.location.title": "Location",
-    "tasks.location.building": "Building",
-    "tasks.location.buildingPlaceholder": "e.g. Block A",
-    "tasks.location.floor": "Floor",
-    "tasks.location.floorPlaceholder": "e.g. 3F",
-    "tasks.location.room": "Room",
-    "tasks.location.roomPlaceholder": "e.g. 301",
-    "tasks.location.description": "Description",
-    "tasks.location.descriptionPlaceholder": "Location notes",
-    "tasks.location.select": "Select location…",
-    "admin.title": "Admin Panel",
-    "admin.subtitle": "System administration",
-    // --- invite ---
-    "invite.title": "You've been invited",
-    "invite.subtitle": "Join an organization or workspace",
-    "invite.accept": "Accept Invitation",
-    "invite.decline": "Decline",
-    "invite.expired": "Invitation has expired",
-    // --- share ---
-    "share.title": "Shared Link",
-    "share.subtitle": "Access this content via link",
-    "share.expired": "Link has expired or does not exist",
-    // --- editor ---
-    "editor.title": "Document Editor",
-    "editor.empty": "Start writing…",
-    "editor.files": "Files",
-    "editor.noFiles": "No files yet",
-    // --- audit ---
-    "audit.title": "Audit Log",
-    "audit.noEntries": "No audit events yet",
-    "audit.notAvailable": "Audit log not available",
-    "audit.notAvailableDescription": "Personal accounts do not include cross-workspace audit logs",
-    // --- workspace navigation tabs ---
-    "workspace.nav.ariaLabel": "Workspace capability navigation",
-    "workspace.nav.wbs": "Tasks",
-    "workspace.nav.capabilities": "Capabilities",
-    "workspace.nav.editor": "Editor",
-    "workspace.nav.audit": "Audit",
-    "workspace.nav.members": "Members",
-    "workspace.nav.qa": "QA",
-    "workspace.nav.acceptance": "Acceptance",
-    "workspace.nav.finance": "Finance",
-    "workspace.nav.issues": "Issues",
-    "workspace.nav.files": "Files",
-    "workspace.nav.daily": "Daily",
-    "workspace.nav.schedule": "Schedule",
-    "workspace.nav.locations": "Locations",
-    // --- workspace locations ---
-    "workspace.locations.title": "Locations",
-    "workspace.locations.empty": "No locations yet",
-    "workspace.locations.addBuilding": "Add Building",
-    "workspace.locations.addFloor": "Add Floor",
-    "workspace.locations.addRoom": "Add Room",
-    "workspace.locations.buildingType": "Building",
-    "workspace.locations.floorType": "Floor",
-    "workspace.locations.roomType": "Room",
-    "workspace.locations.labelPlaceholder": "Location name",
-    "workspace.locations.addDialog.title": "Add Location",
-    "workspace.locations.addDialog.confirm": "Add",
-    "workspace.locations.addDialog.cancel": "Cancel",
-    "workspace.locations.deleteDialog.title": "Delete Location",
-    "workspace.locations.deleteDialog.description": "Are you sure you want to delete this location? All sub-locations will also be removed. This action cannot be undone.",
-    // --- Wave 45: daily log ---
-    "workspace.daily.title": "Daily Log",
-    "workspace.daily.addEntry": "Add Entry",
-    "workspace.daily.editEntry": "Edit Entry",
-    "workspace.daily.empty": "No log entries yet",
-    "workspace.daily.emptyHint": "Start recording your daily progress",
-    "workspace.daily.deleteTitle": "Delete Log Entry",
-    "workspace.daily.deleteDescription": "Are you sure you want to delete this log entry? This action cannot be undone.",
-    "workspace.daily.date": "Date",
-    "workspace.daily.content": "Content",
-    "workspace.daily.contentPlaceholder": "What happened today…",
-    "workspace.daily.photos": "Photos",
-    "workspace.daily.contentRequired": "Content is required",
-    "workspace.daily.saveFailed": "Failed to save log entry",
-    // --- Wave 46: issues ---
-    "workspace.issues.title": "Issues",
-    "workspace.issues.addIssue": "Add Issue",
-    "workspace.issues.createIssue": "Create Issue",
-    "workspace.issues.editIssue": "Edit Issue",
-    "workspace.issues.empty": "No issues reported",
-    "workspace.issues.emptyHint": "Report the first issue to track workspace problems",
-    "workspace.issues.deleteTitle": "Delete Issue",
-    "workspace.issues.deleteDescription": "Are you sure you want to delete this issue? This action cannot be undone.",
-    "workspace.issues.titleLabel": "Title",
-    "workspace.issues.descriptionLabel": "Description",
-    "workspace.issues.descriptionPlaceholder": "Describe the issue…",
-    "workspace.issues.severityLabel": "Severity",
-    "workspace.issues.statusLabel": "Status",
-    "workspace.issues.titleRequired": "Title is required",
-    "workspace.issues.saveFailed": "Failed to save issue",
-    "workspace.issues.severity.critical": "Critical",
-    "workspace.issues.severity.high": "High",
-    "workspace.issues.severity.medium": "Medium",
-    "workspace.issues.severity.low": "Low",
-    "workspace.issues.status.open": "Open",
-    "workspace.issues.status.in-progress": "In Progress",
-    "workspace.issues.status.resolved": "Resolved",
-    "workspace.issues.status.closed": "Closed",
-    "workspace.statusBar.mounted": "Mounted",
-    "workspace.statusBar.isolated": "Isolated",
-    "workspace.statusBar.flowing": "Flowing",
-    "workspace.statusBar.blocked": "Blocked",
-    // --- workspace members view ---
-    "workspace.members.title": "Workspace Members",
-    "workspace.members.none": "No members yet",
-    "workspace.members.noneHint": "No access grants have been assigned to this workspace.",
-    "workspace.members.count": "{count} members",
-    "workspace.members.invite": "Add member",
-    "workspace.members.inviteFirst": "Add first member",
-    "workspace.members.revoke": "Revoke access",
-    "workspace.members.grantDate": "Granted {date}",
-    "workspace.members.inviteDialog.title": "Add workspace member",
-    "workspace.members.inviteDialog.userIdLabel": "User ID",
-    "workspace.members.inviteDialog.userIdPlaceholder": "Enter user ID...",
-    "workspace.members.inviteDialog.roleLabel": "Role",
-    "workspace.members.inviteDialog.confirm": "Grant access",
-    "workspace.members.revokeDialog.title": "Confirm revoke access",
-    "workspace.members.revokeDialog.description": "Are you sure you want to revoke access for {userId}? This cannot be undone.",
-    // --- workspace capabilities ---
-    "workspace.capabilities.mounted": "Mounted Atomic Capabilities",
-    "workspace.capabilities.production": "Stable",
-    "workspace.capabilities.beta": "Beta",
-    "workspace.capabilities.none": "No capabilities mounted",
-    "workspace.capabilities.noneHint": "This workspace has no capabilities mounted yet",
-    "workspace.capabilities.count": "{count} capabilities mounted",
-    "workspace.capabilities.mountNew": "Mount New Capability",
-    "workspace.capabilities.mountFirst": "Mount First Capability",
-    "workspace.capabilities.mountSelected": "Mount Selected ({count})",
-    "workspace.capabilities.unmount": "Unmount",
-    "workspace.capabilities.mountDialog.title": "Mount Atomic Capability",
-    "workspace.capabilities.mountDialog.hint": "Select capabilities to add to this workspace",
-    "workspace.capabilities.mountDialog.allMounted": "All available capabilities are already mounted",
-    "workspace.capabilities.unmountDialog.title": "Confirm Unmount",
-    "workspace.capabilities.unmountDialog.description": "Unmount \"{name}\" from this workspace? This can be reversed.",
-    // --- workspace settings dialog ---
-    "workspace.settings.title": "Workspace Sovereignty Settings",
-    "workspace.settings.nameLabel": "Workspace Node Name",
-    "workspace.settings.personnelLabel": "Personnel",
-    "workspace.settings.manager": "Manager",
-    "workspace.settings.supervisor": "Supervisor",
-    "workspace.settings.safety": "Safety Officer",
-    "workspace.settings.addressLabel": "Physical Address",
-    "workspace.settings.country": "Country",
-    "workspace.settings.state": "State / Province",
-    "workspace.settings.city": "City",
-    "workspace.settings.street": "Street Address",
-    "workspace.settings.postalCode": "Postal Code",
-    "workspace.settings.lifecycleLabel": "Lifecycle State",
-    "workspace.settings.lifecycle.preparatory": "Preparatory",
-    "workspace.settings.lifecycle.active": "Active",
-    "workspace.settings.lifecycle.stopped": "Stopped",
-    "workspace.settings.visibilityLabel": "Workspace Visibility",
-    "workspace.settings.visibilityVisible": "Publicly visible in workspace directory",
-    "workspace.settings.visibilityHidden": "Hidden, visible only to authorized personnel",
-    "workspace.settings.dangerZone.title": "Danger Zone",
-    "workspace.settings.dangerZone.deleteLabel": "Delete workspace",
-    "workspace.settings.dangerZone.deleteHint": "Permanently delete this workspace and all its data. This action cannot be undone.",
-    "workspace.settings.dangerZone.deleteButton": "Delete",
-    "workspace.settings.dangerZone.confirmTitle": "Confirm workspace deletion",
-    "workspace.settings.dangerZone.confirmDescription": "You are about to delete \"{name}\". All data will be permanently removed. This cannot be undone.",
-    "workspace.settings.dangerZone.confirmButton": "Delete permanently",
-    "workspace.settings.photoURLLabel": "封面照片網址",
-    "workspace.settings.photoURLPlaceholder": "https://example.com/photo.jpg",
-    // --- dashboard ---
-    "dashboard.orgDescription": "Overview of your organisation workspaces",
-    "dashboard.personalDescription": "Your personal workspace",
-    "dashboard.viewAll": "View all",
-    // --- search ---
-    "search.title": "Global Search",
-    "search.placeholder": "Search workspaces, tasks, members…",
-    "search.hint": "Type to start searching",
-    "search.noResults": "No results found",
-    "search.module.workspace": "Workspaces",
-    "search.module.account": "Accounts",
-    "search.module.work": "Tasks",
-    // --- social reactions ---
-    "social.like": "Like",
-    "social.liked": "Liked",
-    "social.bookmark": "Bookmark",
-    "social.bookmarked": "Bookmarked",
-    // --- social feed / explore / followers (Wave 60) ---
-    "social.feed.title": "Social Feed",
-    "social.feed.empty": "No activity yet",
-    "social.feed.emptyHint": "Follow workspaces or accounts to see activity here",
-    "social.explore.title": "Explore",
-    "social.explore.description": "Discover interesting workspaces and accounts",
-    "social.explore.trending": "Trending Stars",
-    "social.explore.empty": "Nothing to explore yet",
-    "social.followers.title": "Followers",
-    "social.following.title": "Following",
-    "social.followers.empty": "No followers yet",
-    "social.following.empty": "Not following anyone yet",
-    "social.follow": "Follow",
-    "social.unfollow": "Unfollow",
-    "social.star": "Star",
-    "social.watch": "Watch",
-    // --- search results / filter / history (Wave 61) ---
-    "search.results.title": "Search Results",
-    "search.history.title": "Recent Searches",
-    "search.history.empty": "No recent searches",
-    "search.history.clear": "Clear",
-    "search.filter.scope": "Scope",
-    "search.filter.all": "All",
-    "search.filter.global": "Global",
-    "search.filter.workspace": "Workspace",
-    "search.advanced": "Advanced Search",
-    // --- file preview / gallery / versions (Wave 62) ---
-    "workspace.files.gallery": "Gallery",
-    "workspace.files.listMode": "List",
-    "workspace.files.preview": "Preview",
-    "workspace.files.versions": "Version History",
-    "workspace.files.noPreview": "Preview not available for this format",
-    "workspace.files.download": "Download",
-    "workspace.files.uploadedBy": "Uploaded by",
-    "workspace.files.fileSize": "Size",
-    // --- workspace QA ---
-    "workspace.qa.title": "Quality Assurance",
-    "workspace.qa.description": "Review completed tasks and mark them as verified",
-    "workspace.qa.pendingTitle": "Pending QA",
-    "workspace.qa.noPending": "No tasks pending QA",
-    "workspace.qa.verify": "Verify",
-    "workspace.qa.verifiedTitle": "Verified",
-    "workspace.qa.verifiedBadge": "Verified",
-    // --- workspace Acceptance ---
-    "workspace.acceptance.title": "Acceptance Management",
-    "workspace.acceptance.description": "Formally accept tasks that have passed QA verification",
-    "workspace.acceptance.pendingTitle": "Pending Acceptance",
-    "workspace.acceptance.noPending": "No tasks pending acceptance",
-    "workspace.acceptance.noPendingHint": "First verify tasks in the QA page",
-    "workspace.acceptance.accept": "Accept",
-    "workspace.acceptance.acceptedTitle": "Accepted",
-    "workspace.acceptance.acceptedBadge": "Accepted",
-    "workspace.acceptance.milestone": "Congratulations! You've reached 5+ accepted milestones",
-    // --- workspace Finance ---
-    "workspace.finance.title": "Finance Management",
-    "workspace.finance.description": "Track the financial lifecycle and payment status of tasks",
-    "workspace.finance.totalBudget": "Total Budget",
-    "workspace.finance.total": "Finance Items",
-    "workspace.finance.inProgress": "In Progress",
-    "workspace.finance.completed": "Completed",
-    "workspace.finance.empty": "No finance items yet",
-    "workspace.finance.emptyHint": "Set quantity and unit price on tasks in WBS to see them here",
-    "workspace.finance.advance": "Advance",
-    "workspace.finance.stage.claim-preparation": "Claim Preparation",
-    "workspace.finance.stage.claim-submitted": "Claim Submitted",
-    "workspace.finance.stage.claim-approved": "Claim Approved",
-    "workspace.finance.stage.invoice-requested": "Invoice Requested",
-    "workspace.finance.stage.payment-term": "Payment Term",
-    "workspace.finance.stage.payment-received": "Payment Received",
-    "workspace.finance.stage.completed": "Completed",
-    // --- workspace Schedule ---
-    "workspace.schedule.title": "Schedule Calendar",
-    "workspace.schedule.today": "Today",
-    "workspace.schedule.unscheduled": "Unscheduled Tasks",
-    "workspace.schedule.empty": "No tasks yet",
-    "workspace.schedule.emptyHint": "Add tasks in WBS with a due date to see them on this calendar",
-    // --- workspace Files ---
-    "workspace.files.title": "Files",
-    "workspace.files.description": "Document and file management for workspace resources",
-    "workspace.files.searchPlaceholder": "Search by file name or type…",
-    "workspace.files.empty": "No files uploaded yet",
-    "workspace.files.noResults": "No files match your search",
-    // --- comments (Wave 55) ---
-    "comment.count": "{n} comments",
-    "comment.empty": "No comments yet",
-    "comment.placeholder": "Add a comment…",
-    "comment.deleted": "[deleted]",
-    // --- achievements (Wave 56) ---
-    "achievement.title": "Achievements",
-    "achievement.unlocked": "unlocked",
-    "achievement.empty": "No achievements unlocked yet",
-    // --- causal graph (Wave 57) ---
-    "workspace.causalGraph.title": "Causal Graph",
-    "workspace.causalGraph.nodes": "nodes",
-    "workspace.causalGraph.empty": "No causal nodes yet",
-    "workspace.causalGraph.emptyHint": "Nodes are created automatically as workspace events occur (task completion, QA, milestones, etc.)",
-    "workspace.causalGraph.sidebar": "Node Details",
-    "workspace.causalGraph.effects": "{n} downstream effects",
-    "workspace.causalGraph.clickNode": "Click a node to inspect its impact chain",
-    "workspace.nav.causalGraph": "Causal Graph",
-    // --- forks (Wave 58) ---
-    "workspace.forks.title": "Forks",
-    "workspace.forks.description": "Manage forked versions of this workspace for isolated experimentation",
-    "workspace.forks.empty": "No forks yet",
-    "workspace.forks.emptyHint": "Mount the \"Forks\" capability to create workspace branches",
-    "workspace.forks.historyTitle": "Closed Forks",
-    "fork.baseline": "Baseline",
-    "fork.abandon": "Abandon",
-    "fork.abandonTitle": "Confirm Abandon Fork",
-    "fork.abandonDescription": "Abandoning this fork cannot be undone. Historical records will be kept.",
-    "fork.status.active": "Active",
-    "fork.status.abandoned": "Abandoned",
-    "fork.status.merged": "Merged",
-    "workspace.nav.forks": "Forks",
-    // --- workforce (Wave 59) ---
-    "workspace.workforce.title": "Workforce",
-    "workspace.workforce.description": "Staff scheduling, shift assignment, and capacity planning",
-    "workspace.workforce.empty": "No schedules yet",
-    "workspace.workforce.emptyHint": "Mount the \"Workforce\" capability to create staff schedules",
-    "workforce.assignees": "assignees",
-    "workforce.approve": "Approve",
-    "workforce.reject": "Reject",
-    "workforce.status.proposal": "Proposal",
-    "workforce.status.official": "Official",
-    "workforce.status.rejected": "Rejected",
-    "workforce.status.completed": "Completed",
-    "workspace.nav.workforce": "Workforce",
-  },
-};
+## Table of Contents
 
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
+1. [Philosophy Overview](#1-philosophy-overview)
+2. [Core Concepts — MDDD Vocabulary](#2-core-concepts--mddd-vocabulary)
+   - 2.1 [Bounded Context](#21-bounded-context-限界上下文)
+   - 2.2 [Ubiquitous Language](#22-ubiquitous-language-通用語言)
+   - 2.3 [Context Mapping](#23-context-mapping-上下文映射)
+   - 2.4 [Aggregate & Aggregate Root](#24-aggregate--aggregate-root-聚合與聚合根)
+   - 2.5 [Invariants](#25-invariants-不變性約束)
+   - 2.6 [Separation of Concerns](#26-separation-of-concerns-關注點分離)
+3. [Hexagonal Architecture — Ports & Adapters](#3-hexagonal-architecture--ports--adapters)
+   - 3.1 [The Hexagon Mental Model](#31-the-hexagon-mental-model)
+   - 3.2 [Inbound Ports (Driving Side)](#32-inbound-ports-driving-side)
+   - 3.3 [Outbound Ports (Driven Side)](#33-outbound-ports-driven-side)
+   - 3.4 [Adapters](#34-adapters)
+4. [How DDD Maps onto Hexagonal Architecture](#4-how-ddd-maps-onto-hexagonal-architecture)
+5. [Xuanwu 4-Layer Implementation](#5-xuanwu-4-layer-implementation)
+   - 5.1 [Layer Structure](#51-layer-structure)
+   - 5.2 [Dependency Rules](#52-dependency-rules)
+   - 5.3 [File Placement Convention](#53-file-placement-convention)
+6. [Context Mapping in Xuanwu](#6-context-mapping-in-xuanwu)
+   - 6.1 [SaaS ↔ Workspace Boundary](#61-saas--workspace-boundary)
+   - 6.2 [Context Map Patterns Used](#62-context-map-patterns-used)
+7. [Port & Adapter Catalogue](#7-port--adapter-catalogue)
+   - 7.1 [Shared (Cross-Cutting) Ports](#71-shared-cross-cutting-ports)
+   - 7.2 [Module-Owned Ports](#72-module-owned-ports)
+8. [Development Guide — Working with this Architecture](#8-development-guide--working-with-this-architecture)
+   - 8.1 [Adding a New Feature](#81-adding-a-new-feature)
+   - 8.2 [Adding a New Port](#82-adding-a-new-port)
+   - 8.3 [Crossing a Bounded Context Boundary](#83-crossing-a-bounded-context-boundary)
+   - 8.4 [Common Anti-Patterns to Avoid](#84-common-anti-patterns-to-avoid)
+   - 8.5 [Consistency Boundary & Transaction Semantics](#85-consistency-boundary--transaction-semantics)
+   - 8.6 [Event Contract Versioning (Simple Rules)](#86-event-contract-versioning-simple-rules)
+   - 8.7 [Authorization Boundary](#87-authorization-boundary)
+   - 8.8 [Composition Root & Dependency Wiring](#88-composition-root--dependency-wiring)
+   - 8.9 [Read/Write Separation (CQRS)](#89-readwrite-separation-cqrs)
+   - 8.10 [Observability Baseline](#810-observability-baseline)
+9. [Quick Reference](#9-quick-reference)
 
-/**
- * Check whether a locale string is one of the supported locales.
- */
-export function isSupportedLocale(locale: string): locale is Locale {
-  return (SUPPORTED_LOCALES as readonly string[]).includes(locale);
+---
+
+## 1. Philosophy Overview
+
+Xuanwu uses **Model-Driven Domain Discovery (MDDD)** as its design process and **Hexagonal Architecture (Ports & Adapters)** as its structural blueprint. The domain model — not the database, not the UI — is the centre of gravity. Business rules live in **Entities** and **Aggregates**; infrastructure details (Firebase, Redis, QStash) are plug-in concerns. The public API of every module reflects the **Ubiquitous Language** of its Bounded Context.
+
+```mermaid
+graph TD
+    DA["🔵 Driving Adapters<br/>REST · React Server Actions · CLI"]
+    IP(["Inbound Ports<br/>IUseCase · ICommand"])
+    CORE["🟡 Application Core<br/>Use Cases + Domain Model"]
+    OP(["Outbound Ports<br/>IRepository · IEventBus"])
+    DRV["🔴 Driven Adapters<br/>Firestore · Redis · QStash · SMTP"]
+
+    DA -->|calls| IP
+    IP --> CORE
+    CORE --> OP
+    OP -->|implemented by| DRV
+
+    style DA   fill:#dbeafe,stroke:#3b82f6,color:#000
+    style CORE fill:#fef9c3,stroke:#eab308,color:#000
+    style DRV  fill:#fce7f3,stroke:#ec4899,color:#000
+```
+
+The application core **never imports from adapters**. It defines **interfaces** (ports) that adapters implement — the Dependency Inversion Principle applied at the architecture level.
+
+---
+
+## 2. Core Concepts — MDDD Vocabulary
+
+> Full term definitions → [`docs/architecture/glossary/`](../glossary/)
+
+### 2.1 Bounded Context (限界上下文)
+
+**Definition**: A linguistic and logical boundary within which every term has exactly one meaning.
+**In Xuanwu**: Each `src/modules/{name}.module/` is a Bounded Context; `index.ts` is its only public surface.
+**Rules**: Never import internal files across modules. Share data via typed DTOs or Domain Events only.
+**Diagnostic**: *"Does this word mean the same thing here as in another module?"* If not, you've found a boundary.
+
+> Example: `"Account"` in `account.module` = platform user account; in `settlement.module` = financial ledger account.
+
+---
+
+### 2.2 Ubiquitous Language (通用語言)
+
+**Definition**: Shared vocabulary used by domain experts and developers alike — in code identifiers, DB fields, event names, and docs.
+**In Xuanwu**: Canonical vocabulary → [`docs/architecture/glossary/`](../glossary/). Domain events target `{domain}.{entity}.{verb}` (e.g. `wbs.task.state_changed`).
+
+> ⚠️ Runtime event type strings in `_events.ts` files currently use colon-separated format (e.g. `workspace:task:state:changed`) — a known deviation pending migration.
+
+**Diagnostic**: *"Does a business sentence map 1:1 to code entities without translation?"*
+
+---
+
+### 2.3 Context Mapping (上下文映射)
+
+**Definition**: The high-level relationship map describing direction of influence and integration patterns between Bounded Contexts.
+**In Xuanwu**: See [Section 6](#6-context-mapping-in-xuanwu) for the full Context Map.
+
+| Pattern | Description |
+|---------|-------------|
+| **Upstream / Downstream** | Upstream shapes the model; downstream adapts |
+| **Anticorruption Layer (ACL)** | Downstream translates upstream data to protect its own model |
+| **Open Host Service** | Upstream publishes a formal, versioned API for multiple consumers |
+| **Published Language** | Well-documented exchange format (e.g. domain events) |
+| **Partnership** | Two contexts co-evolve under mutual agreement |
+| **Conformist** | Downstream copies upstream model without translation |
+| **Shared Kernel** | Small, jointly-maintained sub-model |
+| **Customer / Supplier** | Downstream negotiates interface requirements with upstream |
+
+---
+
+### 2.4 Aggregate & Aggregate Root (聚合與聚合根)
+
+**Definition**: An **Aggregate** is a cluster of domain objects treated as a single unit for data changes. The **Aggregate Root** is the sole entry point; all business invariants are enforced there.
+**Rules**: (1) Only the root has a globally stable persisted ID. (2) External objects hold only the root's ID. (3) Repositories load/save only roots. (4) Cross-aggregate communication via Domain Events only.
+
+```
+Aggregate: Workspace
+├── Root: Workspace (workspaceId)
+├── Entity: WorkspaceMember (memberId)     ← via Workspace only
+└── Entity: BaselineHistory (historyId)   ← via Workspace.mergeBaseline()
+
+Aggregate: WBSTask
+├── Root: WBSTask (taskId)
+├── Value Object: SkillRequirement
+└── Entity: TaskDependency (dependencyId) ← via WBSTask only
+
+// Cross-aggregate ref: WBSTask.workspaceId: string  ← ID only, never an object ref
+```
+
+**Diagnostic**: *"Who is responsible for this business rule?"* → That's the Aggregate Root.
+
+---
+
+### 2.5 Invariants (不變性約束)
+
+**Definition**: A business rule that must always be true. Lives in Aggregate Root methods — never in Application Services, repositories, or UI.
+
+```typescript
+class WBSTask {
+  transition(newState: TaskState): void {
+    if (this.state === "accepted") throw new TaskAlreadyAcceptedError(this.taskId);
+    // Invariant: accepted tasks cannot regress
+  }
+  resolveIssue(issueId: string): void {
+    this.issues = this.issues.filter(i => i.id !== issueId);
+    if (this.issues.every(i => i.resolved)) this.state = "in_progress";
+    // Invariant: blocked state clears when all issues resolved
+  }
+}
+```
+
+**Diagnostic**: *"If this rule is violated, is the system in an invalid state?"* → Yes = invariant; protect it in the domain layer.
+
+---
+
+### 2.6 Separation of Concerns (關注點分離)
+
+**Definition**: Each layer handles only one type of concern. The application core is ignorant of storage and UI; infrastructure adapters are ignorant of business rules.
+
+| Layer | Concern | Anti-pattern |
+|-------|---------|--------------|
+| **Domain** | Business rules | DB queries, HTTP calls, React imports |
+| **Application** | Use case orchestration | Business invariants, direct DB queries |
+| **Infrastructure** | Data storage/retrieval | Business rule evaluations |
+| **Presentation** | User interface | DB queries, domain invariant checks |
+
+---
+
+## 3. Hexagonal Architecture — Ports & Adapters
+
+### 3.1 The Hexagon Mental Model
+
+The "hexagon" represents the **application core** (use cases + domain model). Everything outside is a pluggable detail.
+
+```mermaid
+flowchart TD
+    HTTP["HTTP Request"] & REACT["React Component"] & CLI["CLI Tool"]
+
+    subgraph DRIVING["Driving Adapters (Primary)"]
+        SA["Server Actions · Route Handlers · API"]
+    end
+
+    subgraph HEXAGON["Application Core"]
+        direction TB
+        subgraph DOMAIN["Domain Model"]
+            E["Entities · Aggregates · Value Objects"]
+            DS["Domain Services · Domain Events"]
+        end
+        UC["Use Cases / Application Services<br/>Load → Apply → Persist"]
+    end
+
+    subgraph DRIVEN["Driven Adapters (Secondary)"]
+        FS["Firestore · Redis · QStash · Firebase Auth"]
+    end
+
+    HTTP & REACT & CLI --> SA
+    SA -->|"Inbound Port (IUseCase · ICommand)"| UC
+    UC --- E
+    UC --- DS
+    UC -->|"Outbound Port (IRepository · IEventBus)"| FS
+
+    style HEXAGON fill:#fefce8,stroke:#ca8a04,color:#000
+    style DRIVING fill:#dbeafe,stroke:#3b82f6,color:#000
+    style DRIVEN  fill:#fce7f3,stroke:#ec4899,color:#000
+```
+
+### 3.2 Inbound Ports (Driving Side)
+
+Inbound ports define **what actions the application exposes**. Called by driving adapters.
+
+```typescript
+// Inbound port — defined in the application layer
+interface ICreateWorkspaceUseCase {
+  execute(command: CreateWorkspaceCommand): Promise<Result<WorkspaceDTO, AppError>>;
 }
 
-/**
- * Resolve a raw locale string to a supported `Locale`, falling back to the
- * default locale when the requested locale is not supported.
- */
-export function resolveLocale(locale?: string | null): Locale {
-  if (locale && isSupportedLocale(locale)) return locale;
-  return DEFAULT_LOCALE;
+// Driving adapter — Server Action calls the use case via the port
+async function createWorkspaceAction(formData: FormData) {
+  const useCase = new CreateWorkspaceUseCase(workspaceRepo, eventBus);
+  const result = await useCase.execute({ displayName: formData.get("name") });
+  // ...
+}
+```
+
+### 3.3 Outbound Ports (Driven Side)
+
+Outbound ports define **what the application needs from the outside world**. Implemented by driven adapters.
+
+```typescript
+// Outbound port — defined in the domain layer
+interface IWorkspaceRepository {
+  findById(workspaceId: string): Promise<Workspace | null>;
+  save(workspace: Workspace): Promise<void>;
+  delete(workspaceId: string): Promise<void>;
 }
 
-/**
- * Return a translate function (`t`) bound to the given locale.
- *
- * @example
- * const t = useTranslation("zh-TW");
- * t("home.welcome"); // "歡迎使用玄武平台"
- * t("missing.key");  // "missing.key"  (key fallback)
- */
-export function useTranslation(locale?: string | null): (key: string) => string {
-  const resolved = resolveLocale(locale);
-  const messages = dictionary[resolved];
+// Driven adapter — Firestore implementation
+class FirestoreWorkspaceRepository implements IWorkspaceRepository {
+  async findById(workspaceId: string) {
+    const doc = await getDoc(doc(db, "workspaces", workspaceId));
+    return doc.exists() ? WorkspaceMapper.toDomain(doc.data()) : null;
+  }
+  // ...
+}
+```
 
-  return (key: string): string => messages[key] ?? key;
+### 3.4 Adapters
+
+| Adapter type | Direction | Examples |
+|-------------|-----------|---------|
+| **Primary (Driving)** | Outside → Hexagon | Server Actions, Route Handlers, React component callbacks |
+| **Secondary (Driven)** | Hexagon → Outside | Firestore repository, Redis cache, QStash publisher, SMTP adapter |
+
+**Key principle**: Adapters have no business logic. If an adapter makes decisions, move them to Domain or Application.
+
+---
+
+## 4. How DDD Maps onto Hexagonal Architecture
+
+| DDD Concept | Hexagonal Position | Xuanwu Location |
+|-------------|-------------------|-----------------|
+| **Entities / Value Objects** | Domain Layer | `domain.{aggregate}/_entity.ts`, `_value-objects.ts` |
+| **Aggregate Root** | Domain Layer | `domain.{aggregate}/_entity.ts` |
+| **Domain Services** | Domain Layer | `domain.{aggregate}/_service.ts` |
+| **Domain Events** | Domain Layer → Event Bus port | `domain.{aggregate}/_events.ts` |
+| **Repository Interface (Port)** | Outbound Port | `domain.{aggregate}/_ports.ts` |
+| **Use Cases / Application Services** | Application Layer | `core/_use-cases.ts`, `_actions.ts`, `_queries.ts` |
+| **DTOs / Command Objects** | Application Layer boundary | `core/_dto.ts`, `_commands.ts` |
+| **Repository Implementation** | Secondary Adapter | `infra.firestore/_repository.ts` |
+| **ACL (Anticorruption Layer)** | Secondary Adapter | `infra.{adapter}/_mapper.ts` |
+| **Ubiquitous Language** | Pervasive (all layers) | Enforced via glossary + naming conventions |
+| **Bounded Context** | One hexagon | `src/modules/{name}.module/` |
+| **Context Map** | Relationships between hexagons | `docs/architecture/catalog/service-boundary.md` |
+
+---
+
+## 5. Xuanwu 4-Layer Implementation
+
+### 5.1 Layer Structure
+
+File tree shows canonical file placement; diagram shows dependency flow.
+
+```
+src/modules/{name}.module/
+├── index.ts                     ← Public API (Bounded Context contract)
+│
+├── domain.{aggregate}/          ← Domain Layer
+│   ├── _entity.ts               ← Aggregate Root + Entities
+│   ├── _value-objects.ts        ← Value Objects (immutable, self-validating)
+│   ├── _service.ts              ← Domain Services (multi-entity logic)
+│   ├── _events.ts               ← Domain Event definitions
+│   └── _ports.ts                ← Outbound Port interfaces (Repository, EventBus)
+│
+├── core/                        ← Application Layer
+│   ├── _use-cases.ts            ← Use case orchestration
+│   ├── _actions.ts              ← Server Actions (thin adapter → use case)
+│   ├── _queries.ts              ← Read queries (CQRS read side)
+│   └── _dto.ts                  ← Data Transfer Objects
+│
+├── infra.{adapter}/             ← Infrastructure Layer (Secondary Adapter)
+│   ├── _repository.ts           ← Repository implementation (Firestore, etc.)
+│   └── _mapper.ts               ← Domain ↔ Persistence mapper
+│
+└── _components/                 ← Presentation Layer (Primary Adapter)
+    ├── {feature}-view.tsx       ← Page-level component (calls Server Actions)
+    └── {widget}.tsx             ← Reusable UI component
+```
+
+```mermaid
+graph TD
+    PRES["Presentation Layer<br/><code>_components/ · src/app/</code><br/><i>Primary Adapter — what the user sees & does</i>"]
+    APP["Application Layer<br/><code>core/_use-cases.ts · _actions.ts</code><br/><i>Orchestrates: Load → Validate → Apply → Persist → Emit</i>"]
+    DOM["Domain Layer<br/><code>domain.*/_entity.ts · _value-objects.ts · _events.ts</code><br/><i>Entities · Aggregates · Value Objects · Domain Events</i>"]
+    PORT["Outbound Ports<br/><code>domain.*/_ports.ts</code><br/><i>IRepository · IEventBus</i>"]
+    INFRA["Infrastructure Layer<br/><code>infra.{adapter}/</code><br/><i>Firestore · Redis · QStash adapters</i>"]
+
+    PRES -->|"Server Actions / queries"| APP
+    APP  -->|"pure calls"| DOM
+    APP  -->|"depends on (via ports)"| PORT
+    PORT -->|"implemented by"| INFRA
+
+    style DOM   fill:#fef9c3,stroke:#eab308,color:#000
+    style PORT  fill:#f0fdf4,stroke:#16a34a,color:#000
+    style INFRA fill:#fce7f3,stroke:#ec4899,color:#000
+    style PRES  fill:#dbeafe,stroke:#3b82f6,color:#000
+    style APP   fill:#fff7ed,stroke:#ea580c,color:#000
+```
+
+### 5.2 Dependency Rules
+
+| Layer | May import from | Must NOT import from |
+|-------|----------------|----------------------|
+| **Presentation** | Application (Server Actions, queries, DTOs) | Domain internals, Infrastructure |
+| **Application** | Domain (Entities, VOs, Domain Services, Ports) | Infrastructure (concrete adapters), Presentation |
+| **Domain** | Nothing — pure TypeScript | Application, Infrastructure, Presentation |
+| **Infrastructure** | Domain (Ports + Entities for mapping) | Application (orchestration logic), Presentation |
+
+**Golden rule**: dependency arrows always point toward the Domain layer. The Domain layer has zero outward dependencies.
+
+### 5.3 File Placement Convention
+
+```typescript
+// Domain — pure business logic
+// src/modules/workspace.module/domain.workspace/_entity.ts
+export class Workspace {
+  private constructor(readonly id: string, private state: WorkspaceState) {}
+  static create(props: CreateWorkspaceProps): Workspace { /* factory */ }
+  archive(): DomainEvent { /* invariant-checked mutation */ }
 }
 
-/**
- * Retrieve the full message dictionary for a locale.
- * Useful for passing to third-party i18n providers.
- */
-export function getMessages(locale?: string | null): Messages {
-  return dictionary[resolveLocale(locale)];
+// Outbound port — domain defines, infrastructure implements
+// src/modules/workspace.module/domain.workspace/_ports.ts
+export interface IWorkspaceRepository {
+  findById(id: string): Promise<Workspace | null>;
+  save(workspace: Workspace): Promise<void>;
 }
+
+// Application — orchestration only, no business logic
+// src/modules/workspace.module/core/_use-cases.ts
+export class ArchiveWorkspaceUseCase {
+  constructor(
+    private readonly repo: IWorkspaceRepository,   // ← port, not adapter
+    private readonly eventBus: IEventBusPort,
+  ) {}
+
+  async execute(workspaceId: string): Promise<Result<void, AppError>> {
+    const workspace = await this.repo.findById(workspaceId);
+    if (!workspace) return fail(new NotFoundError("workspace", workspaceId));
+    const event = workspace.archive();              // ← domain rule enforced here
+    await this.repo.save(workspace);
+    await this.eventBus.publish(event);
+    return ok(undefined);
+  }
+}
+
+// Infrastructure — Firestore implementation
+// src/modules/workspace.module/infra.firestore/_repository.ts
+export class FirestoreWorkspaceRepository implements IWorkspaceRepository {
+  async findById(id: string) {
+    const snap = await getDoc(doc(db, "workspaces", id));
+    return snap.exists() ? WorkspaceMapper.toDomain(snap.data()) : null;
+  }
+  async save(workspace: Workspace) { /* ... */ }
+}
+```
+
+---
+
+## 6. Context Mapping in Xuanwu
+
+### 6.1 SaaS ↔ Workspace Boundary
+
+The primary architectural boundary in Xuanwu. Full crossing protocol → [`docs/architecture/catalog/service-boundary.md`](../catalog/service-boundary.md).
+
+```mermaid
+graph LR
+    subgraph SAAS["⬆ SaaS Layer — Upstream"]
+        direction TB
+        id["identity.module<br/><i>Identity Provider</i>"]
+        acc["account.module<br/><i>Account / Org</i>"]
+        ns["namespace.module<br/><i>Path Resolution</i>"]
+        sett["settlement.module<br/><i>AR / AP</i>"]
+        notif["notification.module<br/><i>Inbox Routing</i>"]
+        ach["achievement.module<br/><i>Badge Engine</i>"]
+    end
+
+    subgraph WS["⬇ Workspace Layer — Downstream"]
+        direction TB
+        ws["workspace.module"]
+        work["work.module / wbs tasks / issues / CRs"]
+        file["file.module"]
+        collab["collaboration.module"]
+        fork["fork.module"]
+    end
+
+    wf["workforce.module<br/><i>Partnership Bridge</i>"]
+
+    SAAS -- "📢 Published Language\n(domain events via Event Bus)" --> WS
+    SAAS <-- "🤝 Open Host Service" --> wf
+    wf -- "WBS skill → org capacity" --> WS
+
+    style SAAS fill:#e8f4f8,stroke:#2980b9,color:#000
+    style WS   fill:#fdf2e9,stroke:#e67e22,color:#000
+    style wf   fill:#e8f8e8,stroke:#27ae60,color:#000
+```
+
+| Module pair | Pattern | ACL needed? |
+|-------------|---------|-------------|
+| `account.module` → `workspace.module` | Customer / Supplier | Yes — workspace translates org identity to `WorkspaceMember` |
+| `workspace.module` → `settlement.module` | Conformist (event consumer) | No — settlement reacts to `wbs.task.state_changed` |
+| `workspace.module` → `notification.module` | Open Host Service | No — notification subscribes via Event Bus |
+| `workforce.module` ↔ `workspace.module` | Partnership (bridge) | Yes — translates WBS skill requirements into org capacity |
+
+### 6.2 Context Map Patterns Used
+
+#### Anticorruption Layer (ACL) — 防腐層
+
+Translates an upstream model (e.g. Firebase Auth) into Xuanwu's domain model. Full implementation → [`src/modules/identity.module/infra.firebase/_mapper.ts`](../../../src/modules/identity.module/infra.firebase/_mapper.ts).
+
+```typescript
+// ACL: Firebase Auth user → identity.module IdentityUser
+export class FirebaseAuthMapper {
+  static toDomain(u: FirebaseUser): IdentityUser {
+    return IdentityUser.fromFirebase({ uid: u.uid, email: u.email ?? "", avatarUrl: u.photoURL ?? DEFAULT_AVATAR });
+  }
+}
+```
+
+#### Open Host Service — 開放主機服務
+
+Consumers subscribe to a well-defined Event Bus contract without knowing workspace internals.
+
+```typescript
+// Subscriber in notification.module — uses only event payload, zero workspace imports
+async function handleTaskAccepted({ payload }: EventEnvelope) {
+  const { taskId, workspaceId, actorId } = payload;
+}
+```
+
+#### Published Language — 已發布語言
+
+All domain events follow the `EventEnvelope` schema — the shared contract across all Bounded Contexts. See [`docs/architecture/catalog/event-catalog.md`](../catalog/event-catalog.md).
+
+---
+
+## 7. Port & Adapter Catalogue
+
+### 7.1 Shared (Cross-Cutting) Ports
+
+Owned by `src/shared/ports/` — used by many modules; no single Bounded Context owns them.
+
+| Port Interface | Concern | Concrete Adapter | Location |
+|----------------|---------|-----------------|----------|
+| `ICachePort` | Key-value cache with TTL | Upstash Redis | `src/infrastructure/upstash/redis.ts` |
+| `IQueuePort` | Async message delivery | Upstash QStash | `src/infrastructure/upstash/qstash.ts` |
+| `IVectorIndexPort<T>` | Semantic similarity search | Upstash Vector | `src/infrastructure/upstash/vector.ts` |
+| `IWorkflowPort` | Durable workflow orchestration | Upstash Workflow | `src/infrastructure/upstash/workflow.ts` |
+| `IStoragePort` | Browser key-value persistence | localStorage | `src/shared/directives/use-local-storage.ts` |
+| `ILocalePort` | Locale selection + persistence | `useLocale` directive | `src/shared/directives/index.ts` |
+| `ILoggerPort` | Structured logging | Console / Cloud Logging | `src/infrastructure/logging/` |
+| `IAnalyticsPort` | User event tracking | Firebase Analytics | `src/infrastructure/firebase/client/analytics.ts` |
+| `IAuthPort` | Auth state + ID token | Firebase Admin Auth | `src/infrastructure/firebase/admin/auth/` |
+
+### 7.2 Module-Owned Ports
+
+Module-specific ports live inside `domain.*/_ports.ts` of the owning module.
+
+| Module | Port Interface | Implemented by |
+|--------|---------------|----------------|
+| `account.module` | `IAccountRepository` | `infra.firestore/_repository.ts` |
+| `workspace.module` | `IWorkspaceRepository` | `infra.firestore/_repository.ts` |
+| `workspace.module` | `IEventBusPort` | `infra.eventbus/_adapter.ts` |
+| `identity.module` | `IIdentityProvider` | `infra.firebase/_provider.ts` |
+| `notification.module` | `INotificationDeliveryPort` | `infra.firebase/_messaging.ts` |
+
+---
+
+## 8. Development Guide — Working with this Architecture
+
+### 8.1 Adding a New Feature
+
+Follow the sequence: **Domain → Application → Infrastructure → Presentation**
+
+1. **Domain first**: Define or update the Aggregate Root. Encode the new business rule as an invariant method. Unit-test the invariant — no framework needed.
+2. **Port**: If external I/O is needed, define an outbound port interface in `domain.*/_ports.ts`.
+3. **Use Case**: Write orchestration in `core/_use-cases.ts`. Depend on port interfaces, not adapters. Write integration tests.
+4. **Adapter**: Implement the port in `infra.{adapter}/`. Wire up to the concrete technology (Firestore, Redis, etc.).
+5. **Presentation**: Create or update the Server Action in `_actions.ts` calling the use case. Update the React component.
+
+### 8.2 Adding a New Port
+
+1. **Decide ownership**: Multi-module use → `src/shared/ports/index.ts`. Single-module → `domain.*/_ports.ts`.
+2. **Define the interface** with method names matching the Ubiquitous Language (not the adapter's API names).
+3. **Register the adapter** at the Server Action boundary or module composition root.
+4. **Never instantiate the adapter** in Domain or Application code.
+
+### 8.3 Crossing a Bounded Context Boundary
+
+**Allowed crossing mechanisms** (priority order):
+
+1. **Domain Events via Event Bus** — preferred for all async state changes
+2. **Server Actions calling another module's `index.ts`** — synchronous orchestration within the same request
+3. **Read model queries (CQRS)** — when one module needs another's data for display only
+
+```typescript
+// ❌ Internal domain objects across modules
+import { WBSTask } from "@/modules/workspace.module/domain.wbs/_entity";
+
+// ❌ Another module's infrastructure
+import { firestoreTaskRepo } from "@/modules/workspace.module/infra.firestore/_repository";
+
+// ✅ Public API barrel
+import { getTask, createTask } from "@/modules/workspace.module";
+
+// ✅ Domain events
+eventBus.subscribe("wbs.task.state_changed", handleTaskStateChange);
+```
+
+### 8.4 Common Anti-Patterns to Avoid
+
+| Anti-pattern | What it looks like | Why it hurts | Fix |
+|--------------|-------------------|-------------|-----|
+| **Anemic Domain Model** | Entities have only getters; logic in Application Services | Invariants scattered; domain is a data bag | Move logic to Aggregate Root |
+| **Smart Repository** | Repository contains `if (task.state === "accepted") { settlementService.create(...) }` | Business rule in Infrastructure | Extract to Domain Service or Use Case |
+| **Fat Action** | Server Action contains long business logic chains | Hard to test; couples Presentation to business rules | Extract a Use Case class |
+| **Layer Bypass** | Presentation calls `getDoc(db, "workspaces", id)` directly | Breaks encapsulation | Route through `core/_queries.ts` |
+| **Cross-module Domain Coupling** | Module A imports `WorkspaceEntity` from Module B's domain | Modules entangled; B can't change without breaking A | Use DTOs + Domain Events |
+| **God Aggregate** | Workspace holds all tasks, issues, CRs, members | Performance and consistency problems | Keep aggregates small; reference by ID |
+
+### 8.5 Consistency Boundary & Transaction Semantics
+
+| Scope | Consistency model |
+|-------|------------------|
+| Within one Aggregate | Strong — invariants enforced atomically |
+| Across Aggregates / modules | Eventual — event-driven; use outbox pattern for reliability |
+
+Execution sequence: **Load → Apply domain mutation → Persist → Publish Domain Event**. If publishing fails, handle at application/infrastructure level (outbox), not by moving rules into adapters.
+
+### 8.6 Event Contract Versioning (Simple Rules)
+
+| Rule | Detail |
+|------|--------|
+| Version in metadata | `v1`, `v2` in event envelope |
+| Prefer additive changes | New optional fields; avoid field renames/removals |
+| Breaking changes | Publish new version; run old + new consumers in parallel during transition |
+
+### 8.7 Authorization Boundary
+
+| Layer | Responsibility |
+|-------|---------------|
+| Presentation / Application | Authenticate caller; enforce request-level access guard |
+| Domain | Enforce business authorization invariants (who can do what in domain terms) |
+| Infrastructure | Storage and platform security policies |
+
+Rule: if violating the check makes business state invalid → Domain layer.
+
+### 8.8 Composition Root & Dependency Wiring
+
+Wire ports to adapters only at composition boundaries (Server Action / Route Handler / module root).
+
+```typescript
+// ✅ Compose at boundary — never inside domain or use case code
+const repo: IWorkspaceRepository = new FirestoreWorkspaceRepository(db);
+const eventBus: IEventBusPort = new EventBusAdapter(busClient);
+const useCase = new ArchiveWorkspaceUseCase(repo, eventBus);
+```
+
+### 8.9 Read/Write Separation (CQRS)
+
+| Side | Location | Rules |
+|------|----------|-------|
+| **Write** | `core/_use-cases.ts` | Mutates aggregates; emits domain events |
+| **Read** | `core/_queries.ts` | Denormalized; optimized for retrieval; no invariants |
+
+Temporary read-lag after writes = expected eventual consistency unless a use case requires synchronous read-after-write.
+
+### 8.10 Observability Baseline
+
+| Field | Purpose |
+|-------|---------|
+| `requestId` | Traces one inbound request lifecycle |
+| `eventId` | Traces one published/consumed domain event |
+| `module` + `useCase` | Identifies ownership and execution path |
+
+Log start/fail/success for every use case and event handler with structured fields.
+
+---
+
+## 9. Quick Reference
+
+### Ask Before Every File Change
+
+| Question | Action |
+|----------|--------|
+| What layer does this file belong to? | Check §5.1 file tree |
+| Does this code reference anything outside its layer? | Check dependency rules in §5.2 |
+| Does this code use a term not in the glossary? | Add it to [`docs/architecture/glossary/`](../glossary/) first |
+| Am I crossing a Bounded Context boundary? | Use Domain Events or the public `index.ts` barrel |
+| Is this a business rule or an infrastructure detail? | Business rules → Domain; infrastructure details → Adapter |
+
+### Ports & Adapters Cheat Sheet
+
+| Scenario | Action |
+|----------|--------|
+| New external dependency | Define port interface first → write app code against port → implement adapter last |
+| New business rule | Add invariant method to Aggregate Root → enforce in domain layer only |
+| New cross-module data flow | Emit Domain Event from producer → subscribe in consumer via Event Bus (Published Language) |
+
+### Files Quick Map
+
+| Purpose | Location |
+|---------|----------|
+| Architecture decisions | `docs/architecture/adr/` |
+| Domain glossary | `docs/architecture/glossary/` |
+| Bounded context boundaries | `docs/architecture/catalog/service-boundary.md` |
+| Domain event contracts | `docs/architecture/catalog/event-catalog.md` |
+| Business entity definitions | `docs/architecture/catalog/business-entities.md` |
+| Shared ACL ports | `src/shared/ports/index.ts` |
+| Infrastructure adapters | `src/infrastructure/` |
+| Module public API | `src/modules/{name}.module/index.ts` |
+| This document | `docs/architecture/notes/model-driven-hexagonal-architecture.md` |
+
+---
+
+*This document should be read in conjunction with the [Architecture SSOT](../README.md) and the [Service Boundary Contract](../catalog/service-boundary.md).*
 ````
 
 ## File: docs/architecture/README.md

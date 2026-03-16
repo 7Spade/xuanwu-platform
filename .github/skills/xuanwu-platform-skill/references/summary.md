@@ -37,15 +37,15 @@ This skill contains the following reference files:
 
 ## Statistics
 
-793 files | 70,974 lines
+812 files | 73,677 lines
 
 | Language | Files | Lines |
 |----------|------:|------:|
-| TypeScript | 284 | 21,353 |
-| Markdown | 270 | 27,259 |
-| TypeScript (TSX) | 194 | 20,269 |
-| No Extension | 20 | 72 |
+| Markdown | 296 | 29,612 |
+| TypeScript | 290 | 21,590 |
+| TypeScript (TSX) | 196 | 20,397 |
 | JSON | 10 | 606 |
+| No Extension | 5 | 57 |
 | MERMAID | 4 | 758 |
 | YAML | 3 | 259 |
 | JavaScript (ESM) | 2 | 112 |
@@ -56,8 +56,8 @@ This skill contains the following reference files:
 **Largest files:**
 - `src/shared/i18n/index.ts` (1,251 lines)
 - `docs/management/issues.md` (952 lines)
-- `docs/architecture/notes/model-driven-hexagonal-architecture.md` (775 lines)
 - `src/design-system/primitives/ui/sidebar.tsx` (726 lines)
+- `docs/architecture/notes/model-driven-hexagonal-architecture.md` (654 lines)
 - `docs/architecture/catalog/business-entities.md` (632 lines)
 - `src/modules/workspace.module/core/_use-cases.ts` (496 lines)
 - `.serena/memories/tasks/BACKLOG.md` (466 lines)
