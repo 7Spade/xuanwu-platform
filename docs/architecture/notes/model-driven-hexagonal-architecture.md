@@ -1,9 +1,8 @@
 # Model-Driven Hexagonal Architecture
 
-> Tags: `ssot` `architecture-core` `ddd` `hexagonal` `ports-adapters` `layer-rules`  
-> Design philosophy and development guide for the **xuanwu-platform**.  
-> This document is the primary reference for understanding how Domain-Driven Design (DDD)
-> and Hexagonal Architecture (Ports & Adapters) are unified in this project.
+> Tags: `ssot` `architecture-core` `ddd` `hexagonal` `layer-rules` `context-map` `development-guide` `quick-reference`
+> Design philosophy and development guide for the **xuanwu-platform**.
+> Primary reference for how DDD and Hexagonal Architecture (Ports & Adapters) are unified in this project.
 
 ---
 
@@ -24,10 +23,9 @@
    - 3.4 [Adapters](#34-adapters)
 4. [How DDD Maps onto Hexagonal Architecture](#4-how-ddd-maps-onto-hexagonal-architecture)
 5. [Xuanwu 4-Layer Implementation](#5-xuanwu-4-layer-implementation)
-   - 5.1 [Layer Definitions](#51-layer-definitions)
-   - 5.2 [Layer Diagram](#52-layer-diagram)
-   - 5.3 [Dependency Rules](#53-dependency-rules)
-   - 5.4 [File Placement Convention](#54-file-placement-convention)
+   - 5.1 [Layer Structure](#51-layer-structure)
+   - 5.2 [Dependency Rules](#52-dependency-rules)
+   - 5.3 [File Placement Convention](#53-file-placement-convention)
 6. [Context Mapping in Xuanwu](#6-context-mapping-in-xuanwu)
    - 6.1 [SaaS ↔ Workspace Boundary](#61-saas--workspace-boundary)
    - 6.2 [Context Map Patterns Used](#62-context-map-patterns-used)
@@ -39,205 +37,141 @@
    - 8.2 [Adding a New Port](#82-adding-a-new-port)
    - 8.3 [Crossing a Bounded Context Boundary](#83-crossing-a-bounded-context-boundary)
    - 8.4 [Common Anti-Patterns to Avoid](#84-common-anti-patterns-to-avoid)
-  - 8.5 [Consistency Boundary & Transaction Semantics](#85-consistency-boundary--transaction-semantics)
-  - 8.6 [Event Contract Versioning (Simple Rules)](#86-event-contract-versioning-simple-rules)
-  - 8.7 [Authorization Boundary](#87-authorization-boundary)
-  - 8.8 [Composition Root & Dependency Wiring](#88-composition-root--dependency-wiring)
-  - 8.9 [Read/Write Separation (CQRS)](#89-readwrite-separation-cqrs)
-  - 8.10 [Observability Baseline](#810-observability-baseline)
+   - 8.5 [Consistency Boundary & Transaction Semantics](#85-consistency-boundary--transaction-semantics)
+   - 8.6 [Event Contract Versioning (Simple Rules)](#86-event-contract-versioning-simple-rules)
+   - 8.7 [Authorization Boundary](#87-authorization-boundary)
+   - 8.8 [Composition Root & Dependency Wiring](#88-composition-root--dependency-wiring)
+   - 8.9 [Read/Write Separation (CQRS)](#89-readwrite-separation-cqrs)
+   - 8.10 [Observability Baseline](#810-observability-baseline)
 9. [Quick Reference](#9-quick-reference)
 
 ---
 
 ## 1. Philosophy Overview
 
-Xuanwu uses **Model-Driven Domain Discovery (MDDD)** as its design process and **Hexagonal Architecture (Ports & Adapters)** as its structural blueprint.
+Xuanwu uses **Model-Driven Domain Discovery (MDDD)** as its design process and **Hexagonal Architecture (Ports & Adapters)** as its structural blueprint. The domain model — not the database, not the UI — is the centre of gravity. Business rules live in **Entities** and **Aggregates**; infrastructure details (Firebase, Redis, QStash) are plug-in concerns. The public API of every module reflects the **Ubiquitous Language** of its Bounded Context.
 
-### Why Model-Driven?
+```mermaid
+graph TD
+    DA["🔵 Driving Adapters<br/>REST · React Server Actions · CLI"]
+    IP(["Inbound Ports<br/>IUseCase · ICommand"])
+    CORE["🟡 Application Core<br/>Use Cases + Domain Model"]
+    OP(["Outbound Ports<br/>IRepository · IEventBus"])
+    DRV["🔴 Driven Adapters<br/>Firestore · Redis · QStash · SMTP"]
 
-The domain model — not the database, not the UI, not the framework — is the centre of gravity.  
-Every design decision starts with a question: **"What does the domain say?"**
+    DA -->|calls| IP
+    IP --> CORE
+    CORE --> OP
+    OP -->|implemented by| DRV
 
-- Business rules live in **Entities** and **Aggregates**, not in controllers or database triggers.
-- Infrastructure details (Firebase, Redis, QStash) are plug-in concerns; they can change without touching business logic.
-- The public API of every module reflects the **Ubiquitous Language** of its Bounded Context.
-
-### Why Hexagonal?
-
-Hexagonal Architecture enforces that the domain model is surrounded by two rings:
-
-```
-         ┌─────────────────────────────────────┐
-         │         Driving Adapters             │  ← REST, React, Server Actions, CLI
-         │   (things that call the application) │
-         └───────────────────────┬─────────────┘
-                                 │ Inbound Ports
-         ┌───────────────────────▼─────────────┐
-         │         Application Core             │
-         │   (Use Cases + Domain Model)         │
-         └───────────────────────┬─────────────┘
-                                 │ Outbound Ports
-         ┌───────────────────────▼─────────────┐
-         │         Driven Adapters              │  ← Firestore, Redis, QStash, Email
-         │   (things the application calls)     │
-         └─────────────────────────────────────┘
+    style DA   fill:#dbeafe,stroke:#3b82f6,color:#000
+    style CORE fill:#fef9c3,stroke:#eab308,color:#000
+    style DRV  fill:#fce7f3,stroke:#ec4899,color:#000
 ```
 
-The application core never imports from adapters. It defines **interfaces** (ports) that adapters implement. This is the Dependency Inversion Principle applied at the architecture level.
+The application core **never imports from adapters**. It defines **interfaces** (ports) that adapters implement — the Dependency Inversion Principle applied at the architecture level.
 
 ---
 
 ## 2. Core Concepts — MDDD Vocabulary
 
+> Full term definitions → [`docs/architecture/glossary/`](../glossary/)
+
 ### 2.1 Bounded Context (限界上下文)
 
-**Definition**: A linguistic and logical boundary within which a domain model is defined and applicable. Inside the boundary, every term has exactly one meaning.
+**Definition**: A linguistic and logical boundary within which every term has exactly one meaning.
+**In Xuanwu**: Each `src/modules/{name}.module/` is a Bounded Context; `index.ts` is its only public surface.
+**Rules**: Never import internal files across modules. Share data via typed DTOs or Domain Events only.
+**Diagnostic**: *"Does this word mean the same thing here as in another module?"* If not, you've found a boundary.
 
-> "Account" in the `account.module` means a platform user account (personal or org).  
-> "Account" in the `settlement.module` means a financial ledger account (AR/AP).  
-> Same word; different Bounded Contexts; different definitions.
-
-**In Xuanwu**: Each `src/modules/{name}.module/` directory is a Bounded Context. The `index.ts` barrel is the only public surface — all internal files are encapsulated.
-
-**Key rules**:
-- Never import internal files of another module directly.
-- If two modules need to share data, use typed contracts (DTOs) or Domain Events.
-- The module name IS the Bounded Context name.
-
-**Diagnostic question**: *"What does this word mean here?"* If the answer differs from what it means in another module, you've found a boundary.
+> Example: `"Account"` in `account.module` = platform user account; in `settlement.module` = financial ledger account.
 
 ---
 
 ### 2.2 Ubiquitous Language (通用語言)
 
-**Definition**: The shared vocabulary used by both domain experts and developers. Code identifiers, database field names, event names, and documentation all use the same terms.
+**Definition**: Shared vocabulary used by domain experts and developers alike — in code identifiers, DB fields, event names, and docs.
+**In Xuanwu**: Canonical vocabulary → [`docs/architecture/glossary/`](../glossary/). Domain events target `{domain}.{entity}.{verb}` (e.g. `wbs.task.state_changed`).
 
-**In Xuanwu**:
-- Canonical vocabulary is in [`docs/architecture/glossary/`](../glossary/).
-- Domain events follow the naming convention `{domain}.{entity}.{verb}` (e.g. `wbs.task.state_changed`).
+> ⚠️ Runtime event type strings in `_events.ts` files currently use colon-separated format (e.g. `workspace:task:state:changed`) — a known deviation pending migration.
 
-  > **⚠️ Implementation gap**: Current TypeScript code (`_events.ts` files across all modules) uses **colon-separated** event type strings at runtime (e.g., `workspace:task:state:changed`, `account:personal:created`, `settlement:created`). The dot-format names above are the **canonical target**. The colon-separated format is the current runtime reality and is a known deviation from this convention. A dedicated code migration task is required to align runtime event type strings with the `{domain}.{entity}.{verb}` format. Until that migration is complete, both formats must be considered in any cross-module event subscription logic.
-- Entity field names match the glossary terms (e.g. `assigneeId`, not `userId` or `executorId`).
-
-**Diagnostic question**: *"If a business person says 'the assignee submitted a change request', does that sentence map 1:1 to code entities without translation?"*  
-If translation is needed, align the code or the glossary.
+**Diagnostic**: *"Does a business sentence map 1:1 to code entities without translation?"*
 
 ---
 
 ### 2.3 Context Mapping (上下文映射)
 
-**Definition**: The high-level relationship map between Bounded Contexts. It describes the direction of influence and the integration patterns between modules.
-
-**Core relationships** between contexts:
-
-| Pattern | Chinese | Description |
-|---------|---------|-------------|
-| **Upstream / Downstream** | 上游 / 下游 | Upstream shapes the model; downstream adapts to it |
-| **Anticorruption Layer (ACL)** | 防腐層 | Downstream translates upstream data to protect its own model |
-| **Partnership** | 合夥關係 | Two contexts co-evolve under mutual agreement |
-| **Customer / Supplier** | 客戶 / 供應商 | Downstream negotiates interface requirements with upstream |
-| **Conformist** | 遵奉者 | Downstream copies the upstream model without translation |
-| **Shared Kernel** | 共享核心 | Two contexts share a small, jointly-maintained sub-model |
-| **Open Host Service** | 開放主機服務 | Upstream publishes a formal, versioned API for multiple consumers |
-| **Published Language** | 已發布語言 | A well-documented exchange format between contexts (e.g. domain events) |
-
+**Definition**: The high-level relationship map describing direction of influence and integration patterns between Bounded Contexts.
 **In Xuanwu**: See [Section 6](#6-context-mapping-in-xuanwu) for the full Context Map.
+
+| Pattern | Description |
+|---------|-------------|
+| **Upstream / Downstream** | Upstream shapes the model; downstream adapts |
+| **Anticorruption Layer (ACL)** | Downstream translates upstream data to protect its own model |
+| **Open Host Service** | Upstream publishes a formal, versioned API for multiple consumers |
+| **Published Language** | Well-documented exchange format (e.g. domain events) |
+| **Partnership** | Two contexts co-evolve under mutual agreement |
+| **Conformist** | Downstream copies upstream model without translation |
+| **Shared Kernel** | Small, jointly-maintained sub-model |
+| **Customer / Supplier** | Downstream negotiates interface requirements with upstream |
 
 ---
 
 ### 2.4 Aggregate & Aggregate Root (聚合與聚合根)
 
-**Definition**: An **Aggregate** is a cluster of domain objects (entities + value objects) that are treated as a single unit for the purpose of data changes. The **Aggregate Root** is the single entry point — all external access to the aggregate goes through the root.
-
-**Rules**:
-1. Only the Aggregate Root has a globally stable identity (a persisted ID).
-2. External objects may only hold a reference to the Aggregate Root ID, not to internal entities.
-3. All business invariants within an Aggregate must be enforced by the Aggregate Root.
-4. Repositories load and save only Aggregate Roots.
-5. Aggregates communicate across boundaries only via Domain Events, not direct references.
-
-**Example in Xuanwu**:
+**Definition**: An **Aggregate** is a cluster of domain objects treated as a single unit for data changes. The **Aggregate Root** is the sole entry point; all business invariants are enforced there.
+**Rules**: (1) Only the root has a globally stable persisted ID. (2) External objects hold only the root's ID. (3) Repositories load/save only roots. (4) Cross-aggregate communication via Domain Events only.
 
 ```
 Aggregate: Workspace
-├── Aggregate Root: Workspace (workspaceId)
-├── Entity: WorkspaceMember (memberId)  ← accessed via Workspace only
-└── Entity: BaselineHistory (historyId)  ← append-only, via Workspace.mergeBaseline()
+├── Root: Workspace (workspaceId)
+├── Entity: WorkspaceMember (memberId)     ← via Workspace only
+└── Entity: BaselineHistory (historyId)   ← via Workspace.mergeBaseline()
 
 Aggregate: WBSTask
-├── Aggregate Root: WBSTask (taskId)
-├── Value Object: SkillRequirement (a string tag)
-└── Entity: TaskDependency (dependencyId)  ← accessed via WBSTask only
+├── Root: WBSTask (taskId)
+├── Value Object: SkillRequirement
+└── Entity: TaskDependency (dependencyId) ← via WBSTask only
 
-// ✅ Cross-aggregate reference (by ID only):
-type WBSTask = {
-  workspaceId: string;  // FK to Workspace root — never a direct object reference
-  ...
-}
+// Cross-aggregate ref: WBSTask.workspaceId: string  ← ID only, never an object ref
 ```
 
-**Diagnostic question**: *"Who is responsible for this business rule?"*  
-The answer is the Aggregate Root that owns the entities involved.
+**Diagnostic**: *"Who is responsible for this business rule?"* → That's the Aggregate Root.
 
 ---
 
 ### 2.5 Invariants (不變性約束)
 
-**Definition**: A business rule that must always be true for the system to be in a valid state. Invariants are the domain's constitution — they cannot be violated, even temporarily.
-
-**Where invariants live**: Inside the Aggregate Root's methods, not in Application Services, not in repositories, not in UI components.
-
-**Example invariants in Xuanwu**:
+**Definition**: A business rule that must always be true. Lives in Aggregate Root methods — never in Application Services, repositories, or UI.
 
 ```typescript
-// WBSTask Aggregate Root
 class WBSTask {
-  // Invariant: a task with open Issues must be Blocked
+  transition(newState: TaskState): void {
+    if (this.state === "accepted") throw new TaskAlreadyAcceptedError(this.taskId);
+    // Invariant: accepted tasks cannot regress
+  }
   resolveIssue(issueId: string): void {
     this.issues = this.issues.filter(i => i.id !== issueId);
-    if (this.issues.every(i => i.resolved)) {
-      this.state = "in_progress";  // restores correct state
-    }
+    if (this.issues.every(i => i.resolved)) this.state = "in_progress";
+    // Invariant: blocked state clears when all issues resolved
   }
-
-  // Invariant: Accepted tasks cannot regress
-  transition(newState: TaskState): void {
-    if (this.state === "accepted") {
-      throw new TaskAlreadyAcceptedError(this.taskId);
-    }
-    // ...
-  }
-}
-
-// Namespace (Value Object-like invariant)
-// Invariant: slug is globally unique and immutable after registration
-class Namespace {
-  constructor(readonly slug: string) {
-    if (!SLUG_PATTERN.test(slug)) throw new InvalidSlugError(slug);
-  }
-  // No setter for slug — immutable
 }
 ```
 
-**Diagnostic question**: *"If this rule is violated, is the system in an invalid state?"*  
-If yes, it's an invariant — protect it in the domain layer.
+**Diagnostic**: *"If this rule is violated, is the system in an invalid state?"* → Yes = invariant; protect it in the domain layer.
 
 ---
 
 ### 2.6 Separation of Concerns (關注點分離)
 
-**Definition**: The architectural philosophy that each layer should handle only one type of concern. Business logic is the domain's concern; database access is infrastructure's concern; rendering is the UI's concern.
-
-**In Hexagonal terms**: The application core is ignorant of how data is stored or how the UI works. Infrastructure adapters are ignorant of business rules.
-
-**Layer responsibility mapping**:
+**Definition**: Each layer handles only one type of concern. The application core is ignorant of storage and UI; infrastructure adapters are ignorant of business rules.
 
 | Layer | Concern | Anti-pattern |
 |-------|---------|--------------|
-| **Domain** | What are the rules? | Database queries, HTTP calls, React imports |
-| **Application** | What use case is being executed? | Business invariants, direct DB queries |
-| **Infrastructure** | How is data stored/retrieved? | Business rule evaluations, UI rendering |
-| **Presentation** | What does the user see? | Database queries, domain invariant checks |
+| **Domain** | Business rules | DB queries, HTTP calls, React imports |
+| **Application** | Use case orchestration | Business invariants, direct DB queries |
+| **Infrastructure** | Data storage/retrieval | Business rule evaluations |
+| **Presentation** | User interface | DB queries, domain invariant checks |
 
 ---
 
@@ -245,50 +179,43 @@ If yes, it's an invariant — protect it in the domain layer.
 
 ### 3.1 The Hexagon Mental Model
 
-The "hexagon" represents the **application core** (use cases + domain model). The shape is symbolic — what matters is that **everything outside the hexagon is a detail**:
+The "hexagon" represents the **application core** (use cases + domain model). Everything outside is a pluggable detail.
 
-```
-                    HTTP Request   React Component   CLI Tool
-                          │               │              │
-                    ┌─────▼───────────────▼──────────────▼─────┐
-                    │          Driving Adapters                  │
-                    │    (Server Actions, Route Handlers, API)   │
-                    └─────────────────────┬──────────────────────┘
-                                         │
-                           ┌─────────────▼─────────────┐
-                           │      Inbound Port           │
-                           │  (IUseCase / ICommand)      │
-                           └─────────────┬───────────────┘
-                                         │
-              ┌──────────────────────────▼──────────────────────────┐
-              │                 Application Core                     │
-              │                                                      │
-              │   ┌──────────────────────────────────────────────┐  │
-              │   │              Domain Model                    │  │
-              │   │  (Entities · Value Objects · Aggregates ·    │  │
-              │   │   Domain Services · Domain Events)           │  │
-              │   └──────────────────────────────────────────────┘  │
-              │                                                      │
-              │   ┌──────────────────────────────────────────────┐  │
-              │   │           Use Cases / Application Services    │  │
-              │   │  (Orchestration: Load → Apply → Persist)     │  │
-              │   └──────────────────────────────────────────────┘  │
-              └──────────────────────────┬──────────────────────────┘
-                                         │
-                           ┌─────────────▼───────────────┐
-                           │      Outbound Port           │
-                           │  (IRepository / IEventBus)   │
-                           └─────────────┬────────────────┘
-                                         │
-                    ┌────────────────────▼──────────────────────────┐
-                    │             Driven Adapters                    │
-                    │  (Firestore, Redis, QStash, SMTP, Firebase)   │
-                    └────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    HTTP["HTTP Request"] & REACT["React Component"] & CLI["CLI Tool"]
+
+    subgraph DRIVING["Driving Adapters (Primary)"]
+        SA["Server Actions · Route Handlers · API"]
+    end
+
+    subgraph HEXAGON["Application Core"]
+        direction TB
+        subgraph DOMAIN["Domain Model"]
+            E["Entities · Aggregates · Value Objects"]
+            DS["Domain Services · Domain Events"]
+        end
+        UC["Use Cases / Application Services<br/>Load → Apply → Persist"]
+    end
+
+    subgraph DRIVEN["Driven Adapters (Secondary)"]
+        FS["Firestore · Redis · QStash · Firebase Auth"]
+    end
+
+    HTTP & REACT & CLI --> SA
+    SA -->|"Inbound Port (IUseCase · ICommand)"| UC
+    UC --- E
+    UC --- DS
+    UC -->|"Outbound Port (IRepository · IEventBus)"| FS
+
+    style HEXAGON fill:#fefce8,stroke:#ca8a04,color:#000
+    style DRIVING fill:#dbeafe,stroke:#3b82f6,color:#000
+    style DRIVEN  fill:#fce7f3,stroke:#ec4899,color:#000
 ```
 
 ### 3.2 Inbound Ports (Driving Side)
 
-Inbound ports define **what actions the application exposes**. They are called by driving adapters.
+Inbound ports define **what actions the application exposes**. Called by driving adapters.
 
 ```typescript
 // Inbound port — defined in the application layer
@@ -306,10 +233,10 @@ async function createWorkspaceAction(formData: FormData) {
 
 ### 3.3 Outbound Ports (Driven Side)
 
-Outbound ports define **what the application needs from the outside world**. They are implemented by driven adapters.
+Outbound ports define **what the application needs from the outside world**. Implemented by driven adapters.
 
 ```typescript
-// Outbound port — defined in the domain layer (or application layer)
+// Outbound port — defined in the domain layer
 interface IWorkspaceRepository {
   findById(workspaceId: string): Promise<Workspace | null>;
   save(workspace: Workspace): Promise<void>;
@@ -328,14 +255,12 @@ class FirestoreWorkspaceRepository implements IWorkspaceRepository {
 
 ### 3.4 Adapters
 
-Adapters are the glue between the hexagon and the outside world.
-
 | Adapter type | Direction | Examples |
 |-------------|-----------|---------|
 | **Primary (Driving)** | Outside → Hexagon | Server Actions, Route Handlers, React component callbacks |
 | **Secondary (Driven)** | Hexagon → Outside | Firestore repository, Redis cache, QStash publisher, SMTP adapter |
 
-**Key principle**: Adapters have no business logic. If an adapter starts making decisions, those decisions belong in the domain or application layer.
+**Key principle**: Adapters have no business logic. If an adapter makes decisions, move them to Domain or Application.
 
 ---
 
@@ -343,24 +268,26 @@ Adapters are the glue between the hexagon and the outside world.
 
 | DDD Concept | Hexagonal Position | Xuanwu Location |
 |-------------|-------------------|-----------------|
-| **Entities / Value Objects** | Domain Layer (inside hexagon) | `domain.{aggregate}/_entity.ts`, `_value-objects.ts` |
-| **Aggregate Root** | Domain Layer (inside hexagon) | `domain.{aggregate}/_entity.ts` |
-| **Domain Services** | Domain Layer (inside hexagon) | `domain.{aggregate}/_service.ts` |
+| **Entities / Value Objects** | Domain Layer | `domain.{aggregate}/_entity.ts`, `_value-objects.ts` |
+| **Aggregate Root** | Domain Layer | `domain.{aggregate}/_entity.ts` |
+| **Domain Services** | Domain Layer | `domain.{aggregate}/_service.ts` |
 | **Domain Events** | Domain Layer → Event Bus port | `domain.{aggregate}/_events.ts` |
 | **Repository Interface (Port)** | Outbound Port | `domain.{aggregate}/_ports.ts` |
-| **Use Cases / Application Services** | Application Layer (inside hexagon) | `core/_use-cases.ts`, `_actions.ts`, `_queries.ts` |
+| **Use Cases / Application Services** | Application Layer | `core/_use-cases.ts`, `_actions.ts`, `_queries.ts` |
 | **DTOs / Command Objects** | Application Layer boundary | `core/_dto.ts`, `_commands.ts` |
 | **Repository Implementation** | Secondary Adapter | `infra.firestore/_repository.ts` |
-| **ACL (Anticorruption Layer)** | Secondary Adapter translating foreign model | `infra.{adapter}/_mapper.ts` |
+| **ACL (Anticorruption Layer)** | Secondary Adapter | `infra.{adapter}/_mapper.ts` |
 | **Ubiquitous Language** | Pervasive (all layers) | Enforced via glossary + naming conventions |
-| **Bounded Context** | One hexagon | One `src/modules/{name}.module/` |
+| **Bounded Context** | One hexagon | `src/modules/{name}.module/` |
 | **Context Map** | Relationships between hexagons | `docs/architecture/catalog/service-boundary.md` |
 
 ---
 
 ## 5. Xuanwu 4-Layer Implementation
 
-### 5.1 Layer Definitions
+### 5.1 Layer Structure
+
+File tree shows canonical file placement; diagram shows dependency flow.
 
 ```
 src/modules/{name}.module/
@@ -388,85 +315,74 @@ src/modules/{name}.module/
     └── {widget}.tsx             ← Reusable UI component
 ```
 
-### 5.2 Layer Diagram
+```mermaid
+graph TD
+    PRES["Presentation Layer<br/><code>_components/ · src/app/</code><br/><i>Primary Adapter — what the user sees & does</i>"]
+    APP["Application Layer<br/><code>core/_use-cases.ts · _actions.ts</code><br/><i>Orchestrates: Load → Validate → Apply → Persist → Emit</i>"]
+    DOM["Domain Layer<br/><code>domain.*/_entity.ts · _value-objects.ts · _events.ts</code><br/><i>Entities · Aggregates · Value Objects · Domain Events</i>"]
+    PORT["Outbound Ports<br/><code>domain.*/_ports.ts</code><br/><i>IRepository · IEventBus</i>"]
+    INFRA["Infrastructure Layer<br/><code>infra.{adapter}/</code><br/><i>Firestore · Redis · QStash adapters</i>"]
 
-```
-┌──────────────────────────────────────────────────────────┐
-│  Presentation Layer  (_components/, src/app/)            │
-│  "What does the user see and do?"                        │
-│  Primary Adapter — calls Application layer               │
-└───────────────────────────────┬──────────────────────────┘
-                                │ calls via Server Actions / queries
-┌───────────────────────────────▼──────────────────────────┐
-│  Application Layer  (core/_use-cases.ts, _actions.ts)    │
-│  "What use case is being executed?"                      │
-│  Orchestrates: Load → Validate → Apply → Persist → Emit  │
-└────────────────────┬──────────────────────┬──────────────┘
-                     │ uses (pure calls)     │ depends on (via ports)
-     ┌───────────────▼──────┐    ┌──────────▼────────────────────────┐
-     │  Domain Layer         │    │  Outbound Ports (_ports.ts)        │
-     │  "What are the rules?"│    │  IWorkspaceRepository              │
-     │  Entities, Aggregates │    │  IEventBusPort                     │
-     │  Value Objects        │    └──────────────────┬─────────────────┘
-     │  Domain Services      │                       │ implemented by
-     │  Domain Events        │    ┌──────────────────▼─────────────────┐
-     └───────────────────────┘    │  Infrastructure Layer               │
-                                  │  "How is data stored?"              │
-                                  │  Firestore, Redis, QStash adapters  │
-                                  └─────────────────────────────────────┘
+    PRES -->|"Server Actions / queries"| APP
+    APP  -->|"pure calls"| DOM
+    APP  -->|"depends on (via ports)"| PORT
+    PORT -->|"implemented by"| INFRA
+
+    style DOM   fill:#fef9c3,stroke:#eab308,color:#000
+    style PORT  fill:#f0fdf4,stroke:#16a34a,color:#000
+    style INFRA fill:#fce7f3,stroke:#ec4899,color:#000
+    style PRES  fill:#dbeafe,stroke:#3b82f6,color:#000
+    style APP   fill:#fff7ed,stroke:#ea580c,color:#000
 ```
 
-### 5.3 Dependency Rules
+### 5.2 Dependency Rules
 
 | Layer | May import from | Must NOT import from |
 |-------|----------------|----------------------|
 | **Presentation** | Application (Server Actions, queries, DTOs) | Domain internals, Infrastructure |
 | **Application** | Domain (Entities, VOs, Domain Services, Ports) | Infrastructure (concrete adapters), Presentation |
 | **Domain** | Nothing — pure TypeScript | Application, Infrastructure, Presentation |
-| **Infrastructure** | Domain (Ports and Entities for mapping) | Application (orchestration logic), Presentation |
+| **Infrastructure** | Domain (Ports + Entities for mapping) | Application (orchestration logic), Presentation |
 
-The golden rule: **dependency arrows always point toward the Domain layer**. The Domain layer has zero outward dependencies.
+**Golden rule**: dependency arrows always point toward the Domain layer. The Domain layer has zero outward dependencies.
 
-### 5.4 File Placement Convention
+### 5.3 File Placement Convention
 
 ```typescript
-// ✅ Correct placement examples
-
-// Domain layer — pure business logic
+// Domain — pure business logic
 // src/modules/workspace.module/domain.workspace/_entity.ts
 export class Workspace {
   private constructor(readonly id: string, private state: WorkspaceState) {}
-
   static create(props: CreateWorkspaceProps): Workspace { /* factory */ }
   archive(): DomainEvent { /* invariant-checked mutation */ }
 }
 
-// Outbound port — defined in Domain, implemented in Infrastructure
+// Outbound port — domain defines, infrastructure implements
 // src/modules/workspace.module/domain.workspace/_ports.ts
 export interface IWorkspaceRepository {
   findById(id: string): Promise<Workspace | null>;
   save(workspace: Workspace): Promise<void>;
 }
 
-// Application layer — orchestration (no business logic)
+// Application — orchestration only, no business logic
 // src/modules/workspace.module/core/_use-cases.ts
 export class ArchiveWorkspaceUseCase {
   constructor(
-    private readonly repo: IWorkspaceRepository,     // ← port, not adapter
+    private readonly repo: IWorkspaceRepository,   // ← port, not adapter
     private readonly eventBus: IEventBusPort,
   ) {}
 
   async execute(workspaceId: string): Promise<Result<void, AppError>> {
     const workspace = await this.repo.findById(workspaceId);
     if (!workspace) return fail(new NotFoundError("workspace", workspaceId));
-    const event = workspace.archive();               // ← domain rule enforced here
+    const event = workspace.archive();              // ← domain rule enforced here
     await this.repo.save(workspace);
     await this.eventBus.publish(event);
     return ok(undefined);
   }
 }
 
-// Infrastructure adapter — Firestore implementation
+// Infrastructure — Firestore implementation
 // src/modules/workspace.module/infra.firestore/_repository.ts
 export class FirestoreWorkspaceRepository implements IWorkspaceRepository {
   async findById(id: string) {
@@ -483,7 +399,7 @@ export class FirestoreWorkspaceRepository implements IWorkspaceRepository {
 
 ### 6.1 SaaS ↔ Workspace Boundary
 
-The primary architectural boundary in Xuanwu. See [`docs/architecture/catalog/service-boundary.md`](../catalog/service-boundary.md) for the full crossing protocol.
+The primary architectural boundary in Xuanwu. Full crossing protocol → [`docs/architecture/catalog/service-boundary.md`](../catalog/service-boundary.md).
 
 ```mermaid
 graph LR
@@ -519,50 +435,40 @@ graph LR
 
 | Module pair | Pattern | ACL needed? |
 |-------------|---------|-------------|
-| `account.module` → `workspace.module` | Customer / Supplier | Yes — workspace translates org identity to workspace-scoped `WorkspaceMember` |
-| `workspace.module` → `settlement.module` | Conformist (event consumer) | No — settlement merely reacts to `wbs.task.state_changed` event |
-| `workspace.module` → `notification.module` | Open Host Service | No — notification subscribes via Event Bus without coupling to workspace model |
-| `workforce.module` ↔ `workspace.module` | Partnership (bridge) | Yes — workforce translates WBS skill requirements into org capacity queries |
+| `account.module` → `workspace.module` | Customer / Supplier | Yes — workspace translates org identity to `WorkspaceMember` |
+| `workspace.module` → `settlement.module` | Conformist (event consumer) | No — settlement reacts to `wbs.task.state_changed` |
+| `workspace.module` → `notification.module` | Open Host Service | No — notification subscribes via Event Bus |
+| `workforce.module` ↔ `workspace.module` | Partnership (bridge) | Yes — translates WBS skill requirements into org capacity |
 
 ### 6.2 Context Map Patterns Used
 
 #### Anticorruption Layer (ACL) — 防腐層
 
-Used whenever Xuanwu consumes a model from an upstream that we don't control (Firebase Auth, external APIs) or when two modules must share data without coupling their domain models.
+Translates an upstream model (e.g. Firebase Auth) into Xuanwu's domain model. Full implementation → [`src/modules/identity.module/infra.firebase/_mapper.ts`](../../../src/modules/identity.module/infra.firebase/_mapper.ts).
 
 ```typescript
-// ACL Mapper: translates Firebase Auth user into identity.module's IdentityUser
-// src/modules/identity.module/infra.firebase/_mapper.ts
-
+// ACL: Firebase Auth user → identity.module IdentityUser
 export class FirebaseAuthMapper {
-  static toDomain(firebaseUser: FirebaseUser): IdentityUser {
-    return IdentityUser.fromFirebase({
-      uid: firebaseUser.uid,
-      email: firebaseUser.email ?? "",
-      displayName: firebaseUser.displayName ?? "",
-      // Maps Firebase photoURL → Xuanwu avatarUrl convention
-      avatarUrl: firebaseUser.photoURL ?? DEFAULT_AVATAR,
-    });
+  static toDomain(u: FirebaseUser): IdentityUser {
+    return IdentityUser.fromFirebase({ uid: u.uid, email: u.email ?? "", avatarUrl: u.photoURL ?? DEFAULT_AVATAR });
   }
 }
 ```
 
 #### Open Host Service — 開放主機服務
 
-Used by `notification.module` and `settlement.module` — they subscribe to a well-defined Event Bus contract without knowing anything about the internal model of `workspace.module` or `wbs` tasks.
+Consumers subscribe to a well-defined Event Bus contract without knowing workspace internals.
 
 ```typescript
-// Subscriber in notification.module — consumes events via Published Language
-// Has no import from workspace.module internals
-async function handleTaskAccepted(envelope: EventEnvelope) {
-  const { taskId, workspaceId, actorId } = envelope.payload;
-  // Works purely with the event payload — no workspace domain objects
+// Subscriber in notification.module — uses only event payload, zero workspace imports
+async function handleTaskAccepted({ payload }: EventEnvelope) {
+  const { taskId, workspaceId, actorId } = payload;
 }
 ```
 
 #### Published Language — 已發布語言
 
-All domain events follow the `EventEnvelope` schema (see `docs/architecture/catalog/event-catalog.md`). The schema is the Published Language shared across all Bounded Contexts.
+All domain events follow the `EventEnvelope` schema — the shared contract across all Bounded Contexts. See [`docs/architecture/catalog/event-catalog.md`](../catalog/event-catalog.md).
 
 ---
 
@@ -570,7 +476,7 @@ All domain events follow the `EventEnvelope` schema (see `docs/architecture/cata
 
 ### 7.1 Shared (Cross-Cutting) Ports
 
-These ports are owned by `src/shared/ports/` because they are used by many modules and no single Bounded Context owns them.
+Owned by `src/shared/ports/` — used by many modules; no single Bounded Context owns them.
 
 | Port Interface | Concern | Concrete Adapter | Location |
 |----------------|---------|-----------------|----------|
@@ -586,7 +492,7 @@ These ports are owned by `src/shared/ports/` because they are used by many modul
 
 ### 7.2 Module-Owned Ports
 
-Module-specific ports live inside the owning module's `domain.*/_ports.ts`. Examples:
+Module-specific ports live inside `domain.*/_ports.ts` of the owning module.
 
 | Module | Port Interface | Implemented by |
 |--------|---------------|----------------|
@@ -604,41 +510,38 @@ Module-specific ports live inside the owning module's `domain.*/_ports.ts`. Exam
 
 Follow the sequence: **Domain → Application → Infrastructure → Presentation**
 
-1. **Domain first**: Define or update the Aggregate Root. Encode the new business rule as an invariant method. Write unit tests for the invariant — no framework needed.
-2. **Port**: If the feature needs external I/O, define an outbound port interface in `domain.*/_ports.ts`.
-3. **Use Case**: Write the application orchestration in `core/_use-cases.ts`. Depend on port interfaces, not adapters. Write integration tests.
+1. **Domain first**: Define or update the Aggregate Root. Encode the new business rule as an invariant method. Unit-test the invariant — no framework needed.
+2. **Port**: If external I/O is needed, define an outbound port interface in `domain.*/_ports.ts`.
+3. **Use Case**: Write orchestration in `core/_use-cases.ts`. Depend on port interfaces, not adapters. Write integration tests.
 4. **Adapter**: Implement the port in `infra.{adapter}/`. Wire up to the concrete technology (Firestore, Redis, etc.).
-5. **Presentation**: Create or update the Server Action in `_actions.ts` that calls the use case. Update the React component to call the action.
+5. **Presentation**: Create or update the Server Action in `_actions.ts` calling the use case. Update the React component.
 
 ### 8.2 Adding a New Port
 
-When you need to abstract a new infrastructure concern:
-
-1. **Decide ownership**: Is this used by multiple modules? → `src/shared/ports/index.ts`. Is it specific to one module? → `domain.*/_ports.ts`.
+1. **Decide ownership**: Multi-module use → `src/shared/ports/index.ts`. Single-module → `domain.*/_ports.ts`.
 2. **Define the interface** with method names matching the Ubiquitous Language (not the adapter's API names).
-3. **Register the concrete adapter** in the module's dependency composition root or via Next.js injection at the Server Action boundary.
-4. **Never instantiate the adapter in Domain or Application code** — only at the composition boundary.
+3. **Register the adapter** at the Server Action boundary or module composition root.
+4. **Never instantiate the adapter** in Domain or Application code.
 
 ### 8.3 Crossing a Bounded Context Boundary
 
-**Allowed crossing mechanisms** (in priority order):
+**Allowed crossing mechanisms** (priority order):
 
 1. **Domain Events via Event Bus** — preferred for all async state changes
-2. **Server Actions calling another module's public `index.ts`** — only for synchronous orchestration within the same request
-3. **Read model queries (CQRS)** — when one module needs to read another's data for display only
+2. **Server Actions calling another module's `index.ts`** — synchronous orchestration within the same request
+3. **Read model queries (CQRS)** — when one module needs another's data for display only
 
-**Never allowed**:
 ```typescript
-// ❌ Importing internal domain objects across module boundaries
+// ❌ Internal domain objects across modules
 import { WBSTask } from "@/modules/workspace.module/domain.wbs/_entity";
 
-// ❌ Reaching into another module's infrastructure
+// ❌ Another module's infrastructure
 import { firestoreTaskRepo } from "@/modules/workspace.module/infra.firestore/_repository";
 
-// ✅ Using the public API barrel
+// ✅ Public API barrel
 import { getTask, createTask } from "@/modules/workspace.module";
 
-// ✅ Reacting to domain events
+// ✅ Domain events
 eventBus.subscribe("wbs.task.state_changed", handleTaskStateChange);
 ```
 
@@ -646,58 +549,46 @@ eventBus.subscribe("wbs.task.state_changed", handleTaskStateChange);
 
 | Anti-pattern | What it looks like | Why it hurts | Fix |
 |--------------|-------------------|-------------|-----|
-| **Anemic Domain Model** | Entities have only getters; all logic is in Application Services | Invariants are scattered; domain becomes a data bag | Move logic back to the Aggregate Root |
-| **Smart Repository** | Repository contains `if (task.state === "accepted") { settlementService.create(...) }` | Business rule in Infrastructure layer | Extract to Domain Service or Use Case |
+| **Anemic Domain Model** | Entities have only getters; logic in Application Services | Invariants scattered; domain is a data bag | Move logic to Aggregate Root |
+| **Smart Repository** | Repository contains `if (task.state === "accepted") { settlementService.create(...) }` | Business rule in Infrastructure | Extract to Domain Service or Use Case |
 | **Fat Action** | Server Action contains long business logic chains | Hard to test; couples Presentation to business rules | Extract a Use Case class |
-| **Layer Bypass** | Presentation component calls `getDoc(db, "workspaces", id)` directly | Breaks encapsulation; forces UI to understand DB schema | Route through a query in `core/_queries.ts` |
-| **Cross-module Domain Coupling** | Module A imports `WorkspaceEntity` from Module B's domain | Modules become entangled; B can't change without breaking A | Use DTOs + Domain Events for cross-boundary data |
-| **God Aggregate** | Workspace aggregate holds all tasks, issues, CRs, members | Performance and consistency problems | Keep aggregates small; reference by ID |
+| **Layer Bypass** | Presentation calls `getDoc(db, "workspaces", id)` directly | Breaks encapsulation | Route through `core/_queries.ts` |
+| **Cross-module Domain Coupling** | Module A imports `WorkspaceEntity` from Module B's domain | Modules entangled; B can't change without breaking A | Use DTOs + Domain Events |
+| **God Aggregate** | Workspace holds all tasks, issues, CRs, members | Performance and consistency problems | Keep aggregates small; reference by ID |
 
 ### 8.5 Consistency Boundary & Transaction Semantics
 
-In Xuanwu, **Aggregate boundary = default strong consistency boundary**.
+| Scope | Consistency model |
+|-------|------------------|
+| Within one Aggregate | Strong — invariants enforced atomically |
+| Across Aggregates / modules | Eventual — event-driven; use outbox pattern for reliability |
 
-- Within one Aggregate in one use case, preserve invariants atomically.
-- Across multiple Aggregates or modules, default to **event-driven eventual consistency**.
-- Do not claim cross-module strong consistency unless a dedicated transaction mechanism is explicitly designed and documented.
-
-Minimal execution guideline:
-
-1. Load Aggregate Root
-2. Apply invariant-protected domain mutation
-3. Persist Aggregate
-4. Publish Domain Event
-
-If step 4 fails, handle it as an application/infrastructure reliability concern (for example with an outbox-style mechanism), not by moving business rules into adapters.
+Execution sequence: **Load → Apply domain mutation → Persist → Publish Domain Event**. If publishing fails, handle at application/infrastructure level (outbox), not by moving rules into adapters.
 
 ### 8.6 Event Contract Versioning (Simple Rules)
 
-Use simple, explicit event compatibility rules:
-
-- Add `version` in event metadata (e.g. `v1`, `v2`).
-- Prefer additive changes (new optional fields) over breaking field renames/removals.
-- If a breaking change is required, publish a new version and run old/new consumers in parallel for a transition window.
+| Rule | Detail |
+|------|--------|
+| Version in metadata | `v1`, `v2` in event envelope |
+| Prefer additive changes | New optional fields; avoid field renames/removals |
+| Breaking changes | Publish new version; run old + new consumers in parallel during transition |
 
 ### 8.7 Authorization Boundary
 
-Authorization is split by responsibility:
+| Layer | Responsibility |
+|-------|---------------|
+| Presentation / Application | Authenticate caller; enforce request-level access guard |
+| Domain | Enforce business authorization invariants (who can do what in domain terms) |
+| Infrastructure | Storage and platform security policies |
 
-- **Presentation/Application**: authenticate caller identity and enforce request-level access guard.
-- **Domain**: enforce business authorization invariants (who is allowed to do what in domain terms).
-- **Infrastructure**: enforce storage and platform security policies.
-
-Rule of thumb: if violating the rule makes the business state invalid, the rule belongs in Domain.
+Rule: if violating the check makes business state invalid → Domain layer.
 
 ### 8.8 Composition Root & Dependency Wiring
 
-Ports and adapters must be wired at composition boundaries only:
-
-- Allowed wiring points: Server Action boundary, Route Handler boundary, or module composition root.
-- Application/use case code depends on interfaces (ports), never concrete adapters.
-- Domain code must never instantiate adapters.
+Wire ports to adapters only at composition boundaries (Server Action / Route Handler / module root).
 
 ```typescript
-// ✅ Compose at boundary
+// ✅ Compose at boundary — never inside domain or use case code
 const repo: IWorkspaceRepository = new FirestoreWorkspaceRepository(db);
 const eventBus: IEventBusPort = new EventBusAdapter(busClient);
 const useCase = new ArchiveWorkspaceUseCase(repo, eventBus);
@@ -705,23 +596,22 @@ const useCase = new ArchiveWorkspaceUseCase(repo, eventBus);
 
 ### 8.9 Read/Write Separation (CQRS)
 
-Xuanwu uses **read/write separation**:
+| Side | Location | Rules |
+|------|----------|-------|
+| **Write** | `core/_use-cases.ts` | Mutates aggregates; emits domain events |
+| **Read** | `core/_queries.ts` | Denormalized; optimized for retrieval; no invariants |
 
-- **Write side**: commands/use cases mutate aggregates and emit domain events.
-- **Read side**: queries/read models serve UI and reporting.
-- Read models may be denormalized and optimized for retrieval; they must not enforce domain invariants.
-
-When read freshness is temporarily behind writes, treat it as expected eventual consistency behavior unless a use case explicitly requires synchronous read-after-write guarantees.
+Temporary read-lag after writes = expected eventual consistency unless a use case requires synchronous read-after-write.
 
 ### 8.10 Observability Baseline
 
-All production-facing flows should carry minimal observability context:
+| Field | Purpose |
+|-------|---------|
+| `requestId` | Traces one inbound request lifecycle |
+| `eventId` | Traces one published/consumed domain event |
+| `module` + `useCase` | Identifies ownership and execution path |
 
-- `requestId`: traces one inbound request lifecycle.
-- `eventId`: traces one published/consumed domain event.
-- `module` and `useCase`: identifies ownership and execution path.
-
-At minimum, log start/fail/success for use cases and event handlers with structured fields so cross-module diagnosis is possible without inspecting raw code paths.
+Log start/fail/success for every use case and event handler with structured fields.
 
 ---
 
@@ -731,30 +621,19 @@ At minimum, log start/fail/success for use cases and event handlers with structu
 
 | Question | Action |
 |----------|--------|
-| What layer does this file belong to? | Check the table in §5.4 |
-| Does this code reference anything outside its layer? | Check the dependency rules in §5.3 |
+| What layer does this file belong to? | Check §5.1 file tree |
+| Does this code reference anything outside its layer? | Check dependency rules in §5.2 |
 | Does this code use a term not in the glossary? | Add it to [`docs/architecture/glossary/`](../glossary/) first |
 | Am I crossing a Bounded Context boundary? | Use Domain Events or the public `index.ts` barrel |
 | Is this a business rule or an infrastructure detail? | Business rules → Domain; infrastructure details → Adapter |
 
 ### Ports & Adapters Cheat Sheet
 
-```
-New external dependency?
-  → Define port interface first (domain or shared/ports)
-  → Write application code against the port
-  → Implement adapter last
-
-New business rule?
-  → Add invariant method to Aggregate Root
-  → Enforce it in the domain layer only
-  → Never duplicate the rule in Application or Infrastructure
-
-New cross-module data flow?
-  → Emit a Domain Event from the producing module
-  → Subscribe in the consuming module via Event Bus
-  → Use Published Language (EventEnvelope schema)
-```
+| Scenario | Action |
+|----------|--------|
+| New external dependency | Define port interface first → write app code against port → implement adapter last |
+| New business rule | Add invariant method to Aggregate Root → enforce in domain layer only |
+| New cross-module data flow | Emit Domain Event from producer → subscribe in consumer via Event Bus (Published Language) |
 
 ### Files Quick Map
 
