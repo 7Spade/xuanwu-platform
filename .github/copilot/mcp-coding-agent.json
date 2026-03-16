@@ -152,15 +152,12 @@
       "command": "npx",
       "args": [
         "-y",
-        "firebase-mcp-server"
-      ],
-      "tools": [
-        "*"
-      ],
-      "env": {
-        "FIREBASE_PROJECT_ID": "xuanwu-i-00708880-4e2d8",
-        "SERVICE_ACCOUNT_KEY_PATH": "$COPILOT_MCP_FIREBASE_SERVICE_ACCOUNT_KEY_PATH"
-      }
+          "firebase-tools@latest",
+          "mcp"
+        ],
+        "tools": [
+          "*"
+        ]
     },
     "upstash": {
       "type": "stdio",

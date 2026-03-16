@@ -13,8 +13,8 @@ import {
   AlertDialogTitle,
 } from "@/design-system/primitives/ui/alert-dialog";
 import { useTranslation } from "@/shared/i18n";
-import type { WorkItemDTO } from "@/modules/work.module/core/_use-cases";
-import { deleteWorkItem } from "@/modules/work.module/core/_use-cases";
+import type { WorkItemDTO } from "@/modules/work.module";
+import { deleteWorkItem } from "@/modules/work.module";
 import { FirestoreWorkItemRepository } from "@/modules/work.module/infra.firestore/_repository";
 import { WorkItemEditDialog } from "./work-item-edit-dialog";
 

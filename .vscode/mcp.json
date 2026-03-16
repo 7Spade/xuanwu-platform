@@ -102,10 +102,7 @@
     "firebase-mcp-server": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "firebase-tools@latest", "mcp"],
-      "env": {
-        "FIREBASE_PROJECT_ID": "xuanwu-i-00708880-4e2d8"
-      }
+        "args": ["-y", "firebase-tools@latest", "mcp"]
     },
     "upstash": {
       "type": "stdio",

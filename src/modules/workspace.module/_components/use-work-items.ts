@@ -14,7 +14,7 @@ import { FirestoreWorkItemRepository } from "@/modules/work.module/infra.firesto
 import {
   getWorkItemsByWorkspace,
   type WorkItemDTO,
-} from "@/modules/work.module/core/_use-cases";
+} from "@/modules/work.module";
 
 export interface UseWorkItemsResult {
   items: WorkItemDTO[];

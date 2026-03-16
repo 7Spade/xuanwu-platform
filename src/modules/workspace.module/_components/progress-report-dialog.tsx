@@ -17,9 +17,9 @@ import { Button } from "@/design-system/primitives/ui/button";
 import { Input } from "@/design-system/primitives/ui/input";
 import { Label } from "@/design-system/primitives/ui/label";
 import { useTranslation } from "@/shared/i18n";
-import { reportProgress } from "@/modules/work.module/core/_use-cases";
+import { reportProgress } from "@/modules/work.module";
 import { FirestoreWorkItemRepository } from "@/modules/work.module/infra.firestore/_repository";
-import type { WorkItemDTO } from "@/modules/work.module/core/_use-cases";
+import type { WorkItemDTO } from "@/modules/work.module";
 
 let _repo: FirestoreWorkItemRepository | null = null;
 function getRepo() {

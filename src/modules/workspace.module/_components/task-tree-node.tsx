@@ -30,11 +30,11 @@ import {
   AlertDialogTitle,
 } from "@/design-system/primitives/ui/alert-dialog";
 import { useTranslation } from "@/shared/i18n";
-import type { TaskWithChildren } from "@/modules/work.module/domain.work/_task-tree";
+import type { TaskWithChildren } from "@/modules/work.module";
 import {
   deleteWorkItem,
   updateWorkItem,
-} from "@/modules/work.module/core/_use-cases";
+} from "@/modules/work.module";
 import { FirestoreWorkItemRepository } from "@/modules/work.module/infra.firestore/_repository";
 import { TaskEditorDialog } from "./task-editor-dialog";
 import { ProgressReportDialog } from "./progress-report-dialog";

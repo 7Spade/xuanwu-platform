@@ -16,25 +16,25 @@ This skill provides authoritative guidance for the following areas. Load the rel
 
 | Topic | Reference |
 |-------|-----------|
-| File conventions (`layout`, `page`, `loading`, `error`, `route`) | [file-conventions.md](./file-conventions.md) |
-| RSC and Client Component boundaries | [rsc-boundaries.md](./rsc-boundaries.md) |
-| Directives (`"use client"`, `"use server"`, `"use cache"`) | [directives.md](./directives.md) |
-| Data fetching patterns | [data-patterns.md](./data-patterns.md) |
-| Async APIs (params, searchParams, cookies, headers) | [async-patterns.md](./async-patterns.md) |
-| Metadata and `<head>` management | [metadata.md](./metadata.md) |
-| Error handling (`error.tsx`, `global-error.tsx`) | [error-handling.md](./error-handling.md) |
-| Route handlers | [route-handlers.md](./route-handlers.md) |
-| Image optimization (`next/image`) | [image.md](./image.md) |
-| Font optimization (`next/font`) | [font.md](./font.md) |
-| Suspense boundaries | [suspense-boundaries.md](./suspense-boundaries.md) |
-| Hydration errors | [hydration-error.md](./hydration-error.md) |
-| Bundling and tree-shaking | [bundling.md](./bundling.md) |
-| Runtime selection (Node.js vs Edge) | [runtime-selection.md](./runtime-selection.md) |
-| Script loading (`next/script`) | [scripts.md](./scripts.md) |
-| Self-hosting | [self-hosting.md](./self-hosting.md) |
-| Parallel routes and slots | [parallel-routes.md](./parallel-routes.md) |
-| Built-in functions | [functions.md](./functions.md) |
-| Debug tips | [debug-tricks.md](./debug-tricks.md) |
+| File conventions (`layout`, `page`, `loading`, `error`, `route`) | [nextjs.org/docs/app/getting-started/layouts-and-pages](https://nextjs.org/docs/app/getting-started/layouts-and-pages) |
+| RSC and Client Component boundaries | [nextjs.org/docs/app/getting-started/server-and-client-components](https://nextjs.org/docs/app/getting-started/server-and-client-components) |
+| Directives (`"use client"`, `"use server"`, `"use cache"`) | [nextjs.org/docs/app/api-reference/directives](https://nextjs.org/docs/app/api-reference/directives) |
+| Data fetching patterns | [nextjs.org/docs/app/getting-started/fetching-data](https://nextjs.org/docs/app/getting-started/fetching-data) |
+| Async APIs (params, searchParams, cookies, headers) | [nextjs.org/docs/app/api-reference/functions/cookies](https://nextjs.org/docs/app/api-reference/functions/cookies) |
+| Metadata and `<head>` management | [nextjs.org/docs/app/getting-started/metadata-and-og-images](https://nextjs.org/docs/app/getting-started/metadata-and-og-images) |
+| Error handling (`error.tsx`, `global-error.tsx`) | [nextjs.org/docs/app/getting-started/error-handling](https://nextjs.org/docs/app/getting-started/error-handling) |
+| Route handlers | [nextjs.org/docs/app/getting-started/route-handlers](https://nextjs.org/docs/app/getting-started/route-handlers) |
+| Image optimization (`next/image`) | [nextjs.org/docs/app/api-reference/components/image](https://nextjs.org/docs/app/api-reference/components/image) |
+| Font optimization (`next/font`) | [nextjs.org/docs/app/api-reference/components/font](https://nextjs.org/docs/app/api-reference/components/font) |
+| Suspense boundaries | [nextjs.org/docs/app/getting-started/linking-and-navigating#streaming](https://nextjs.org/docs/app/getting-started/linking-and-navigating#streaming) |
+| Hydration errors | [nextjs.org/docs/messages/react-hydration-error](https://nextjs.org/docs/messages/react-hydration-error) |
+| Bundling and tree-shaking | [nextjs.org/docs/app/getting-started/optimizing](https://nextjs.org/docs/app/getting-started/optimizing) |
+| Runtime selection (Node.js vs Edge) | [nextjs.org/docs/app/api-reference/edge](https://nextjs.org/docs/app/api-reference/edge) |
+| Script loading (`next/script`) | [nextjs.org/docs/app/api-reference/components/script](https://nextjs.org/docs/app/api-reference/components/script) |
+| Self-hosting | [nextjs.org/docs/app/getting-started/deploying](https://nextjs.org/docs/app/getting-started/deploying) |
+| Parallel routes and slots | [nextjs.org/docs/app/api-reference/file-conventions/parallel-routes](https://nextjs.org/docs/app/api-reference/file-conventions/parallel-routes) |
+| Built-in functions | [nextjs.org/docs/app/api-reference/functions](https://nextjs.org/docs/app/api-reference/functions) |
+| Debug tips | [nextjs.org/docs/app/getting-started/debugging](https://nextjs.org/docs/app/getting-started/debugging) |
 
 ## Core Rules
 

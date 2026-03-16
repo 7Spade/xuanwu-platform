@@ -38,8 +38,8 @@ import {
 import { useTranslation } from "@/shared/i18n";
 import { useWorkItems } from "./use-work-items";
 import { FirestoreWorkItemRepository } from "@/modules/work.module/infra.firestore/_repository";
-import { updateWorkItem } from "@/modules/work.module/core/_use-cases";
-import type { WorkItemDTO } from "@/modules/work.module/core/_use-cases";
+import { updateWorkItem } from "@/modules/work.module";
+import type { WorkItemDTO } from "@/modules/work.module";
 
 let _repo: FirestoreWorkItemRepository | null = null;
 function getRepo() {

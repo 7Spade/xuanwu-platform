@@ -86,7 +86,7 @@ The `xuanwu-research` and `xuanwu-orchestrator` agents are the primary users of 
 
 ## Firebase MCP Usage
 
-This project is built on Firebase (`xuanwu-i-00708880-4e2d8`). The `firebase-mcp-server` MCP is pre-configured with the project ID. Use it to inspect and manage Firebase resources directly from agent tasks rather than writing one-off Admin SDK code.
+This project is built on Firebase (`xuanwu-i-00708880-4e2d8`). The `firebase-mcp-server` MCP is available for Firebase inspection tasks and is launched through the Firebase CLI MCP entrypoint. Use it to inspect and manage Firebase resources directly from agent tasks rather than writing one-off Admin SDK code.
 
 ### When to use firebase-mcp-server
 
@@ -226,9 +226,9 @@ The Coding Agent requires a **different JSON format** from `.vscode/mcp.json`:
 Copy the ready-to-paste configuration from `.github/copilot/mcp-coding-agent.json` into
 [Settings → Copilot → Coding agent → MCP configuration](https://github.com/7Spade/xuanwu-platform/settings/copilot/coding_agent).
 
-> **firebase-mcp-server note:** To use firebase-mcp-server in the Coding Agent, add a Copilot environment secret named
-> `COPILOT_MCP_FIREBASE_SERVICE_ACCOUNT_KEY_PATH` pointing to a service account key JSON file, or remove that entry from
-> the configuration if Firebase inspection is not needed during agent sessions.
+> **firebase-mcp-server note:** This repository now launches firebase-mcp-server through the Firebase CLI entrypoint
+> `npx -y firebase-tools@latest mcp`. Do not assume the MCP JSON preconfigures `FIREBASE_PROJECT_ID` or
+> `SERVICE_ACCOUNT_KEY_PATH`; use the Firebase CLI environment actually available to the agent session.
 
 > **agent-memory note:** To use agent-memory in the Coding Agent, add two Copilot environment secrets:
 > `COPILOT_MCP_REDIS_URL` (Redis Cloud TLS URL, e.g. `rediss://default:PASSWORD@host:port`) and

@@ -26,7 +26,7 @@ import { Badge } from "@/design-system/primitives/ui/badge";
 import { Button } from "@/design-system/primitives/ui/button";
 import { useTranslation } from "@/shared/i18n";
 import { useWorkItems } from "./use-work-items";
-import type { WorkItemDTO } from "@/modules/work.module/core/_use-cases";
+import type { WorkItemDTO } from "@/modules/work.module";
 
 // ---------------------------------------------------------------------------
 // Calendar utilities

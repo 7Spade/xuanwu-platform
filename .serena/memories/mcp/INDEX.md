@@ -53,5 +53,5 @@ Serena (code intelligence) > firebase-mcp-server (Firebase inspection)
 
 - Servers using `uvx`: `serena`, `markitdown`, `agent-memory` — require `uv` installed via `astral-sh/setup-uv@v5` in `copilot-setup-steps.yml`
 - Servers using `npx`: all others — Node.js required
-- Firebase secrets: `COPILOT_MCP_FIREBASE_SERVICE_ACCOUNT_KEY_PATH` env secret
+- Firebase MCP entrypoint: `npx -y firebase-tools@latest mcp`
 - agent-memory secrets: `COPILOT_MCP_REDIS_URL` + `COPILOT_MCP_OPENAI_API_KEY` env secrets

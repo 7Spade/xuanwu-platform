@@ -39,7 +39,7 @@ Configure the following MCP servers at **[Settings → Copilot → Coding Agent]
 | ⭐⭐⭐ | **Sequential Thinking** | `npx @modelcontextprotocol/server-sequential-thinking` | Multi-step structured reasoning — essential for DDD layer decomposition, domain modeling, and debugging complex route boundaries |
 | ⭐⭐⭐ | **Software Planning** | `npx github:NightTrek/Software-planning-mcp` | Implementation plan and todo tracking across DDD modules and parallel route features |
 | ⭐⭐⭐ | **Serena** | `uvx --from git+https://github.com/oraios/serena serena start-mcp-server --context ide` | Deep TypeScript symbol navigation, cross-file rename, and persistent per-project memory across sessions |
-| ⭐⭐⭐ | **Firebase** | `npx firebase-mcp-server` | Firestore, Firebase Auth, and Firebase App Hosting management — core to this project's infrastructure |
+| ⭐⭐⭐ | **Firebase** | `npx -y firebase-tools@latest mcp` | Firebase CLI-backed MCP for Firestore, Firebase Auth, and Firebase App Hosting management |
 
 ### 🔧 Recommended MCP Servers
 
@@ -68,7 +68,7 @@ Configure the following MCP servers at **[Settings → Copilot → Coding Agent]
     "markitdown":          { "type": "stdio", "command": "uvx", "args": ["markitdown-mcp"], "tools": ["*"] },
     "everything":          { "type": "stdio", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-everything"], "tools": ["*"] },
     "serena":              { "type": "stdio", "command": "uvx", "args": ["--from", "git+https://github.com/oraios/serena", "serena", "start-mcp-server", "--context", "ide", "--project", "."], "tools": ["*"] },
-    "firebase-mcp-server": { "type": "stdio", "command": "npx", "args": ["-y", "firebase-mcp-server"], "env": { "FIREBASE_PROJECT_ID": "xuanwu-i-00708880-4e2d8", "SERVICE_ACCOUNT_KEY_PATH": "$COPILOT_MCP_FIREBASE_SERVICE_ACCOUNT_KEY_PATH" }, "tools": ["*"] }
+    "firebase-mcp-server": { "type": "stdio", "command": "npx", "args": ["-y", "firebase-tools@latest", "mcp"], "tools": ["*"] }
   }
 }
 ```
@@ -76,6 +76,8 @@ Configure the following MCP servers at **[Settings → Copilot → Coding Agent]
 > **Why these MCPs?** The GitHub Copilot Coding Agent browser environment operates without a local IDE. MCP servers provide the agent with tools to read/write files, fetch documentation, plan multi-step implementations, and validate changes — all remotely. For a DDD + Next.js parallel routing project, Repomix (codebase snapshot), Context7 (framework docs), Serena (TypeScript symbol intelligence), Sequential Thinking (layered reasoning), and Agent Memory (cross-session persistence) are the highest-leverage additions.
 >
 > **`filesystem` path note:** The Coding Agent config above uses `"."` (execution dir = repo root). The VS Code local config in `.vscode/mcp.json` uses `"${workspaceFolder}"` (VS Code variable substitution). Both resolve to the repo root — the format differs by environment.
+>
+> **`firebase-mcp-server` note:** This workspace invokes Firebase MCP through the Firebase CLI entrypoint `npx -y firebase-tools@latest mcp`. The MCP JSON no longer hardcodes `FIREBASE_PROJECT_ID` or `SERVICE_ACCOUNT_KEY_PATH`; Firebase project selection and authentication are expected to come from the Firebase CLI environment you run under.
 >
 > **`agent-memory` secrets:** Add `COPILOT_MCP_REDIS_URL` (format: `rediss://default:PASSWORD@host:port`) and `COPILOT_MCP_OPENAI_API_KEY` to **Settings → Copilot → Coding agent → Secrets** before using this entry.
 
