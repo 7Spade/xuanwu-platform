@@ -102,7 +102,7 @@
     "firebase-mcp-server": {
       "type": "stdio",
       "command": "npx",
-        "args": ["-y", "firebase-tools@latest", "mcp"]
+        "args": ["-y", "firebase-tools@latest", "mcp", "--dir", "${workspaceFolder}"]
     },
     "upstash": {
       "type": "stdio",
