@@ -342,7 +342,7 @@ Scaffold (implementation pending)
 | `capabilities` | `string[]` | Enabled capability flags |
 | `tasks` | `Record<string, WorkspaceTask>` | WBS task map keyed by task ID |
 
-> **Terminology note**: `WorkspaceGrant` currently stores `userId` in the code-level field. This is a known terminology inconsistency documented in ADR-014. Do not rename the code field until a dedicated migration PR is raised.
+> **Terminology note**: `WorkspaceGrant` currently stores `userId` in the code-level field. This is a known terminology inconsistency documented in ADR-013 and tracked for follow-up migration in ADR-014. Do not rename the code field until a dedicated migration PR is raised.
 
 **Key invariants**
 - A Workspace must belong to a Namespace.
@@ -353,7 +353,7 @@ Scaffold (implementation pending)
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `accountId` | `string` | FK → AccountEntity (code field: `userId` — see ADR-014) |
+| `accountId` | `string` | FK → AccountEntity (code field: `userId` — see ADR-013 / ADR-014) |
 | `role` | `string` | `maintainer \| collaborator` |
 | `grantedAt` | `timestamp` | |
 
