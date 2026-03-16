@@ -8,7 +8,7 @@
 // NEVER export entities, value objects, repositories, or domain events directly.
 
 // DTOs
-export type { AccountDTO, MemberDTO, PublicProfileDTO } from "./core/_queries";
+export type { AccountDTO, MemberDTO, PublicProfileDTO, UserOrganizationDTO } from "./core/_queries";
 
 // Application use cases
 export {
@@ -22,6 +22,7 @@ export {
   getPublicProfile,
   getOrganizationsByOwnerId,
   getUserRoleInOrganization,
+  getUserOrganizations,
   type MemberRole,
 } from "./core/_queries";
 

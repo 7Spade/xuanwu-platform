@@ -4,9 +4,13 @@
  *
  * Assembles the sidebar structure using SidebarProvider + Sidebar components.
  * Aggregates navigation items from multiple domains:
+ * - AccountSwitcher: context switcher from account.module (personal ↔ org)
  * - NavMain: hardcoded routes
  * - NavTopWorkspaces: workspace list from workspace.module
  * - NavUser: user profile from account.module + identity.module
+ *
+ * The sidebar content (workspace list) is context-aware: it responds to
+ * whichever account is active in the AccountSwitcher.
  */
 
 import { useTranslation } from "@/shared/i18n";
@@ -20,6 +24,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/design-system/primitives/ui/sidebar";
+import { AccountSwitcher } from "@/modules/account.module";
 
 import { NavMain } from "./nav-main";
 import { NavTopWorkspaces } from "./nav-top-workspaces";
@@ -31,6 +36,7 @@ export function DashboardSidebar() {
   return (
     <Sidebar className="border-r border-border/50">
       <SidebarHeader className="p-2">
+        <AccountSwitcher />
       </SidebarHeader>
 
       <SidebarContent>
@@ -61,3 +67,4 @@ export function DashboardSidebar() {
     </Sidebar>
   );
 }
+

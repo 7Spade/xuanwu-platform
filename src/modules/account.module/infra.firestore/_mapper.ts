@@ -23,6 +23,12 @@ export interface AccountDoc {
   badgeSlugs: string[];
   ownerId: string | null;
   members: MembershipDoc[] | null;
+  /**
+   * Denormalized list of active (non-owner) member account IDs for efficient
+   * Firestore array-contains queries.  Derived from the `members` array on
+   * every write; only active members are included.
+   */
+  memberAccountIds: string[] | null;
   teams: TeamDoc[] | null;
   createdAt: string;
   updatedAt: string;
@@ -139,6 +145,10 @@ export function accountEntityToDoc(entity: AccountEntity): AccountDoc {
     badgeSlugs: [...entity.profile.badgeSlugs],
     ownerId: entity.ownerId,
     members: entity.members ? entity.members.map(membershipRecordToDoc) : null,
+    memberAccountIds:
+      entity.members
+        ?.filter((m) => m.status === "active")
+        .map((m) => m.accountId as string) ?? null,
     teams: entity.teams ? entity.teams.map(teamRecordToDoc) : null,
     createdAt: entity.createdAt,
     updatedAt: entity.updatedAt,

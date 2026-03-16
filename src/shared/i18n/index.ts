@@ -83,6 +83,9 @@ const dictionary: Dictionary = {
     "sidebar.personal": "個人",
     "sidebar.organization": "組織",
     "sidebar.syncingAccounts": "同步帳號中",
+    // --- account switcher ---
+    "account.personalAccount": "個人帳號",
+    "account.organizations": "組織",
     "nav.breadcrumb.members": "成員",
     "nav.breadcrumb.billing": "帳單",
     // --- workspaces ---

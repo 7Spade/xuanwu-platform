@@ -27,8 +27,7 @@ import {
 } from "@/modules/identity.module";
 import {
   getAccountById,
-  getOrganizationsByOwnerId,
-  getUserRoleInOrganization,
+  getUserOrganizations,
   type AccountDTO,
   type MemberRole,
 } from "@/modules/account.module";
@@ -42,8 +41,16 @@ export interface AccountContextValue {
   user: AuthUser | null;
   /** The Firestore AccountDTO for the current user (null until loaded or if missing). */
   account: AccountDTO | null;
-  /** Organization accounts owned by the current user. */
+  /**
+   * All organization accounts the user is associated with (owned or member).
+   * Includes orgs owned by the user AND orgs where the user has an active membership.
+   */
   organizations: AccountDTO[];
+  /**
+   * Maps each organization ID to the current user's role in that org.
+   * Use this to read roles for all organizations without extra fetches.
+   */
+  orgRoles: Record<string, MemberRole>;
   /** True while the initial auth + account fetch is in-flight. */
   loading: boolean;
   /** True while organizations are being fetched after account resolves. */
@@ -56,6 +63,7 @@ export interface AccountContextValue {
   /**
    * The current user's role in the activeAccount.
    * Null for personal accounts; MemberRole ("owner"|"admin"|"member"|"viewer") for orgs.
+   * Derived from orgRoles map.
    */
   activeAccountRole: MemberRole | null;
   /** Switch the active account context. Pass null to reset to personal. */
@@ -72,6 +80,7 @@ const AccountContext = createContext<AccountContextValue>({
   user: null,
   account: null,
   organizations: [],
+  orgRoles: {},
   loading: true,
   orgsLoading: false,
   activeAccount: null,
@@ -88,34 +97,40 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [account, setAccount] = useState<AccountDTO | null>(null);
   const [organizations, setOrganizations] = useState<AccountDTO[]>([]);
+  const [orgRoles, setOrgRoles] = useState<Record<string, MemberRole>>({});
   const [loading, setLoading] = useState(true);
   const [orgsLoading, setOrgsLoading] = useState(false);
   const [activeAccount, setActiveAccountState] = useState<AccountDTO | null>(null);
-  const [activeAccountRole, setActiveAccountRole] = useState<MemberRole | null>(null);
+
+  /** Applies a getUserOrganizations result to state. */
+  const applyOrgsResult = useCallback(
+    (result: Awaited<ReturnType<typeof getUserOrganizations>>) => {
+      if (result.ok) {
+        setOrganizations(result.value.map((r) => r.org));
+        const roles: Record<string, MemberRole> = {};
+        for (const r of result.value) roles[r.org.id] = r.userRole;
+        setOrgRoles(roles);
+      } else {
+        setOrganizations([]);
+        setOrgRoles({});
+      }
+    },
+    [],
+  );
 
   const setActiveAccount = useCallback((next: AccountDTO | null) => {
     setActiveAccountState(next);
-    // When switching to an org, fetch the user's role in that org.
-    // Personal account always has null role.
-    if (next && next.accountType === "organization" && user) {
-      getUserRoleInOrganization(user.uid, next.id).then((result: any) => {
-        setActiveAccountRole(result.ok ? result.value : null);
-      });
-    } else {
-      setActiveAccountRole(null);
-    }
-  }, [user]);
+  }, []);
 
   const refreshOrganizations = useCallback(async () => {
     if (!user) return;
     setOrgsLoading(true);
     try {
-      const orgsResult = await getOrganizationsByOwnerId(user.uid);
-      setOrganizations(orgsResult.ok ? orgsResult.value : []);
+      applyOrgsResult(await getUserOrganizations(user.uid));
     } finally {
       setOrgsLoading(false);
     }
-  }, [user]);
+  }, [user, applyOrgsResult]);
 
   useEffect(() => {
     const unsubscribe = clientOnAuthStateChanged(async (authUser) => {
@@ -124,6 +139,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       if (!authUser) {
         setAccount(null);
         setOrganizations([]);
+        setOrgRoles({});
         setActiveAccountState(null);
         setLoading(false);
         return;
@@ -138,17 +154,17 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         // Always reset to personal account when auth state changes (new sign-in)
         setActiveAccountState(personalAccount);
 
-        // Load owned organizations
+        // Load all organizations (owned + member) with roles
         setOrgsLoading(true);
         try {
-          const orgsResult = await getOrganizationsByOwnerId(authUser.uid);
-          setOrganizations(orgsResult.ok ? orgsResult.value : []);
+          applyOrgsResult(await getUserOrganizations(authUser.uid));
         } finally {
           setOrgsLoading(false);
         }
       } catch {
         setAccount(null);
         setOrganizations([]);
+        setOrgRoles({});
         setActiveAccountState(null);
       }
 
@@ -158,12 +174,19 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     return unsubscribe;
   }, []);
 
+  // Derive activeAccountRole from the orgRoles map (no extra fetch needed).
+  const activeAccountRole: MemberRole | null =
+    activeAccount && activeAccount.accountType === "organization"
+      ? (orgRoles[activeAccount.id] ?? null)
+      : null;
+
   return (
     <AccountContext.Provider
       value={{
         user,
         account,
         organizations,
+        orgRoles,
         loading,
         orgsLoading,
         activeAccount,
@@ -185,7 +208,8 @@ export function AccountProvider({ children }: { children: ReactNode }) {
  * useCurrentAccount — returns the current user's Firebase Auth user + AccountDTO.
  *
  * Must be called inside <AccountProvider>.
- * Returns { user, account, loading, organizations, orgsLoading, activeAccount, setActiveAccount }.
+ * Returns { user, account, loading, organizations, orgRoles, orgsLoading, activeAccount,
+ *           activeAccountRole, setActiveAccount, refreshOrganizations }.
  */
 export function useCurrentAccount(): AccountContextValue {
   return useContext(AccountContext);
