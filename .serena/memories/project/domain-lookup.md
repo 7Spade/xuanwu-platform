@@ -423,8 +423,8 @@
 
 ---
 
-> 最後更新：PR #12 — feature.module 已移除；16 個 Domain Modules  
-> 對應 Serena 記憶：`project/architecture.md`
+> 最後更新：Documentation governance convergence — 目前為 **22 個 Domain Modules**（17 implemented + 5 scaffold）。  
+> 對應 Serena 記憶：`project/architecture.md` 與 `modules/INDEX.md`
 
 ---
 

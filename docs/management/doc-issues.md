@@ -1,6 +1,8 @@
 # Documentation Issues / 文檔問題報告
 
-> 記錄全域 `*.md` 文件中的失效連結、路徑錯誤、格式問題、版本落差，以及 Serena 記憶索引中的孤立節點。
+> ⚠️ Historical snapshot: this file records legacy findings from earlier audit passes.
+> Current governance baseline and active conflict classification are maintained in [`documentation-governance-baseline.md`](./documentation-governance-baseline.md).
+> Scoped full inventory is maintained in [`documentation-index.md`](./documentation-index.md).
 
 ---
 

@@ -2,6 +2,7 @@
 
 > 本文件記錄在 xuanwu-platform 儲存庫中發現的架構問題、mDDD 違規與程式碼壞味道。
 > 每個問題包含：受影響檔案、問題描述、嚴重程度，以及建議修正方向。
+> 文件治理索引請見 [`README.md`](./README.md)，SoT 對齊基準請見 [`documentation-governance-baseline.md`](./documentation-governance-baseline.md)。
 
 ---
 

@@ -15,7 +15,8 @@ Xuanwu Platform 所有 Serena 記憶檔案的主索引。
 | **Domain Modules** | [modules/INDEX.md](./modules/INDEX.md) | `src/modules/` 全部 22 個 Domain Module 的 .ts 檔案索引（17 已實作 + 5 scaffold） |
 | **MCP 工具** | [mcp/INDEX.md](./mcp/INDEX.md) | 已配置的 MCP servers 使用指南 |
 | **PR 歷史** | [pr-history/INDEX.md](./pr-history/INDEX.md) | 每個合併 PR 的摘要與決策記錄 |
-| **專案知識** | [project/](./project/) | 架構概覽、Domain 路由表、慣例文件、指令清單 |
+| **專案知識** | [project/](./project/) | 架構概覽、Domain 路由表、慣例文件、指令清單、文件拓撲 |
+| **文件治理拓撲** | [project/documentation-topology.md](./project/documentation-topology.md) | 掃描範圍、SoT、索引路徑、知識修剪準則 |
 
 ---
 
@@ -33,6 +34,11 @@ Xuanwu Platform 所有 Serena 記憶檔案的主索引。
 - 架構 SSOT：`docs/architecture/notes/model-driven-hexagonal-architecture.md`
 - Domain 路由表：[project/domain-lookup.md](./project/domain-lookup.md)
 - ADR 索引：`docs/architecture/adr/README.md`
+
+### 我要了解文件治理拓撲
+- 文件治理索引：`docs/management/documentation-index.md`
+- 文件治理基準：`docs/management/documentation-governance-baseline.md`
+- Serena 文件拓撲記憶：[project/documentation-topology.md](./project/documentation-topology.md)
 
 ### 我要了解如何操作某個 MCP Server
 - [mcp/INDEX.md](./mcp/INDEX.md)

@@ -15,31 +15,36 @@ src/modules/<name>.module/
 └── _components/         ← Presentation Layer (React Server / Client components)
 ```
 
-**Active modules (16 total — feature.module removed per PR #12 decision):**
+**Current modules (22 total = 17 implemented + 5 scaffold):**
 
 | Module | Layer | Bounded Context |
 |--------|-------|-----------------|
-| `identity.module/` | SaaS (cross-cutting) | Auth · Sessions · Credentials · Identity Providers (replaces raw Firebase Auth) |
+| `identity.module/` | SaaS (cross-cutting) | Auth · Sessions · Credentials · Identity Providers |
 | `account.module/` | SaaS | Unified Account (personal\|org) · Profile · Team · Membership |
 | `namespace.module/` | SaaS | Namespace path-resolution for account handles |
-| `workspace.module/` | Workspace | WBS · Issue · CR · QA · Acceptance · Baseline |
-| `file.module/` | Workspace | Files · DocParse · ObjExtract · Intelligence |
-| `work.module/` | Workspace | Work Items · Milestones · Dependencies |
-| `fork.module/` | Workspace | Fork Network (planning branches + merge-back) |
-| `workforce.module/` | Bridge | Workforce Scheduling (SaaS ↔ Workspace) |
-| `settlement.module/` | SaaS | Settlement · AR · AP |
-| `notification.module/` | SaaS (cross-cutting) | Notification Engine · Inbox · Push |
-| `social.module/` | SaaS | Social Graph · Feed · Discovery |
-| `achievement.module/` | SaaS | Achievement Rules · Badge Unlocking → account.module |
-| `collaboration.module/` | Workspace (cross-cutting) | Comments · Reactions · Presence · Co-editing |
-| `search.module/` | SaaS (cross-cutting) | Full-text + semantic search index + query |
-| `audit.module/` | SaaS (cross-cutting) | Audit trail (immutable) · Sec policy automation |
-| `causal-graph.module/` | SaaS / Workspace (cross-cutting) | Causal nodes · Cause-effect edges · Impact scope analysis |
+| `workspace.module/` | Workspace | Workspace, WBS, Issue, CR, QA, Acceptance, Baseline |
+| `file.module/` | Workspace | Files, document parsing, intelligence pipeline |
+| `work.module/` | Workspace | Work items, milestones, dependencies |
+| `fork.module/` | Workspace | Fork network (planning branches + merge-back) |
+| `workforce.module/` | Bridge | Workforce scheduling (SaaS ↔ Workspace) |
+| `settlement.module/` | SaaS | AR, AP, settlement records |
+| `notification.module/` | SaaS (cross-cutting) | Notification engine, inbox, push |
+| `social.module/` | SaaS | Social graph, feed, discovery |
+| `achievement.module/` | SaaS | Achievement rules, badge unlocking |
+| `collaboration.module/` | Workspace (cross-cutting) | Comments, reactions, presence, co-editing |
+| `search.module/` | SaaS (cross-cutting) | Full-text + semantic search |
+| `audit.module/` | SaaS (cross-cutting) | Audit trail, compliance |
+| `causal-graph.module/` | SaaS / Workspace (cross-cutting) | Causal nodes, edges, impact scope |
+| `governance.module/` | SaaS | Governance rules and policy enforcement *(scaffold)* |
+| `knowledge.module/` | Workspace | Knowledge base and document library *(scaffold)* |
+| `subscription.module/` | SaaS | Subscription plans and billing cycles *(scaffold)* |
+| `taxonomy.module/` | SaaS (cross-cutting) | Tag taxonomy and label hierarchy *(scaffold)* |
+| `vector-ingestion.module/` | SaaS (cross-cutting) | Vector embedding ingestion pipeline *(scaffold)* |
 
-**Removed modules:**
-- `org.module/` — removed; Team/Membership absorbed into `account.module` (AccountType: organization)
-- `profile.module/` — removed; public profile is a sub-aggregate of `account.module`
-- `feature.module/` — removed (PR #12); too vague to locate clearly; runtime feature flag infrastructure can live in `src/infrastructure/` or be handled via Firebase Remote Config if needed
+**Removed/absorbed modules (historical):**
+- `org.module/` → absorbed into `account.module`
+- `profile.module/` → absorbed into `account.module`
+- `feature.module/` → removed as standalone bounded context
 
 ## DDD Layer Rules
 - **Domain**: pure, no I/O, no framework imports
