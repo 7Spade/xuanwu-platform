@@ -13,10 +13,28 @@
 - Bounded context unit: `src/modules/{module-name}.module/` with `index.ts` as public API
 
 ```mermaid
-flowchart LR
-    P[Presentation\nsrc/app + _components] --> A[Application\ncore/_use-cases|_actions|_queries]
-    A --> D[Domain\ndomain.*]
-    I[Infrastructure\ninfra.* + src/infrastructure] --> D
+graph LR
+    subgraph Presentation
+        P["src/app/ + _components/"]
+    end
+    subgraph Application
+        A["core/_use-cases<br/>_actions · _queries"]
+    end
+    subgraph Domain
+        D["domain.*/<br/>entities · VOs · ports · events"]
+    end
+    subgraph Infrastructure
+        I["infra.*/<br/>Firestore · Redis · QStash"]
+    end
+
+    P -->|"calls"| A
+    A -->|"uses"| D
+    I -->|"implements ports in"| D
+
+    style D fill:#f9f,stroke:#c0c,color:#000
+    style A fill:#bbf,stroke:#88f,color:#000
+    style P fill:#bfb,stroke:#8c8,color:#000
+    style I fill:#fdb,stroke:#c96,color:#000
 ```
 
 ---

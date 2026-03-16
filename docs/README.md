@@ -6,6 +6,51 @@
 
 ---
 
+## 文件地圖（Document Map）
+
+```mermaid
+graph TD
+    subgraph L0["⭐ L0 — SSOT（Single Source of Truth）"]
+        ARCH["🏛 Architecture SSOT<br/>notes/model-driven-hexagonal-architecture.md"]
+        COP["🤖 Copilot SSOT<br/>copilot/README.md"]
+    end
+
+    subgraph L1["📚 L1 — 核心業務知識"]
+        ENT["業務實體目錄<br/>catalog/business-entities.md"]
+        EVT["Domain Event 目錄<br/>catalog/event-catalog.md"]
+        SVC["服務邊界契約<br/>catalog/service-boundary.md"]
+        GLO["術語詞彙表<br/>glossary/"]
+        ADR["架構決策記錄<br/>adr/"]
+    end
+
+    subgraph L2["🗺 L2 — 參考資料"]
+        NAV["架構導覽<br/>architecture/README.md"]
+        OVW["架構快速參考<br/>architecture/overview.md"]
+        MCP["MCP 設定<br/>copilot/mcp.md"]
+        DAI["Document AI 設計<br/>notes/document-ai.md"]
+    end
+
+    subgraph L3["🔧 L3 — 問題管理"]
+        GOV["文件治理索引<br/>management/documentation-index.md"]
+        ISS["架構問題<br/>management/issues.md"]
+        CAT["分類問題報告<br/>management/*.md"]
+    end
+
+    L1 --> L0
+    L2 --> L0
+    L2 --> L1
+    L3 --> L0
+    NAV --> ARCH
+    OVW --> ARCH
+    ENT --> ARCH
+    EVT --> ARCH
+    SVC --> ARCH
+    GLO --> ARCH
+    ADR --> ARCH
+```
+
+---
+
 ## 快速導覽（集中入口）
 
 | 需求 | 入口文件 |

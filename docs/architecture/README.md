@@ -12,17 +12,41 @@ All canonical architecture concepts are centralized in:
 ## SSOT Hierarchy / SSOT 層級
 
 ```mermaid
-flowchart TD
-    A[Architecture SSOT\nnotes/model-driven-hexagonal-architecture.md]
-    B[Architecture Catalog\ncatalog/]
-    C[Glossary\nbusiness + technical terms]
-    D[ADR\ndecision history]
-    E[Overview\nquick onboarding snapshot]
+graph TD
+    SSOT["⭐ Architecture SSOT<br/>notes/model-driven-hexagonal-architecture.md<br/><i>MDDD · Hexagonal · Layers · Ports · Dev Guide</i>"]
 
-    E --> A
-    B --> A
-    C --> A
-    D --> A
+    CATALOG["📦 Business Contracts<br/>catalog/"]
+    GLOSS["📖 Shared Language<br/>glossary/"]
+    ADR["📋 Decision History<br/>adr/"]
+    OVW["🚀 Quick Onboarding<br/>overview.md"]
+
+    CATALOG -->|"references"| SSOT
+    GLOSS   -->|"references"| SSOT
+    ADR     -->|"records decisions for"| SSOT
+    OVW     -->|"summarises"| SSOT
+```
+
+---
+
+## Module Layer Structure / 模組層次結構
+
+```mermaid
+graph LR
+    subgraph Module["src/modules/{name}.module/"]
+        P["_components/<br/>(Presentation)"]
+        A["core/<br/>(Application)"]
+        D["domain.*/\n(Domain)"]
+        I["infra.*/\n(Infrastructure)"]
+    end
+
+    P -->|"calls use-cases"| A
+    A -->|"uses domain model"| D
+    I -->|"implements ports"| D
+
+    style D fill:#f9f,stroke:#c0c
+    style A fill:#bbf,stroke:#88f
+    style P fill:#bfb,stroke:#8c8
+    style I fill:#fdb,stroke:#c96
 ```
 
 ---
