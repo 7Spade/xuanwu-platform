@@ -131,6 +131,15 @@ Xuanwu 平台的 GitHub Copilot 客製化完整文件，包含代理架構、智
 
 Serena MCP 是本倉庫的主要程式碼智能工具。代理系統與 Serena 的最佳協同方式：
 
+### 文件收斂與衝突校正準則
+
+當 Serena 執行文件任務時，請用以下優先序解決衝突與矛盾：
+
+1. **架構語意與邊界規則以** `docs/architecture/notes/model-driven-hexagonal-architecture.md` **為準（SSOT）**。
+2. **`docs/architecture/README.md` 僅作導覽索引**，不得作為架構語意最終裁決來源。
+3. **Copilot/代理流程與操作規範以** `docs/copilot/**` **與 `.github/copilot-instructions.md` 為準**。
+4. 若發現文件互相矛盾，先修正被引用文件中的錯誤敘述，再補上導覽連結，避免重複定義第二份 SSOT。
+
 ### Session 啟動序列（所有代理必須遵守）
 
 ```

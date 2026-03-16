@@ -1,7 +1,7 @@
-# Architecture — Single Source of Truth / 架構文件總覽
+# Architecture Documentation Index / 架構文件總覽
 
-> GitHub Copilot agents read this file to understand domain boundaries, layer responsibilities, and business rules before making changes.
-> This is the SSOT (Single Source of Truth) entrypoint for the **xuanwu-platform** project.
+> GitHub Copilot agents should start from this index to navigate architecture documents.
+> Architecture SSOT is `docs/architecture/notes/model-driven-hexagonal-architecture.md`; this file is the documentation index, not the design authority.
 
 ---
 

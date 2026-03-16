@@ -1,7 +1,8 @@
 # Xuanwu Platform — Architecture Overview
 
 > **Quick reference** for developers new to the repository.  
-> Detailed SSOT: [`docs/architecture/README.md`](./README.md)
+> Architecture SSOT: [`docs/architecture/notes/model-driven-hexagonal-architecture.md`](./notes/model-driven-hexagonal-architecture.md)  
+> Architecture docs index: [`docs/architecture/README.md`](./README.md)
 
 ---
 
@@ -31,7 +32,7 @@ xuanwu-platform/
 │   ├── shared/               # Cross-cutting utilities, i18n, types, directives
 │   └── infrastructure/       # Firebase & Upstash adapters (server-only)
 ├── functions/                # Firebase Cloud Functions
-├── docs/architecture/        # Architecture SSOT, ADRs, diagrams, glossary
+├── docs/architecture/        # Architecture docs index, SSOT notes, ADRs, diagrams, glossary
 └── docs/architecture/overview.md # ← You are here (quick reference)
 ```
 
@@ -145,7 +146,7 @@ Homepage (/)
 | Document | Description |
 |----------|-------------|
 | [`docs/architecture/notes/model-driven-hexagonal-architecture.md`](./notes/model-driven-hexagonal-architecture.md) | MDDD design philosophy, Ports & Adapters, Context Mapping |
-| [`docs/architecture/README.md`](./README.md) | Full architecture SSOT |
+| [`docs/architecture/README.md`](./README.md) | Architecture documentation index |
 | [`docs/architecture/adr/README.md`](./adr/README.md) | Architecture Decision Records |
 | [`docs/architecture/catalog/`](./catalog/) | Business entities, events, service boundary |
 | [`docs/architecture/glossary/glossary.md`](./glossary/glossary.md) | Shared terminology |
