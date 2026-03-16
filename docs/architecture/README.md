@@ -117,10 +117,19 @@ See [Service Boundary](./catalog/service-boundary.md) for crossing protocols and
 | Search | `src/modules/search.module/` | SaaS (cross-cutting) | Full-text + semantic search index, unified query surface |
 | Audit | `src/modules/audit.module/` | SaaS (cross-cutting) | Audit trail (immutable), Policy automation (Sec), Compliance reports |
 | Causal Graph | `src/modules/causal-graph.module/` | SaaS / Workspace (cross-cutting) | Causal nodes, cause-effect edges, impact scope, causal path analysis |
+| Governance | `src/modules/governance.module/` | SaaS | Governance rules, policy enforcement — *scaffold, implementation pending* |
+| Knowledge | `src/modules/knowledge.module/` | Workspace | Knowledge base, document library — *scaffold, implementation pending* |
+| Subscription | `src/modules/subscription.module/` | SaaS | Subscription plans, billing cycle — *scaffold, implementation pending* |
+| Taxonomy | `src/modules/taxonomy.module/` | SaaS (cross-cutting) | Tag taxonomy, label hierarchy — *scaffold, implementation pending* |
+| Vector Ingestion | `src/modules/vector-ingestion.module/` | SaaS (cross-cutting) | Vector embedding pipeline for semantic search — *scaffold, implementation pending* |
 
 > Each module is self-contained — ports, value objects, and infrastructure adapters live inside the module, not in shared global directories.
 > Every module folder contains a `README.md` documenting its bounded context, aggregates, and cross-module dependencies.
 > See [`core-logic.mermaid`](./diagrams/core-logic.mermaid) for the full interaction sequence that drove this module decomposition.
+>
+> **`workspace.module` owns three domain aggregates**: `domain.workspace` (WorkspaceEntity), `domain.issues` (IssueEntity), `domain.daily` (DailyLogEntity).
+>
+> **Scaffold modules (5)**: `governance`, `knowledge`, `subscription`, `taxonomy`, `vector-ingestion` — directories exist but entities are not yet implemented. See ADR-011.
 >
 > **Removed modules:** `org.module` (→ `account.module`), `profile.module` (→ `account.module`), `feature.module` (removed PR #12 — feature flag infrastructure belongs in `src/infrastructure/` or Firebase Remote Config, not a standalone BC).
 

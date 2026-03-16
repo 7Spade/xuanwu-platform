@@ -1,7 +1,8 @@
 # Business Entities / 核心業務實體
 
 Canonical definitions of every first-class domain object in the system.
-Each entity maps directly to a Firestore collection and a bounded context boundary.
+Entity definitions reflect the actual implementation in `src/modules/`.
+Each entity maps to a Firestore collection within its bounded context.
 
 > **SSOT reference**: Entity ownership and module boundaries are defined in
 > [`docs/architecture/notes/model-driven-hexagonal-architecture.md`](../notes/model-driven-hexagonal-architecture.md).
@@ -14,40 +15,50 @@ Each entity maps directly to a Firestore collection and a bounded context bounda
 
 ```
 SaaS Layer
-├── Account  (accountType: personal | organization)
-├── Namespace
-├── Team
-│   └── TeamMember
-└── AccountProfile
+├── IdentityRecord (identity.module)
+├── AccountEntity (account.module)
+│   ├── AccountProfile
+│   ├── MembershipRecord
+│   └── TeamRecord
+├── NamespaceEntity (namespace.module)
+│   └── WorkspaceBinding
+├── SettlementRecord (settlement.module)
+│   └── ClaimLineItem
+├── NotificationRecord (notification.module)
+├── SocialRelation (social.module)
+├── AchievementRecord (achievement.module)
+├── SearchIndexEntry / SearchResult (search.module)
+└── AuditEntry (audit.module)
 
 Workspace Layer
-├── Workspace
-│   └── WorkspaceMember
-├── Epic
-├── Milestone
-│   └── MilestoneTask
-├── WBSTask
-│   └── TaskDependency
-├── Issue
-├── ChangeRequest
-│   └── CRReview
-├── MergeQueue
-└── BaselineHistory
-
-File and Intelligence Layer
-├── File
+├── WorkspaceEntity (workspace.module / domain.workspace)
+│   ├── WorkspaceGrant
+│   ├── WorkspaceTask (WBS)
+│   ├── WorkspaceLocation
+│   └── WorkspacePersonnel
+├── IssueEntity (workspace.module / domain.issues)
+├── DailyLogEntity (workspace.module / domain.daily)
+├── FileEntity (file.module)
 │   └── FileVersion
-├── ParsedDocument
-└── ExtractedObject
+├── WorkItemEntity (work.module)
+│   ├── MilestoneEntity
+│   └── WorkDependency
+└── ForkEntity (fork.module)
 
-Workforce Layer (SaaS ↔ Workspace boundary)
-├── WorkforceRequest
-└── AssignmentSchedule
+Bridge Layer
+└── ScheduleAssignment (workforce.module)
+    └── ScheduleLocation
 
-Settlement Layer
-├── SettlementRecord
-├── ARRecord
-└── APRecord
+Cross-cutting
+├── Comment (collaboration.module)
+└── CausalNode / CausalEdge / CausalPath (causal-graph.module)
+
+Scaffold (implementation pending)
+├── governance.module
+├── knowledge.module
+├── subscription.module
+├── taxonomy.module
+└── vector-ingestion.module
 ```
 
 ---
@@ -56,124 +67,249 @@ Settlement Layer
 
 ---
 
-### Account / 帳號
+### IdentityRecord
 
-The unified platform account. Represents both individual people (`personal`) and organizations (`organization`). Owned by `account.module`.
-
-> **Auth boundary**: Firebase Auth credentials (UID, provider tokens, sessions) are managed by
-> `identity.module`. The `account.module` maps the identity UID to an Account aggregate at
-> first login and owns all platform-level account data from that point forward.
+**Module**: `identity.module` · `domain.identity/_entity.ts`
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `accountId` | `string` | UUID — primary key |
-| `accountType` | `string` | `personal \| organization` |
+| `id` | `string` | UUID — primary key |
+| `provider` | `string` | Auth provider (`google \| github \| email`) |
+| `providerUid` | `string` | UID issued by the identity provider |
+| `accountId` | `string` | FK → AccountEntity |
 | `email` | `string` | Verified email address |
+| `isAnonymous` | `boolean` | `true` for anonymous sessions |
+| `claims` | `Record<string, unknown>` | Custom Firebase JWT claims |
+
+**Key invariants**
+- An IdentityRecord maps exactly one provider credential to one AccountEntity.
+- `identity.module` does NOT own Account-level data — it only owns auth credentials.
+- Anonymous IdentityRecords are promoted upon sign-in completion.
+
+**Key relationships**
+- `N IdentityRecord → 1 AccountEntity` (multiple providers per account are supported)
+
+---
+
+### AccountEntity
+
+**Module**: `account.module` · `domain.account/_entity.ts`
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | `string` | UUID — primary key |
+| `handle` | `string` | Globally unique URL-safe handle |
+| `accountType` | `string` | `personal \| org` |
+| `profile` | `AccountProfile` | Embedded profile sub-aggregate |
+| `ownerId` | `string` | For org accounts: founding AccountEntity id |
+| `members` | `MembershipRecord[]` | Membership list — org accounts only |
+| `teams` | `TeamRecord[]` | Teams owned by this account — org accounts only |
+
+**Key invariants**
+- A `personal` account has no `members` or `teams`.
+- An `org` account must have at least one member with the `owner` role.
+- `handle` is globally unique and immutable once registered.
+- Deleting an org account requires all Workspaces to be archived first.
+
+**Key relationships**
+- `1 AccountEntity → 1 NamespaceEntity`
+- `1 AccountEntity (org) → N MembershipRecord`
+- `1 AccountEntity (org) → N TeamRecord`
+
+#### AccountProfile
+
+| Field | Type | Notes |
+|-------|------|-------|
 | `displayName` | `string` | Public display name |
 | `avatarUrl` | `string` | Profile image URL |
-| `namespaceId` | `string` | FK → Namespace (personal accounts: personal namespace; org accounts: org namespace) |
-| `billingStatus` | `string` | `active \| suspended \| cancelled` — organization accounts only |
-| `createdAt` | `timestamp` | |
-| `updatedAt` | `timestamp` | |
+| `bio` | `string` | Optional |
 
-**Invariants**
-- An Account of type `personal` always has exactly one personal Namespace upon registration.
-- An Account of type `organization` must have exactly one org-scoped Namespace.
-- Only `organization`-type Accounts own Teams and Workspaces at the org level.
-- Deleting an organization Account requires all Workspaces to be archived first.
-
-**Relationships**
-- `1 Account → 1 Namespace`
-- `1 Account → N TeamMember` (personal accounts participate as members)
-- `1 Account → N WorkspaceMember`
-- `1 Account → N WBSTask` (as assignee)
-- `1 Account (organization) → N Team`
-- `1 Account (organization) → N Workspace`
-- `1 Account (organization) → N ARRecord` (as billing entity)
-
----
-
-### Organization → Account (accountType: organization)
-
-> **Removed as a separate entity.** Organizations are now represented as `Account` records
-> with `accountType = "organization"`. See [Account](#account--帳號) above.
->
-> `orgId` foreign-key references throughout this document refer to `Account.accountId`
-> where `accountType = "organization"`. The `account.module` is the owning bounded context.
-> The `org.module` has been removed; Team and Membership logic is absorbed into `account.module`.
-
----
-
-### Namespace / 命名空間
-
-A unique, URL-safe path prefix scoping all workspace addresses.
+#### MembershipRecord
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `namespaceId` | `string` | UUID — primary key |
-| `slug` | `string` | Globally unique. e.g. `acme` or `john` |
-| `type` | `string` | `org \| personal` |
-| `ownerId` | `string` | FK → Account (personal or organization) |
-| `createdAt` | `timestamp` | |
-
-**Invariants**
-- Slug is globally unique and immutable once registered.
-- A Namespace of type `org` is owned by exactly one Account (accountType=organization).
-- A Namespace of type `personal` is owned by exactly one Account (accountType=personal).
-- All Workspaces under this namespace inherit the slug as a path prefix: `{slug}/{workspace-slug}`.
-
----
-
-### Team / 團隊
-
-A named group of org members used to manage workspace access in bulk.
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `teamId` | `string` | UUID — primary key |
-| `orgId` | `string` | FK → Account (accountType=organization) |
-| `name` | `string` | Display name |
-| `slug` | `string` | URL-safe. Unique within org. |
-| `description` | `string` | Optional |
-| `createdAt` | `timestamp` | |
-
-**Invariants**
-- A Team belongs to exactly one organization Account.
-- A Team can be assigned to one or more Workspaces as a permissions group.
-- `@team` mentions in a ChangeRequest route review notifications to all TeamMembers.
-
----
-
-### TeamMember / 團隊成員
-
-Junction entity binding an Account to a Team with a role.
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `teamMemberId` | `string` | UUID — primary key |
-| `teamId` | `string` | FK → Team |
-| `accountId` | `string` | FK → Account |
-| `role` | `string` | `member \| lead` |
+| `id` | `string` | UUID |
+| `accountId` | `string` | FK → AccountEntity (member) |
+| `role` | `string` | `owner \| admin \| member` |
 | `joinedAt` | `timestamp` | |
 
----
-
-### AccountProfile / 帳號檔案
-
-The public-facing representation of an Account. A sub-aggregate of `account.module`,
-separated from Account to allow independent read scaling.
+#### TeamRecord
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `profileId` | `string` | Same as `accountId` — 1:1 with Account |
-| `displayName` | `string` | Denormalized from Account |
-| `avatarUrl` | `string` | Denormalized from Account |
-| `bio` | `string` | Optional |
-| `badges` | `string[]` | Achievement badge IDs earned |
-| `contributionSummary` | `map` | Accepted task count by month |
-| `followerCount` | `number` | |
-| `followingCount` | `number` | |
-| `updatedAt` | `timestamp` | |
+| `id` | `string` | UUID |
+| `name` | `string` | Team display name |
+| `slug` | `string` | URL-safe, unique within org |
+| `memberAccountIds` | `string[]` | FK → AccountEntity[] |
+
+---
+
+### NamespaceEntity
+
+**Module**: `namespace.module` · `domain.namespace/_entity.ts`
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | `string` | UUID — primary key |
+| `slug` | `string` | Globally unique URL path prefix |
+| `ownerType` | `string` | `personal \| org` |
+| `ownerId` | `string` | FK → AccountEntity |
+| `workspaces` | `WorkspaceBinding[]` | Workspace references scoped to this namespace |
+
+**Key invariants**
+- Slug is globally unique and immutable once registered.
+- Workspace full path is `{namespace-slug}/{workspace-slug}`.
+- A `personal` AccountEntity has exactly one personal Namespace.
+- An `org` AccountEntity has exactly one org Namespace.
+
+#### WorkspaceBinding
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `workspaceId` | `string` | FK → WorkspaceEntity |
+| `slug` | `string` | Workspace slug within this namespace |
+
+---
+
+### SettlementRecord
+
+**Module**: `settlement.module` · `domain.settlement/_entity.ts`
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | `string` | UUID — primary key |
+| `workspaceId` | `string` | FK → WorkspaceEntity |
+| `dimensionId` | `string` | Business dimension / unit ID |
+| `role` | `string` | `AR \| AP` (accounts receivable / payable) |
+| `stage` | `FinanceLifecycleStage` | Current billing lifecycle stage |
+| `cycleIndex` | `number` | Billing cycle number |
+| `contractAmount` | `number` | Total contracted value |
+| `receivedAmount` | `number` | Amount received to date |
+| `currentClaimLineItems` | `ClaimLineItem[]` | Line items for the current billing cycle |
+| `paymentTermStartAt` | `timestamp` | Payment term start date |
+| `paymentReceivedAt` | `timestamp \| null` | Actual payment receipt date |
+
+**Key invariants**
+- `role = AR` tracks money owed to the org; `role = AP` tracks money owed to assignees.
+- Settlement stage follows the `FinanceLifecycleStage` state machine.
+
+#### ClaimLineItem
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `workItemId` | `string` | FK → WorkItemEntity |
+| `description` | `string` | Line item description |
+| `quantity` | `number` | Work unit quantity |
+| `unitPrice` | `number` | Unit price |
+| `amount` | `number` | Computed: `quantity × unitPrice` |
+
+---
+
+### NotificationRecord
+
+**Module**: `notification.module` · `domain.notification/_entity.ts`
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | `string` | UUID — primary key |
+| `recipientAccountId` | `string` | FK → AccountEntity |
+| `channel` | `string` | `in-app \| email \| push` |
+| `priority` | `string` | `low \| normal \| high \| urgent` |
+| `title` | `string` | Notification title |
+| `body` | `string` | Notification body |
+| `sourceEventKey` | `string` | Originating domain event key |
+| `read` | `boolean` | Whether the notification has been read |
+| `readAt` | `timestamp \| null` | When the notification was read |
+
+**Key relationships**
+- Each record belongs to exactly one recipient AccountEntity.
+- `sourceEventKey` links back to the domain event that triggered the notification.
+
+---
+
+### SocialRelation
+
+**Module**: `social.module` · `domain.social/_entity.ts`
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | `string` | UUID — primary key |
+| `subjectAccountId` | `string` | FK → AccountEntity (actor) |
+| `targetId` | `string` | FK → target entity |
+| `targetType` | `string` | `account \| workspace \| work-item` |
+| `relationType` | `string` | `star \| watch \| follow` |
+
+**Key invariants**
+- The `(subjectAccountId, targetId, relationType)` tuple is unique.
+
+---
+
+### AchievementRecord
+
+**Module**: `achievement.module` · `domain.achievement/_entity.ts`
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | `string` | UUID — primary key |
+| `accountId` | `string` | FK → AccountEntity |
+| `badgeSlug` | `string` | Identifies the badge rule |
+| `unlockedAt` | `timestamp` | When the badge was earned |
+
+**Key invariants**
+- Each `(accountId, badgeSlug)` pair is unique — a badge is unlocked at most once per account.
+- Badge projection writes to `account.module` via `IAccountBadgeWritePort` (ACL port).
+
+---
+
+### SearchIndexEntry / SearchResult
+
+**Module**: `search.module` · `domain.search/_entity.ts`
+
+#### SearchIndexEntry
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | `string` | UUID — primary key |
+| `sourceModule` | `string` | Name of the originating module |
+| `sourceId` | `string` | FK → source entity in originating module |
+| `ownerAccountId` | `string` | FK → AccountEntity |
+| `workspaceId` | `string \| null` | FK → WorkspaceEntity (`null` for SaaS-level entries) |
+| `visibility` | `string` | `public \| private` |
+| `title` | `string` | Indexed title |
+| `snippet` | `string` | Indexed preview snippet |
+| `tags` | `string[]` | Searchable tag set |
+| `indexedAt` | `timestamp` | Last index timestamp |
+
+#### SearchResult
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `sourceModule` | `string` | Originating module name |
+| `sourceId` | `string` | FK → source entity |
+| `title` | `string` | |
+| `snippet` | `string` | |
+| `score` | `number` | Relevance score `0.0–1.0` |
+
+---
+
+### AuditEntry
+
+**Module**: `audit.module` · `domain.audit/_entity.ts`
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | `string` | UUID — primary key |
+| `actor` | `ActorRef` | Who performed the action (embedded snapshot) |
+| `action` | `AuditAction` | The action type |
+| `resource` | `ResourceRef` | The affected resource (embedded snapshot) |
+| `metadata` | `Record<string, unknown>` | Additional context data |
+| `originEventId` | `string` | Source domain event ID |
+| `outcome` | `string` | `pass \| fail \| blocked` |
+| `occurredAt` | `timestamp` | When the action occurred |
+
+**Key invariants**
+- Append-only — never updated or deleted.
+- `actor` and `resource` are embedded snapshots, not FK references, to preserve historical accuracy.
 
 ---
 
@@ -181,388 +317,316 @@ separated from Account to allow independent read scaling.
 
 ---
 
-### Workspace / 工作空間
+### WorkspaceEntity
 
-The primary logical container for a project or engagement. Analogous to a GitHub repository but for operational work.
+**Module**: `workspace.module / domain.workspace` · `domain.workspace/_entity.ts`
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `workspaceId` | `string` | UUID — primary key |
-| `namespaceId` | `string` | FK → Namespace |
-| `orgId` | `string` | FK → Account (accountType=organization). `null` if personal |
-| `displayName` | `string` | |
-| `slug` | `string` | Unique within namespace |
-| `ownerId` | `string` | FK → Account |
-| `visibility` | `string` | `public \| private` |
-| `baselineRef` | `string` | FK → BaselineHistory (latest accepted) |
-| `createdAt` | `timestamp` | |
-| `archivedAt` | `timestamp` | `null` if active |
-
-**Invariants**
-- A Workspace must belong to a Namespace (org or personal).
-- The workspace full path is `{namespace-slug}/{workspace-slug}`.
-- A Workspace has exactly one Protected Baseline at any point in time.
-- Archiving a Workspace freezes all mutation operations.
-
----
-
-### WorkspaceMember / 工作空間成員
-
-Grants an Account or Team scoped access to a Workspace.
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `memberId` | `string` | UUID — primary key |
-| `workspaceId` | `string` | FK → Workspace |
-| `accountId` | `string` | FK → Account. `null` if team grant |
-| `teamId` | `string` | FK → Team. `null` if direct account grant |
-| `role` | `string` | `maintainer \| collaborator` |
-| `grantedById` | `string` | FK → Account (who made the grant) |
-| `grantedAt` | `timestamp` | |
-
----
-
-### Epic / 史詩
-
-A large body of work composed of multiple WBS tasks sharing a business objective.
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `epicId` | `string` | UUID — primary key |
-| `workspaceId` | `string` | FK → Workspace |
-| `title` | `string` | |
-| `description` | `string` | |
-| `status` | `string` | `active \| completed \| archived` |
-| `createdById` | `string` | FK → Account |
-| `createdAt` | `timestamp` | |
-| `completedAt` | `timestamp` | `null` until all tasks accepted |
-
----
-
-### Milestone / 里程碑
-
-A time-bound checkpoint grouping tasks into a delivery stage.
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `milestoneId` | `string` | UUID — primary key |
-| `workspaceId` | `string` | FK → Workspace |
-| `title` | `string` | |
-| `dueDate` | `timestamp` | |
-| `status` | `string` | `open \| closed` |
-| `createdById` | `string` | FK → Account |
-| `createdAt` | `timestamp` | |
-
----
-
-### MilestoneTask / 里程碑任務關聯
-
-Junction entity linking WBS tasks to Milestones.
+> `workspace.module` owns three domain aggregates: `domain.workspace`, `domain.issues`, and `domain.daily`.
 
 | Field | Type | Notes |
 |-------|------|-------|
 | `id` | `string` | UUID — primary key |
-| `milestoneId` | `string` | FK → Milestone |
-| `taskId` | `string` | FK → WBSTask |
+| `dimensionId` | `string` | Business dimension / unit ID |
+| `namespaceId` | `string` | FK → NamespaceEntity |
+| `slug` | `string` | Unique within namespace |
+| `name` | `string` | Display name |
+| `lifecycleState` | `string` | Workspace lifecycle status |
+| `visibility` | `string` | `public \| private` |
+| `scope` | `string` | Workspace scope descriptor |
+| `protocol` | `string` | Workflow protocol identifier |
+| `grants` | `WorkspaceGrant[]` | Per-account access grants |
+| `teamIds` | `string[]` | FK → TeamRecord[] |
+| `personnel` | `WorkspacePersonnel` | Personnel configuration |
+| `address` | `string` | Physical address (if applicable) |
+| `locations` | `WorkspaceLocation[]` | Geo-tagged work locations |
+| `capabilities` | `string[]` | Enabled capability flags |
+| `tasks` | `Record<string, WorkspaceTask>` | WBS task map keyed by task ID |
 
----
+> **Terminology note**: `WorkspaceGrant` currently stores `userId` in the code-level field. This is a known terminology inconsistency documented in ADR-011. Do not rename the code field until a dedicated migration PR is raised.
 
-### WBSTask / WBS 任務
+**Key invariants**
+- A Workspace must belong to a Namespace.
+- Full path is `{namespace-slug}/{workspace-slug}`.
+- Archiving a Workspace freezes all mutation operations.
 
-The atomic unit of work. Central entity of the entire system.
+#### WorkspaceGrant
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `taskId` | `string` | UUID — primary key |
-| `workspaceId` | `string` | FK → Workspace |
-| `parentTaskId` | `string` | FK → WBSTask. `null` if root task |
-| `epicId` | `string` | FK → Epic. `null` if standalone |
+| `accountId` | `string` | FK → AccountEntity (code field: `userId` — see ADR-011) |
+| `role` | `string` | `maintainer \| collaborator` |
+| `grantedAt` | `timestamp` | |
+
+#### WorkspaceTask (WBS)
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | `string` | Task ID within workspace |
+| `title` | `string` | |
+| `status` | `string` | Task lifecycle status |
+| `parentId` | `string \| null` | Parent task ID (WBS hierarchy) |
+| `assigneeIds` | `string[]` | FK → AccountEntity[] |
+
+#### WorkspaceLocation
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | `string` | Location ID |
+| `label` | `string` | Display label |
+| `coordinates` | `GeoPoint` | Latitude / longitude |
+
+#### WorkspacePersonnel
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `supervisorId` | `string` | FK → AccountEntity |
+| `coordinatorIds` | `string[]` | FK → AccountEntity[] |
+
+---
+
+### IssueEntity
+
+**Module**: `workspace.module / domain.issues` · `domain.issues/_entity.ts`
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | `string` | UUID — primary key |
+| `workspaceId` | `string` | FK → WorkspaceEntity |
 | `title` | `string` | |
 | `description` | `string` | |
-| `assigneeId` | `string` | FK → Account. Set by AssignmentSchedule |
-| `state` | `string` | See state machine below |
-| `scheduledStart` | `timestamp` | Set by Workforce Scheduling |
-| `scheduledEnd` | `timestamp` | Set by Workforce Scheduling |
-| `effortEstimate` | `number` | Person-hours |
-| `skillRequirement` | `string[]` | Tags used for workforce matching |
-| `createdById` | `string` | FK → Account (Maintainer who created) |
-| `createdAt` | `timestamp` | |
-| `updatedAt` | `timestamp` | |
-| `acceptedAt` | `timestamp` | `null` until state = `accepted` |
+| `status` | `string` | `open \| resolved` |
+| `severity` | `string` | Issue severity level |
+| `reporterId` | `string` | FK → AccountEntity (reporter) |
+| `assigneeId` | `string \| null` | FK → AccountEntity (assignee) |
+| `resolvedAt` | `timestamp \| null` | |
 
-**State machine values**  
-`pending` → `in_progress` → `done` → `qa_in_review` → `acceptance_review` → `accepted`  
-Lateral: `in_progress` ↔ `blocked`  
-Regression: `qa_in_review` → `in_progress` / `acceptance_review` → `in_progress`
-
-See [state-machine diagram](../diagrams/state-machine.mermaid).
+**Key invariants**
+- An open Issue on a WorkspaceTask can block the task's state progression.
+- Resolving the last open Issue on a task resumes its progression.
 
 ---
 
-### TaskDependency / 任務依賴
+### DailyLogEntity
 
-Enforces execution sequencing between two WBS tasks.
+**Module**: `workspace.module / domain.daily` · `domain.daily/_entity.ts`
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `dependencyId` | `string` | UUID — primary key |
-| `upstreamTaskId` | `string` | FK → WBSTask (must complete first) |
-| `downstreamTaskId` | `string` | FK → WBSTask (blocked until upstream done) |
-| `type` | `string` | `finish_to_start \| start_to_start` |
+| `id` | `string` | UUID — primary key |
+| `workspaceId` | `string` | FK → WorkspaceEntity |
+| `date` | `string` | ISO date string (`YYYY-MM-DD`) |
+| `content` | `string` | Log body text |
+| `photoURLs` | `string[]` | Attached photo URLs |
+| `authorId` | `string` | FK → AccountEntity |
+
+**Key invariants**
+- One log entry per author per date per workspace.
 
 ---
 
-### Issue / 議題
+### FileEntity
 
-A discrete blocker or defect raised against a WBS task.
+**Module**: `file.module` · `domain.file/_entity.ts`
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `issueId` | `string` | UUID — primary key |
-| `workspaceId` | `string` | FK → Workspace |
-| `sequentialNumber` | `number` | Monotonically incrementing per workspace. Displayed as `#1`, `#2` |
-| `linkedTaskId` | `string` | FK → WBSTask |
-| `title` | `string` | |
-| `description` | `string` | |
-| `state` | `string` | `open \| resolved` |
-| `openedById` | `string` | FK → Account |
-| `resolvedById` | `string` | FK → Account. `null` until resolved |
-| `openedAt` | `timestamp` | |
-| `resolvedAt` | `timestamp` | `null` until resolved |
-
-**Invariants**
-- A WBSTask with one or more `open` Issues transitions to `blocked`.
-- Resolving the last open Issue on a task transitions the task back to `in_progress`.
-
----
-
-### ChangeRequest / 變更請求
-
-A versioned proposal to update the Protected Baseline.
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `crId` | `string` | UUID — primary key |
-| `workspaceId` | `string` | FK → Workspace |
-| `taskId` | `string` | FK → WBSTask |
-| `snapshotRef` | `string` | Reference to the submitted work snapshot |
-| `state` | `string` | `open \| changes_requested \| approved \| merged \| closed` |
-| `authorId` | `string` | FK → Account (Assignee) |
-| `mergeQueueId` | `string` | FK → MergeQueue. `null` if direct merge |
-| `createdAt` | `timestamp` | |
-| `mergedAt` | `timestamp` | `null` until merged |
-
----
-
-### CRReview / 變更請求審查
-
-A single reviewer's decision on a ChangeRequest.
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `reviewId` | `string` | UUID — primary key |
-| `crId` | `string` | FK → ChangeRequest |
-| `reviewerId` | `string` | FK → Account |
-| `decision` | `string` | `approved \| changes_requested` |
-| `comment` | `string` | Optional |
-| `reviewedAt` | `timestamp` | |
-
----
-
-### MergeQueue / 合併佇列
-
-An optional governance gate that serializes and validates groups of ChangeRequests.
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `queueId` | `string` | UUID — primary key |
-| `workspaceId` | `string` | FK → Workspace |
-| `state` | `string` | `pending \| validating \| merged \| failed` |
-| `createdAt` | `timestamp` | |
-| `processedAt` | `timestamp` | `null` until processed |
-
----
-
-### BaselineHistory / 基線歷史
-
-Append-only log of every successful merge into the Protected Baseline.
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `historyId` | `string` | UUID — primary key |
-| `workspaceId` | `string` | FK → Workspace |
-| `crId` | `string` | FK → ChangeRequest |
-| `mergedById` | `string` | FK → Account (Maintainer) |
-| `snapshotRef` | `string` | Immutable reference to the merged content |
-| `mergedAt` | `timestamp` | |
-
-**Invariants**
-- Never deleted or updated. Append-only.
-- Each record advances the workspace `baselineRef`.
-
----
-
-## File and Intelligence Layer Entities / 檔案與智能層實體
-
----
-
-### File / 檔案
-
-Logical file record. Stable across version updates.
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `fileId` | `string` | UUID — primary key |
-| `workspaceId` | `string` | FK → Workspace |
-| `uploadedById` | `string` | FK → Account |
+| `id` | `string` | UUID — primary key |
+| `workspaceId` | `string` | FK → WorkspaceEntity |
 | `name` | `string` | Original filename |
-| `mimeType` | `string` | |
-| `currentVersionId` | `string` | FK → FileVersion (latest) |
-| `uploadedAt` | `timestamp` | |
+| `mimeType` | `string` | MIME type |
+| `currentVersionId` | `string` | FK → FileVersion (latest active version) |
+| `versions` | `FileVersion[]` | All versions — append-only |
+| `parseStatus` | `string` | `pending \| completed \| failed` |
 
----
+**Key invariants**
+- A new upload creates a new FileVersion and updates `currentVersionId`.
+- FileVersions are append-only — never deleted.
 
-### FileVersion / 檔案版本
-
-Immutable snapshot of a file's binary content at a point in time.
+#### FileVersion
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `versionId` | `string` | UUID — primary key |
-| `fileId` | `string` | FK → File |
+| `id` | `string` | UUID — version primary key |
+| `fileId` | `string` | FK → FileEntity |
 | `storageUri` | `string` | Firebase Storage path |
-| `sizeBytes` | `number` | |
-| `uploadedById` | `string` | FK → Account |
+| `sizeBytes` | `number` | File size in bytes |
+| `uploadedById` | `string` | FK → AccountEntity |
 | `createdAt` | `timestamp` | |
 
-**Invariants**
-- Never deleted. Append-only.
-- A new upload to an existing File creates a new FileVersion and updates `File.currentVersionId`.
-
 ---
 
-### ParsedDocument / 解析後文件
+### WorkItemEntity
 
-Structured output from Document Parsing for a specific FileVersion.
+**Module**: `work.module` · `domain.work/_entity.ts`
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `parseId` | `string` | UUID — primary key |
-| `fileId` | `string` | FK → File |
-| `fileVersionId` | `string` | FK → FileVersion |
-| `rawText` | `string` | Full extracted plain text |
-| `structureJson` | `string` | Heading tree, tables, metadata as JSON |
-| `state` | `string` | `pending \| completed \| failed` |
-| `parsedAt` | `timestamp` | `null` until completed |
+| `id` | `string` | UUID — primary key |
+| `workspaceId` | `string` | FK → WorkspaceEntity |
+| `title` | `string` | |
+| `status` | `string` | Work item lifecycle status |
+| `priority` | `string` | `low \| medium \| high \| critical` |
+| `milestoneId` | `string \| null` | FK → MilestoneEntity |
+| `assigneeId` | `string \| null` | FK → AccountEntity |
+| `dueDate` | `timestamp \| null` | |
+| `dependencies` | `WorkDependency[]` | Upstream dependency list |
+| `parentId` | `string \| null` | FK → WorkItemEntity (task hierarchy) |
+| `type` | `string` | Work item type classifier |
+| `quantity` | `number` | Work unit quantity |
+| `unitPrice` | `number` | Unit price for settlement |
+| `subtotal` | `number` | Derived: `quantity × unitPrice` |
+| `location` | `string \| null` | Physical location tag |
+| `photoURLs` | `string[]` | Attached photo references |
 
----
+**Key invariants**
+- `subtotal` is always derived — `quantity × unitPrice`.
+- A WorkItemEntity with unresolved upstream dependencies is blocked from state progression.
 
-### ExtractedObject / 提取物件
-
-A single actionable entity extracted from a ParsedDocument.
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `objectId` | `string` | UUID — primary key |
-| `parseId` | `string` | FK → ParsedDocument |
-| `type` | `string` | `date \| amount \| party \| deliverable \| obligation` |
-| `value` | `string` | Raw extracted value |
-| `normalizedValue` | `string` | Parsed / formatted value (ISO date, numeric amount) |
-| `confidence` | `number` | Model confidence score `0.0–1.0` |
-| `linkedTaskId` | `string` | FK → WBSTask. `null` if unlinked |
-| `linkedWorkItemId` | `string` | FK → WorkItem. `null` if unlinked |
-| `extractedAt` | `timestamp` | |
-
----
-
-## Workforce Layer Entities / 人力層實體
-
----
-
-### WorkforceRequest / 人力需求請求
-
-A request submitted by a Workspace for task staffing.
+#### MilestoneEntity
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `requestId` | `string` | UUID — primary key |
-| `workspaceId` | `string` | FK → Workspace |
-| `taskId` | `string` | FK → WBSTask |
-| `skillRequirement` | `string[]` | Required skills for the task |
-| `preferredStart` | `timestamp` | |
-| `preferredEnd` | `timestamp` | |
-| `effortHours` | `number` | |
-| `state` | `string` | `pending \| scheduled \| approved` |
-| `requestedAt` | `timestamp` | |
+| `id` | `string` | UUID — primary key |
+| `workspaceId` | `string` | FK → WorkspaceEntity |
+| `name` | `string` | Milestone name |
+| `targetDate` | `timestamp` | Target completion date |
+| `workItemIds` | `string[]` | FK → WorkItemEntity[] |
 
----
-
-### AssignmentSchedule / 指派排程
-
-The approved output of Workforce Scheduling. Binds a member to a task with a confirmed time window.
+#### WorkDependency
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `scheduleId` | `string` | UUID — primary key |
-| `requestId` | `string` | FK → WorkforceRequest |
-| `taskId` | `string` | FK → WBSTask |
-| `assigneeId` | `string` | FK → Account |
-| `scheduledStart` | `timestamp` | |
-| `scheduledEnd` | `timestamp` | |
-| `approvedById` | `string` | FK → Account (OrgOwner) |
-| `approvedAt` | `timestamp` | |
+| `upstreamId` | `string` | FK → WorkItemEntity (must complete first) |
+| `type` | `string` | `finish-to-start \| start-to-start` |
 
 ---
 
-## Settlement Layer Entities / 結算層實體
+### ForkEntity
 
----
-
-### SettlementRecord / 結算記錄
-
-Root record triggered when a WBSTask reaches `accepted`. Parent of AR and AP records.
+**Module**: `fork.module` · `domain.fork/_entity.ts`
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `settlementId` | `string` | UUID — primary key |
-| `taskId` | `string` | FK → WBSTask |
-| `workspaceId` | `string` | FK → Workspace |
-| `orgId` | `string` | FK → Account (accountType=organization) |
-| `triggerEvent` | `string` | Always `task_accepted` |
-| `triggeredAt` | `timestamp` | |
+| `id` | `string` | UUID — primary key |
+| `originWorkspaceId` | `string` | FK → WorkspaceEntity (source workspace) |
+| `forkedByAccountId` | `string` | FK → AccountEntity |
+| `baselineVersion` | `string` | Baseline snapshot reference |
+| `status` | `string` | `active \| merged \| abandoned` |
+| `pendingCRId` | `string \| null` | FK → pending change request |
+
+**Key invariants**
+- A Fork is always created from a specific baseline version.
+- Merging a Fork requires an approved change request.
 
 ---
 
-### ARRecord / 應收帳款記錄
-
-Represents money owed to the organization by a client.
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `arId` | `string` | UUID — primary key |
-| `settlementId` | `string` | FK → SettlementRecord |
-| `orgId` | `string` | FK → Account (accountType=organization) |
-| `clientId` | `string` | FK → Account or external client ref |
-| `invoiceRef` | `string` | Generated invoice document reference |
-| `amount` | `number` | |
-| `currency` | `string` | ISO 4217 e.g. `TWD`, `USD` |
-| `state` | `string` | `pending \| issued \| paid` |
-| `issuedAt` | `timestamp` | `null` until issued |
-| `paidAt` | `timestamp` | `null` until paid |
+## Bridge Layer Entities / 橋接層實體
 
 ---
 
-### APRecord / 應付帳款記錄
+### ScheduleAssignment
 
-Represents money owed to an assignee or vendor by the organization.
+**Module**: `workforce.module` · `domain.workforce/_entity.ts`
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `apId` | `string` | UUID — primary key |
-| `settlementId` | `string` | FK → SettlementRecord |
-| `assigneeId` | `string` | FK → Account |
-| `amount` | `number` | |
-| `currency` | `string` | ISO 4217 |
-| `state` | `string` | `pending \| scheduled \| paid` |
-| `scheduledAt` | `timestamp` | Payment scheduled date |
-| `paidAt` | `timestamp` | `null` until paid |
+| `id` | `string` | UUID — primary key |
+| `accountId` | `string` | FK → AccountEntity (requester / org) |
+| `workspaceId` | `string` | FK → WorkspaceEntity |
+| `title` | `string` | Assignment title |
+| `status` | `string` | `PROPOSAL \| OFFICIAL \| COMPLETED \| CANCELLED` |
+| `originType` | `string` | How the assignment originated |
+| `assigneeIds` | `string[]` | FK → AccountEntity[] (assignees) |
+| `location` | `ScheduleLocation` | Work location |
+| `requiredSkills` | `string[]` | Skill tags for workforce matching |
+| `startDate` | `timestamp` | Scheduled start date |
+| `endDate` | `timestamp` | Scheduled end date |
+| `version` | `number` | Optimistic concurrency version counter |
+
+**Key invariants**
+- A `PROPOSAL` assignment must be promoted to `OFFICIAL` before work begins.
+- `assigneeIds` may only contain AccountEntities that are workspace members.
+- This entity bridges SaaS identity data with Workspace-level execution — it is the sole Bridge Layer entity.
+
+#### ScheduleLocation
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `label` | `string` | Location display label |
+| `address` | `string` | Physical address |
+| `coordinates` | `GeoPoint \| null` | Optional geo-coordinates |
+
+---
+
+## Cross-cutting Entities / 跨切面實體
+
+---
+
+### Comment
+
+**Module**: `collaboration.module` · `domain.collaboration/_entity.ts`
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | `string` | UUID — primary key |
+| `workspaceId` | `string` | FK → WorkspaceEntity |
+| `artifactType` | `string` | Type of the commented artifact |
+| `artifactId` | `string` | FK → artifact entity |
+| `authorAccountId` | `string` | FK → AccountEntity |
+| `body` | `string` | Comment body (Markdown) |
+| `parentId` | `string \| null` | FK → Comment (threaded replies) |
+| `editedAt` | `timestamp \| null` | Last edit timestamp |
+| `deletedAt` | `timestamp \| null` | Soft-delete timestamp |
+
+**Key invariants**
+- Comments are soft-deleted: `deletedAt` is set and content is cleared, but the record is retained.
+- `artifactType` identifies which module owns the commented artifact.
+
+---
+
+### CausalNode / CausalEdge / CausalPath
+
+**Module**: `causal-graph.module` · `domain.causal-graph/_entity.ts`
+
+#### CausalNode
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | `string` | UUID — primary key |
+| `kind` | `string` | `work-item \| milestone \| cr \| qa \| baseline \| domain-event \| settlement \| audit-entry` |
+| `sourceRef` | `string` | FK → source entity in originating module |
+| `label` | `string` | Display label |
+| `occurredAt` | `timestamp` | When the causal event occurred |
+
+#### CausalEdge
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | `string` | UUID — primary key |
+| `causeNodeId` | `string` | FK → CausalNode (cause) |
+| `effectNodeId` | `string` | FK → CausalNode (effect) |
+| `confidence` | `number` | Causality confidence score `0.0–1.0` |
+| `reason` | `string` | Human-readable rationale |
+
+#### CausalPath
+
+A traversed sequence of `CausalNode` and `CausalEdge` representing a complete cause-effect chain.
+
+**Key invariants**
+- CausalNodes are append-only — causal history is never rewritten.
+- CausalEdges encode inferred causality with an explicit confidence score.
+
+---
+
+## Scaffold Modules / 待實作模組
+
+The following modules exist as directory scaffolds in `src/modules/` but have no entity implementations yet.
+They are documented here for planning purposes. See ADR-011.
+
+| Module | Layer | Planned Responsibility |
+|--------|-------|------------------------|
+| `governance.module` | SaaS | Governance rules, policy enforcement, compliance workflows |
+| `knowledge.module` | Workspace | Knowledge base, document library, wiki pages |
+| `subscription.module` | SaaS | Subscription plans, feature entitlements, billing cycles |
+| `taxonomy.module` | SaaS (cross-cutting) | Tag taxonomy, label hierarchy, classification trees |
+| `vector-ingestion.module` | SaaS (cross-cutting) | Vector embedding pipeline for semantic search integration |
