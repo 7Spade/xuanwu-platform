@@ -16,6 +16,7 @@ agents:
   - xuanwu-ui
   - xuanwu-quality
   - xuanwu-docs
+  - xuanwu-librarian
   - xuanwu-ops
   - xuanwu-test-expert
   - xuanwu-software-planner
@@ -58,6 +59,9 @@ handoffs:
   - label: 'Update documentation'
     agent: xuanwu-docs
     prompt: 'Update the documentation for the changes described above.'
+  - label: 'Refactor markdown knowledge library'
+    agent: xuanwu-librarian
+    prompt: 'Refactor markdown documentation with hierarchical, graphical, categorized, and tagged organization; clear obsolete content and repair broken indexes while preserving complete information.'
   - label: 'CI/CD or infra operations'
     agent: xuanwu-ops
     prompt: 'Handle the CI/CD and infrastructure operations for the task above.'
@@ -103,6 +107,7 @@ Execute the complete Six-Step Intent Pipeline from that skill before every dispa
 | UI design, audit, or localization | `xuanwu-ui` |
 | Quality review, lint, or security | `xuanwu-quality` |
 | Documentation updates | `xuanwu-docs` |
+| Markdown library curation (refactor, stale cleanup, index repair) | `xuanwu-librarian` |
 | CI/CD or operational changes | `xuanwu-ops` |
 | Browser diagnostics or preflight | `xuanwu-test-expert` |
 | Complex reasoning or debugging | `xuanwu-sequential-thinking` |

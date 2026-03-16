@@ -61,7 +61,7 @@ If a task touches business rules or domain terminology, read the SSOT documents 
 
 All repository-scoped agents live in `.github/agents/`. Use `@xuanwu-commander` as the general entry-point for any request — it applies the six-step intent pipeline and dispatches to the right specialist.
 
-**User-selectable agents:** `xuanwu-commander` · `xuanwu-orchestrator` · `xuanwu-product` · `xuanwu-research` · `xuanwu-architect` · `xuanwu-architecture-chief` · `xuanwu-implementer` · `xuanwu-ui` · `xuanwu-quality` · `xuanwu-docs` · `xuanwu-ops` · `xuanwu-test-expert` · `xuanwu-software-planner` · `xuanwu-sequential-thinking` · `ddd-orchestrator`
+**User-selectable agents:** `xuanwu-commander` · `xuanwu-orchestrator` · `xuanwu-product` · `xuanwu-research` · `xuanwu-architect` · `xuanwu-architecture-chief` · `xuanwu-implementer` · `xuanwu-ui` · `xuanwu-quality` · `xuanwu-docs` · `xuanwu-librarian` · `xuanwu-ops` · `xuanwu-test-expert` · `xuanwu-software-planner` · `xuanwu-sequential-thinking` · `ddd-orchestrator`
 
 **Sub-agent clusters** (`user-invocable: false` — invoked via parent handoffs, not shown in the agent picker):
 - **DDD cluster** (`ddd-domain-modeler`, `ddd-application-layer`, `ddd-infrastructure`) — trigger via `@ddd-orchestrator` or `/ddd-slice-scaffold`
