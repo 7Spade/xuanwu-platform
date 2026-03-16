@@ -28,6 +28,9 @@ export type {
   IMembershipRepository,
 } from "./domain.account/_ports";
 
+// Presentation shell component — stable public API for account context switching
+export { AccountSwitcher } from "./_components/shell/account-switcher";
+
 // Presentation hook — stable public API for cross-module session access
 export { useCurrentAccount } from "./_components/account-provider";
 export type { AccountContextValue } from "./_components/account-provider";

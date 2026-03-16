@@ -19,7 +19,7 @@ import {
   SidebarRail,
 } from "@/design-system/primitives/ui/sidebar";
 
-import { AccountSwitcher } from "./account-switcher";
+import { AccountSwitcher } from "@/modules/account.module";
 import { NavMain } from "./nav-main";
 import { NavTopWorkspaces } from "./nav-top-workspaces";
 import { NavUser } from "./nav-user";

@@ -11,7 +11,7 @@ import { Check, ChevronsUpDown, Globe, Loader2, Plus } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-import { useCurrentAccount } from "@/modules/account.module";
+import { useCurrentAccount } from "../account-provider";
 import type { AccountDTO } from "@/modules/account.module/core/_use-cases";
 import { useTranslation } from "@/shared/i18n";
 import { Avatar, AvatarFallback, AvatarImage } from "@/design-system/primitives/ui/avatar";
