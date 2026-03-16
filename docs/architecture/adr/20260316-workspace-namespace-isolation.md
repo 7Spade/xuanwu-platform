@@ -2,7 +2,7 @@
 
 **Date**: 2026-03-16  
 **Status**: Proposed  
-**Source**: `docs/management/semantics-issues.md` — SEM-003, SEM-005
+**Source**: `docs/management/issues.md` — SEM-003, SEM-005
 
 ---
 
@@ -54,7 +54,7 @@ Affected entities and files:
 
 ### 2. Add `ownerAccountId` to the business glossary
 
-Add the following entry to `docs/architecture/glossary/business-terms.md`:
+Add the following entry to `docs/architecture/glossary/glossary.md`:
 
 > **Owner Account ID** (`ownerAccountId`): The stable, platform-assigned identifier of the Account (personal or organization) that provisioned and owns a given aggregate root. This is the Account's `accountId` as stored in `account.module`. It is the canonical cross-module foreign key for expressing ownership. Use `ownerAccountId` for all domain entities that express ownership by an account. Do not use `dimensionId`, `accountId` (ambiguous with identity UID), or `ownerId`.
 
@@ -126,5 +126,5 @@ export const NamespaceSlugSchema = z.string().regex(ACCOUNT_HANDLE_PATTERN, "...
 - MDHA §2.3 Context Mapping — Customer/Supplier and Partnership patterns
 - MDHA §2.5 Invariants — Account.handle ↔ Namespace.slug sync is a system invariant
 - MDHA §6 Context Mapping in Xuanwu
-- Glossary: `docs/architecture/glossary/business-terms.md`
-- Source issues: `docs/management/semantics-issues.md` (SEM-003, SEM-005) — translated to this ADR and removed
+- Glossary: `docs/architecture/glossary/glossary.md`
+- Source issues: `docs/management/issues.md` (SEM-003, SEM-005) — translated to this ADR and removed

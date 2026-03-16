@@ -1,5 +1,6 @@
 # Model-Driven Hexagonal Architecture
 
+> Tags: `ssot` `architecture-core` `ddd` `hexagonal` `ports-adapters` `layer-rules`  
 > Design philosophy and development guide for the **xuanwu-platform**.  
 > This document is the primary reference for understanding how Domain-Driven Design (DDD)
 > and Hexagonal Architecture (Ports & Adapters) are unified in this project.
@@ -484,19 +485,36 @@ export class FirestoreWorkspaceRepository implements IWorkspaceRepository {
 
 The primary architectural boundary in Xuanwu. See [`docs/architecture/catalog/service-boundary.md`](../catalog/service-boundary.md) for the full crossing protocol.
 
-```
-SaaS Layer (Upstream)                     Workspace Layer (Downstream)
-─────────────────────────────             ─────────────────────────────
-identity.module  (Identity Provider)      workspace.module
-account.module   (Account / Org)          wbs tasks, issues, CRs
-namespace.module (Path resolution)        file.module, work.module
-settlement.module (AR / AP)               collaboration.module
-notification.module (Inbox routing)       fork.module
-achievement.module (Badge engine)
-─────────────────────────────
-               │  Published Language: typed domain events via Event Bus
-               │  Open Host Service: Workforce Scheduling bridge
-               ▼
+```mermaid
+graph LR
+    subgraph SAAS["⬆ SaaS Layer — Upstream"]
+        direction TB
+        id["identity.module<br/><i>Identity Provider</i>"]
+        acc["account.module<br/><i>Account / Org</i>"]
+        ns["namespace.module<br/><i>Path Resolution</i>"]
+        sett["settlement.module<br/><i>AR / AP</i>"]
+        notif["notification.module<br/><i>Inbox Routing</i>"]
+        ach["achievement.module<br/><i>Badge Engine</i>"]
+    end
+
+    subgraph WS["⬇ Workspace Layer — Downstream"]
+        direction TB
+        ws["workspace.module"]
+        work["work.module / wbs tasks / issues / CRs"]
+        file["file.module"]
+        collab["collaboration.module"]
+        fork["fork.module"]
+    end
+
+    wf["workforce.module<br/><i>Partnership Bridge</i>"]
+
+    SAAS -- "📢 Published Language\n(domain events via Event Bus)" --> WS
+    SAAS <-- "🤝 Open Host Service" --> wf
+    wf -- "WBS skill → org capacity" --> WS
+
+    style SAAS fill:#e8f4f8,stroke:#2980b9,color:#000
+    style WS   fill:#fdf2e9,stroke:#e67e22,color:#000
+    style wf   fill:#e8f8e8,stroke:#27ae60,color:#000
 ```
 
 | Module pair | Pattern | ACL needed? |

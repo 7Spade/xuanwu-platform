@@ -32,8 +32,7 @@ graph TD
 
     subgraph L3["🔧 L3 — 問題管理"]
         GOV["文件治理索引<br/>management/documentation-index.md"]
-        ISS["架構問題<br/>management/issues.md"]
-        CAT["分類問題報告<br/>management/*.md"]
+        ISS["問題追蹤清單<br/>management/issues.md"]
     end
 
     L1 --> L0
@@ -72,7 +71,7 @@ docs/
 │   │   └── document-ai.md
 │   ├── catalog/               ← 業務契約（實體/事件/邊界）
 │   ├── adr/                   ← 架構決策記錄
-│   ├── glossary/              ← 術語詞彙表
+│   ├── glossary/              ← 術語詞彙表（glossary.md 統一詞彙）
 │   ├── diagrams/              ← Mermaid 圖表
 │   ├── README.md              ← 架構導覽索引
 │   └── overview.md            ← 快速參考（新人入門）
@@ -82,7 +81,7 @@ docs/
 └── management/                ← 問題追蹤與文件治理
     ├── documentation-index.md ← 全域文件治理索引
     ├── README.md              ← 目錄說明
-    └── *.md                   ← 各類問題分類報告
+    └── issues.md              ← 全平台問題統一追蹤清單
 ```
 
 ---
@@ -105,8 +104,7 @@ docs/
 | [業務實體目錄](./architecture/catalog/business-entities.md) | 所有 Domain Entity 的規範定義（欄位、不變性約束、Firestore 對應） |
 | [Domain Event 目錄](./architecture/catalog/event-catalog.md) | Domain Event 合約、Payload 規範、Published Language |
 | [服務邊界契約](./architecture/catalog/service-boundary.md) | SaaS ↔ Workspace 邊界協議、跨邊界規則 |
-| [業務術語詞彙表](./architecture/glossary/business-terms.md) | 業務詞彙（中英對照） |
-| [技術術語詞彙表](./architecture/glossary/technical-terms.md) | 技術詞彙（中英對照） |
+| [業務術語詞彙表](./architecture/glossary/glossary.md) | 業務術語與技術術語（中英對照，合併詞彙表） |
 | [ADR 索引](./architecture/adr/README.md) | 架構決策記錄完整清單 |
 
 ---
@@ -129,16 +127,7 @@ docs/
 | 文件 | 職責 |
 |------|------|
 | [文件治理索引](./management/documentation-index.md) | 全域文件 SSOT 定義、分類結構、重複規則、路徑規範 |
-| [架構問題](./management/issues.md) | DDD 違規、mDDD 問題主列表 |
-| [文件缺陷](./management/doc-issues.md) | 失效連結、路徑錯誤、格式問題 |
-| [API 問題](./management/api-issues.md) | API 契約問題 |
-| [欄位問題](./management/fields-issues.md) | 欄位命名與型別問題 |
-| [整合問題](./management/integration-issues.md) | 模組整合問題 |
-| [效能問題](./management/performance-issues.md) | 效能問題 |
-| [安全問題](./management/security-issues.md) | 安全性問題 |
-| [語意問題](./management/semantics-issues.md) | 語意歧義問題 |
-| [UI 問題](./management/ui-issues.md) | UI/UX 問題 |
-| [工作流程問題](./management/workflow-issues.md) | CI/CD 流程問題 |
+| [問題追蹤清單](./management/issues.md) | 全平台問題統一追蹤（架構 DDD、整合、API、安全、效能、欄位、流程、UI、語意、文件） |
 
 ---
 

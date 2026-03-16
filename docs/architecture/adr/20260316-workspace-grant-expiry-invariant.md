@@ -2,7 +2,7 @@
 
 **Date**: 2026-03-16  
 **Status**: Proposed  
-**Source**: `docs/management/security-issues.md` — SEC-001
+**Source**: `docs/management/issues.md` — SEC-001
 
 ---
 
@@ -134,4 +134,4 @@ const allowed = hasWorkspaceAccess(workspace, userId, userTeamIds, now);
 
 - MDHA §2.5 Invariants: `docs/architecture/notes/model-driven-hexagonal-architecture.md`
 - MDHA §8.7 Authorization Boundary
-- Source issue: `docs/management/security-issues.md` (SEC-001) — translated to this ADR and removed
+- Source issue: `docs/management/issues.md` (SEC-001) — translated to this ADR and removed
