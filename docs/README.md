@@ -1,7 +1,19 @@
 # Xuanwu Platform — Documentation Index / 文件索引
 
+> Tags: `docs-index` `taxonomy` `navigation` `ssot`
 > **快速導覽**：本索引按層次分類列出所有專案文件。
 > 詳細文件治理規則請見 [`docs/management/documentation-index.md`](./management/documentation-index.md)。
+
+---
+
+## 快速導覽（集中入口）
+
+| 需求 | 入口文件 |
+|---|---|
+| 架構原則、DDD 詞彙、層次規範（唯一準則） | [Architecture SSOT](./architecture/notes/model-driven-hexagonal-architecture.md) |
+| 架構文件導覽與分類標籤 | [Architecture Navigation Hub](./architecture/README.md) |
+| 新人 1 分鐘架構快覽 | [Architecture Overview](./architecture/overview.md) |
+| 文件治理與防重複規則 | [Documentation Governance](./management/documentation-index.md) |
 
 ---
 
