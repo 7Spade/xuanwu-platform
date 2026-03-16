@@ -1,26 +1,40 @@
 "use client";
 /**
- * OrganizationsView — list of user's organizations with create CTA.
+ * OrganizationsView — lists the current user's organizations with a
+ * create-org CTA that opens an inline dialog.
  *
- * Source: organization.slice/core/_components/
- * Wave 23: wired to real Firestore data via useCurrentAccount + useNamespace.
- * Shows the user's namespace (org card) when it exists; empty state otherwise.
+ * DDD chain:
+ *   Presentation (this view)
+ *     ← Application context: organizations[] via AccountProvider
+ *     → CreateOrgDialog (Presentation) → Application use cases (create account + namespace)
+ *
+ * Data source fixed: uses organizations[] from AccountProvider context
+ * (AccountDTO[]) instead of namespace lookup by personal account ID.
  */
 
+import { useState } from "react";
 import { Building2, Plus, Loader2 } from "lucide-react";
-import Link from "next/link";
+
 import { Button } from "@/design-system/primitives/ui/button";
 import { useTranslation } from "@/shared/i18n";
-import { useCurrentAccount } from "@/modules/account.module/_components/account-provider";
-import { useNamespace } from "./use-namespace";
+import { useCurrentAccount } from "@/modules/account.module";
+import type { AccountDTO } from "@/modules/account.module";
+
 import { OrgCard } from "./org-card";
+import { CreateOrgDialog } from "./create-org-dialog";
 
 export function OrganizationsView() {
   const t = useTranslation("zh-TW");
-  const { account, loading: authLoading } = useCurrentAccount();
-  const { namespace, loading: nsLoading } = useNamespace(account?.id);
+  const { loading: authLoading, orgsLoading, organizations, refreshOrganizations } =
+    useCurrentAccount();
 
-  const loading = authLoading || nsLoading;
+  const loading = authLoading || orgsLoading;
+  const [createOpen, setCreateOpen] = useState(false);
+
+  const handleOrgCreated = async (_org: AccountDTO) => {
+    // Re-fetch the org list from Firestore so the new card appears immediately.
+    await refreshOrganizations();
+  };
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 duration-500 animate-in fade-in">
@@ -33,13 +47,11 @@ export function OrganizationsView() {
           </div>
         </div>
         <Button
-          asChild
           className="gap-2 px-4 text-[11px] font-bold uppercase tracking-widest"
+          onClick={() => setCreateOpen(true)}
         >
-          <Link href="/onboarding">
-            <Plus className="size-4" />
-            {t("organizations.createOrg")}
-          </Link>
+          <Plus className="size-4" />
+          {t("organizations.createOrg")}
         </Button>
       </div>
 
@@ -47,9 +59,11 @@ export function OrganizationsView() {
         <div className="flex items-center justify-center py-20">
           <Loader2 className="size-8 animate-spin text-muted-foreground" />
         </div>
-      ) : namespace ? (
+      ) : organizations.length > 0 ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <OrgCard namespace={namespace} />
+          {organizations.map((org) => (
+            <OrgCard key={org.id} org={org} />
+          ))}
         </div>
       ) : (
         /* Empty state */
@@ -60,14 +74,20 @@ export function OrganizationsView() {
             {t("organizations.noOrgsHint")}
           </p>
           <Button
-            asChild
             size="lg"
             className="mt-8 rounded-full px-8 text-xs font-bold uppercase tracking-widest shadow-lg"
+            onClick={() => setCreateOpen(true)}
           >
-            <Link href="/onboarding">{t("organizations.createOrg")}</Link>
+            {t("organizations.createOrg")}
           </Button>
         </div>
       )}
+
+      <CreateOrgDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreated={handleOrgCreated}
+      />
     </div>
   );
 }

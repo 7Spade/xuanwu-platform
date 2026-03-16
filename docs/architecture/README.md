@@ -11,12 +11,14 @@
 
 **Modular DDD** means every bounded context lives in its own self-contained **Domain Module** under `src/modules/`. Each module exposes a single public `index.ts` barrel; no module imports the internal files of another. This modular boundary is enforced in addition to the 4-layer DDD direction rules (Presentation → Application → Domain ← Infrastructure).
 
+The structural backbone is **Hexagonal Architecture (Ports & Adapters)**: the domain model is surrounded by inbound ports (driven by UI and API) and outbound ports (implemented by infrastructure adapters). Business rules live exclusively in the Domain layer; infrastructure is a plug-in concern. The full design philosophy is documented in the [Model-Driven Hexagonal Architecture guide](./model-driven-hexagonal-architecture.md).
+
 | Concern | Choice |
 |---------|--------|
 | Framework | Next.js 15 (App Router, parallel routing) |
 | Language | TypeScript 5 |
 | UI | React 19, Tailwind CSS v4, shadcn/ui |
-| Design System | Four-tier: primitives / components / patterns / tokens (see [Design System](#design-system)) |
+| Design System | Five-tier: primitives / components / patterns / tokens / layout (see [Design System](#design-system)) |
 | Drag and Drop | `@atlaskit/pragmatic-drag-and-drop` + Visual Indicators (VIs) |
 | Validation | Zod |
 | Backend / DB | Firebase (Firestore, Auth, Storage, App Check) |
@@ -26,6 +28,9 @@
 
 ## Navigation / 文件導覽
 
+- [**Model-Driven Hexagonal Architecture Guide**](./model-driven-hexagonal-architecture.md) — MDDD design philosophy, Ports & Adapters, Context Mapping, and development guide *(start here for architecture questions)*
+- [**Architecture Overview**](./overview.md) — Quick reference for developers new to the repository
+- [**Architecture Issues**](./docs/management/issues.md) — Known architecture issues and resolution status
 - [ADR (Architecture Decision Records)](./adr/README.md) — Architecture decisions and rationale
 - [Architecture Catalog](./catalog/index.md) — Entities, events, and service boundaries
 - [Glossary](./glossary/glossary.md) — Shared business and technical vocabulary
@@ -50,7 +55,7 @@ This project follows a strict 4-layer DDD architecture within each Domain Module
 |-------|----------|----------------|----------------------|
 | **Domain** | `src/modules/<module>/domain.<aggregate>/` | Entities, value objects, aggregates, domain events, port interfaces, domain services | None (pure business logic) |
 | **Application** | `src/modules/<module>/core/_use-cases.ts`, `_actions.ts`, `_queries.ts` | Use cases, application services, DTOs, command/query objects | Domain layer only |
-| **Infrastructure** | `src/modules/<module>/infra.<adapter>/` | Repository implementations, external API adapters, Firebase integration, persistence | Domain + Application port interfaces |
+| **Infrastructure** | `src/modules/<module>/infra.<adapter>/` | Repository implementations, external API adapters, Firebase integration, persistence | Domain layer only (port interfaces + entities for mapping) |
 | **UI / Presentation** | `src/modules/<module>/_components/`, `src/app/` | React components, Next.js pages and route handlers | Application layer (via DTOs) |
 
 ### Layer Direction Rules
@@ -140,7 +145,7 @@ Parallel routes allow multiple pages to render simultaneously in the same layout
 
 ## Design System
 
-The design system lives in `src/design-system/` and follows a **four-tier hierarchy**:
+The design system lives in `src/design-system/` and follows a **five-tier hierarchy**:
 
 | Tier | Location | Contents |
 |------|----------|----------|
@@ -148,12 +153,16 @@ The design system lives in `src/design-system/` and follows a **four-tier hierar
 | **components** | `src/design-system/components/` | Project-specific wrappers that compose or extend primitives with Xuanwu branding and behaviour. |
 | **patterns** | `src/design-system/patterns/` | Higher-order composites built from components (e.g. data tables, sidebars, command palettes). |
 | **tokens** | `src/design-system/tokens/` | Design-token constants: colours, spacing, typography, radii, shadows, z-index, and motion values. Mirrors the CSS custom-properties in `globals.css` / `tailwind.config.ts`. |
+| **layout** | `src/design-system/layout/` | Structural layout shells (base shell, marketing layouts). Composed from lower-tier components. |
+
+`src/design-system/providers/` houses React context providers (e.g. ThemeProvider) consumed across tiers.
 
 ```typescript
 import { Button }        from "@/design-system/primitives";
 import { SearchField }   from "@/design-system/components";
 import { LoginForm }     from "@/design-system/patterns";
 import { colorBrand }    from "@/design-system/tokens";
+import { HomeLayout }    from "@/design-system/layout";
 ```
 
 ### Drag and Drop — `@atlaskit/pragmatic-drag-and-drop`

@@ -1,9 +1,18 @@
 "use client";
 /**
  * NavMain — Primary navigation items in the sidebar.
+ *
+ * Items are derived from the 16 domain modules:
+ *  - Home          → account-level dashboard
+ *  - Workspaces    → workspace.module (core project management)
+ *  - Notifications → notification.module (alerts + mentions)
+ *  - Organizations → namespace.module + account.module (org management)
+ *  - Search        → search.module (global search)
  */
 
 import {
+  Bell,
+  Building2,
   LayoutDashboard,
   Layers,
   Search,
@@ -18,9 +27,13 @@ import {
   SidebarMenuButton,
 } from "@/design-system/primitives/ui/sidebar";
 
+const HOME_ROUTE = "/dashboard";
+
 const NAV_ITEMS = [
-  { href: "/", icon: LayoutDashboard, labelKey: "nav.home" },
+  { href: HOME_ROUTE, icon: LayoutDashboard, labelKey: "nav.home" },
   { href: "/workspaces", icon: Layers, labelKey: "nav.workspaces" },
+  { href: "/notifications", icon: Bell, labelKey: "nav.notifications" },
+  { href: "/organizations", icon: Building2, labelKey: "nav.organizations" },
   { href: "/search", icon: Search, labelKey: "nav.search" },
 ] as const;
 
@@ -36,7 +49,7 @@ export function NavMain() {
             asChild
             isActive={
               pathname === href ||
-              (href !== "/" && pathname.startsWith(href))
+              (href !== HOME_ROUTE && pathname.startsWith(href))
             }
           >
             <Link href={href}>

@@ -82,7 +82,7 @@ describe("filterVisibleWorkspaces", () => {
       makeWorkspace("ws-1", "user-dim", "visible"),
       makeWorkspace("ws-2", "user-dim", "hidden"),
     ];
-    const visible = filterVisibleWorkspaces(workspaces, "acc-1", "user-dim", true, "user", new Set());
+    const visible = filterVisibleWorkspaces(workspaces, "acc-1", "user-dim", true, "personal", new Set());
     expect(visible).toHaveLength(2);
   });
 

@@ -39,5 +39,5 @@ src/modules/<name>.module/
 ## Rules
 
 - Avoid deeply nested directories.
-- Group code by feature rather than by technical layer when possible.
+- Organize code by DDD layer within each module (Domain → Application → Infrastructure → Presentation), not by feature.
 - Keep modules small and cohesive.

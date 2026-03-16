@@ -15,7 +15,7 @@ import { useState } from "react";
 import { useTranslation } from "@/shared/i18n";
 import { Button } from "@/design-system/primitives/ui/button";
 import { Input } from "@/design-system/primitives/ui/input";
-import { useCurrentAccount } from "@/modules/account.module/_components/account-provider";
+import { useCurrentAccount } from "@/modules/account.module";
 import type { WorkspaceDTO } from "@/modules/workspace.module";
 
 import { useWorkspaces } from "./use-workspaces";
@@ -25,6 +25,13 @@ import { CreateWorkspaceDialog } from "./create-workspace-dialog";
 interface WorkspacesViewProps {
   /** The namespace slug, e.g. "my-org". Used to build workspace hrefs. */
   slug: string;
+  /**
+   * The account (dimension) ID whose workspaces to fetch.
+   * When omitted, defaults to the currently active account (org or personal).
+   * Pass this explicitly from AccountWorkspacesPage to respect the active
+   * account context rather than always falling back to the personal account.
+   */
+  dimensionId?: string;
 }
 
 function filterWorkspaces(workspaces: WorkspaceDTO[], query: string): WorkspaceDTO[] {
@@ -37,10 +44,14 @@ function filterWorkspaces(workspaces: WorkspaceDTO[], query: string): WorkspaceD
   );
 }
 
-export function WorkspacesView({ slug }: WorkspacesViewProps) {
+export function WorkspacesView({ slug, dimensionId }: WorkspacesViewProps) {
   const t = useTranslation("zh-TW");
-  const { account } = useCurrentAccount();
-  const { workspaces, loading, error, refresh } = useWorkspaces(account?.id ?? null);
+  const { account, activeAccount } = useCurrentAccount();
+  // Priority: explicit prop → active account (org or personal) → personal account → null.
+  // This lets the caller (AccountWorkspacesPage) pin a specific dimension, while
+  // the fallback chain ensures switching accounts always shows the right workspaces.
+  const effectiveDimensionId = dimensionId ?? activeAccount?.id ?? account?.id ?? null;
+  const { workspaces, loading, error, refresh } = useWorkspaces(effectiveDimensionId);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
@@ -160,9 +171,9 @@ export function WorkspacesView({ slug }: WorkspacesViewProps) {
         </div>
       ) : null}
 
-      {account && (
+      {effectiveDimensionId && (
         <CreateWorkspaceDialog
-          dimensionId={account.id}
+          dimensionId={effectiveDimensionId}
           open={createOpen}
           onOpenChange={setCreateOpen}
           onCreated={() => { refresh(); }}

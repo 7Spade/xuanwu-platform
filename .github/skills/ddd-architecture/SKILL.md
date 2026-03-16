@@ -45,8 +45,7 @@ It covers all four layers and the agent/prompt kit that drives the DDD developme
 ┌─────────────────────┴────────────────────────┐
 │ Infrastructure Layer                         │
 │ src/modules/{module}/infra.{adapter}/        │
-│ src/modules/{module}/infra.outbox/           │
-│ Firestore repos, Event Bus, Outbox, Storage  │
+│ Firestore repos, Redis, QStash adapters      │
 └──────────────────────────────────────────────┘
 ```
 

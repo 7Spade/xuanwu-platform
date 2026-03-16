@@ -385,7 +385,7 @@ export { createWorkspace, getWorkspaceById, ... } from "./_use-cases"; // re-exp
 | 24 | 中（🟡）| 跨模組 Presentation Layer 元件直接依賴 | 3 個元件，3 個模組 | ❌ Open |
 | 25 | 中（🟡）| `useCurrentAccount` 跨模組 Presentation Hook 耦合（壞味道） | 11 個元件，7 個模組 | ❌ Open |
 | 26 | 高（🔴）| 全部 16 個 `core/_actions.ts` 錯誤使用 `'use server'`（僅含 re-export） | 16 個模組 | ✅ Fixed |
-| 27 | 新功能（🔵）| Document AI 基礎設施設計與腳手架（見 `docs/architecture/document-ai.md`） | `file.module`, `src/infrastructure/document-ai/`, `functions/` | ✅ Scaffolded |
+| 27 | 新功能（🔵）| Document AI 基礎設施設計與腳手架（見 `docs/architecture/notes/document-ai.md`） | `file.module`, `src/infrastructure/document-ai/`, `functions/` | ✅ Scaffolded |
 
 ---
 
@@ -429,7 +429,7 @@ startParsingImport / finishParsingImport
 | `src/modules/file.module/_components/document-parser-view.tsx` | Document Parser UI 元件 |
 | `functions/src/document-ai/process-document.fn.ts` | Cloud Function（Phase 1） |
 | `functions/src/index.ts` + `functions/package.json` | Cloud Functions 進入點與套件設定 |
-| `docs/architecture/document-ai.md` | 完整架構設計文件 |
+| `docs/architecture/notes/document-ai.md` | 完整架構設計文件 |
 
 ### 待完成項目
 

@@ -203,3 +203,20 @@ export async function getOrgMembersByHandle(
     return fail(err instanceof Error ? err : new Error(String(err)));
   }
 }
+
+/**
+ * GetOrganizationsByOwnerIdUseCase
+ * Returns all organization accounts owned by the given personal account ID.
+ * Used by the AccountSwitcher to populate the account context list.
+ */
+export async function getOrganizationsByOwnerId(
+  repo: IAccountRepository,
+  ownerId: string,
+): Promise<Result<AccountDTO[]>> {
+  try {
+    const entities = await repo.findOrganizationsByOwnerId(ownerId as AccountId);
+    return ok(entities.map(entityToDTO));
+  } catch (err) {
+    return fail(err instanceof Error ? err : new Error(String(err)));
+  }
+}

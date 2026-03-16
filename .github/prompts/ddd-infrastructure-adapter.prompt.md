@@ -36,7 +36,7 @@ This prompt drives Step 3 of the DDD cycle: implement port interfaces with concr
 
 ## Output Contract
 
-- Adapter class in `src/modules/{module}/infra.*/` or `src/modules/{module}/infra.outbox/`.
+- Adapter class in `src/modules/{module}/infra.{adapter}/` (named after the concrete technology, e.g. `infra.firestore/`).
 - Port interface in `src/modules/{module}/domain.*/_ports.ts` (if new).
 - Adapter tests using Firestore emulator or mocks.
 

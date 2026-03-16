@@ -1,6 +1,6 @@
 ---
 name: ddd-slice-scaffold
-description: 'Scaffold a complete DDD-structured domain module with all four layers: Domain (entities/VOs), Application (use cases/actions), Infrastructure (repository/outbox), and Presentation (components/index).'
+description: 'Scaffold a complete DDD-structured domain module with all four layers: Domain (entities/VOs/ports), Application (use cases/actions/DTOs), Infrastructure (repository/mapper), and Presentation (components/index).'
 agent: 'ddd-orchestrator'
 argument-hint: 'Slice name and main aggregate, e.g.: reporting.module ReportEntity | billing.module InvoiceEntity'
 ---
@@ -16,22 +16,21 @@ src/modules/{module-name}.module/
 ├── index.ts                         ← Public API (Presentation exports only)
 │
 ├── domain.{context}/                ← Step 1: Domain Layer
-│   ├── _entity.ts                   ← Aggregate Root
-│   ├── _value-objects.ts            ← Value Objects
+│   ├── _entity.ts                   ← Aggregate Root + Entities
+│   ├── _value-objects.ts            ← Value Objects (immutable, self-validating)
 │   ├── _service.ts                  ← Domain Service (if needed)
-│   └── _events.ts                   ← Domain Events
+│   ├── _events.ts                   ← Domain Event definitions
+│   └── _ports.ts                    ← Outbound Port interfaces (IRepository, IEventBus)
 │
 ├── core/                            ← Step 2: Application Layer
-│   ├── _use-cases.ts                ← Use Case functions
-│   ├── _actions.ts                  ← Server Actions (Next.js)
-│   └── _queries.ts                  ← Read queries
+│   ├── _use-cases.ts                ← Use Case orchestration
+│   ├── _actions.ts                  ← Server Actions (thin adapter → use case)
+│   ├── _queries.ts                  ← Read queries (CQRS read side)
+│   └── _dto.ts                      ← Data Transfer Objects
 │
-├── infra.outbox/                    ← Step 3: Infrastructure Layer
-│   ├── _outbox-writer.ts            ← Transactional Outbox [S1]
-│   └── _repository.ts               ← Firestore Repository adapter
-│
-├── core.event-bus/                  ← Integration Event contracts
-│   └── _events.ts
+├── infra.{adapter}/                 ← Step 3: Infrastructure Layer (one folder per adapter)
+│   ├── _repository.ts               ← Repository implementation (Firestore, etc.)
+│   └── _mapper.ts                   ← Domain ↔ Persistence mapper
 │
 └── _components/                     ← Step 4: Presentation Layer
     ├── {SliceName}View.tsx           ← Main container component
@@ -43,7 +42,7 @@ src/modules/{module-name}.module/
 1. Read domain glossary from `docs/architecture/catalog/business-entities.md` and `docs/architecture/glossary/business-terms.md`.
 2. **Domain Layer** (ddd-domain-modeler): Entity + VOs + Events.
 3. **Application Layer** (ddd-application-layer): Use cases + Server Actions + Queries.
-4. **Infrastructure Layer** (ddd-infrastructure): Repository + Outbox + EventBus adapters.
+4. **Infrastructure Layer** (ddd-infrastructure): Repository adapter + persistence mapper.
 5. **Presentation Layer** (xuanwu-ui): Components calling server actions.
 6. **Public API**: Wire `index.ts` to expose only Presentation exports.
 7. **Register**: Add slice to `src/modules/README.md`.

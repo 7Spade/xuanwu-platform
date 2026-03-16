@@ -1,7 +1,11 @@
 # Service Boundary / 服務邊界定義
 
 Defines the contractual boundary between the SaaS Layer and Workspace Layer,
-including ownership rules, crossing protocols, and the Workforce Scheduling bridge.
+including ownership rules, crossing protocols, Workforce Scheduling bridge, and Context Mapping patterns.
+
+> **MDDD reference**: Context Mapping terminology used in this document is defined in the
+> [Technical Glossary — Context Mapping Patterns](../glossary/technical-terms.md#context-mapping-patterns--上下文映射模式)
+> and the [Model-Driven Hexagonal Architecture guide](../model-driven-hexagonal-architecture.md#6-context-mapping-in-xuanwu).
 
 ---
 
@@ -175,3 +179,34 @@ The Workspace Layer does not know whether AR or AP records were created.
 | `settlement_records` | SaaS | Read: OrgOwner. Write: system only. |
 | `ar_records` | SaaS | Read: OrgOwner. Write: system only. |
 | `ap_records` | SaaS | Read: OrgOwner, Assignee (own). Write: system only. |
+
+---
+
+## Context Map / 上下文映射圖
+
+This table records the **integration relationship pattern** between every pair of Bounded Contexts that directly communicate. For pattern definitions see the [Technical Glossary](../glossary/technical-terms.md#context-mapping-patterns--上下文映射模式).
+
+| Upstream Context | Downstream Context | Pattern | Notes |
+|------------------|--------------------|---------|-------|
+| `identity.module` | `account.module` | **Upstream / Downstream + ACL** | `account.module` translates Firebase Auth user into `AccountDTO`; the ACL lives in `infra.firebase/_mapper.ts` |
+| `account.module` | `namespace.module` | **Customer / Supplier** | `namespace.module` negotiates slug-path resolution contracts with `account.module` |
+| `account.module` | `workspace.module` | **Upstream / Downstream + ACL** | `workspace.module` translates org/user identities into workspace-scoped `WorkspaceMember`; ACL in `infra.firestore/_mapper.ts` |
+| `workspace.module` | `settlement.module` | **Open Host Service (Event Bus)** | `settlement.module` subscribes to `wbs.task.state_changed{toState:"accepted"}` via Published Language; no direct coupling |
+| `workspace.module` | `notification.module` | **Open Host Service (Event Bus)** | `notification.module` subscribes to workspace events; uses only event payload, no workspace domain objects |
+| `workspace.module` ↔ `workforce.module` | — | **Partnership (Bridge)** | Workforce Scheduling reads from both layers by design; co-evolved under mutual interface agreement |
+| `account.module` | `achievement.module` | **Open Host Service (Event Bus)** | Achievement engine reacts to qualifying activity events; writes badges back via `IAccountBadgeWritePort` (ACL port) |
+| `workspace.module` | `audit.module` | **Conformist** | Audit module records events exactly as emitted without translation |
+| `workspace.module` | `search.module` | **Open Host Service (Event Bus)** | Search subscribes to entity-created / entity-updated events to maintain the search index |
+| `workspace.module` | `collaboration.module` | **Partnership** | Collaboration attaches to workspace entities; both modules co-evolve presence and co-editing contracts |
+| `workspace.module` | `social.module` | **Conformist (event consumer)** | Social feed subscribes to public workspace events without model translation |
+| `(all modules)` | `notification.module` | **Published Language** | All event payloads use `EventEnvelope` — the Published Language shared across all contexts |
+| `(all modules)` | `src/shared/` | **Shared Kernel** | `AppError`, `Result<T,E>`, `PaginatedResult`, i18n utilities, and port interfaces in `src/shared/` form the Shared Kernel |
+
+### Anticorruption Layer Implementation Sites
+
+| ACL Location | Translates | From | To |
+|-------------|------------|------|----|
+| `identity.module/infra.firebase/_mapper.ts` | Firebase Auth user | `FirebaseUser` (external) | `IdentityUser` (domain) |
+| `account.module/infra.firestore/_repository.ts` | Firestore document | `DocumentData` | `AccountDTO` |
+| `workspace.module/infra.firestore/_repository.ts` | Firestore document | `DocumentData` | `Workspace` aggregate |
+| `workforce.module/infra.*/` | Org capacity data | SaaS org model | WBS skill/time-window terms |

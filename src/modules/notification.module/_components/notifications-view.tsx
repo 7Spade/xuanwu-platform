@@ -10,7 +10,7 @@
 import { Bell, Loader2 } from "lucide-react";
 import { Button } from "@/design-system/primitives/ui/button";
 import { useTranslation } from "@/shared/i18n";
-import { useCurrentAccount } from "@/modules/account.module/_components/account-provider";
+import { useCurrentAccount } from "@/modules/account.module";
 import { useNotifications } from "./use-notifications";
 import { NotificationItem } from "./notification-item";
 

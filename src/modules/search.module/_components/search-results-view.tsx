@@ -25,7 +25,7 @@ import { Clock, File, History, Search, Trash2, X } from "lucide-react";
 import { Input } from "@/design-system/primitives/ui/input";
 import { Badge } from "@/design-system/primitives/ui/badge";
 import { useTranslation } from "@/shared/i18n";
-import { useCurrentAccount } from "@/modules/account.module/_components/account-provider";
+import { useCurrentAccount } from "@/modules/account.module";
 import { FirestoreSearchQueryAdapter } from "@/modules/search.module/infra.firestore/_repository";
 import { executeSearch } from "@/modules/search.module/core/_use-cases";
 import type { SearchResultDTO } from "@/modules/search.module/core/_use-cases";

@@ -1,12 +1,12 @@
 "use client";
 /**
- * OrgCard — displays an organization/namespace summary card.
+ * OrgCard — displays an organization account summary card.
  *
- * Source equivalent: organization.slice/core/_components/org-card.tsx
- * Adapted: uses FirestoreNamespaceRepository DTO, design-system primitives, i18n.
+ * Receives an AccountDTO for an org account. Links to /{org.handle} for the
+ * org's workspace/settings pages.
  */
 
-import { Building2, ArrowRight, Layers } from "lucide-react";
+import { Building2, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 import { useTranslation } from "@/shared/i18n";
@@ -17,15 +17,15 @@ import {
   CardContent,
   CardHeader,
 } from "@/design-system/primitives/ui/card";
-import type { NamespaceDTO } from "@/modules/namespace.module/core/_use-cases";
+import type { AccountDTO } from "@/modules/account.module";
 
 interface OrgCardProps {
-  namespace: NamespaceDTO;
+  org: AccountDTO;
 }
 
-export function OrgCard({ namespace }: OrgCardProps) {
+export function OrgCard({ org }: OrgCardProps) {
   const t = useTranslation("zh-TW");
-  const href = `/${namespace.slug}`;
+  const href = `/${org.handle ?? org.id}/workspaces`;
 
   return (
     <Card className="group relative flex h-full flex-col overflow-hidden border-border/60 bg-card/80 shadow-sm transition-all duration-200 hover:border-primary/30 hover:shadow-md">
@@ -36,28 +36,23 @@ export function OrgCard({ namespace }: OrgCardProps) {
       <CardHeader className="flex flex-row items-start justify-between gap-2 p-4 pb-2">
         <div className="min-w-0 flex-1">
           <h3 className="truncate font-semibold leading-tight tracking-tight">
-            {namespace.slug}
+            {org.displayName}
           </h3>
-          <p className="mt-0.5 truncate text-[10px] font-mono text-muted-foreground/60">
-            /{namespace.slug}
-          </p>
+          {org.handle && (
+            <p className="mt-0.5 truncate text-[10px] font-mono text-muted-foreground/60">
+              /{org.handle}
+            </p>
+          )}
         </div>
         <Badge
           variant="outline"
           className="h-5 shrink-0 px-2 text-[10px] font-bold uppercase tracking-wider"
         >
-          {namespace.ownerType}
+          {t("sidebar.organization")}
         </Badge>
       </CardHeader>
 
       <CardContent className="flex flex-1 flex-col justify-between gap-3 px-4 pb-4 pt-0">
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Layers className="size-3" />
-          <span>
-            {namespace.workspaceCount}&nbsp;{t("organizations.workspaces")}
-          </span>
-        </div>
-
         <div className="flex items-center justify-end">
           <Button
             asChild

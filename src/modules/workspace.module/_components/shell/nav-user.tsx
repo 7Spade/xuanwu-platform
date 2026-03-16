@@ -11,7 +11,7 @@ import { UserCircle, LogOut, ChevronsUpDown, Bell, Building2, ShieldCheck } from
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { useCurrentAccount } from "@/modules/account.module/_components/account-provider";
+import { useCurrentAccount } from "@/modules/account.module";
 import { useTranslation } from "@/shared/i18n";
 import { Avatar, AvatarFallback, AvatarImage } from "@/design-system/primitives/ui/avatar";
 import {

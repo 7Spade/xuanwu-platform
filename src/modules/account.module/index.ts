@@ -17,6 +17,7 @@ export {
   updateAccountProfile,
   getAccountById,
   getPublicProfile,
+  getOrganizationsByOwnerId,
 } from "./core/_use-cases";
 
 // Port interfaces (for infrastructure adapter implementors)
@@ -26,3 +27,7 @@ export type {
   IAccountBadgeWritePort,
   IMembershipRepository,
 } from "./domain.account/_ports";
+
+// Presentation hook — stable public API for cross-module session access
+export { useCurrentAccount } from "./_components/account-provider";
+export type { AccountContextValue } from "./_components/account-provider";

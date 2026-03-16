@@ -1,8 +1,8 @@
 # design-system — File Index
 
 **層次**: 設計系統 / Design System
-**職責**: 提供 UI 元件的四層結構（primitives → components → patterns → tokens），確保設計一致性。
-**架構**: Four-tier hierarchy — `primitives`（raw shadcn/ui 元件）→ `components`（專案特定包裝）→ `patterns`（高階 UI 複合體）→ `tokens`（設計常數）。
+**職責**: 提供 UI 元件的五層結構（primitives → components → patterns → tokens → layout）加上 providers，確保設計一致性。
+**架構**: Five-tier hierarchy — `primitives`（raw shadcn/ui 元件）→ `components`（專案特定包裝）→ `patterns`（高階 UI 複合體）→ `tokens`（設計常數）→ `layout`（結構版面殼層）；`providers/` 放 React context providers。
 **匯入規則**: 從對應層次匯入，例如 `import { Button } from "@/design-system/primitives"`，或直接使用 `@/design-system` barrel。
 
 ---

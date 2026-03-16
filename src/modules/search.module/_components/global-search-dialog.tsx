@@ -25,7 +25,7 @@ import { useTranslation } from "@/shared/i18n";
 import { FirestoreSearchQueryAdapter } from "@/modules/search.module/infra.firestore/_repository";
 import { executeSearch } from "@/modules/search.module/core/_use-cases";
 import type { SearchResultDTO } from "@/modules/search.module/core/_use-cases";
-import { useCurrentAccount } from "@/modules/account.module/_components/account-provider";
+import { useCurrentAccount } from "@/modules/account.module";
 
 let _adapter: FirestoreSearchQueryAdapter | null = null;
 function getRepo() {

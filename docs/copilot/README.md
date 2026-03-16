@@ -7,6 +7,7 @@ Xuanwu 平台的 GitHub Copilot 客製化完整文件，包含代理架構、智
 | 文件 | 說明 |
 |------|------|
 | 本文件 | 總覽與快速導航 |
+| [`mcp.md`](./docs/copilot/mcp.md) | GitHub Coding Agent 完整 MCP 設定（可直接貼至 GitHub 設定頁） |
 | `.github/README.md` | 倉庫維護指南（customization 結構、資料夾規則） |
 | `.github/copilot-instructions.md` | 全域 always-on 規則 |
 | `AGENTS.md` | 多代理共用約定 |
