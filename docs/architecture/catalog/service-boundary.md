@@ -4,7 +4,7 @@ Defines the contractual boundary between the SaaS Layer and Workspace Layer,
 including ownership rules, crossing protocols, Workforce Scheduling bridge, and Context Mapping patterns.
 
 > **MDDD reference**: Context Mapping terminology used in this document is defined in the
-> [Technical Glossary — Context Mapping Patterns](../glossary/technical-terms.md#context-mapping-patterns--上下文映射模式)
+> [Glossary — Context Mapping Patterns](../glossary/glossary.md#context-mapping-patterns--上下文映射模式)
 > and the [Model-Driven Hexagonal Architecture guide](../notes/model-driven-hexagonal-architecture.md#6-context-mapping-in-xuanwu).
 
 ---
@@ -163,7 +163,7 @@ The Workspace Layer does not know whether AR or AP records were created.
 
 ## Firestore Security Rules Strategy / Firestore 安全規則策略
 
-> **⚠️ Implementation status**: The table below describes the **intended / target** security rules for each collection. The current `firestore.rules` file is minimal — it only covers the legacy `/users/{userId}` path with a catch-all deny rule. Full multi-collection rules implementation is a pending security task. See `docs/management/security-issues.md` for tracked gaps. Do **not** treat this table as reflecting the live production rules.
+> **⚠️ Implementation status**: The table below describes the **intended / target** security rules for each collection. The current `firestore.rules` file is minimal — it only covers the legacy `/users/{userId}` path with a catch-all deny rule. Full multi-collection rules implementation is a pending security task. See [`docs/management/issues.md` § SEC-007](../../management/issues.md) for tracked gaps. Do **not** treat this table as reflecting the live production rules.
 
 | Collection | Owner layer | Rule summary |
 |------------|-------------|--------------|
@@ -189,7 +189,7 @@ The Workspace Layer does not know whether AR or AP records were created.
 
 ## Context Map / 上下文映射圖
 
-This table records the **integration relationship pattern** between every pair of Bounded Contexts that directly communicate. For pattern definitions see the [Technical Glossary](../glossary/technical-terms.md#context-mapping-patterns--上下文映射模式).
+This table records the **integration relationship pattern** between every pair of Bounded Contexts that directly communicate. For pattern definitions see the [Glossary — Context Mapping Patterns](../glossary/glossary.md#context-mapping-patterns--上下文映射模式).
 
 | Upstream Context | Downstream Context | Pattern | Notes |
 |------------------|--------------------|---------|-------|

@@ -20,7 +20,7 @@ graph LR
         ENT["業務實體目錄"]
         EVT["事件目錄"]
         SVC["服務邊界"]
-        GLO["術語詞彙表"]
+        GLO["術語詞彙表<br/>glossary/glossary.md"]
         ADR["ADR 記錄"]
     end
 
@@ -96,8 +96,7 @@ graph LR
 | **業務實體目錄** | `docs/architecture/catalog/business-entities.md` | 所有 Domain Entity 的規範定義 |
 | **事件目錄** | `docs/architecture/catalog/event-catalog.md` | Domain Event 合約與 Payload 規範 |
 | **服務邊界** | `docs/architecture/catalog/service-boundary.md` | SaaS ↔ Workspace 邊界協議 |
-| **業務術語** | `docs/architecture/glossary/business-terms.md` | 業務詞彙（中/英） |
-| **技術術語** | `docs/architecture/glossary/technical-terms.md` | 技術詞彙（中/英） |
+| **業務術語** | `docs/architecture/glossary/glossary.md` | 業務與技術術語（中/英，合併詞彙表） |
 | **圖表** | `docs/architecture/diagrams/` | Mermaid 原始圖表 |
 | **架構筆記** | `docs/architecture/notes/` | 深度設計說明（SSOT + 補充文件） |
 
@@ -116,16 +115,7 @@ graph LR
 |------|------|------|
 | **本索引** | `docs/management/documentation-index.md` | 全域文件治理（唯一） |
 | **目錄說明** | `docs/management/README.md` | 目錄導覽 |
-| **架構問題** | `docs/management/issues.md` | DDD 違規、mDDD 問題主列表 |
-| **文件缺陷** | `docs/management/doc-issues.md` | 失效連結、路徑錯誤、格式問題 |
-| **API 問題** | `docs/management/api-issues.md` | API 契約問題 |
-| **欄位問題** | `docs/management/fields-issues.md` | 欄位命名與型別問題 |
-| **整合問題** | `docs/management/integration-issues.md` | 模組整合問題 |
-| **效能問題** | `docs/management/performance-issues.md` | 效能問題 |
-| **安全問題** | `docs/management/security-issues.md` | 安全性問題 |
-| **語意問題** | `docs/management/semantics-issues.md` | 語意歧義問題 |
-| **UI 問題** | `docs/management/ui-issues.md` | UI/UX 問題 |
-| **工作流程問題** | `docs/management/workflow-issues.md` | CI/CD 流程問題 |
+| **問題追蹤清單** | `docs/management/issues.md` | 全平台問題統一追蹤（架構、整合、API、安全、效能、欄位、流程、UI、語意、文件） |
 
 ---
 
@@ -144,7 +134,7 @@ graph LR
 | Domain Entity 規範定義 | `docs/architecture/catalog/business-entities.md` |
 | Domain Event 合約 | `docs/architecture/catalog/event-catalog.md` |
 | SaaS ↔ Workspace 邊界規則 | `docs/architecture/catalog/service-boundary.md` |
-| 術語解釋 | `docs/architecture/glossary/` |
+| 術語解釋 | `docs/architecture/glossary/glossary.md` |
 | GitHub Coding Agent MCP JSON 設定 | `docs/copilot/mcp.md` |
 
 其他文件可以**引用**以上內容（加上連結），但不應**重複描述**相同內容。

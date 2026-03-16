@@ -2,7 +2,7 @@
 
 **Date**: 2026-03-16  
 **Status**: Proposed  
-**Source**: `docs/management/semantics-issues.md` — SEM-001, SEM-006
+**Source**: `docs/management/issues.md` — SEM-001, SEM-006
 
 ---
 
@@ -45,7 +45,7 @@ Generic cross-cutting modules (`audit.module`, `search.module`) cannot reliably 
 | `ScheduleAssignment.status` | (retain or rename to `approvalStatus`) | Evaluated in ADR for `workforce.module` refinement |
 | `ForkEntity.status` | (retain) | Already has dedicated `ForkStatus` type; semantics are clear |
 
-### 2. Establish canonical lifecycle naming rules in `docs/architecture/glossary/technical-terms.md`
+### 2. Establish canonical lifecycle naming rules in `docs/architecture/glossary/glossary.md`
 
 | Field convention | When to use | Example |
 |------------------|-------------|---------|
@@ -90,5 +90,5 @@ Generic cross-cutting modules (`audit.module`, `search.module`) cannot reliably 
 
 - MDHA §2.2 Ubiquitous Language: `docs/architecture/notes/model-driven-hexagonal-architecture.md`
 - MDHA §2.5 Invariants: enforcing correct state representations is part of domain invariant enforcement
-- Glossary: `docs/architecture/glossary/technical-terms.md`
-- Source issues: `docs/management/semantics-issues.md` (SEM-001, SEM-006) — translated to this ADR and removed
+- Glossary: `docs/architecture/glossary/glossary.md`
+- Source issues: `docs/management/issues.md` (SEM-001, SEM-006) — translated to this ADR and removed
