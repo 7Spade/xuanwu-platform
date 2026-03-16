@@ -20,7 +20,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/design-system/primitives/ui/sidebar";
-import { useCurrentAccount } from "@/modules/account.module/_components/account-provider";
+import { useCurrentAccount } from "@/modules/account.module";
 
 import { useWorkspaces } from "../use-workspaces";
 

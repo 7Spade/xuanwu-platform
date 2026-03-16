@@ -17,7 +17,7 @@ import { Building2, Plus, Loader2 } from "lucide-react";
 
 import { Button } from "@/design-system/primitives/ui/button";
 import { useTranslation } from "@/shared/i18n";
-import { useCurrentAccount } from "@/modules/account.module/_components/account-provider";
+import { useCurrentAccount } from "@/modules/account.module";
 import type { AccountDTO } from "@/modules/account.module";
 
 import { OrgCard } from "./org-card";

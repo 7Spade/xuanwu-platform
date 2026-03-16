@@ -15,7 +15,7 @@ import { useState } from "react";
 import { useTranslation } from "@/shared/i18n";
 import { Button } from "@/design-system/primitives/ui/button";
 import { Input } from "@/design-system/primitives/ui/input";
-import { useCurrentAccount } from "@/modules/account.module/_components/account-provider";
+import { useCurrentAccount } from "@/modules/account.module";
 import type { WorkspaceDTO } from "@/modules/workspace.module";
 
 import { useWorkspaces } from "./use-workspaces";

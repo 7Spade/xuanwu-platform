@@ -10,7 +10,7 @@ import { useCallback, useEffect, useState } from "react";
 import { BookOpen, Loader2, Plus } from "lucide-react";
 import { Button } from "@/design-system/primitives/ui/button";
 import { useTranslation } from "@/shared/i18n";
-import { useCurrentAccount } from "@/modules/account.module/_components/account-provider";
+import { useCurrentAccount } from "@/modules/account.module";
 import { FirestoreDailyLogRepository } from "@/modules/workspace.module/infra.firestore/_daily-log-repository";
 import { getDailyLogs } from "@/modules/workspace.module/core/_daily-log-use-cases";
 import type { DailyLogDTO } from "@/modules/workspace.module/core/_daily-log-use-cases";

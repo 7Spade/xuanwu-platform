@@ -16,7 +16,7 @@ import { MessageSquare, Send, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/design-system/primitives/ui/button";
 import { Textarea } from "@/design-system/primitives/ui/textarea";
 import { useTranslation } from "@/shared/i18n";
-import { useCurrentAccount } from "@/modules/account.module/_components/account-provider";
+import { useCurrentAccount } from "@/modules/account.module";
 import { useComments } from "./use-comments";
 import { postComment } from "@/modules/collaboration.module/core/_use-cases";
 import { FirestoreCommentRepository } from "@/modules/collaboration.module/infra.firestore/_repository";

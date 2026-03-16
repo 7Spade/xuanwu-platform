@@ -28,7 +28,7 @@ import { Button } from "@/design-system/primitives/ui/button";
 import { Input } from "@/design-system/primitives/ui/input";
 import { Label } from "@/design-system/primitives/ui/label";
 import { useTranslation } from "@/shared/i18n";
-import { useCurrentAccount } from "@/modules/account.module/_components/account-provider";
+import { useCurrentAccount } from "@/modules/account.module";
 import type { AccountDTO } from "@/modules/account.module";
 import { createOrganizationAccount } from "@/modules/account.module";
 import { FirestoreAccountRepository } from "@/modules/account.module/infra.firestore/_repository";

@@ -48,7 +48,7 @@ import {
   SelectValue,
 } from "@/design-system/primitives/ui/select";
 import { useTranslation } from "@/shared/i18n";
-import { useCurrentAccount } from "@/modules/account.module/_components/account-provider";
+import { useCurrentAccount } from "@/modules/account.module";
 import { FirestoreIssueRepository } from "@/modules/workspace.module/infra.firestore/_issue-repository";
 import {
   getIssues,

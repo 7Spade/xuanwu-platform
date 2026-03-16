@@ -8,7 +8,7 @@
  */
 
 import { Loader2 } from "lucide-react";
-import { useCurrentAccount } from "@/modules/account.module/_components/account-provider";
+import { useCurrentAccount } from "@/modules/account.module";
 import { WorkspacesView } from "@/modules/workspace.module/_components/workspaces-view";
 
 export function AccountWorkspacesPage() {
