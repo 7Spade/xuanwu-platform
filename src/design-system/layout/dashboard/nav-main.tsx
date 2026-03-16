@@ -1,49 +1,60 @@
 "use client";
 /**
- * NavMain — Pure UI component for primary navigation.
+ * NavMain — Primary navigation items in the sidebar.
  *
- * Props-based design: accepts nav items and active pathname as props.
- * Suitable for inclusion in design-system layouts.
- *
- * For the orchestrated version with routing logic, see:
- * src/modules/workspace.module/_components/shell/nav-main.tsx
+ * Items are derived from the 16 domain modules:
+ *  - Home          → account-level dashboard
+ *  - Workspaces    → workspace.module (core project management)
+ *  - Notifications → notification.module (alerts + mentions)
+ *  - Organizations → namespace.module + account.module (org management)
+ *  - Search        → search.module (global search)
  */
 
-import type { LucideIcon } from "lucide-react";
+import {
+  Bell,
+  Building2,
+  LayoutDashboard,
+  Layers,
+  Search,
+} from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
+import { useTranslation } from "@/shared/i18n";
 import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@/design-system/primitives/ui/sidebar";
 
-export interface NavMainItem {
-  href: string;
-  icon: LucideIcon;
-  label: string;
-}
+const HOME_ROUTE = "/dashboard";
 
-export interface NavMainProps {
-  items: NavMainItem[];
-  pathname: string;
-  homeRoute?: string;
-}
+const NAV_ITEMS = [
+  { href: HOME_ROUTE, icon: LayoutDashboard, labelKey: "nav.home" },
+  { href: "/workspaces", icon: Layers, labelKey: "nav.workspaces" },
+  { href: "/notifications", icon: Bell, labelKey: "nav.notifications" },
+  { href: "/organizations", icon: Building2, labelKey: "nav.organizations" },
+  { href: "/search", icon: Search, labelKey: "nav.search" },
+] as const;
 
-export function NavMain({ items, pathname, homeRoute = "/dashboard" }: NavMainProps) {
+export function NavMain() {
+  const pathname = usePathname();
+  const t = useTranslation("zh-TW");
+
   return (
     <SidebarMenu>
-      {items.map(({ href, icon: Icon, label }) => (
+      {NAV_ITEMS.map(({ href, icon: Icon, labelKey }) => (
         <SidebarMenuItem key={href}>
           <SidebarMenuButton
             asChild
             isActive={
-              pathname === href || (href !== homeRoute && pathname.startsWith(href))
+              pathname === href ||
+              (href !== HOME_ROUTE && pathname.startsWith(href))
             }
           >
             <Link href={href}>
               <Icon />
-              <span className="font-semibold">{label}</span>
+              <span className="font-semibold">{t(labelKey)}</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>

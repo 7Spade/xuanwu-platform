@@ -1,57 +1,56 @@
 "use client";
 /**
- * NavTopWorkspaces — Pure UI component for workspace navigation list.
+ * NavTopWorkspaces — sidebar section listing the top workspaces (up to 10)
+ * for the currently active account.
  *
- * Props-based design: accepts workspace data and expansion state.
- * For the orchestrated version with data fetching, see:
- * src/modules/workspace.module/_components/shell/nav-top-workspaces.tsx
+ * Behaviour:
+ *  - Shows the first 2 workspaces immediately.
+ *  - Workspaces 3–10 are revealed when the user clicks "Show more".
+ *  - Clicking any workspace navigates to its WBS view.
+ *  - A loading skeleton is shown while workspaces are fetching.
  */
 
-import { Layers } from "lucide-react";
+import { Layers, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
+import { useTranslation } from "@/shared/i18n";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/design-system/primitives/ui/sidebar";
+import { useCurrentAccount } from "@/modules/account.module";
 
-export interface Workspace {
-  id: string;
-  name: string;
-}
-
-export interface NavTopWorkspacesProps {
-  workspaces: Workspace[];
-  slug: string; // dimensionId or account handle for URL
-  loading?: boolean;
-  expanded?: boolean;
-  onExpandedChange?: (expanded: boolean) => void;
-  showMoreLabel?: string;
-  showLessLabel?: string;
-  initialVisible?: number;
-  maxVisible?: number;
-}
+import { useWorkspaces, type UseWorkspacesResult } from "@/modules/workspace.module/_components/use-workspaces";
 
 const INITIAL_VISIBLE = 2;
 const MAX_VISIBLE = 10;
 
-export function NavTopWorkspaces({
-  workspaces,
-  slug,
-  loading = false,
-  expanded = false,
-  onExpandedChange,
-  showMoreLabel = "Show more",
-  showLessLabel = "Show less",
-  initialVisible = INITIAL_VISIBLE,
-  maxVisible = MAX_VISIBLE,
-}: NavTopWorkspacesProps) {
-  const capped = workspaces.slice(0, maxVisible);
-  const visible = expanded ? capped : capped.slice(0, initialVisible);
-  const hasMore = capped.length > initialVisible;
+export function NavTopWorkspaces() {
+  const t = useTranslation("zh-TW");
+  const { account, activeAccount } = useCurrentAccount();
 
-  if (loading || capped.length === 0) {
+  const dimensionId = activeAccount?.id ?? account?.id ?? null;
+  const slug = (activeAccount?.handle ?? account?.handle ?? dimensionId) ?? "";
+
+  const { workspaces, loading } = useWorkspaces(dimensionId);
+  const [expanded, setExpanded] = useState(false);
+
+  const capped = workspaces.slice(0, MAX_VISIBLE);
+  const visible = expanded ? capped : capped.slice(0, INITIAL_VISIBLE);
+  const hasMore = capped.length > INITIAL_VISIBLE;
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground">
+        <Loader2 className="size-3 animate-spin" />
+        <span className="truncate">{t("nav.topWorkspaces")}</span>
+      </div>
+    );
+  }
+
+  if (capped.length === 0) {
     return null;
   }
 
@@ -71,11 +70,11 @@ export function NavTopWorkspaces({
       {hasMore && (
         <SidebarMenuItem>
           <SidebarMenuButton
-            onClick={() => onExpandedChange?.(!expanded)}
+            onClick={() => setExpanded((v) => !v)}
             className="text-muted-foreground"
           >
             <span className="text-xs font-medium">
-              {expanded ? showLessLabel : showMoreLabel}
+              {expanded ? t("nav.showLess") : t("nav.showMore")}
             </span>
           </SidebarMenuButton>
         </SidebarMenuItem>

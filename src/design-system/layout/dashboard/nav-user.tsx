@@ -1,15 +1,20 @@
 "use client";
 /**
- * NavUser — Pure UI component for user menu in sidebar footer.
+ * NavUser — Authenticated user menu in the sidebar footer.
+ * Shows user avatar, name, and logout option.
  *
- * Props-based: accepts user data and action handlers.
- * For the orchestrated version with auth/account hooks, see:
- * src/modules/workspace.module/_components/shell/nav-user.tsx
+ * Aggregates from:
+ * - account.module: useCurrentAccount() → user profile data
+ * - identity.module: clientSignOut() → Firebase logout
+ * - next/navigation: useRouter → post-logout navigation
  */
 
 import { UserCircle, LogOut, ChevronsUpDown, Bell, Building2, ShieldCheck } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
+import { useCurrentAccount } from "@/modules/account.module";
+import { useTranslation } from "@/shared/i18n";
 import { Avatar, AvatarFallback, AvatarImage } from "@/design-system/primitives/ui/avatar";
 import {
   DropdownMenu,
@@ -25,50 +30,23 @@ import {
   SidebarMenuButton,
   useSidebar,
 } from "@/design-system/primitives/ui/sidebar";
+import { clientSignOut } from "@/modules/identity.module/_client-actions";
 
-export interface NavUserProps {
-  displayName: string;
-  email: string;
-  photoURL?: string | null;
-  isMobile?: boolean;
-  onLogout?: () => Promise<void>;
-  labels?: {
-    account?: string;
-    profile?: string;
-    notifications?: string;
-    organizations?: string;
-    settings?: string;
-    logout?: string;
-  };
-}
-
-export function NavUser({
-  displayName,
-  email,
-  photoURL,
-  isMobile: isStatic,
-  onLogout,
-  labels = {},
-}: NavUserProps) {
+export function NavUser() {
   const { isMobile } = useSidebar();
-  const mobile = isStatic ?? isMobile;
-  const initial = (displayName || email || "?")[0].toUpperCase();
-
-  const defaultLabels = {
-    account: "Account",
-    profile: "Profile Settings",
-    notifications: "Notifications",
-    organizations: "Organizations",
-    settings: "Settings",
-    logout: "Sign out",
-    ...labels,
-  };
+  const router = useRouter();
+  const t = useTranslation("zh-TW");
+  const { user, account } = useCurrentAccount();
 
   const handleLogout = async () => {
-    if (onLogout) {
-      await onLogout();
-    }
+    await clientSignOut();
+    router.push("/login");
   };
+
+  const displayName = account?.displayName ?? user?.displayName ?? user?.email ?? "";
+  const email = user?.email ?? "";
+  const photoURL = account?.avatarUrl ?? user?.photoURL ?? null;
+  const initial = (displayName || email || "?")[0].toUpperCase();
 
   return (
     <SidebarMenu>
@@ -89,7 +67,7 @@ export function NavUser({
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">
-                  {displayName || "Loading…"}
+                  {displayName || t("common.loading")}
                 </span>
                 <span className="truncate text-xs text-muted-foreground">
                   {email}
@@ -100,57 +78,50 @@ export function NavUser({
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-            side={mobile ? "bottom" : "top"}
+            side={isMobile ? "bottom" : "top"}
             align="end"
             sideOffset={4}
           >
             <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-widest opacity-60">
-              {defaultLabels.account}
+              {t("nav.account")}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/profile" className="flex cursor-pointer items-center gap-2 py-2">
+              <Link
+                href="/profile"
+                className="flex cursor-pointer items-center gap-2 py-2"
+              >
                 <UserCircle className="size-4 text-muted-foreground" />
                 <span className="text-xs font-medium">
-                  {defaultLabels.profile}
+                  {t("nav.profileSettings")}
                 </span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link href="/notifications" className="flex cursor-pointer items-center gap-2 py-2">
                 <Bell className="size-4 text-muted-foreground" />
-                <span className="text-xs font-medium">
-                  {defaultLabels.notifications}
-                </span>
+                <span className="text-xs font-medium">{t("nav.notifications")}</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link href="/organizations" className="flex cursor-pointer items-center gap-2 py-2">
                 <Building2 className="size-4 text-muted-foreground" />
-                <span className="text-xs font-medium">
-                  {defaultLabels.organizations}
-                </span>
+                <span className="text-xs font-medium">{t("nav.organizations")}</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/settings" className="flex cursor-pointer items-center gap-2 py-2">
+              <Link href="/security" className="flex cursor-pointer items-center gap-2 py-2">
                 <ShieldCheck className="size-4 text-muted-foreground" />
-                <span className="text-xs font-medium">
-                  {defaultLabels.settings}
-                </span>
+                <span className="text-xs font-medium">{t("nav.security")}</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <button
-                onClick={handleLogout}
-                className="flex w-full cursor-pointer items-center gap-2 py-2"
-              >
-                <LogOut className="size-4 text-muted-foreground" />
-                <span className="text-xs font-medium">
-                  {defaultLabels.logout}
-                </span>
-              </button>
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="flex cursor-pointer items-center gap-2 py-2 text-destructive"
+            >
+              <LogOut className="size-4" />
+              <span className="text-xs font-bold">{t("auth.signOut")}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
