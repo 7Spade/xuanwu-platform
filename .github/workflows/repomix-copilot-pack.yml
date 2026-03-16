@@ -51,7 +51,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Generate Copilot-focused repomix output
-        uses: yamadashy/repomix/.github/actions/repomix@008e28c6da696e3e2fa0ae308856668a85db3aba # pin main SHA
+        uses: yamadashy/repomix/.github/actions/repomix@008e28c6da696e3e2fa0ae308856668a85db3aba # pin commit SHA for supply-chain integrity
         with:
           directories: "."
           include: "src/**,docs/**,.github/**,README.md,AGENTS.md,package.json,tsconfig.json,next.config.ts,tailwind.config.ts,eslint.config.mjs,vitest.config.ts,firebase.json,firestore.rules,storage.rules,apphosting.yaml"
