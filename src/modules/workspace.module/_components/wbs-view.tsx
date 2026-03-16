@@ -12,7 +12,7 @@ import { useMemo, useState } from "react";
 import { GitBranch, Loader2, Plus } from "lucide-react";
 import { Button } from "@/design-system/primitives/ui/button";
 import { useTranslation } from "@/shared/i18n";
-import { buildTaskTree } from "@/modules/work.module/domain.work/_task-tree";
+import { buildTaskTree } from "@/modules/work.module";
 import { useWorkItems } from "./use-work-items";
 import { TaskTreeNode } from "./task-tree-node";
 import { CreateWorkItemDialog } from "./create-work-item-dialog";

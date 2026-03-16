@@ -9,7 +9,7 @@
  *   4. Compute descendantSum = sum of all descendant subtotals.
  */
 
-import type { WorkItemDTO } from "../core/_use-cases";
+import type { WorkItemDTO } from "./_dto";
 
 export interface TaskWithChildren extends WorkItemDTO {
   wbsNo: string;

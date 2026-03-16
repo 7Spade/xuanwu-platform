@@ -4,28 +4,9 @@ import type { WorkItemEntity } from "../domain.work/_entity";
 import { buildWorkItem } from "../domain.work/_entity";
 import type { WorkItemId, WorkItemStatus, WorkItemPriority } from "../domain.work/_value-objects";
 import type { IWorkItemRepository } from "../domain.work/_ports";
+import type { WorkItemDTO } from "../domain.work/_dto";
 
-export interface WorkItemDTO {
-  readonly id: string;
-  readonly workspaceId: string;
-  readonly title: string;
-  readonly description?: string;
-  readonly status: WorkItemStatus;
-  readonly priority: WorkItemPriority;
-  readonly assigneeId?: string;
-  readonly dueDate?: string;
-  readonly createdAt: string;
-  // Wave 43 tree fields
-  readonly parentId?: string;
-  readonly type?: string;
-  readonly quantity?: number;
-  readonly unitPrice?: number;
-  readonly discount?: number;
-  readonly subtotal?: number;
-  readonly completedQuantity?: number;
-  readonly location?: { building?: string; floor?: string; room?: string; description?: string };
-  readonly photoURLs?: readonly string[];
-}
+export type { WorkItemDTO } from "../domain.work/_dto";
 
 function entityToDTO(w: WorkItemEntity): WorkItemDTO {
   return {

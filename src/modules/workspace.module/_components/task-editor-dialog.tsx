@@ -25,9 +25,9 @@ import {
 } from "@/design-system/primitives/ui/select";
 import { MapPin } from "lucide-react";
 import { useTranslation } from "@/shared/i18n";
-import { updateWorkItem } from "@/modules/work.module/core/_use-cases";
+import { updateWorkItem } from "@/modules/work.module";
 import { FirestoreWorkItemRepository } from "@/modules/work.module/infra.firestore/_repository";
-import type { WorkItemDTO } from "@/modules/work.module/core/_use-cases";
+import type { WorkItemDTO } from "@/modules/work.module";
 import { LocationDialog } from "./location-dialog";
 import type { LocationValue } from "./location-dialog";
 

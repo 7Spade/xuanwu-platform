@@ -29,9 +29,8 @@ import {
 import { Textarea } from "@/design-system/primitives/ui/textarea";
 import { useTranslation } from "@/shared/i18n";
 import { FirestoreWorkItemRepository } from "@/modules/work.module/infra.firestore/_repository";
-import { updateWorkItem } from "@/modules/work.module/core/_use-cases";
-import type { WorkItemDTO } from "@/modules/work.module/core/_use-cases";
-import type { WorkItemStatus, WorkItemPriority } from "@/modules/work.module/domain.work/_value-objects";
+import { updateWorkItem } from "@/modules/work.module";
+import type { WorkItemDTO, WorkItemStatus, WorkItemPriority } from "@/modules/work.module";
 
 export interface WorkItemEditDialogProps {
   item: WorkItemDTO;

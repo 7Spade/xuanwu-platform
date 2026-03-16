@@ -28,8 +28,8 @@ import {
 } from "@/design-system/primitives/ui/select";
 import { useTranslation } from "@/shared/i18n";
 import { FirestoreWorkItemRepository } from "@/modules/work.module/infra.firestore/_repository";
-import { createWorkItem, createChildWorkItem } from "@/modules/work.module/core/_use-cases";
-import type { WorkItemPriority } from "@/modules/work.module/domain.work/_value-objects";
+import { createWorkItem, createChildWorkItem } from "@/modules/work.module";
+import type { WorkItemPriority } from "@/modules/work.module";
 
 interface CreateWorkItemDialogProps {
   workspaceId: string;
