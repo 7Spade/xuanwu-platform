@@ -44,7 +44,7 @@ Conventions shared across all GitHub Copilot agents in this repository.
 | `xuanwu-ui` | Mobile-first UI, shadcn/ui, Tailwind CSS, i18n-safe components |
 | `xuanwu-quality` | Lint/build/test, security checks, Firebase rule scrutiny |
 | `xuanwu-docs` | README, architecture docs, schema docs, diagrams |
-| `xuanwu-librarian` | Markdown library curation: hierarchical/graphical/category/tag refactoring, stale-content cleanup, and broken-index repair with full-information preservation |
+| `xuanwu-librarian` | Markdown library curation: structure refactoring, stale-content cleanup, and index/link consistency sync with full-information preservation |
 | `xuanwu-ops` | CI/CD, deployment workflows, runtime infrastructure |
 | `xuanwu-test-expert` | Next.js preflight diagnostics and runtime verification |
 | `xuanwu-software-planner` | Implementation planning and todo tracking |
