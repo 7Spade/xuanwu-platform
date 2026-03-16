@@ -16,6 +16,8 @@ domain modeling, runtime behavior, or operational constraints.
 | ADR-005 | Use Event Bus for SaaS ↔ Workspace boundary crossing | Accepted | — |
 | ADR-006 | Adopt Modular DDD — each module is self-contained, no shared global domain directory | Accepted | — |
 | ADR-007 | Use `@atlaskit/pragmatic-drag-and-drop` for drag-and-drop interactions + Visual Indicators (VIs) | Accepted | — |
+| [ADR-008](./20260316-navigation-logic-gaps.md) | Navigation logic gaps — auth guard, post-login redirect, dead-end routes (E2E audit) | Proposed | 2026-03-16 |
+| [ADR-009](./20260316-ui-ux-navigation-gaps.md) | UI/UX navigation gaps — unreachable pages, missing back-links, active state (E2E audit) | Proposed | 2026-03-16 |
 
 When adding new ADRs, update this index with links in chronological order.
 
