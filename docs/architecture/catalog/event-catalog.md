@@ -21,6 +21,8 @@ Examples:
   settlement.ar_record.issued
 ```
 
+> **⚠️ Implementation gap (tracked)**: Current TypeScript code (`_events.ts` files across all modules) uses **colon-separated** event type strings at runtime (e.g., `workspace:task:state:changed`, `account:personal:created`, `settlement:created`). The dot-format names above are the **canonical target** per ADR-013. The colon-separated format is the current runtime reality and a known deviation from this convention. A dedicated code migration task is required to align implementation with this convention. Until that migration is complete, treat dot-format names in this catalog as the specification and colon-separated names in `_events.ts` files as the current implementation.
+
 ---
 
 ## Event Envelope / 事件信封結構
@@ -35,9 +37,9 @@ interface EventEnvelope {
   occurredAt:  timestamp    // When the domain action happened
   publishedAt: timestamp    // When the event was written to the bus
   source: {
-    service:     string     // Emitting service e.g. "wbs-module"
-    workspaceId: string     // null for SaaS-layer events
-    orgId:       string     // null for personal workspace events
+    service:        string     // Emitting service e.g. "wbs-module"
+    workspaceId:    string     // null for SaaS-layer events
+    ownerAccountId: string     // accountId of the org account; null for personal workspace events
   }
   actorId:     string       // accountId who triggered the action
   payload:     object       // Event-specific fields (see below)
@@ -298,7 +300,7 @@ interface EventEnvelope {
 
 **Payload**
 ```typescript
-{ settlementId: string; taskId: string; workspaceId: string; orgId: string; triggeredAt: timestamp }
+{ settlementId: string; taskId: string; workspaceId: string; ownerAccountId: string; triggeredAt: timestamp }
 ```
 
 ---
@@ -307,7 +309,7 @@ interface EventEnvelope {
 
 **Payload**
 ```typescript
-{ arId: string; settlementId: string; orgId: string; clientId: string; invoiceRef: string; amount: number; currency: string }
+{ arId: string; settlementId: string; ownerAccountId: string; clientId: string; invoiceRef: string; amount: number; currency: string }
 ```
 
 ---
