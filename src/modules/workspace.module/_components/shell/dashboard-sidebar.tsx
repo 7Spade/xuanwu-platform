@@ -21,6 +21,7 @@ import {
 
 import { AccountSwitcher } from "./account-switcher";
 import { NavMain } from "./nav-main";
+import { NavTopWorkspaces } from "./nav-top-workspaces";
 import { NavUser } from "./nav-user";
 
 export function DashboardSidebar() {
@@ -39,6 +40,15 @@ export function DashboardSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <NavMain />
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel className="px-3 text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">
+            {t("nav.topWorkspaces")}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <NavTopWorkspaces />
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
