@@ -20,6 +20,11 @@
 | `file.module` | [file.md](./file.md) | 檔案上傳/版本/文件解析 |
 | `search.module` | [search.md](./search.md) | 全文搜尋索引與查詢 |
 | `causal-graph.module` | [causal-graph.md](./causal-graph.md) | 因果圖節點/邊/影響範圍分析 |
+| `governance.module` | [governance.md](./governance.md) | 治理規則/政策執行 — scaffold |
+| `knowledge.module` | [knowledge.md](./knowledge.md) | 知識庫/文件庫 — scaffold |
+| `subscription.module` | [subscription.md](./subscription.md) | 訂閱方案/計費週期 — scaffold |
+| `taxonomy.module` | [taxonomy.md](./taxonomy.md) | 標籤分類法/標籤層級 — scaffold |
+| `vector-ingestion.module` | [vector-ingestion.md](./vector-ingestion.md) | 向量嵌入管線/語意搜尋 — scaffold |
 | `social.module` | [social.md](./social.md) | 社交關係（star/watch/follow） |
 | `achievement.module` | [achievement.md](./achievement.md) | 成就/徽章解鎖（XP） |
 | `collaboration.module` | [collaboration.md](./collaboration.md) | 評論/協作（artifact 層級） |

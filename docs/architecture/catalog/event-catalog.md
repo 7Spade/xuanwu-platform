@@ -39,7 +39,7 @@ interface EventEnvelope {
     workspaceId: string     // null for SaaS-layer events
     orgId:       string     // null for personal workspace events
   }
-  actorId:     string       // userId who triggered the action
+  actorId:     string       // accountId who triggered the action
   payload:     object       // Event-specific fields (see below)
 }
 ```
@@ -48,17 +48,17 @@ interface EventEnvelope {
 
 ## SaaS Layer Events / SaaS 層事件
 
-### `saas.org.created`
+### `saas.account.created`
 
 | Field | Value |
 |-------|-------|
-| **Producer** | Organization service |
-| **Trigger** | User creates an organization |
-| **Consumers** | Namespace service, Notification Engine |
+| **Producer** | `account.module` |
+| **Trigger** | An Account is registered (personal or organization type) |
+| **Consumers** | `namespace.module`, Notification Engine |
 
 **Payload**
 ```typescript
-{ orgId: string; ownerId: string; displayName: string; namespaceId: string }
+{ accountId: string; accountType: "personal" | "organization"; ownerAccountId: string; displayName: string; namespaceId: string }
 ```
 
 ---
@@ -73,11 +73,11 @@ interface EventEnvelope {
 
 **Payload**
 ```typescript
-{ workspaceId: string; orgId: string; ownerId: string; displayName: string; visibility: "public" | "private" }
+{ workspaceId: string; accountId: string; ownerAccountId: string; displayName: string; visibility: "public" | "private" }
 ```
 
 **Notification rules**
-- Notify OrgOwner: `workspace created under your organization`
+- Notify org Account owner: `workspace created under your organization`
 - If `visibility = public`: contribute to Discovery Feed ranking
 
 ---
@@ -86,11 +86,11 @@ interface EventEnvelope {
 
 **Payload**
 ```typescript
-{ teamId: string; userId: string; role: "member" | "lead"; addedById: string }
+{ teamId: string; accountId: string; role: "member" | "lead"; addedById: string }
 ```
 
 **Notification rules**
-- Notify `userId`: `You have been added to team {teamName}`
+- Notify `accountId`: `You have been added to team {teamName}`
 
 ---
 
@@ -110,11 +110,11 @@ interface EventEnvelope {
 
 **Payload**
 ```typescript
-{ workspaceId: string; userId: string; role: "maintainer" | "collaborator" }
+{ workspaceId: string; accountId: string; role: "maintainer" | "collaborator" }
 ```
 
 **Notification rules**
-- Notify workspace owner: `{userName} accepted invitation to {workspaceName}`
+- Notify workspace owner: `{accountName} accepted invitation to {workspaceName}`
 
 ---
 
@@ -327,10 +327,10 @@ interface EventEnvelope {
 
 **Payload**
 ```typescript
-{ userId: string; badgeId: string; badgeName: string; ruleId: string; unlockedAt: timestamp }
+{ accountId: string; badgeId: string; badgeName: string; ruleId: string; unlockedAt: timestamp }
 ```
 
-- Update UserProfile `badges` array
+- Update AccountProfile `badges` array
 
 ---
 
@@ -338,12 +338,12 @@ interface EventEnvelope {
 
 | Trigger Pattern | Resolution Method | Recipient(s) |
 |----------------|-------------------|--------------|
-| Direct participant | `actorId` match | The user who performed the action |
+| Direct participant | `actorId` match | The account that performed the action |
 | Task assignee | `task.assigneeId` lookup | Current assignee of the task |
 | Workspace maintainer | `WorkspaceMember.role = maintainer` | All maintainers of the workspace |
-| Reviewer | `CRReview.reviewerId` | Users who reviewed the CR |
-| `@mention` in CR | Parse CR description for `@{userId}` or `@{teamSlug}` | Mentioned user or all team members |
-| Watch subscription | `Social.watch` records for `workspaceId` | All users watching the workspace |
-| Follow subscription | `Social.follow` records for `userId` | All users following the actor |
-| OrgOwner | `Organization.ownerId` | Org owner(s) |
-| Custom rule | User-defined subscription filter | Per-user configuration |
+| Reviewer | `CRReview.reviewerId` | Accounts who reviewed the CR |
+| `@mention` in CR | Parse CR description for `@{accountId}` or `@{teamSlug}` | Mentioned account or all team members |
+| Watch subscription | `Social.watch` records for `workspaceId` | All accounts watching the workspace |
+| Follow subscription | `Social.follow` records for `accountId` | All accounts following the actor |
+| OrgOwner | `Account.ownerId` (where accountType=organization) | Org account owner(s) |
+| Custom rule | User-defined subscription filter | Per-account configuration |

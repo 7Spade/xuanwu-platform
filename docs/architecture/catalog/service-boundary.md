@@ -15,7 +15,7 @@ including ownership rules, crossing protocols, Workforce Scheduling bridge, and 
 ┌─────────────────────────────────────────────────────────┐
 │                     SaaS Layer                          │
 │                                                         │
-│  Organization   Namespace   Team   Settlement   Social  │
+│  Account   Namespace   Team   Settlement   Social          │
 │                                                         │
 │              ┌──────────────────────┐                   │
 │              │  Workforce Scheduling │  ← Bridge        │
@@ -40,8 +40,8 @@ including ownership rules, crossing protocols, Workforce Scheduling bridge, and 
 
 | Entity / Concept | Rationale |
 |-----------------|-----------|
-| User identity and authentication | Identity is platform-wide, not workspace-scoped |
-| Organization and Namespace | Billing and routing concerns belong to the platform |
+| Identity and authentication (`identity.module`) | Identity is platform-wide, not workspace-scoped |
+| Account and Namespace | Billing and routing concerns belong to the platform |
 | Team composition | Teams are an org-level access concept |
 | Workforce Scheduling decisions | Staffing involves org-wide capacity |
 | Settlement (AR / AP) | Financial records are org-level liabilities |
@@ -163,8 +163,9 @@ The Workspace Layer does not know whether AR or AP records were created.
 
 | Collection | Owner layer | Rule summary |
 |------------|-------------|--------------|
-| `users` | SaaS | Read: authenticated users only. Write: own document only. |
-| `organizations` | SaaS | Read: org members. Write: OrgOwner only. |
+| `identities` | SaaS (`identity.module`) | Read: own document only (Firebase Auth UID). Write: system only. |
+| `accounts` | SaaS (`account.module`) | Read: authenticated accounts only. Write: own document only. |
+| `organizations` | SaaS (alias view of `accounts` where accountType=organization) | Read: account members. Write: OrgOwner only. |
 | `namespaces` | SaaS | Read: public for public workspaces. Write: system only. |
 | `teams` | SaaS | Read: org members. Write: OrgOwner only. |
 | `workspaces` | Workspace | Read: WorkspaceMember or public if `visibility=public`. Write: Maintainer only. |
