@@ -44,7 +44,7 @@ export function isWorkspaceVisibleToUser(
  * @param userId       The acting user
  * @param dimensionId  The account that owns the workspaces
  * @param isOwnerOfDimension  Whether the user is the dimension owner
- * @param accountType  "user" | "organization"
+ * @param accountType  "personal" | "organization"
  * @param userTeamIds  Set of team IDs the user belongs to (org context)
  */
 export function filterVisibleWorkspaces(
@@ -52,14 +52,14 @@ export function filterVisibleWorkspaces(
   userId: string,
   dimensionId: string,
   isOwnerOfDimension: boolean,
-  accountType: "user" | "organization",
+  accountType: "personal" | "organization",
   userTeamIds: ReadonlySet<string>,
 ): WorkspaceEntity[] {
   const dimensionWorkspaces = workspaces.filter(
     (ws) => ws.dimensionId === dimensionId,
   );
 
-  if (accountType === "user") {
+  if (accountType === "personal") {
     // Personal accounts: the owner sees all their own workspaces
     return dimensionWorkspaces;
   }
