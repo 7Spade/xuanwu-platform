@@ -129,3 +129,20 @@ When uncertain, prefer explicitness over speed:
 4. Report what changed, why, and what remains.
 
 This repository values architectural correctness above fast but risky edits.
+
+## Module Documentation Contract
+
+When an agent edits any `src/modules/*.module` directory, it must keep both files present and updated:
+
+- `README.md` must clearly include:
+  1. Bounded Context
+  2. Core vs Supporting Domain
+  3. Context Mapping
+  4. Anti-Corruption Layer
+  5. Core Business Logic
+  6. Operational Flow
+  7. Inter-module Contracts
+- `AGENTS.md` must include:
+  - automation tasks / agent behavior,
+  - dependency direction diagram,
+  - boundary summary and hard red lines.
