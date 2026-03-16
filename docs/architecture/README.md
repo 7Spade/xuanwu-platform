@@ -55,7 +55,7 @@ This project follows a strict 4-layer DDD architecture within each Domain Module
 |-------|----------|----------------|----------------------|
 | **Domain** | `src/modules/<module>/domain.<aggregate>/` | Entities, value objects, aggregates, domain events, port interfaces, domain services | None (pure business logic) |
 | **Application** | `src/modules/<module>/core/_use-cases.ts`, `_actions.ts`, `_queries.ts` | Use cases, application services, DTOs, command/query objects | Domain layer only |
-| **Infrastructure** | `src/modules/<module>/infra.<adapter>/` | Repository implementations, external API adapters, Firebase integration, persistence | Domain + Application port interfaces |
+| **Infrastructure** | `src/modules/<module>/infra.<adapter>/` | Repository implementations, external API adapters, Firebase integration, persistence | Domain layer only (port interfaces + entities for mapping) |
 | **UI / Presentation** | `src/modules/<module>/_components/`, `src/app/` | React components, Next.js pages and route handlers | Application layer (via DTOs) |
 
 ### Layer Direction Rules
