@@ -18,7 +18,7 @@ The structural backbone is **Hexagonal Architecture (Ports & Adapters)**: the do
 | Framework | Next.js 15 (App Router, parallel routing) |
 | Language | TypeScript 5 |
 | UI | React 19, Tailwind CSS v4, shadcn/ui |
-| Design System | Four-tier: primitives / components / patterns / tokens (see [Design System](#design-system)) |
+| Design System | Five-tier: primitives / components / patterns / tokens / layout (see [Design System](#design-system)) |
 | Drag and Drop | `@atlaskit/pragmatic-drag-and-drop` + Visual Indicators (VIs) |
 | Validation | Zod |
 | Backend / DB | Firebase (Firestore, Auth, Storage, App Check) |
@@ -143,7 +143,7 @@ Parallel routes allow multiple pages to render simultaneously in the same layout
 
 ## Design System
 
-The design system lives in `src/design-system/` and follows a **four-tier hierarchy**:
+The design system lives in `src/design-system/` and follows a **five-tier hierarchy**:
 
 | Tier | Location | Contents |
 |------|----------|----------|
@@ -151,12 +151,16 @@ The design system lives in `src/design-system/` and follows a **four-tier hierar
 | **components** | `src/design-system/components/` | Project-specific wrappers that compose or extend primitives with Xuanwu branding and behaviour. |
 | **patterns** | `src/design-system/patterns/` | Higher-order composites built from components (e.g. data tables, sidebars, command palettes). |
 | **tokens** | `src/design-system/tokens/` | Design-token constants: colours, spacing, typography, radii, shadows, z-index, and motion values. Mirrors the CSS custom-properties in `globals.css` / `tailwind.config.ts`. |
+| **layout** | `src/design-system/layout/` | Structural layout shells (base shell, marketing layouts). Composed from lower-tier components. |
+
+`src/design-system/providers/` houses React context providers (e.g. ThemeProvider) consumed across tiers.
 
 ```typescript
 import { Button }        from "@/design-system/primitives";
 import { SearchField }   from "@/design-system/components";
 import { LoginForm }     from "@/design-system/patterns";
 import { colorBrand }    from "@/design-system/tokens";
+import { HomeLayout }    from "@/design-system/layout";
 ```
 
 ### Drag and Drop — `@atlaskit/pragmatic-drag-and-drop`
