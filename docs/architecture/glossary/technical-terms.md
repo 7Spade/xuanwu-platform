@@ -2,7 +2,7 @@
 
 Covers system architecture, data governance, integration patterns, and infrastructure primitives.
 
-See also: [`model-driven-hexagonal-architecture.md`](../../../model-driven-hexagonal-architecture.md) for a full MDDD design guide.
+See also: [`model-driven-hexagonal-architecture.md`](../model-driven-hexagonal-architecture.md) for a full MDDD design guide.
 
 ---
 

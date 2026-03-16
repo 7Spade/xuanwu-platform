@@ -106,7 +106,7 @@ The application core never imports from adapters. It defines **interfaces** (por
 **Definition**: The shared vocabulary used by both domain experts and developers. Code identifiers, database field names, event names, and documentation all use the same terms.
 
 **In Xuanwu**:
-- Canonical vocabulary is in [`docs/architecture/glossary/`](./docs/architecture/glossary/).
+- Canonical vocabulary is in [`docs/architecture/glossary/`](./glossary/).
 - Domain events follow the naming convention `{domain}.{entity}.{verb}` (e.g. `wbs.task.state_changed`).
 - Entity field names match the glossary terms (e.g. `assigneeId`, not `userId` or `executorId`).
 
@@ -474,7 +474,7 @@ export class FirestoreWorkspaceRepository implements IWorkspaceRepository {
 
 ### 6.1 SaaS ↔ Workspace Boundary
 
-The primary architectural boundary in Xuanwu. See [`docs/architecture/catalog/service-boundary.md`](./docs/architecture/catalog/service-boundary.md) for the full crossing protocol.
+The primary architectural boundary in Xuanwu. See [`docs/architecture/catalog/service-boundary.md`](./catalog/service-boundary.md) for the full crossing protocol.
 
 ```
 SaaS Layer (Upstream)                     Workspace Layer (Downstream)
@@ -637,7 +637,7 @@ eventBus.subscribe("wbs.task.state_changed", handleTaskStateChange);
 |----------|--------|
 | What layer does this file belong to? | Check the table in §5.4 |
 | Does this code reference anything outside its layer? | Check the dependency rules in §5.3 |
-| Does this code use a term not in the glossary? | Add it to [`docs/architecture/glossary/`](./docs/architecture/glossary/) first |
+| Does this code use a term not in the glossary? | Add it to [`docs/architecture/glossary/`](./glossary/) first |
 | Am I crossing a Bounded Context boundary? | Use Domain Events or the public `index.ts` barrel |
 | Is this a business rule or an infrastructure detail? | Business rules → Domain; infrastructure details → Adapter |
 
@@ -672,8 +672,8 @@ New cross-module data flow?
 | Shared ACL ports | `src/shared/ports/index.ts` |
 | Infrastructure adapters | `src/infrastructure/` |
 | Module public API | `src/modules/{name}.module/index.ts` |
-| This document | `model-driven-hexagonal-architecture.md` (repo root) |
+| This document | `docs/architecture/model-driven-hexagonal-architecture.md` |
 
 ---
 
-*This document should be read in conjunction with the [Architecture SSOT](./docs/architecture/README.md) and the [Service Boundary Contract](./docs/architecture/catalog/service-boundary.md).*
+*This document should be read in conjunction with the [Architecture SSOT](./README.md) and the [Service Boundary Contract](./catalog/service-boundary.md).*

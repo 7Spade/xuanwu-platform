@@ -24,9 +24,9 @@ npm run dev
 
 Configure the following MCP servers at **[Settings → Copilot → Coding Agent](https://github.com/7Spade/xuanwu-platform/settings/copilot/coding_agent)** to unlock the full GitHub Copilot Coding Agent browser development experience for this Next.js + DDD project.
 
-> The full ready-to-paste JSON is in [`mcp.md`](./mcp.md). The equivalent VS Code local config is in [`.vscode/mcp.json`](./.vscode/mcp.json).
+> The full ready-to-paste JSON is in [`docs/copilot/mcp.md`](./docs/copilot/mcp.md). The equivalent VS Code local config is in [`.vscode/mcp.json`](./.vscode/mcp.json).
 >
-> **Format note:** GitHub Coding Agent config (below and in `mcp.md`) uses `"type": "stdio"` with a required `"tools"` field. VS Code `.vscode/mcp.json` uses the `"servers"` root key with `"type": "stdio"` and no `"tools"` field. Both formats resolve to the same MCP servers.
+> **Format note:** GitHub Coding Agent config (below and in `docs/copilot/mcp.md`) uses `"type": "stdio"` with a required `"tools"` field. VS Code `.vscode/mcp.json` uses the `"servers"` root key with `"type": "stdio"` and no `"tools"` field. Both formats resolve to the same MCP servers.
 
 ### ✅ Essential MCP Servers
 

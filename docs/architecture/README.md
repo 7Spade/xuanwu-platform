@@ -11,7 +11,7 @@
 
 **Modular DDD** means every bounded context lives in its own self-contained **Domain Module** under `src/modules/`. Each module exposes a single public `index.ts` barrel; no module imports the internal files of another. This modular boundary is enforced in addition to the 4-layer DDD direction rules (Presentation → Application → Domain ← Infrastructure).
 
-The structural backbone is **Hexagonal Architecture (Ports & Adapters)**: the domain model is surrounded by inbound ports (driven by UI and API) and outbound ports (implemented by infrastructure adapters). Business rules live exclusively in the Domain layer; infrastructure is a plug-in concern. The full design philosophy is documented in the [Model-Driven Hexagonal Architecture guide](../../model-driven-hexagonal-architecture.md).
+The structural backbone is **Hexagonal Architecture (Ports & Adapters)**: the domain model is surrounded by inbound ports (driven by UI and API) and outbound ports (implemented by infrastructure adapters). Business rules live exclusively in the Domain layer; infrastructure is a plug-in concern. The full design philosophy is documented in the [Model-Driven Hexagonal Architecture guide](./model-driven-hexagonal-architecture.md).
 
 | Concern | Choice |
 |---------|--------|
@@ -28,7 +28,9 @@ The structural backbone is **Hexagonal Architecture (Ports & Adapters)**: the do
 
 ## Navigation / 文件導覽
 
-- [**Model-Driven Hexagonal Architecture Guide**](../../model-driven-hexagonal-architecture.md) — MDDD design philosophy, Ports & Adapters, Context Mapping, and development guide *(start here for architecture questions)*
+- [**Model-Driven Hexagonal Architecture Guide**](./model-driven-hexagonal-architecture.md) — MDDD design philosophy, Ports & Adapters, Context Mapping, and development guide *(start here for architecture questions)*
+- [**Architecture Overview**](./overview.md) — Quick reference for developers new to the repository
+- [**Architecture Issues**](./issues.md) — Known architecture issues and resolution status
 - [ADR (Architecture Decision Records)](./adr/README.md) — Architecture decisions and rationale
 - [Architecture Catalog](./catalog/index.md) — Entities, events, and service boundaries
 - [Glossary](./glossary/glossary.md) — Shared business and technical vocabulary

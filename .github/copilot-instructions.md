@@ -10,7 +10,7 @@ Project-wide always-on instructions for GitHub Copilot Chat in this repository.
 
 ## Single Sources of Truth
 
-- Architecture philosophy & Ports/Adapters design: `model-driven-hexagonal-architecture.md`
+- Architecture philosophy & Ports/Adapters design: `docs/architecture/model-driven-hexagonal-architecture.md`
 - Business logic & domain modules: `docs/architecture/README.md`
 - Codebase reference baseline: `docs/architecture/README.md` and established code patterns
 - Copilot customization guide: `docs/copilot/README.md`

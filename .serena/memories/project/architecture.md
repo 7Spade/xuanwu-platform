@@ -1,6 +1,6 @@
 # Xuanwu Platform — Architecture Reference
 
-> **Design philosophy**: See `model-driven-hexagonal-architecture.md` (repo root) — MDDD + Hexagonal Architecture (Ports & Adapters) guide.
+> **Design philosophy**: See `docs/architecture/model-driven-hexagonal-architecture.md` — MDDD + Hexagonal Architecture (Ports & Adapters) guide.
 > **Domain SSOT**: `docs/architecture/README.md`
 
 ## Domain Modules (`src/modules/`)
