@@ -18,15 +18,7 @@ import { Input } from "@/design-system/primitives/ui/input";
 import { Label } from "@/design-system/primitives/ui/label";
 import { Textarea } from "@/design-system/primitives/ui/textarea";
 import { useTranslation } from "@/shared/i18n";
-import { FirestoreDailyLogRepository } from "@/modules/workspace.module/infra.firestore/_daily-log-repository";
-import { createDailyLog, updateDailyLog } from "@/modules/workspace.module/core/_daily-log-use-cases";
-import type { DailyLogDTO } from "@/modules/workspace.module/core/_daily-log-use-cases";
-
-let _repo: FirestoreDailyLogRepository | null = null;
-function getRepo() {
-  if (!_repo) _repo = new FirestoreDailyLogRepository();
-  return _repo;
-}
+import { createDailyLog, updateDailyLog, type DailyLogDTO } from "@/modules/workspace.module";
 
 interface DailyLogDialogProps {
   workspaceId: string;
@@ -85,10 +77,9 @@ export function DailyLogDialog({
     try {
       let result;
       if (existingLog) {
-        result = await updateDailyLog(getRepo(), existingLog.id, content.trim(), photoURLs);
+        result = await updateDailyLog(existingLog.id, content.trim(), photoURLs);
       } else {
         result = await createDailyLog(
-          getRepo(),
           crypto.randomUUID(),
           workspaceId,
           date,

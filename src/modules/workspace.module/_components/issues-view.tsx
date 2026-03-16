@@ -49,21 +49,15 @@ import {
 } from "@/design-system/primitives/ui/select";
 import { useTranslation } from "@/shared/i18n";
 import { useCurrentAccount } from "@/modules/account.module";
-import { FirestoreIssueRepository } from "@/modules/workspace.module/infra.firestore/_issue-repository";
 import {
-  getIssues,
   createIssue,
-  updateIssue,
   deleteIssue,
-} from "@/modules/workspace.module/core/_issue-use-cases";
-import type { IssueDTO } from "@/modules/workspace.module/core/_issue-use-cases";
-import type { IssueSeverity, IssueStatus } from "@/modules/workspace.module/domain.issues/_entity";
-
-let _repo: FirestoreIssueRepository | null = null;
-function getRepo() {
-  if (!_repo) _repo = new FirestoreIssueRepository();
-  return _repo;
-}
+  getIssues,
+  updateIssue,
+  type IssueDTO,
+  type IssueSeverity,
+  type IssueStatus,
+} from "@/modules/workspace.module";
 
 const SEVERITIES: IssueSeverity[] = ["critical", "high", "medium", "low"];
 
@@ -121,7 +115,7 @@ function IssueFormDialog({ workspaceId, reporterId, editIssue, open, onOpenChang
     try {
       let result;
       if (editIssue) {
-        result = await updateIssue(getRepo(), editIssue.id, {
+        result = await updateIssue(editIssue.id, {
           title: title.trim(),
           description: description.trim() || null,
           severity,
@@ -129,7 +123,6 @@ function IssueFormDialog({ workspaceId, reporterId, editIssue, open, onOpenChang
         });
       } else {
         result = await createIssue(
-          getRepo(),
           crypto.randomUUID(),
           workspaceId,
           title.trim(),
@@ -227,7 +220,7 @@ export function IssuesView({ workspaceId }: IssuesViewProps) {
   const fetchIssues = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await getIssues(getRepo(), workspaceId);
+      const result = await getIssues(workspaceId);
       if (result.ok) setIssues(result.value);
     } finally {
       setLoading(false);
@@ -240,7 +233,7 @@ export function IssuesView({ workspaceId }: IssuesViewProps) {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await deleteIssue(getRepo(), deleteTarget.id);
+      await deleteIssue(deleteTarget.id);
       setDeleteTarget(null);
       void fetchIssues();
     } finally {

@@ -20,15 +20,13 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { getAuth, onAuthStateChanged, type User } from "firebase/auth";
 
-import { getFirebaseApp } from "@/infrastructure/firebase/app";
+import { getFirebaseAuth, onAuthStateChanged, type User } from "@/infrastructure/firebase/client";
 import {
   getAccountById,
   getOrganizationsByOwnerId,
   type AccountDTO,
-} from "@/modules/account.module/core/_use-cases";
-import { FirestoreAccountRepository } from "@/modules/account.module/infra.firestore/_repository";
+} from "@/modules/account.module";
 
 // ---------------------------------------------------------------------------
 // Context value type
@@ -91,8 +89,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     setOrgsLoading(true);
     try {
-      const repo = new FirestoreAccountRepository();
-      const orgsResult = await getOrganizationsByOwnerId(repo, user.uid);
+      const orgsResult = await getOrganizationsByOwnerId(user.uid);
       setOrganizations(orgsResult.ok ? orgsResult.value : []);
     } finally {
       setOrgsLoading(false);
@@ -100,7 +97,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   useEffect(() => {
-    const auth = getAuth(getFirebaseApp());
+    const auth = getFirebaseAuth();
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
@@ -114,10 +111,8 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const repo = new FirestoreAccountRepository();
-
         // Load personal account
-        const result = await getAccountById(repo, firebaseUser.uid);
+        const result = await getAccountById(firebaseUser.uid);
         const personalAccount = result.ok ? result.value : null;
         setAccount(personalAccount);
 
@@ -127,7 +122,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         // Load owned organizations
         setOrgsLoading(true);
         try {
-          const orgsResult = await getOrganizationsByOwnerId(repo, firebaseUser.uid);
+          const orgsResult = await getOrganizationsByOwnerId(firebaseUser.uid);
           setOrganizations(orgsResult.ok ? orgsResult.value : []);
         } finally {
           setOrgsLoading(false);

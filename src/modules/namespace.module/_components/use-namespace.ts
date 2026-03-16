@@ -9,12 +9,11 @@
  * Returns null namespace when the user has not yet created an org/namespace.
  */
 
-import { useEffect, useMemo, useState } from "react";
-import { FirestoreNamespaceRepository } from "../infra.firestore/_repository";
+import { useEffect, useState } from "react";
 import {
   getNamespaceByOwnerId,
   type NamespaceDTO,
-} from "../core/_use-cases";
+} from "@/modules/namespace.module";
 
 export interface UseNamespaceResult {
   namespace: NamespaceDTO | null;
@@ -37,8 +36,6 @@ export function useNamespace(
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
 
-  const repo = useMemo(() => new FirestoreNamespaceRepository(), []);
-
   useEffect(() => {
     if (!ownerId) {
       setNamespace(null);
@@ -50,7 +47,7 @@ export function useNamespace(
     setLoading(true);
     setError(null);
 
-    getNamespaceByOwnerId(repo, ownerId)
+    getNamespaceByOwnerId(ownerId)
       .then((result) => {
         if (cancelled) return;
         if (result.ok) {
@@ -70,7 +67,7 @@ export function useNamespace(
     return () => {
       cancelled = true;
     };
-  }, [ownerId, repo, tick]);
+  }, [ownerId, tick]);
 
   const refresh = () => setTick((n) => n + 1);
 

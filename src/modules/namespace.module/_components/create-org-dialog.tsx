@@ -28,35 +28,12 @@ import { Button } from "@/design-system/primitives/ui/button";
 import { Input } from "@/design-system/primitives/ui/input";
 import { Label } from "@/design-system/primitives/ui/label";
 import { useTranslation } from "@/shared/i18n";
-import { useCurrentAccount } from "@/modules/account.module";
-import type { AccountDTO } from "@/modules/account.module";
-import { createOrganizationAccount } from "@/modules/account.module";
-import { FirestoreAccountRepository } from "@/modules/account.module/infra.firestore/_repository";
+import {
+  createOrganizationAccount,
+  useCurrentAccount,
+  type AccountDTO,
+} from "@/modules/account.module";
 import { registerNamespace } from "@/modules/namespace.module";
-import { FirestoreNamespaceRepository } from "@/modules/namespace.module/infra.firestore/_repository";
-import { FirestoreNamespaceSlugAvailabilityAdapter } from "@/modules/namespace.module/infra.firestore/_slug-availability";
-
-// ---------------------------------------------------------------------------
-// Lazy-init singletons (avoids re-creating on each render)
-// ---------------------------------------------------------------------------
-
-let _accountRepo: FirestoreAccountRepository | null = null;
-function getAccountRepo() {
-  if (!_accountRepo) _accountRepo = new FirestoreAccountRepository();
-  return _accountRepo;
-}
-
-let _nsRepo: FirestoreNamespaceRepository | null = null;
-function getNsRepo() {
-  if (!_nsRepo) _nsRepo = new FirestoreNamespaceRepository();
-  return _nsRepo;
-}
-
-let _slugPort: FirestoreNamespaceSlugAvailabilityAdapter | null = null;
-function getSlugPort() {
-  if (!_slugPort) _slugPort = new FirestoreNamespaceSlugAvailabilityAdapter();
-  return _slugPort;
-}
 
 // ---------------------------------------------------------------------------
 // Slug helpers
@@ -134,7 +111,6 @@ export function CreateOrgDialog({
       // 1. Create the org Account (Application use case — account.module)
       const orgId = crypto.randomUUID();
       const accountResult = await createOrganizationAccount(
-        getAccountRepo(),
         orgId,
         user.uid,
         nameTrimmed,
@@ -149,8 +125,6 @@ export function CreateOrgDialog({
       //    and returns fail() if the slug is taken.
       //    ownerId == orgId (the namespace is owned by the org account, not the user).
       const nsResult = await registerNamespace(
-        getNsRepo(),
-        getSlugPort(),
         orgId,
         slugValue,
         "organization",

@@ -8,14 +8,13 @@
 
 import { KeyRound, Save } from "lucide-react";
 import { useState } from "react";
+
 import {
   EmailAuthProvider,
-  getAuth,
+  getFirebaseAuth,
   reauthenticateWithCredential,
   updatePassword,
-} from "firebase/auth";
-
-import { getFirebaseApp } from "@/infrastructure/firebase/app";
+} from "@/infrastructure/firebase/client";
 import { useTranslation } from "@/shared/i18n";
 import { Button } from "@/design-system/primitives/ui/button";
 import {
@@ -42,7 +41,7 @@ export function SecurityView() {
     newPassword === confirmPassword;
 
   const handleChange = async () => {
-    const auth = getAuth(getFirebaseApp());
+    const auth = getFirebaseAuth();
     const user = auth.currentUser;
     if (!user || !user.email) return;
 

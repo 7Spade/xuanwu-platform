@@ -6,6 +6,8 @@
 
 export type { WorkspaceDTO, WorkspaceGrantDTO, GrantWorkspaceAccessInput } from "./core/_actions";
 export type { WorkspaceRole } from "./core/_use-cases";
+export type { DailyLogDTO } from "./core/_daily-log-actions";
+export type { IssueDTO, IssueSeverity, IssueStatus } from "./core/_issue-actions";
 
 export {
   createWorkspace,
@@ -19,10 +21,22 @@ export {
   updateWorkspaceSettings,
 } from "./core/_actions";
 export {
+  createDailyLog,
+  updateDailyLog,
+  deleteDailyLog,
+} from "./core/_daily-log-actions";
+export {
+  createIssue,
+  updateIssue,
+  deleteIssue,
+} from "./core/_issue-actions";
+export {
   filterVisibleWorkspaces,
   getWorkspaceById,
   getWorkspacesByDimension,
 } from "./core/_queries";
+export { getDailyLogs } from "./core/_daily-log-queries";
+export { getIssues } from "./core/_issue-queries";
 
 // Pure domain utilities (no I/O)
 export {

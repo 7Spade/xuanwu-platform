@@ -11,17 +11,9 @@ import { BookOpen, Loader2, Plus } from "lucide-react";
 import { Button } from "@/design-system/primitives/ui/button";
 import { useTranslation } from "@/shared/i18n";
 import { useCurrentAccount } from "@/modules/account.module";
-import { FirestoreDailyLogRepository } from "@/modules/workspace.module/infra.firestore/_daily-log-repository";
-import { getDailyLogs } from "@/modules/workspace.module/core/_daily-log-use-cases";
-import type { DailyLogDTO } from "@/modules/workspace.module/core/_daily-log-use-cases";
+import { getDailyLogs, type DailyLogDTO } from "@/modules/workspace.module";
 import { DailyLogCard } from "./daily-log-card";
 import { DailyLogDialog } from "./daily-log-dialog";
-
-let _repo: FirestoreDailyLogRepository | null = null;
-function getRepo() {
-  if (!_repo) _repo = new FirestoreDailyLogRepository();
-  return _repo;
-}
 
 interface DailyWorkspaceViewProps {
   workspaceId: string;
@@ -38,7 +30,7 @@ export function DailyWorkspaceView({ workspaceId }: DailyWorkspaceViewProps) {
   const fetchLogs = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await getDailyLogs(getRepo(), workspaceId);
+      const result = await getDailyLogs(workspaceId);
       if (result.ok) setLogs(result.value);
     } finally {
       setLoading(false);

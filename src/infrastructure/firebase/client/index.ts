@@ -15,10 +15,15 @@ export { getFirebaseApp, resolvedFirebaseConfig } from "../app";
 
 export {
   getFirebaseAuth,
+  onAuthStateChanged,
+  updateProfile,
+  reauthenticateWithCredential,
+  updatePassword,
   GoogleAuthProvider,
   GithubAuthProvider,
   EmailAuthProvider,
 } from "./auth";
+export type { User } from "./auth";
 
 export {
   getFirestoreDb,

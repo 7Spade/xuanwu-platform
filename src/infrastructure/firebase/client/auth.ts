@@ -8,7 +8,12 @@
 
 import {
   getAuth,
+  onAuthStateChanged,
+  updateProfile,
+  reauthenticateWithCredential,
+  updatePassword,
   type Auth,
+  type User,
   GoogleAuthProvider,
   GithubAuthProvider,
   EmailAuthProvider,
@@ -29,7 +34,16 @@ export function getFirebaseAuth(): Auth {
 }
 
 // ---------------------------------------------------------------------------
-// Auth providers (re-exported for convenience)
+// Auth providers and operations (re-exported for convenience)
 // ---------------------------------------------------------------------------
 
-export { GoogleAuthProvider, GithubAuthProvider, EmailAuthProvider };
+export {
+  onAuthStateChanged,
+  updateProfile,
+  reauthenticateWithCredential,
+  updatePassword,
+  GoogleAuthProvider,
+  GithubAuthProvider,
+  EmailAuthProvider,
+};
+export type { User };

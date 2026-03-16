@@ -3,3 +3,4 @@
 export type { CommentDTO } from "./core/_use-cases";
 export { postComment, getCommentsByArtifact } from "./core/_use-cases";
 export type { ICommentRepository } from "./domain.collaboration/_ports";
+export { CommentThread } from "./_components/comment-thread";

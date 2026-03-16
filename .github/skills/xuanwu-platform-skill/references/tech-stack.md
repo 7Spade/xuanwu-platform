@@ -1,0 +1,93 @@
+# Tech Stack
+
+## Languages
+
+- Node.js
+
+## Frameworks
+
+- Next.js
+- React
+- TypeScript
+
+## Dependencies
+
+- @atlaskit/pragmatic-drag-and-drop (^1.7.9)
+- @atlaskit/pragmatic-drag-and-drop-hitbox (^1.1.0)
+- @atlaskit/pragmatic-drag-and-drop-react-drop-indicator (^3.2.12)
+- @base-ui/react (^1.3.0)
+- @genkit-ai/google-genai (^1.30.1)
+- @hookform/resolvers (^5.2.2)
+- @radix-ui/react-accordion (^1.2.12)
+- @radix-ui/react-alert-dialog (^1.1.15)
+- @radix-ui/react-avatar (^1.1.11)
+- @radix-ui/react-checkbox (^1.3.3)
+- @radix-ui/react-collapsible (^1.1.12)
+- @radix-ui/react-dialog (^1.1.15)
+- @radix-ui/react-dropdown-menu (^2.1.16)
+- @radix-ui/react-label (^2.1.8)
+- @radix-ui/react-navigation-menu (^1.2.14)
+- @radix-ui/react-popover (^1.1.15)
+- @radix-ui/react-progress (^1.1.8)
+- @radix-ui/react-radio-group (^1.3.8)
+- @radix-ui/react-scroll-area (^1.2.10)
+- @radix-ui/react-select (^2.2.6)
+- @radix-ui/react-separator (^1.1.8)
+- @radix-ui/react-slot (^1.2.4)
+- @radix-ui/react-switch (^1.2.6)
+- @radix-ui/react-tabs (^1.1.13)
+- @radix-ui/react-toast (^1.2.15)
+- @radix-ui/react-tooltip (^1.2.8)
+- @upstash/box (^0.1.23)
+- @upstash/qstash (^2.9.0)
+- @upstash/redis (^1.37.0)
+- @upstash/vector (^1.2.3)
+- @upstash/workflow (^1.1.1)
+- @xstate/react (^6.1.0)
+- class-variance-authority (^0.7.1)
+- clsx (^2.1.1)
+- cmdk (^1.1.1)
+- date-fns (^4.1.0)
+- embla-carousel-react (^8.6.0)
+- firebase (^12.10.0)
+- firebase-admin (^13.7.0)
+- genkit (^1.30.1)
+- input-otp (^1.4.2)
+- lucide-react (^0.577.0)
+- next (15.5.12)
+- next-themes (^0.4.6)
+- radix-ui (^1.4.3)
+- react (^19.0.0)
+- react-day-picker (^9.14.0)
+- react-dom (^19.0.0)
+- react-hook-form (^7.71.2)
+- react-resizable-panels (^4.7.2)
+- recharts (^2.15.4)
+- sonner (^2.0.7)
+- tailwind-merge (^3.5.0)
+- tw-animate-css (^1.4.0)
+- vaul (^1.1.2)
+- xstate (^5.28.0)
+- zod (^3.25.76)
+
+## Dev Dependencies
+
+- @tailwindcss/postcss (^4)
+- @types/node (^22)
+- @types/react (^19)
+- @types/react-dom (^19)
+- @vitest/coverage-v8 (^4.1.0)
+- eslint (^9)
+- eslint-config-next (15.5.12)
+- repomix (^1.12.0)
+- tailwindcss (^4)
+- typescript (5.9.3)
+- vitest (^4.1.0)
+
+## Configuration Files
+
+- tsconfig.json
+- vitest.config.ts
+- .gitignore
+- eslint.config.mjs
+- package.json

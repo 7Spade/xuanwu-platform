@@ -8,9 +8,10 @@ export type { NamespaceDTO, WorkspacePathDTO } from "./core/_queries";
 
 export {
   getNamespaceBySlug,
+  getNamespaceByOwnerId,
   resolveWorkspacePath,
 } from "./core/_queries";
-export { bindWorkspaceToNamespace, registerNamespace } from "./core/_use-cases";
+export { bindWorkspaceToNamespace, registerNamespace } from "./core/_actions";
 
 export type {
   INamespaceRepository,

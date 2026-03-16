@@ -8,8 +8,8 @@
 
 import { User, Save } from "lucide-react";
 import { useEffect, useState } from "react";
-import { updateProfile } from "firebase/auth";
 
+import { updateProfile } from "@/infrastructure/firebase/client";
 import { useCurrentAccount } from "./account-provider";
 import { useTranslation } from "@/shared/i18n";
 import { Avatar, AvatarFallback, AvatarImage } from "@/design-system/primitives/ui/avatar";

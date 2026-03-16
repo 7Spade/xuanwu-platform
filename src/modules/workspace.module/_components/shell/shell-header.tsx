@@ -22,7 +22,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/design-system/primitives/ui/breadcrumb";
-import { GlobalSearchDialog } from "@/modules/search.module/_components/global-search-dialog";
+import { GlobalSearchDialog } from "@/modules/search.module";
 
 /** Maps a URL segment to its i18n key. Falls back to capitalising the segment. */
 const SEGMENT_I18N_KEYS: Record<string, string> = {

@@ -18,18 +18,10 @@ import {
   AlertDialogTitle,
 } from "@/design-system/primitives/ui/alert-dialog";
 import { useTranslation } from "@/shared/i18n";
-import { FirestoreDailyLogRepository } from "@/modules/workspace.module/infra.firestore/_daily-log-repository";
-import { deleteDailyLog } from "@/modules/workspace.module/core/_daily-log-use-cases";
-import type { DailyLogDTO } from "@/modules/workspace.module/core/_daily-log-use-cases";
 import { useCurrentAccount } from "@/modules/account.module";
-import { SocialActionsBar } from "@/modules/social.module/_components/social-actions-bar";
-import { CommentThread } from "@/modules/collaboration.module/_components/comment-thread";
-
-let _repo: FirestoreDailyLogRepository | null = null;
-function getRepo() {
-  if (!_repo) _repo = new FirestoreDailyLogRepository();
-  return _repo;
-}
+import { CommentThread } from "@/modules/collaboration.module";
+import { SocialActionsBar } from "@/modules/social.module";
+import { deleteDailyLog, type DailyLogDTO } from "@/modules/workspace.module";
 
 interface DailyLogCardProps {
   log: DailyLogDTO;
@@ -46,7 +38,7 @@ export function DailyLogCard({ log, onEdit, onDeleted }: DailyLogCardProps) {
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      await deleteDailyLog(getRepo(), log.id);
+      await deleteDailyLog(log.id);
       setDeleteOpen(false);
       onDeleted();
     } finally {
