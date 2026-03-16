@@ -28,6 +28,7 @@ import {
   getOrganizationsByOwnerId,
   type AccountDTO,
 } from "@/modules/account.module/core/_use-cases";
+import { resolveOwnerAccountId } from "@/modules/account.module/core/_owner-account";
 import { FirestoreAccountRepository } from "@/modules/account.module/infra.firestore/_repository";
 
 // ---------------------------------------------------------------------------
@@ -88,16 +89,17 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshOrganizations = useCallback(async () => {
-    if (!user) return;
+    const ownerId = resolveOwnerAccountId(account, user?.uid ?? null);
+    if (!ownerId) return;
     setOrgsLoading(true);
     try {
       const repo = new FirestoreAccountRepository();
-      const orgsResult = await getOrganizationsByOwnerId(repo, user.uid);
+      const orgsResult = await getOrganizationsByOwnerId(repo, ownerId);
       setOrganizations(orgsResult.ok ? orgsResult.value : []);
     } finally {
       setOrgsLoading(false);
     }
-  }, [user]);
+  }, [account, user?.uid]);
 
   useEffect(() => {
     const auth = getAuth(getFirebaseApp());
@@ -127,7 +129,12 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         // Load owned organizations
         setOrgsLoading(true);
         try {
-          const orgsResult = await getOrganizationsByOwnerId(repo, firebaseUser.uid);
+          const ownerId = resolveOwnerAccountId(personalAccount, firebaseUser.uid);
+          if (!ownerId) {
+            setOrganizations([]);
+            return;
+          }
+          const orgsResult = await getOrganizationsByOwnerId(repo, ownerId);
           setOrganizations(orgsResult.ok ? orgsResult.value : []);
         } finally {
           setOrgsLoading(false);
