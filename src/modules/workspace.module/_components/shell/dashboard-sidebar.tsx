@@ -19,7 +19,6 @@ import {
   SidebarRail,
 } from "@/design-system/primitives/ui/sidebar";
 
-import { AccountSwitcher } from "./account-switcher";
 import { NavMain } from "./nav-main";
 import { NavTopWorkspaces } from "./nav-top-workspaces";
 import { NavUser } from "./nav-user";
@@ -30,7 +29,6 @@ export function DashboardSidebar() {
   return (
     <Sidebar className="border-r border-border/50">
       <SidebarHeader className="p-2">
-        <AccountSwitcher />
       </SidebarHeader>
 
       <SidebarContent>

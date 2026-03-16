@@ -131,6 +131,38 @@ UI Action (React component / form)
 
 ---
 
+## Bounded Context, Cohesion, Consistency & Event Flow
+## 界限上下文、內聚、一致性與事件流
+
+### 1) Bounded Context must be explicit / 界限上下文必須明確
+
+- Each `<name>.module/` is one Bounded Context with a single Ubiquitous Language and single ownership boundary.
+- 每個 `<name>.module/` 都是單一 Bounded Context，必須有單一語言模型與單一擁有邊界。
+- Cross-context collaboration must go through public APIs (`index.ts`) and documented contracts (DTO / events), never internal files.
+- 跨上下文協作只能透過公開 API（`index.ts`）與已文件化契約（DTO / 事件），不得直接引用內部檔案。
+
+### 2) Cohesion and one-way dependency / 上下文內聚與依賴單向
+
+- Keep each context cohesive: business rules that change for the same reason should stay in the same module.
+- 維持上下文內聚：會因相同商業原因變更的規則，應留在同一模組。
+- Dependency direction is one-way by layer: Presentation → Application → Domain, while Infrastructure implements Domain ports.
+- 分層依賴方向必須單向：Presentation → Application → Domain，Infrastructure 僅實作 Domain ports。
+- Cross-module imports must use the target module public barrel only; importing `core/`, `domain.*`, or `infra.*` of another module is forbidden.
+- 跨模組匯入必須只走對方 public barrel；直接匯入他模組的 `core/`、`domain.*`、`infra.*` 一律禁止。
+
+### 3) Consistency and event flow / 一致性與事件流
+
+- Aggregate invariants are enforced synchronously inside the owning context before persistence.
+- 聚合不變量必須在擁有該聚合的上下文內、持久化前同步驗證。
+- A use case should follow: load aggregate → apply domain rules → persist state → emit domain event.
+- 用例流程應遵循：載入聚合 → 套用領域規則 → 持久化狀態 → 發出領域事件。
+- Cross-context effects are integration concerns and should be handled by event subscribers / application orchestration, not by direct domain coupling.
+- 跨上下文副作用屬整合責任，應由事件訂閱者或應用層協調處理，不可用直接領域耦合。
+- Treat cross-context propagation as eventually consistent unless a documented same-context transactional guarantee exists.
+- 跨上下文傳播預設採最終一致性；只有在同一上下文且有明確文件化交易保證時，才視為同步強一致。
+
+---
+
 ## Domain Modules in this Project / 本專案 Domain Modules 一覽
 
 | Module 模組 | Layer 層次 | EN Bounded Context | 中文限界上下文 |
