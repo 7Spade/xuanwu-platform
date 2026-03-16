@@ -122,7 +122,11 @@ default_modes:
 
 # initial prompt for the project. It will always be given to the LLM upon activating the project
 # (contrary to the memories, which are loaded on demand).
-initial_prompt: ""
+initial_prompt: >-
+  Follow docs-first strategy for this repository: treat
+  docs/architecture/notes/model-driven-hexagonal-architecture.md as architecture SSOT,
+  use docs/architecture/README.md as navigation index, and align Copilot behaviors with
+  docs/copilot/README.md plus official documentation URLs when uncertainty exists.
 
 # time budget (seconds) per tool call for the retrieval of additional symbol information
 # such as docstrings or parameter information.

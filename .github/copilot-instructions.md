@@ -10,10 +10,10 @@ Project-wide always-on instructions for GitHub Copilot Chat in this repository.
 
 ## Single Sources of Truth
 
-- Architecture philosophy & Ports/Adapters design: `docs/architecture/notes/model-driven-hexagonal-architecture.md`
-- Business logic & domain modules: `docs/architecture/README.md`
-- Codebase reference baseline: `docs/architecture/README.md` and established code patterns
+- Architecture philosophy, layer direction, and Ports/Adapters design: `docs/architecture/notes/model-driven-hexagonal-architecture.md`
+- Architecture navigation index: `docs/architecture/README.md` (index-only)
 - Copilot customization guide: `docs/copilot/README.md`
+- Official VS Code Copilot customization docs: https://code.visualstudio.com/docs/copilot/customization
 
 If a task touches business rules or domain terminology, read the SSOT documents before changing code or documentation.
 
@@ -51,11 +51,16 @@ If a task touches business rules or domain terminology, read the SSOT documents 
 
 ## Decision Workflow
 
-1. Read `docs/architecture/README.md` when business logic is involved.
+1. Read `docs/architecture/notes/model-driven-hexagonal-architecture.md` first when business logic or layer boundaries are involved.
 2. Reuse established repository patterns from existing code.
 3. **Validate before implement** — verify architecture correctness, module boundaries, and existing tests before writing any new code. Prefer the smallest correct diff.
 4. For Copilot customization changes, follow `.github/README.md` first, then the matching spec at https://code.visualstudio.com/docs/copilot/customization, before editing `.github/agents`, `.github/instructions`, `.github/prompts`, or `.github/skills`.
 5. For new or ambiguous requests, apply the **Six-Step Intent Pipeline** (`xuanwu-commander` or `.github/skills/xuanwu-intent-pipeline/SKILL.md`) before dispatching work to any specialist agent.
+
+## Official URL Fallback Policy
+
+- If any Copilot behavior, customization schema, or tool capability is unclear, query official documentation URLs first instead of guessing.
+- Prefer repository mirrors under `docs/copilot/*`; if a conflict exists, treat the official source URL as final authority and then update repository docs accordingly.
 
 ## Custom Agents
 

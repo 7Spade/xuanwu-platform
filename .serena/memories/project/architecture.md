@@ -1,7 +1,8 @@
 # Xuanwu Platform — Architecture Reference
 
 > **Design philosophy**: See `docs/architecture/notes/model-driven-hexagonal-architecture.md` — MDDD + Hexagonal Architecture (Ports & Adapters) guide.
-> **Domain SSOT**: `docs/architecture/README.md`
+> **Architecture SSOT**: `docs/architecture/notes/model-driven-hexagonal-architecture.md`
+> **Architecture index**: `docs/architecture/README.md`
 
 ## Domain Modules (`src/modules/`)
 Each module = one Bounded Context, named `<name>.module/`:

@@ -30,7 +30,8 @@ Xuanwu Platform 所有 Serena 記憶檔案的主索引。
    - `src/modules/**` → [modules/INDEX.md](./modules/INDEX.md) → 各模組子文件
 
 ### 我要了解架構決策
-- 架構 SSOT：`docs/architecture/README.md`
+- 架構 SSOT：`docs/architecture/notes/model-driven-hexagonal-architecture.md`
+- 架構導覽索引：`docs/architecture/README.md`
 - Domain 路由表：[project/domain-lookup.md](./project/domain-lookup.md)
 - ADR 索引：`docs/architecture/adr/README.md`
 

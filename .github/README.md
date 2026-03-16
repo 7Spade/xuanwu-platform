@@ -18,8 +18,8 @@ Use the official VS Code documentation as the authoritative reference for Copilo
 
 Copilot customizations in this repository must stay aligned with:
 
-- Business logic: `docs/architecture/README.md`
-- Codebase reference baseline: `docs/architecture/README.md` and established code patterns
+- Architecture and layering SSOT: `docs/architecture/notes/model-driven-hexagonal-architecture.md`
+- Architecture navigation index: `docs/architecture/README.md` (index-only)
 - Copilot customization documentation: `docs/copilot/README.md` (agent system overview, six-step pipeline, MCP matrix)
 
 ## Customization Selection Matrix
@@ -208,11 +208,14 @@ The repository now follows these consolidation rules:
 
 These documents are stable link targets for prompts and agents that need repository context:
 
+- `docs/architecture/notes/model-driven-hexagonal-architecture.md`
 - `docs/architecture/README.md`
 - `docs/architecture/catalog/business-entities.md`
 - `docs/architecture/glossary/business-terms.md`
 - `docs/architecture/adr/README.md`
 - `docs/copilot/README.md`
+
+When uncertainty exists, always query the corresponding official documentation URL first (VS Code Copilot customization docs, framework docs), then sync repository docs with that authoritative source.
 
 ## Change Workflow
 
