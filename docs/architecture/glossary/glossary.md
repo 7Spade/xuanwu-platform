@@ -9,8 +9,8 @@ See also: [Business Terms](./business-terms.md) | [Technical Terms](./technical-
 
 | Term | 中文 | Layer | Description |
 |------|------|-------|-------------|
-| **User** | 使用者 | Both | Any authenticated person using the platform. Can create organizations or personal workspaces. |
-| **Organization Owner** | 組織擁有者 | SaaS | A User who has created an organization. Controls org-level settings, teams, workspaces, and billing. |
+| **Account** | 帳號 | Both | A unified platform account — either `personal` (individual) or `organization` type. Auth credentials are managed by `identity.module`; all platform account data is owned by `account.module`. |
+| **Organization Owner** | 組織擁有者 | SaaS | The owner of an organization-type Account (`accountType = "organization"`). Controls org-level settings, teams, workspaces, and billing. |
 | **Maintainer** | 維護者 | Workspace | Appointed by the workspace owner. Manages workspace settings, reviews change requests, and triggers merges. |
 | **Task Assignee** | 任務指派人 | Workspace | A member assigned to execute a specific WBS task. Receives assignments via Workforce Scheduling. |
 | **Collaborator** | 協作者 | Workspace | An external user invited to contribute to a workspace. Scoped access, not a full org member. |
@@ -21,8 +21,8 @@ See also: [Business Terms](./business-terms.md) | [Technical Terms](./technical-
 
 | Term | 中文 | Layer | Description |
 |------|------|-------|-------------|
-| **Organization** | 組織 | SaaS | The top-level entity. Groups workspaces, teams, and members under a single billing and governance unit. |
-| **Namespace** | 命名空間 | SaaS | A unique path identifier. Scopes workspace URLs and prevents naming collisions. Format: `org/workspace` or `user/workspace`. |
+| **Account (organization)** | 帳號（組織型） | SaaS | An `Account` with `accountType = "organization"`. Groups workspaces, teams, and members under a single billing and governance unit. Owned by `account.module`. The `org.module` has been removed — this is the canonical representation. |
+| **Namespace** | 命名空間 | SaaS | A unique path identifier. Scopes workspace URLs and prevents naming collisions. Format: `{account-slug}/workspace`. |
 | **Team** | 團隊 | SaaS | A named group of org members. Used to grant bulk workspace access and for `@team` mentions in reviews. |
 | **Workforce Scheduling** | 人力排程 | SaaS ↔ Workspace | Cross-boundary service. Receives task requirements from WBS (skills, time window, effort) and matches them to available org members. |
 | **Settlement Layer** | 結算層 | SaaS | Post-acceptance financial processing. Triggers AR and AP records once a WBS task reaches Accepted state. |
@@ -74,5 +74,5 @@ See also: [Business Terms](./business-terms.md) | [Technical Terms](./technical-
 
 | Term | 中文 | Layer | Description |
 |------|------|-------|-------------|
-| **User Profile** | 使用者檔案 | Both | Public-facing page showing a user's contributions, badges, activity, and workspace memberships. |
+| **Account Profile** | 帳號檔案 | Both | Public-facing page showing an account's contributions, badges, activity, and workspace memberships. Sub-aggregate of `account.module`. |
 | **Achievement Rules** | 成就規則 | Both | Rule engine that evaluates completed WBS task activity against milestone criteria. Awards badges. |

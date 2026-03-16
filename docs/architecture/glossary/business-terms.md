@@ -8,8 +8,8 @@ Covers organizational structure, work management, workforce operations, financia
 
 | Term | 中文 | Definition |
 |------|------|------------|
-| **Organization** | 組織 | The top-level billing and governance unit. Groups workspaces, teams, and members. An org has one or more owners and a registered namespace. |
-| **Organization Owner** | 組織擁有者 | A user who created or was promoted to own the organization. Full control over membership, billing, teams, and workspace provisioning. |
+| **Account (organization)** | 帳號（組織型） | An `Account` with `accountType = "organization"`. The top-level billing and governance unit. Groups workspaces, teams, and members. Managed by `account.module`. The `org.module` has been removed — organization accounts are a unified variant of the Account aggregate. |
+| **Organization Owner** | 組織擁有者 | The owner of an organization-type Account. Full control over membership, billing, teams, and workspace provisioning. |
 | **Personal Workspace** | 個人工作空間 | A workspace created directly under a user's personal namespace, not under any organization. The creating user is both owner and default maintainer. |
 | **Collaborator** | 協作者 | An external user granted scoped access to a specific workspace. Does not hold an org-level role. Mirrors the GitHub collaborator concept. |
 | **Team** | 團隊 | A named group of org members used to assign workspace access in bulk and to receive `@team` review mentions. Mirrors GitHub Teams. |
