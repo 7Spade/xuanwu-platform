@@ -24,6 +24,11 @@ import { getAuth, onAuthStateChanged, type User } from "firebase/auth";
 
 import { getFirebaseApp } from "@/infrastructure/firebase/app";
 import {
+  readStoredActiveAccountId,
+  resolveActiveAccount,
+  writeStoredActiveAccountId,
+} from "@/modules/account.module/core/_active-account";
+import {
   getAccountById,
   getOrganizationsByOwnerId,
   type AccountDTO,
@@ -84,20 +89,33 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const [activeAccount, setActiveAccountState] = useState<AccountDTO | null>(null);
 
   const setActiveAccount = useCallback((next: AccountDTO | null) => {
-    setActiveAccountState(next);
-  }, []);
+    const accountToActivate = next ?? account;
+    setActiveAccountState(accountToActivate);
+    writeStoredActiveAccountId(accountToActivate?.id ?? null);
+  }, [account]);
 
   const refreshOrganizations = useCallback(async () => {
-    if (!user) return;
+    if (!user || !account) return;
     setOrgsLoading(true);
     try {
       const repo = new FirestoreAccountRepository();
       const orgsResult = await getOrganizationsByOwnerId(repo, user.uid);
-      setOrganizations(orgsResult.ok ? orgsResult.value : []);
+      const nextOrganizations = orgsResult.ok ? orgsResult.value : [];
+      setOrganizations(nextOrganizations);
+
+      setActiveAccountState((current) => {
+        const reconciled = resolveActiveAccount(
+          account,
+          nextOrganizations,
+          current?.id ?? readStoredActiveAccountId(),
+        );
+        writeStoredActiveAccountId(reconciled?.id ?? null);
+        return reconciled;
+      });
     } finally {
       setOrgsLoading(false);
     }
-  }, [user]);
+  }, [account, user]);
 
   useEffect(() => {
     const auth = getAuth(getFirebaseApp());
@@ -109,6 +127,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         setAccount(null);
         setOrganizations([]);
         setActiveAccountState(null);
+        writeStoredActiveAccountId(null);
         setLoading(false);
         return;
       }
@@ -121,14 +140,20 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         const personalAccount = result.ok ? result.value : null;
         setAccount(personalAccount);
 
-        // Always reset to personal account when auth state changes (new sign-in)
-        setActiveAccountState(personalAccount);
-
         // Load owned organizations
         setOrgsLoading(true);
         try {
           const orgsResult = await getOrganizationsByOwnerId(repo, firebaseUser.uid);
-          setOrganizations(orgsResult.ok ? orgsResult.value : []);
+          const nextOrganizations = orgsResult.ok ? orgsResult.value : [];
+          setOrganizations(nextOrganizations);
+
+          const nextActiveAccount = resolveActiveAccount(
+            personalAccount,
+            nextOrganizations,
+            readStoredActiveAccountId(),
+          );
+          setActiveAccountState(nextActiveAccount);
+          writeStoredActiveAccountId(nextActiveAccount?.id ?? null);
         } finally {
           setOrgsLoading(false);
         }
@@ -136,6 +161,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         setAccount(null);
         setOrganizations([]);
         setActiveAccountState(null);
+        writeStoredActiveAccountId(null);
       }
 
       setLoading(false);
