@@ -35,3 +35,22 @@ export type {
 
 // AuthUser DTO (used as the return type of IAuthProviderPort methods)
 export type { AuthUser } from "./domain.identity/_value-objects";
+
+// Client-side auth actions (browser/client components only — NOT "use server")
+export {
+  clientSignIn,
+  clientRegister,
+  clientSignInAnonymously,
+  clientSendPasswordResetEmail,
+  clientSignOut,
+  clientOnAuthStateChanged,
+  clientUpdateProfile,
+  clientChangePassword,
+} from "./_client-actions";
+
+// Presentation components (UI surfaces for this bounded context)
+export { AuthView } from "./_components/auth-view";
+export { InviteView } from "./_components/invite-view";
+export { ApiKeysView } from "./_components/api-keys-view";
+export { AdminView } from "./_components/admin-view";
+export { ShareView } from "./_components/share-view";

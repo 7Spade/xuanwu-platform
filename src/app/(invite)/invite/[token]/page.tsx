@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { InviteView } from "@/modules/identity.module/_components/invite-view";
+import { InviteView } from "@/modules/identity.module";
 
 export const metadata: Metadata = {
   title: "邀請 — 玄武平台",

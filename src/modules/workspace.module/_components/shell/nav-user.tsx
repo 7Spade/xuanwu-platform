@@ -28,7 +28,7 @@ import {
   SidebarMenuButton,
   useSidebar,
 } from "@/design-system/primitives/ui/sidebar";
-import { clientSignOut } from "@/modules/identity.module/_client-actions";
+import { clientSignOut } from "@/modules/identity.module";
 
 export function NavUser() {
   const { isMobile } = useSidebar();

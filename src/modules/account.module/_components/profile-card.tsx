@@ -9,7 +9,7 @@
 import { User, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { updateProfile } from "@/infrastructure/firebase/client";
+import { clientUpdateProfile } from "@/modules/identity.module";
 import { useCurrentAccount } from "./account-provider";
 import { useTranslation } from "@/shared/i18n";
 import { Avatar, AvatarFallback, AvatarImage } from "@/design-system/primitives/ui/avatar";
@@ -40,9 +40,11 @@ export function ProfileCard() {
     if (!user) return;
     setSaving(true);
     try {
-      await updateProfile(user, { displayName });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      const result = await clientUpdateProfile(displayName);
+      if (result.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      }
     } finally {
       setSaving(false);
     }

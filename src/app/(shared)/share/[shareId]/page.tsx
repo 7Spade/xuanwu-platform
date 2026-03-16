@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ShareView } from "@/modules/identity.module/_components/share-view";
+import { ShareView } from "@/modules/identity.module";
 
 export const metadata: Metadata = {
   title: "共用內容 — 玄武平台",

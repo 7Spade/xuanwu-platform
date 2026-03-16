@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useAuthState } from "@/shared/directives";
 import { RootShell } from "@/design-system/layout/base";
-import { clientSignOut } from "@/modules/identity.module/_client-actions";
+import { clientSignOut } from "@/modules/identity.module";
 import { MarketingHeader } from "./marketing-header";
 
 interface HomeLayoutProps {

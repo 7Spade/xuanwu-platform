@@ -9,12 +9,7 @@
 import { KeyRound, Save } from "lucide-react";
 import { useState } from "react";
 
-import {
-  EmailAuthProvider,
-  getFirebaseAuth,
-  reauthenticateWithCredential,
-  updatePassword,
-} from "@/infrastructure/firebase/client";
+import { clientChangePassword } from "@/modules/identity.module";
 import { useTranslation } from "@/shared/i18n";
 import { Button } from "@/design-system/primitives/ui/button";
 import {
@@ -41,24 +36,19 @@ export function SecurityView() {
     newPassword === confirmPassword;
 
   const handleChange = async () => {
-    const auth = getFirebaseAuth();
-    const user = auth.currentUser;
-    if (!user || !user.email) return;
-
     setStatus("saving");
     setErrorMsg("");
-    try {
-      const credential = EmailAuthProvider.credential(user.email, currentPassword);
-      await reauthenticateWithCredential(user, credential);
-      await updatePassword(user, newPassword);
+    const result = await clientChangePassword(currentPassword, newPassword);
+    if (result.ok) {
       setStatus("success");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
       setTimeout(() => setStatus("idle"), 4000);
-    } catch (err: unknown) {
+    } else {
       setStatus("error");
       // Surface Firebase Auth error codes when available for better UX
+      const err = result.error;
       const code = (err as { code?: string })?.code;
       if (code === "auth/wrong-password" || code === "auth/invalid-credential") {
         setErrorMsg(t("security.currentPassword") + " 錯誤");
