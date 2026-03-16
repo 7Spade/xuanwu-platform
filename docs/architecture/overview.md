@@ -1,7 +1,7 @@
 # Xuanwu Platform — Architecture Overview
 
 > **Quick reference** for developers new to the repository.  
-> Detailed SSOT: [`docs/architecture/README.md`](./docs/architecture/README.md)
+> Detailed SSOT: [`docs/architecture/README.md`](./README.md)
 
 ---
 
@@ -32,7 +32,7 @@ xuanwu-platform/
 │   └── infrastructure/       # Firebase & Upstash adapters (server-only)
 ├── functions/                # Firebase Cloud Functions
 ├── docs/architecture/        # Architecture SSOT, ADRs, diagrams, glossary
-└── architecture.md           # ← You are here (quick reference)
+└── docs/architecture/overview.md # ← You are here (quick reference)
 ```
 
 ---
@@ -144,10 +144,11 @@ Homepage (/)
 
 | Document | Description |
 |----------|-------------|
-| [`docs/architecture/README.md`](./docs/architecture/README.md) | Full architecture SSOT |
-| [`docs/architecture/adr/README.md`](./docs/architecture/adr/README.md) | Architecture Decision Records |
-| [`docs/architecture/catalog/`](./docs/architecture/catalog/) | Business entities, events, service boundary |
-| [`docs/architecture/glossary/glossary.md`](./docs/architecture/glossary/glossary.md) | Shared terminology |
-| [`docs/architecture/diagrams/`](./docs/architecture/diagrams/) | Mermaid architecture diagrams |
-| [`src/shared/README.md`](./src/shared/README.md) | Shared layer documentation |
-| [`src/infrastructure/firebase/README.md`](./src/infrastructure/firebase/README.md) | Firebase integration guide |
+| [`docs/architecture/model-driven-hexagonal-architecture.md`](./model-driven-hexagonal-architecture.md) | MDDD design philosophy, Ports & Adapters, Context Mapping |
+| [`docs/architecture/README.md`](./README.md) | Full architecture SSOT |
+| [`docs/architecture/adr/README.md`](./adr/README.md) | Architecture Decision Records |
+| [`docs/architecture/catalog/`](./catalog/) | Business entities, events, service boundary |
+| [`docs/architecture/glossary/glossary.md`](./glossary/glossary.md) | Shared terminology |
+| [`docs/architecture/diagrams/`](./diagrams/) | Mermaid architecture diagrams |
+| [`src/shared/README.md`](../../src/shared/README.md) | Shared layer documentation |
+| [`src/infrastructure/firebase/README.md`](../../src/infrastructure/firebase/README.md) | Firebase integration guide |

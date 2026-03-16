@@ -89,9 +89,9 @@ import type { ITaskRepository } from './domain.tasks/_ports'
 | Layer | Allowed paths in a module |
 |-------|---------------------------|
 | Presentation | `_components/`, `index.ts` public API re-exports |
-| Application | `core/_use-cases.ts`, `core/_actions.ts`, `_actions.ts`, `_queries.ts` |
-| Domain | `domain.*/_entity.ts`, `domain.*/_value-objects.ts`, `domain.*/_service.ts` |
-| Infrastructure | `infra.outbox/`, `core.event-store/`, `core.event-bus/` |
+| Application | `core/_use-cases.ts`, `core/_actions.ts`, `_actions.ts`, `_queries.ts`, `core/_dto.ts` |
+| Domain | `domain.*/_entity.ts`, `domain.*/_value-objects.ts`, `domain.*/_service.ts`, `domain.*/_events.ts`, `domain.*/_ports.ts` |
+| Infrastructure | `infra.{adapter}/_repository.ts`, `infra.{adapter}/_mapper.ts` |
 
 ## Cross-Layer Communication Pattern
 
@@ -106,6 +106,7 @@ UI Action
 ```
 
 ## References
+- Model-Driven Hexagonal Architecture guide: `docs/architecture/model-driven-hexagonal-architecture.md`
 - Architecture SSOT: `docs/architecture/README.md`
 - Business entities: `docs/architecture/catalog/business-entities.md`
 - Event catalog: `docs/architecture/catalog/event-catalog.md`

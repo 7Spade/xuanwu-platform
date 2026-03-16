@@ -18,7 +18,7 @@ Xuanwu Platform is a multi-tenant SaaS project management tool built on Next.js 
 - **AI/Agents**: GitHub Copilot with 12 MCP servers (serena, firebase, agent-memory, repomix, playwright, etc.)
 
 ## Key Architecture Decisions
-- **Modular DDD**: Domain Modules live in `src/modules/<name>.module/`; each is a Bounded Context with 4 layers
-- **Design System**: 4-tier — `primitives/` (shadcn), `components/` (wrappers), `patterns/` (composites), `tokens/` (design constants)
+- **Modular DDD + Hexagonal Architecture**: See `docs/architecture/model-driven-hexagonal-architecture.md`. Domain Modules live in `src/modules/<name>.module/`; each is a Bounded Context with 4 layers (Domain → Application → Infrastructure → Presentation).
+- **Design System**: 5-tier — `primitives/` (shadcn), `components/` (wrappers), `patterns/` (composites), `tokens/` (design constants), `layout/` (structural shells); plus `providers/` for React context providers.
 - **Firebase infra**: `src/infrastructure/firebase/client/` (Web SDK) + `src/infrastructure/firebase/admin/` (Admin SDK)
 - **No shared-kernel / shared-infra**: Deleted in PR #6. Cross-module access only via public `index.ts` barrels.

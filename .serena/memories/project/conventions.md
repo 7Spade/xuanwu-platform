@@ -13,6 +13,7 @@
 - File names: `kebab-case` (e.g., `use-translation.ts`)
 - React component files: may use `PascalCase.tsx`
 - Module directories: `<name>.module/` (e.g., `org.module/`)
+- **Domain event `type` strings**: canonical format per `docs/architecture/model-driven-hexagonal-architecture.md` and `docs/architecture/catalog/event-catalog.md` is `{domain}.{entity}.{verb}` (e.g. `wbs.task.state_changed`). Note: current code uses colon-separated format (`workspace:task:state:changed`) — alignment with the canonical convention is a known pending cleanup tracked in `docs/architecture/adr/` (create an ADR when resolving).
 
 ## File Structure Rules
 - Each Domain Module exposes ONLY `index.ts` as public API — never import internal files directly from outside

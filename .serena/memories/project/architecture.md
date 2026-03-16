@@ -1,5 +1,8 @@
 # Xuanwu Platform — Architecture Reference
 
+> **Design philosophy**: See `docs/architecture/model-driven-hexagonal-architecture.md` — MDDD + Hexagonal Architecture (Ports & Adapters) guide.
+> **Domain SSOT**: `docs/architecture/README.md`
+
 ## Domain Modules (`src/modules/`)
 Each module = one Bounded Context, named `<name>.module/`:
 ```
@@ -45,6 +48,9 @@ src/modules/<name>.module/
 - **Presentation**: React components; calls Application only; no direct DB access
 
 ## Design System (`src/design-system/`)
+
+**Five-tier hierarchy** (primitives → components → patterns → tokens → layout) + providers:
+
 ```
 design-system/
 ├── primitives/   ← shadcn/ui components (57 total — see full list below)
@@ -53,7 +59,9 @@ design-system/
 │   └── lib/      ← utils.ts (cn helper)
 ├── components/   ← wrappers/enhanced primitives
 ├── patterns/     ← composite UI patterns
-└── tokens/       ← design constants (color, spacing, typography)
+├── tokens/       ← design constants (color, spacing, typography)
+├── layout/       ← structural layout shells (base shell, marketing layouts)
+└── providers/    ← React context providers (e.g. ThemeProvider)
 ```
 
 ### `primitives/ui/` — Full Component List (shadcn/ui new-york style)
