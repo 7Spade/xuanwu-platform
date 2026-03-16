@@ -1,6 +1,6 @@
 # Xuanwu Architecture Overview / 架構快速參考
 
-> Tags: `architecture` `overview` `onboarding` `quick-reference`
+> Tags: `architecture` `overview` `onboarding` `quick-reference`（定義見 [Tag Taxonomy](../management/documentation-index.md#tag-taxonomy)）
 > Canonical definitions: [Model-Driven Hexagonal Architecture](./notes/model-driven-hexagonal-architecture.md)
 
 ---
@@ -9,8 +9,8 @@
 
 - Framework: Next.js 15 + TypeScript 5
 - Style: Modular DDD + Hexagonal Architecture
-- Core rule: `Presentation → Application → Domain ← Infrastructure`
-- Bounded context unit: `src/modules/<name>.module/` with `index.ts` as public API
+- Core rule: Presentation → Application → Domain ← Infrastructure
+- Bounded context unit: `src/modules/{module-name}.module/` with `index.ts` as public API
 
 ```mermaid
 flowchart LR

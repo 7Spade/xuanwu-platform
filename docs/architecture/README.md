@@ -1,6 +1,6 @@
 # Architecture Navigation Hub / 架構導覽中心
 
-> Tags: `architecture` `navigation` `index` `ssot-gateway`
+> Tags: `architecture` `navigation` `index` `ssot-gateway`（定義見 [Tag Taxonomy](../management/documentation-index.md#tag-taxonomy)）
 
 This file is a **navigation gateway**, not a concept-definition document.
 All canonical architecture concepts are centralized in:
@@ -14,7 +14,7 @@ All canonical architecture concepts are centralized in:
 ```mermaid
 flowchart TD
     A[Architecture SSOT\nnotes/model-driven-hexagonal-architecture.md]
-    B[Architecture Catalog\nentities · events · service boundary]
+    B[Architecture Catalog\ncatalog/]
     C[Glossary\nbusiness + technical terms]
     D[ADR\ndecision history]
     E[Overview\nquick onboarding snapshot]
@@ -49,5 +49,7 @@ For architecture docs, keep this split:
 - **Store concrete contracts** in `catalog/`.
 - **Store terminology** in `glossary/`.
 - **Store why-decisions** in `adr/`.
+
+When duplication is found, keep the most authoritative version in the designated SSOT location and replace duplicated paragraphs with a short link.
 
 If a document repeats long conceptual explanation, replace it with a short pointer to the SSOT.

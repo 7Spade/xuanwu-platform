@@ -1,6 +1,6 @@
 # Xuanwu Platform — Documentation Index / 文件索引
 
-> Tags: `docs-index` `taxonomy` `navigation` `ssot`
+> Tags: `docs-index` `taxonomy` `navigation` `ssot`（定義見 [Tag Taxonomy](./management/documentation-index.md#tag-taxonomy)）
 > **快速導覽**：本索引按層次分類列出所有專案文件。
 > 詳細文件治理規則請見 [`docs/management/documentation-index.md`](./management/documentation-index.md)。
 

@@ -19,6 +19,28 @@
 
 ---
 
+<a id="tag-taxonomy"></a>
+## Tag Taxonomy / 標籤分類法
+
+文件開頭 `Tags:` 主要用於快速判讀文件用途，減少重複閱讀成本。
+
+| 標籤 | 用途 |
+|------|------|
+| `ssot` / `ssot-gateway` | SSOT 文件或 SSOT 導覽入口 |
+| `architecture-core` | 架構核心定義（高權威、優先閱讀） |
+| `navigation` / `index` / `docs-index` | 目錄、索引、路徑導覽 |
+| `taxonomy` | 文件分類或治理規則 |
+| `overview` / `quick-reference` / `onboarding` | 新人快速閱讀入口 |
+| `architecture` | 架構層級相關文件 |
+| `catalog` / `contracts` | 業務契約與目錄類文件 |
+| `adr` / `decision-log` | 架構決策記錄與決策歷史 |
+| `quickstart` | 極短入門導覽（比 `onboarding` 更偏操作入口） |
+| `governance` | 文件治理、責任分工、反重複規則 |
+
+> 規則：每份文件保留 3–5 個最具辨識度的標籤；若標籤無助於分類或檢索，應移除。
+
+---
+
 ## 文件分類結構
 
 ### 1. Architecture / 架構文件
