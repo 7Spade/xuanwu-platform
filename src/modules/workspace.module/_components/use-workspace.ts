@@ -2,17 +2,15 @@
 /**
  * useWorkspace — client-side hook that fetches a single workspace by ID.
  *
- * Source equivalent: workspace.slice/core/_hooks/use-workspace.ts
- * Adapted: uses FirestoreWorkspaceRepository (Web SDK) + getWorkspaceById
- * use-case. Reuses the same memoized-repository pattern as useWorkspaces.
+ * Presentation code stays adapter-agnostic and only calls the workspace query
+ * facade exposed by the module.
  *
  * Returns { workspace, loading, error, refresh }.
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import { getWorkspaceById, type WorkspaceDTO } from "../core/_use-cases";
-import { FirestoreWorkspaceRepository } from "../infra.firestore/_repository";
+import { getWorkspaceById, type WorkspaceDTO } from "../core/_queries";
 
 export interface UseWorkspaceResult {
   workspace: WorkspaceDTO | null;
@@ -33,8 +31,6 @@ export function useWorkspace(
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
 
-  const repo = useMemo(() => new FirestoreWorkspaceRepository(), []);
-
   const refresh = useCallback(() => setTick((n) => n + 1), []);
 
   useEffect(() => {
@@ -48,7 +44,7 @@ export function useWorkspace(
     setLoading(true);
     setError(null);
 
-    getWorkspaceById(repo, workspaceId)
+    getWorkspaceById(workspaceId)
       .then((result) => {
         if (cancelled) return;
         if (result.ok) {
@@ -71,7 +67,7 @@ export function useWorkspace(
     // `repo` is stable (useMemo []). `tick` re-runs the effect on refresh().
     // `refresh` itself is not listed because it is stable (useCallback []).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workspaceId, repo, tick]);
+  }, [workspaceId, tick]);
 
   return { workspace, loading, error, refresh };
 }

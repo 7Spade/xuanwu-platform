@@ -60,25 +60,15 @@ import {
 import { Label } from "@/design-system/primitives/ui/label";
 import { Checkbox } from "@/design-system/primitives/ui/checkbox";
 import { useTranslation } from "@/shared/i18n";
-import type { WorkspaceCapability } from "@/modules/workspace.module/domain.workspace/_value-objects";
 import {
   CAPABILITY_SPECS,
   NON_MOUNTABLE_CAPABILITY_IDS,
-} from "@/modules/workspace.module/domain.workspace/_capability-specs";
-import { mountCapabilities, unmountCapability } from "@/modules/workspace.module/core/_actions";
-import { FirestoreWorkspaceRepository } from "@/modules/workspace.module/infra.firestore/_repository";
+  mountCapabilities,
+  unmountCapability,
+  type WorkspaceCapability,
+} from "@/modules/workspace.module";
 
 import { useWorkspace } from "./use-workspace";
-
-// ---------------------------------------------------------------------------
-// Repo singleton
-// ---------------------------------------------------------------------------
-
-let _repo: FirestoreWorkspaceRepository | null = null;
-function getRepo() {
-  if (!_repo) _repo = new FirestoreWorkspaceRepository();
-  return _repo;
-}
 
 // ---------------------------------------------------------------------------
 // Icon registry — maps capability IDs to icons
@@ -222,7 +212,7 @@ export function WorkspaceCapabilitiesView({
     setIsMounting(true);
     setOpError(null);
     try {
-      const result = await mountCapabilities(getRepo(), workspaceId, caps);
+      const result = await mountCapabilities(workspaceId, caps);
       if (!result.ok) {
         setOpError(result.error.message);
         return;

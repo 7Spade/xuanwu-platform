@@ -12,11 +12,13 @@ import { FolderOpen, Grid2X2, List, Search } from "lucide-react";
 import { Input } from "@/design-system/primitives/ui/input";
 import { Badge } from "@/design-system/primitives/ui/badge";
 import { useTranslation } from "@/shared/i18n";
-import { useFiles } from "@/modules/file.module/_components/use-files";
-import { FileItem } from "@/modules/file.module/_components/file-item";
-import { FilePreview } from "@/modules/file.module/_components/file-preview";
-import { getMimeGroup } from "@/modules/file.module/domain.file/_service";
-import type { FileDTO } from "@/modules/file.module/core/_use-cases";
+import {
+  FileItem,
+  FilePreview,
+  getFileMimeGroup,
+  useFiles,
+  type FileDTO,
+} from "@/modules/file.module";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -45,7 +47,7 @@ function GalleryCard({
   file: FileDTO;
   onClick: () => void;
 }) {
-  const group = getMimeGroup(file.mimeType);
+  const group = getFileMimeGroup(file.mimeType);
   const bgClass = MIME_THUMB_BG[group] ?? "bg-muted/30";
   const isImage = group === "image" && file.downloadURL;
 

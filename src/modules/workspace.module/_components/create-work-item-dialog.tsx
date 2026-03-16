@@ -27,7 +27,6 @@ import {
   SelectValue,
 } from "@/design-system/primitives/ui/select";
 import { useTranslation } from "@/shared/i18n";
-import { FirestoreWorkItemRepository } from "@/modules/work.module/infra.firestore/_repository";
 import { createWorkItem, createChildWorkItem } from "@/modules/work.module";
 import type { WorkItemPriority } from "@/modules/work.module";
 
@@ -38,13 +37,6 @@ interface CreateWorkItemDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated: () => void;
-}
-
-// Module-level singleton.
-let _repo: FirestoreWorkItemRepository | null = null;
-function getRepo() {
-  if (!_repo) _repo = new FirestoreWorkItemRepository();
-  return _repo;
 }
 
 const PRIORITIES: WorkItemPriority[] = ["high", "medium", "low"];
@@ -87,8 +79,8 @@ export function CreateWorkItemDialog({
     try {
       const id = crypto.randomUUID();
       const result = parentId
-        ? await createChildWorkItem(getRepo(), id, workspaceId, parentId, title.trim(), priority)
-        : await createWorkItem(getRepo(), id, workspaceId, title.trim(), priority);
+        ? await createChildWorkItem(id, workspaceId, parentId, title.trim(), priority)
+        : await createWorkItem(id, workspaceId, title.trim(), priority);
       if (!result.ok) {
         setError(result.error.message);
         return;

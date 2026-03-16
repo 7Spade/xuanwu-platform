@@ -18,14 +18,7 @@ import { Button } from "@/design-system/primitives/ui/button";
 import { Input } from "@/design-system/primitives/ui/input";
 import { Label } from "@/design-system/primitives/ui/label";
 import { useTranslation } from "@/shared/i18n";
-import { FirestoreWorkspaceRepository } from "@/modules/workspace.module/infra.firestore/_repository";
-import { createWorkspace } from "@/modules/workspace.module/core/_use-cases";
-
-let _repo: FirestoreWorkspaceRepository | null = null;
-function getRepo() {
-  if (!_repo) _repo = new FirestoreWorkspaceRepository();
-  return _repo;
-}
+import { createWorkspace } from "@/modules/workspace.module";
 
 interface CreateWorkspaceDialogProps {
   dimensionId: string;
@@ -57,7 +50,7 @@ export function CreateWorkspaceDialog({
     setError(null);
     try {
       const id = crypto.randomUUID();
-      const result = await createWorkspace(getRepo(), id, dimensionId, trimmed);
+      const result = await createWorkspace(id, dimensionId, trimmed);
       if (!result.ok) {
         setError(result.error.message);
         return;

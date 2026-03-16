@@ -7,14 +7,14 @@
 
 import { FileText, Image, Code2, Database, FileQuestion } from "lucide-react";
 import { Badge } from "@/design-system/primitives/ui/badge";
-import { getMimeGroup, type MimeGroup } from "../domain.file/_service";
-import type { FileDTO } from "../core/_use-cases";
+import { getFileMimeGroup, type FileMimeGroup } from "../core/_mime";
+import type { FileDTO } from "../core/_queries";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-const MIME_ICONS: Record<MimeGroup, React.ElementType> = {
+const MIME_ICONS: Record<FileMimeGroup, React.ElementType> = {
   image: Image,
   document: FileText,
   code: Code2,
@@ -22,7 +22,7 @@ const MIME_ICONS: Record<MimeGroup, React.ElementType> = {
   other: FileQuestion,
 };
 
-const MIME_BADGE_CLASS: Record<MimeGroup, string> = {
+const MIME_BADGE_CLASS: Record<FileMimeGroup, string> = {
   image: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
   document: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
   code: "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20",
@@ -39,7 +39,7 @@ interface FileItemProps {
 }
 
 export function FileItem({ file }: FileItemProps) {
-  const group = getMimeGroup(file.mimeType);
+  const group = getFileMimeGroup(file.mimeType);
   const Icon = MIME_ICONS[group];
 
   return (

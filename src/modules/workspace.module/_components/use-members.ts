@@ -9,12 +9,8 @@
  * Refreshes when slug changes or `refresh()` is called.
  */
 
-import { useEffect, useMemo, useState } from "react";
-import { FirestoreAccountRepository } from "@/modules/account.module/infra.firestore/_repository";
-import {
-  getOrgMembersByHandle,
-  type MemberDTO,
-} from "@/modules/account.module/core/_use-cases";
+import { useEffect, useState } from "react";
+import { getOrgMembersByHandle, type MemberDTO } from "@/modules/account.module";
 
 export interface UseMembersResult {
   members: MemberDTO[];
@@ -36,8 +32,6 @@ export function useMembers(
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
 
-  const repo = useMemo(() => new FirestoreAccountRepository(), []);
-
   useEffect(() => {
     if (!slug) {
       setMembers([]);
@@ -49,7 +43,7 @@ export function useMembers(
     setLoading(true);
     setError(null);
 
-    getOrgMembersByHandle(repo, slug)
+    getOrgMembersByHandle(slug)
       .then((result) => {
         if (cancelled) return;
         if (result.ok) {
@@ -69,7 +63,7 @@ export function useMembers(
     return () => {
       cancelled = true;
     };
-  }, [slug, repo, tick]);
+  }, [slug, tick]);
 
   const refresh = () => setTick((n) => n + 1);
 

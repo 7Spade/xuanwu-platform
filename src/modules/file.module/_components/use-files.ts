@@ -1,14 +1,13 @@
 "use client";
 /**
- * useFiles — fetches workspace files from Firestore.
+ * useFiles — fetches workspace files from file.module query facade.
  *
- * Pattern: memoized FirestoreFileRepository → getFilesByWorkspace use-case.
- * Returns { files, loading, error } — read-only; upload is a future write-side wave.
+ * Presentation code stays adapter-agnostic and only calls the application
+ * query entrypoint exposed by the module.
  */
 
-import { useState, useEffect, useMemo } from "react";
-import { FirestoreFileRepository } from "../infra.firestore/_repository";
-import { getFilesByWorkspace, type FileDTO } from "../core/_use-cases";
+import { useState, useEffect } from "react";
+import { getFilesByWorkspace, type FileDTO } from "../core/_queries";
 
 export interface UseFilesResult {
   files: FileDTO[];
@@ -17,7 +16,6 @@ export interface UseFilesResult {
 }
 
 export function useFiles(workspaceId: string | null | undefined): UseFilesResult {
-  const repo = useMemo(() => new FirestoreFileRepository(), []);
   const [files, setFiles] = useState<FileDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +29,7 @@ export function useFiles(workspaceId: string | null | undefined): UseFilesResult
     let cancelled = false;
     setLoading(true);
     setError(null);
-    getFilesByWorkspace(repo, workspaceId).then((result) => {
+    getFilesByWorkspace(workspaceId).then((result) => {
       if (cancelled) return;
       if (result.ok) {
         setFiles(result.value);
@@ -43,7 +41,7 @@ export function useFiles(workspaceId: string | null | undefined): UseFilesResult
     return () => {
       cancelled = true;
     };
-  }, [repo, workspaceId]);
+  }, [workspaceId]);
 
   return { files, loading, error };
 }

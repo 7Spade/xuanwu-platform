@@ -9,8 +9,7 @@
 
 import { FileText, Loader2, AlertCircle, Upload } from "lucide-react";
 import { useTranslation } from "@/shared/i18n";
-import { useFiles } from "@/modules/file.module/_components/use-files";
-import { FileItem } from "@/modules/file.module/_components/file-item";
+import { FileItem, useFiles } from "@/modules/file.module";
 
 interface EditorViewProps {
   slug: string;

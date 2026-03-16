@@ -18,7 +18,7 @@ import {
 } from "@/design-system/primitives/ui/card";
 import { Badge } from "@/design-system/primitives/ui/badge";
 import { useTranslation } from "@/shared/i18n";
-import { useNamespaceBySlug } from "@/modules/namespace.module/_components/use-namespace-by-slug";
+import { useNamespaceBySlug } from "@/modules/namespace.module";
 
 const FREE_TIER_LIMIT = 5;
 

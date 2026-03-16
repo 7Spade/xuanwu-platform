@@ -2,19 +2,14 @@
 /**
  * useWorkspaces — client-side hook that fetches workspaces for a dimension (account).
  *
- * Source equivalent: workspace.slice/core/_hooks/use-workspaces.ts
- * Adapted: uses FirestoreWorkspaceRepository (Web SDK) + getWorkspacesByDimension
- * use-case to load workspaces for the current user's dimension ID.
+ * Presentation code stays adapter-agnostic and only calls the workspace query
+ * facade exposed by the module.
  *
- * Refreshes when dimensionId changes (e.g., on org switch).
+ * Refreshes when dimensionId changes (e.g. on org switch).
  */
 
-import { useEffect, useMemo, useState } from "react";
-import { FirestoreWorkspaceRepository } from "../infra.firestore/_repository";
-import {
-  getWorkspacesByDimension,
-  type WorkspaceDTO,
-} from "../core/_use-cases";
+import { useEffect, useState } from "react";
+import { getWorkspacesByDimension, type WorkspaceDTO } from "../core/_queries";
 
 export interface UseWorkspacesResult {
   workspaces: WorkspaceDTO[];
@@ -37,10 +32,6 @@ export function useWorkspaces(
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
 
-  // Repository is a thin wrapper around the Firestore singleton — memoize to
-  // avoid unnecessary object allocation on every dimensionId / tick change.
-  const repo = useMemo(() => new FirestoreWorkspaceRepository(), []);
-
   useEffect(() => {
     if (!dimensionId) {
       setWorkspaces([]);
@@ -52,7 +43,7 @@ export function useWorkspaces(
     setLoading(true);
     setError(null);
 
-    getWorkspacesByDimension(repo, dimensionId)
+    getWorkspacesByDimension(dimensionId)
       .then((result) => {
         if (cancelled) return;
         if (result.ok) {
@@ -72,7 +63,7 @@ export function useWorkspaces(
     return () => {
       cancelled = true;
     };
-  }, [dimensionId, repo, tick]);
+  }, [dimensionId, tick]);
 
   const refresh = () => setTick((n) => n + 1);
 

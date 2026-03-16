@@ -32,10 +32,7 @@ import {
   CardContent,
   CardHeader,
 } from "@/design-system/primitives/ui/card";
-import type { WorkspaceDTO } from "@/modules/workspace.module";
-import type { WorkspaceLifecycleState } from "@/modules/workspace.module/domain.workspace/_value-objects";
-import { advanceWorkspaceLifecycle } from "@/modules/workspace.module/core/_actions";
-import { FirestoreWorkspaceRepository } from "@/modules/workspace.module/infra.firestore/_repository";
+import { advanceWorkspaceLifecycle, type WorkspaceDTO } from "@/modules/workspace.module";
 import { WorkspaceSettingsDialog } from "./workspace-settings-dialog";
 
 interface WorkspaceCardProps {
@@ -43,12 +40,7 @@ interface WorkspaceCardProps {
   slug: string;
 }
 
-// Module-level singleton repository instance.
-let _repo: FirestoreWorkspaceRepository | null = null;
-function getRepo() {
-  if (!_repo) _repo = new FirestoreWorkspaceRepository();
-  return _repo;
-}
+type WorkspaceLifecycleState = WorkspaceDTO["lifecycleState"];
 
 const NEXT_STATE: Partial<Record<WorkspaceLifecycleState, WorkspaceLifecycleState>> = {
   preparatory: "active",
@@ -87,7 +79,7 @@ export function WorkspaceCard({ workspace, slug }: WorkspaceCardProps) {
     if (!nextState) return;
     setAdvancing(true);
     try {
-      const result = await advanceWorkspaceLifecycle(getRepo(), currentWorkspace.id, nextState);
+      const result = await advanceWorkspaceLifecycle(currentWorkspace.id, nextState);
       if (result.ok) {
         setCurrentWorkspace(result.value);
       }

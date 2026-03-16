@@ -5,7 +5,6 @@
 export type { FileDTO, FileVersionDTO, ParsedLineItemDTO, ParsingIntentDTO } from "./core/_use-cases";
 export {
   uploadFile,
-  getFilesByWorkspace,
   markFileAsProcessing,
   saveParsingIntent,
   getParsingIntentsByWorkspace,
@@ -13,6 +12,7 @@ export {
   finishParsingImport,
   buildParsingImportIdempotencyKey,
 } from "./core/_use-cases";
+export { getFilesByWorkspace } from "./core/_queries";
 export type { SaveParsingIntentInput, SaveParsingIntentResult, StartImportResult } from "./core/_use-cases";
 
 // --- Port interfaces ---
@@ -25,6 +25,8 @@ export type {
 
 // --- Domain types (exposed for cross-module use case composition only) ---
 export type { ParsedLineItem, ParsingIntent, ParsingImport } from "./domain.file/_parsing-intent";
+export { getFileMimeGroup } from "./core/_mime";
+export type { FileMimeGroup } from "./core/_mime";
 
 // --- Presentation ---
 export { useFiles } from "./_components/use-files";

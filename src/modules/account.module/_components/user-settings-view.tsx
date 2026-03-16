@@ -12,9 +12,8 @@ import { useTranslation } from "@/shared/i18n";
 
 import { ProfileCard } from "./profile-card";
 import { useCurrentAccount } from "./account-provider";
-import { AchievementsPanel } from "@/modules/achievement.module/_components/achievements-panel";
-import { FollowersPanel } from "@/modules/social.module/_components/followers-panel";
-import { SocialFeedView } from "@/modules/social.module/_components/social-feed-view";
+import { AchievementsPanel } from "@/modules/achievement.module";
+import { FollowersPanel, SocialFeedView } from "@/modules/social.module";
 
 export function UserSettingsView() {
   const t = useTranslation("zh-TW");

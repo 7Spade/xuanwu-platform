@@ -26,22 +26,10 @@ import { Input } from "@/design-system/primitives/ui/input";
 import { Badge } from "@/design-system/primitives/ui/badge";
 import { useTranslation } from "@/shared/i18n";
 import { useCurrentAccount } from "@/modules/account.module";
-import { FirestoreSearchQueryAdapter } from "@/modules/search.module/infra.firestore/_repository";
-import { executeSearch } from "@/modules/search.module/core/_use-cases";
-import type { SearchResultDTO } from "@/modules/search.module/core/_use-cases";
+import { executeSearch, type SearchResultDTO } from "@/modules/search.module";
 import { SearchFilterBar } from "./search-filter-bar";
 import type { SearchFilter } from "./search-filter-bar";
 import { useSearchHistory } from "./use-search-history";
-
-// ---------------------------------------------------------------------------
-// Singleton adapter
-// ---------------------------------------------------------------------------
-
-let _adapter: FirestoreSearchQueryAdapter | null = null;
-function getAdapter() {
-  if (!_adapter) _adapter = new FirestoreSearchQueryAdapter();
-  return _adapter;
-}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -90,7 +78,6 @@ export function SearchResultsView({ initialQuery = "" }: SearchResultsViewProps)
         filter.scope === "all" ? "global" : filter.scope;
       startTransition(() => {
         executeSearch(
-          getAdapter(),
           query.trim(),
           account.id,
           scope,

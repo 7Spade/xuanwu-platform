@@ -31,9 +31,8 @@ import {
 } from "@/design-system/primitives/ui/dialog";
 import { useTranslation } from "@/shared/i18n";
 import { useWorkspace } from "./use-workspace";
-import { addWorkspaceLocation, removeWorkspaceLocation } from "../core/_use-cases";
-import { FirestoreWorkspaceRepository } from "../infra.firestore/_repository";
-import type { WorkspaceLocation } from "../domain.workspace/_entity";
+import { addWorkspaceLocation, removeWorkspaceLocation } from "../core/_actions";
+import type { WorkspaceDTO } from "../core/_queries";
 
 interface WorkspaceLocationsViewProps {
   slug: string;
@@ -41,13 +40,7 @@ interface WorkspaceLocationsViewProps {
 }
 
 type LocationType = "building" | "floor" | "room";
-
-// Module-level singleton repo — same pattern used elsewhere
-let _repo: FirestoreWorkspaceRepository | null = null;
-function getRepo() {
-  if (!_repo) _repo = new FirestoreWorkspaceRepository();
-  return _repo;
-}
+type WorkspaceLocation = NonNullable<WorkspaceDTO["locations"]>[number];
 
 // ---------------------------------------------------------------------------
 // AddLocationDialog
@@ -144,7 +137,7 @@ export function WorkspaceLocationsView({ workspaceId }: WorkspaceLocationsViewPr
   const handleAdd = useCallback(
     async (label: string) => {
       const id = `loc-${crypto.randomUUID()}`;
-      await addWorkspaceLocation(getRepo(), workspaceId, {
+      await addWorkspaceLocation(workspaceId, {
         id,
         label,
         type: addDialog.type,
@@ -159,7 +152,7 @@ export function WorkspaceLocationsView({ workspaceId }: WorkspaceLocationsViewPr
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await removeWorkspaceLocation(getRepo(), workspaceId, deleteTarget.locationId);
+      await removeWorkspaceLocation(workspaceId, deleteTarget.locationId);
       setDeleteTarget(null);
       refresh();
     } finally {

@@ -22,16 +22,8 @@ import {
   CommandList,
 } from "@/design-system/primitives/ui/command";
 import { useTranslation } from "@/shared/i18n";
-import { FirestoreSearchQueryAdapter } from "@/modules/search.module/infra.firestore/_repository";
-import { executeSearch } from "@/modules/search.module/core/_use-cases";
-import type { SearchResultDTO } from "@/modules/search.module/core/_use-cases";
+import { executeSearch, type SearchResultDTO } from "@/modules/search.module";
 import { useCurrentAccount } from "@/modules/account.module";
-
-let _adapter: FirestoreSearchQueryAdapter | null = null;
-function getRepo() {
-  if (!_adapter) _adapter = new FirestoreSearchQueryAdapter();
-  return _adapter;
-}
 
 // ---------------------------------------------------------------------------
 // Module icon helper
@@ -67,7 +59,7 @@ export function GlobalSearchDialog({ open, onOpenChange }: GlobalSearchDialogPro
     }
     const trimmed = query.trim();
     startTransition(() => {
-      executeSearch(getRepo(), trimmed, account.id, "global", undefined, 20)
+      executeSearch(trimmed, account.id, "global", undefined, 20)
         .then((res) => {
           if (res.ok) setResults(res.value);
         })

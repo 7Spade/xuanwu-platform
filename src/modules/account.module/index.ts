@@ -8,17 +8,20 @@
 // NEVER export entities, value objects, repositories, or domain events directly.
 
 // DTOs
-export type { AccountDTO, PublicProfileDTO } from "./core/_use-cases";
+export type { AccountDTO, MemberDTO, PublicProfileDTO } from "./core/_queries";
 
 // Application use cases
 export {
   createPersonalAccount,
   createOrganizationAccount,
   updateAccountProfile,
+} from "./core/_actions";
+export {
   getAccountById,
+  getOrgMembersByHandle,
   getPublicProfile,
   getOrganizationsByOwnerId,
-} from "./core/_use-cases";
+} from "./core/_queries";
 
 // Port interfaces (for infrastructure adapter implementors)
 export type {

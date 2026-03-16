@@ -4,16 +4,17 @@
 // Exports: DTOs, application use cases, port interfaces.
 // NEVER export entities, value objects, repositories, or domain events directly.
 
-export type { NamespaceDTO, WorkspacePathDTO } from "./core/_use-cases";
+export type { NamespaceDTO, WorkspacePathDTO } from "./core/_queries";
 
 export {
-  registerNamespace,
   getNamespaceBySlug,
   resolveWorkspacePath,
-  bindWorkspaceToNamespace,
-} from "./core/_use-cases";
+} from "./core/_queries";
+export { bindWorkspaceToNamespace, registerNamespace } from "./core/_use-cases";
 
 export type {
   INamespaceRepository,
   INamespaceSlugAvailabilityPort,
 } from "./domain.namespace/_ports";
+export { useNamespaceBySlug } from "./_components/use-namespace-by-slug";
+export type { UseNamespaceBySlugResult } from "./_components/use-namespace-by-slug";

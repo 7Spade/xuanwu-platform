@@ -40,13 +40,13 @@ import {
   SelectValue,
 } from "@/design-system/primitives/ui/select";
 import { useTranslation } from "@/shared/i18n";
-import type { WorkspaceGrantDTO, WorkspaceRole } from "@/modules/workspace.module/core/_use-cases";
 import {
   grantWorkspaceAccess,
   revokeWorkspaceAccess,
   updateWorkspaceRole,
-} from "@/modules/workspace.module/core/_actions";
-import { FirestoreWorkspaceGrantRepository } from "@/modules/workspace.module/infra.firestore/_repository";
+  type WorkspaceGrantDTO,
+  type WorkspaceRole,
+} from "@/modules/workspace.module";
 
 import { useWorkspace } from "./use-workspace";
 
@@ -69,13 +69,6 @@ function RoleIcon({ role }: { role: string }) {
     case "Contributor": return <Edit className={cls} />;
     default:            return <Eye className={cls} />;
   }
-}
-
-// Stable singleton — avoids re-instantiation on every render.
-let _grantRepo: FirestoreWorkspaceGrantRepository | null = null;
-function getGrantRepo(): FirestoreWorkspaceGrantRepository {
-  if (!_grantRepo) _grantRepo = new FirestoreWorkspaceGrantRepository();
-  return _grantRepo;
 }
 
 // ---------------------------------------------------------------------------
@@ -184,7 +177,7 @@ export function WorkspaceGrantsView({ workspaceId }: WorkspaceGrantsViewProps) {
     setIsGranting(true);
     setOpError(null);
     try {
-      const result = await grantWorkspaceAccess(getGrantRepo(), workspaceId, {
+      const result = await grantWorkspaceAccess(workspaceId, {
         userId: inviteUserId.trim(),
         role: inviteRole,
       });

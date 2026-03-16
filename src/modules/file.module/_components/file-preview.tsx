@@ -17,8 +17,8 @@ import { Download, ExternalLink, FileQuestion, X } from "lucide-react";
 
 import { Badge } from "@/design-system/primitives/ui/badge";
 import { useTranslation } from "@/shared/i18n";
-import { getMimeGroup } from "../domain.file/_service";
-import type { FileDTO } from "../core/_use-cases";
+import { getFileMimeGroup } from "../core/_mime";
+import type { FileDTO } from "../core/_queries";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -41,7 +41,7 @@ interface FilePreviewProps {
 
 export function FilePreview({ file, onClose }: FilePreviewProps) {
   const t = useTranslation("zh-TW");
-  const group = getMimeGroup(file.mimeType);
+  const group = getFileMimeGroup(file.mimeType);
   const currentVersion = file.versions.find(
     (v) => v.versionId === file.currentVersionId,
   );

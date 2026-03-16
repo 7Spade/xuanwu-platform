@@ -2,20 +2,12 @@
 /**
  * useNamespaceBySlug — client-side hook that fetches a namespace by its slug.
  *
- * Source equivalent: organization.slice/core/_hooks/use-org.ts (slug variant)
- * Adapted: uses FirestoreNamespaceRepository (Web SDK) + getNamespaceBySlug
- * use-case to load a namespace from a route slug (e.g. `[slug]` param).
- *
- * Used by org-settings pages (general, billing) which receive the slug from
- * the URL rather than from AccountProvider.
+ * Presentation code stays adapter-agnostic and only calls the namespace query
+ * facade exposed by the module.
  */
 
-import { useEffect, useMemo, useState } from "react";
-import { FirestoreNamespaceRepository } from "../infra.firestore/_repository";
-import {
-  getNamespaceBySlug,
-  type NamespaceDTO,
-} from "../core/_use-cases";
+import { useEffect, useState } from "react";
+import { getNamespaceBySlug, type NamespaceDTO } from "../core/_queries";
 
 export interface UseNamespaceBySlugResult {
   namespace: NamespaceDTO | null;
@@ -38,8 +30,6 @@ export function useNamespaceBySlug(
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
 
-  const repo = useMemo(() => new FirestoreNamespaceRepository(), []);
-
   useEffect(() => {
     if (!slug) {
       setNamespace(null);
@@ -51,7 +41,7 @@ export function useNamespaceBySlug(
     setLoading(true);
     setError(null);
 
-    getNamespaceBySlug(repo, slug)
+    getNamespaceBySlug(slug)
       .then((result) => {
         if (cancelled) return;
         if (result.ok) {
@@ -71,7 +61,7 @@ export function useNamespaceBySlug(
     return () => {
       cancelled = true;
     };
-  }, [slug, repo, tick]);
+  }, [slug, tick]);
 
   const refresh = () => setTick((n) => n + 1);
 
