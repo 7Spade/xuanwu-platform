@@ -144,7 +144,7 @@ Homepage (/)
 
 | Document | Description |
 |----------|-------------|
-| [`docs/architecture/notes/model-driven-hexagonal-architecture.md`](./model-driven-hexagonal-architecture.md) | MDDD design philosophy, Ports & Adapters, Context Mapping |
+| [`docs/architecture/notes/model-driven-hexagonal-architecture.md`](./notes/model-driven-hexagonal-architecture.md) | MDDD design philosophy, Ports & Adapters, Context Mapping |
 | [`docs/architecture/README.md`](./README.md) | Full architecture SSOT |
 | [`docs/architecture/adr/README.md`](./adr/README.md) | Architecture Decision Records |
 | [`docs/architecture/catalog/`](./catalog/) | Business entities, events, service boundary |

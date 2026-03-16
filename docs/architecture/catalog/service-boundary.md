@@ -5,7 +5,7 @@ including ownership rules, crossing protocols, Workforce Scheduling bridge, and 
 
 > **MDDD reference**: Context Mapping terminology used in this document is defined in the
 > [Technical Glossary — Context Mapping Patterns](../glossary/technical-terms.md#context-mapping-patterns--上下文映射模式)
-> and the [Model-Driven Hexagonal Architecture guide](../model-driven-hexagonal-architecture.md#6-context-mapping-in-xuanwu).
+> and the [Model-Driven Hexagonal Architecture guide](../notes/model-driven-hexagonal-architecture.md#6-context-mapping-in-xuanwu).
 
 ---
 
