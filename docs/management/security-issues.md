@@ -4,50 +4,6 @@
 
 ---
 
-## SEC-001 `WorkspaceGrant.expiresAt` 無強制過期檢查機制
-
-| 屬性 | 值 |
-|------|-----|
-| **嚴重程度** | 高（🔴） |
-| **受影響模組** | `workspace.module` |
-| **受影響檔案** | `src/modules/workspace.module/domain.workspace/_entity.ts` |
-| **受影響欄位** | `WorkspaceGrant.expiresAt?: string` |
-
-**問題描述**  
-`WorkspaceGrant` 包含 `expiresAt?: string`（可選的過期時間），
-但以下程式碼中**沒有**任何過期強制機制：
-
-1. `hasDirectGrant()` 函數只檢查 `g.status === "active"`，不檢查 `expiresAt`：
-```typescript
-// domain.workspace/_entity.ts
-export function hasDirectGrant(workspace: WorkspaceEntity, userId: string): boolean {
-  return workspace.grants.some(
-    (g) => g.userId === userId && g.status === "active",
-    // ← expiresAt 未被檢查！
-  );
-}
-```
-
-2. 沒有 Domain Method 或 Domain Service 負責將「已過期的 grant」的 `status` 從 `"active"` 更新為 `"expired"`。
-
-**安全風險**  
-臨時授權（如承包商）在 `expiresAt` 後，若 `status` 未被更新，仍可通過 `hasDirectGrant()` 的存取檢查。
-
-**建議修正方向**  
-在 `hasDirectGrant()` 或 `hasWorkspaceAccess()` 中加入時間檢查：
-```typescript
-export function hasDirectGrant(workspace: WorkspaceEntity, userId: string, now: string): boolean {
-  return workspace.grants.some(
-    (g) => g.userId === userId
-          && g.status === "active"
-          && (!g.expiresAt || g.expiresAt > now), // ← 新增過期檢查
-  );
-}
-```
-或定義 `purgeExpiredGrants(workspace, now): WorkspaceEntity` 在 Application Layer 週期性清理。
-
----
-
 ## SEC-002 `AuditEntry` 工廠函數預設 `outcome: "success"`
 
 | 屬性 | 值 |
@@ -174,3 +130,7 @@ export const ContractAmountSchema = z.number().positive("Contract amount must be
 export type ContractAmount = z.infer<typeof ContractAmountSchema>;
 ```
 並在 `buildSettlementRecord` 工廠函數中使用此 schema 驗證。
+---
+
+> **已轉譯為 ADR 的問題** / Issues translated to ADRs:
+> - SEC-001 → [ADR-011](../architecture/adr/20260316-workspace-grant-expiry-invariant.md): WorkspaceGrant expiry domain invariant enforcement

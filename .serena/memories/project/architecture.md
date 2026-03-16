@@ -93,3 +93,34 @@ Import pattern: `import { Button } from "@/design-system/primitives"`
   - `[slug]/` — organization context
   - `[slug]/[workspaceId]/(workspace)/` — workspace context with WBS
   - `[slug]/[workspaceId]/(standalone)/editor/` — standalone editor
+
+## Architecture Decision Records (ADRs)
+
+ADR index: `docs/architecture/adr/README.md`
+
+| ADR | File | Topic | Status |
+|-----|------|-------|--------|
+| ADR-001 | (no file) | Adopt DDD 4-layer architecture | Accepted |
+| ADR-002 | (no file) | Use Next.js App Router with parallel routing | Accepted |
+| ADR-003 | (no file) | Use Tailwind CSS v4 with shadcn/ui | Accepted |
+| ADR-004 | (no file) | Use Firebase as infrastructure | Accepted |
+| ADR-005 | (no file) | Use Event Bus for SaaS ↔ Workspace boundary | Accepted |
+| ADR-006 | (no file) | Adopt Modular DDD — self-contained modules | Accepted |
+| ADR-007 | (no file) | Use `@atlaskit/pragmatic-drag-and-drop` | Accepted |
+| ADR-008 | `20260316-navigation-logic-gaps.md` | Navigation logic gaps (E2E audit) | Proposed |
+| ADR-009 | `20260316-ui-ux-navigation-gaps.md` | UI/UX navigation gaps (E2E audit) | Proposed |
+| ADR-010 | `20260316-status-semantic-disambiguation.md` | `status` field semantic disambiguation + lifecycle naming | Proposed |
+| ADR-011 | `20260316-workspace-grant-expiry-invariant.md` | WorkspaceGrant expiry domain invariant enforcement | Proposed |
+| ADR-012 | `20260316-workspace-namespace-isolation.md` | Workspace-Namespace isolation — `dimensionId` rename + `AccountHandle`↔`NamespaceSlug` | Proposed |
+
+## Management Issues → ADR Translation Log
+
+Issues translated to ADRs (removed from `docs/management/`):
+- `semantics-issues.md` SEM-001, SEM-006 → ADR-010
+- `security-issues.md` SEC-001 → ADR-011
+- `semantics-issues.md` SEM-003, SEM-005 → ADR-012
+
+Remaining open issues: `api-issues.md`, `doc-issues.md`, `fields-issues.md`,
+`integration-issues.md`, `performance-issues.md`, `ui-issues.md`,
+`workflow-issues.md`, `semantics-issues.md` (SEM-002, SEM-004),
+`security-issues.md` (SEC-002–006).
