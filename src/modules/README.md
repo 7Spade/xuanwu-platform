@@ -220,3 +220,17 @@ Only add when an existing module shows clear responsibility overload, boundary c
 - Business Entities / 業務實體: [`docs/architecture/catalog/business-entities.md`](../../docs/architecture/catalog/business-entities.md)
 - Service Boundary / 服務邊界: [`docs/architecture/catalog/service-boundary.md`](../../docs/architecture/catalog/service-boundary.md)
 - Event Catalog / 事件目錄: [`docs/architecture/catalog/event-catalog.md`](../../docs/architecture/catalog/event-catalog.md)
+
+## Domain Governance Matrix（for all modules）
+
+Every module under `src/modules/*.module` must explicitly document these seven items in its own `README.md`:
+
+1. **Bounded Context**（上下文邊界）
+2. **Core Domain vs Supporting Domain**（核心域與支撐域）
+3. **Context Mapping**（上下文映射）
+4. **Anti-Corruption Layer**（防腐層）
+5. **Core Business Logic**（核心業務邏輯）
+6. **Operational Flow**（操作流程）
+7. **Inter-module Contracts**（模組間契約）
+
+This repository enforces this as the minimum DDD governance baseline for module-level documentation.
