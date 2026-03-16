@@ -115,6 +115,17 @@ Design or refactor Copilot customization assets in this order:
 - Keep repository agents in `.github/agents/`; do not create `.github/agents/plugins/`.
 - If a bundled plugin is needed, manage it through VS Code plugin settings rather than this folder. For the plugin model, see https://code.visualstudio.com/docs/copilot/customization/agent-plugins and treat marketplace or `chat.plugins.paths` bundles as plugins; treat `.github/agents/*.agent.md` files as repository agents.
 
+**Sub-agent design (`user-invocable: false`):**
+
+Agents marked `user-invocable: false` are sub-agents — they are intentionally excluded from the VS Code agent picker. They are only invoked via `handoffs` from a parent agent. This is the correct and supported design per the [VS Code sub-agents documentation](https://code.visualstudio.com/docs/copilot/agents/subagents). Do not change this setting to `true` unless a sub-agent should become a direct user entry-point.
+
+| Context | Sub-agent behavior |
+|---------|-------------------|
+| VS Code Copilot Chat (desktop/browser) | Not shown in agent picker; invoked only via parent handoffs |
+| GitHub Copilot Coding Agent | All agents including sub-agents are available via the `task` tool regardless of `user-invocable` |
+
+The "Not configured for user selection" label shown in the VS Code Copilot UI for these agents is **expected and intentional**.
+
 **MCP tool assignment guide (add only what the agent genuinely needs):**
 
 | MCP tool | Assign to |

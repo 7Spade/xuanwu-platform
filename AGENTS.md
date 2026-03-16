@@ -28,6 +28,48 @@ Conventions shared across all GitHub Copilot agents in this repository.
 - Do not bypass existing Firebase Security Rules.
 - Prefer deterministic, reviewable changes over ad-hoc workarounds.
 
+## Agent Catalog
+
+### User-Selectable Entry-Point Agents
+
+| Agent | Primary Use |
+|-------|-------------|
+| `xuanwu-commander` | Six-step intent pipeline dispatcher — use for any ambiguous or complex request |
+| `xuanwu-orchestrator` | Delivery coordinator routing work across all specialist agents |
+| `xuanwu-product` | Requirements, acceptance criteria, GitHub issues |
+| `xuanwu-research` | Codebase discovery, framework docs (Context7), knowledge-graph sync |
+| `xuanwu-architect` | System design, API contracts, module and boundary audits |
+| `xuanwu-architecture-chief` | Architecture documentation refinement (delegates to architecture sub-cluster) |
+| `xuanwu-implementer` | Next.js, React, TypeScript, server/client boundary implementation |
+| `xuanwu-ui` | Mobile-first UI, shadcn/ui, Tailwind CSS, i18n-safe components |
+| `xuanwu-quality` | Lint/build/test, security checks, Firebase rule scrutiny |
+| `xuanwu-docs` | README, architecture docs, schema docs, diagrams |
+| `xuanwu-ops` | CI/CD, deployment workflows, runtime infrastructure |
+| `xuanwu-test-expert` | Next.js preflight diagnostics and runtime verification |
+| `xuanwu-software-planner` | Implementation planning and todo tracking |
+| `xuanwu-sequential-thinking` | Step-by-step debugging and complex reasoning |
+| `ddd-orchestrator` | DDD migration coordinator (delegates to DDD sub-cluster) |
+
+### Sub-Agent Clusters
+
+Sub-agents have `user-invocable: false` — they do **not** appear in the VS Code agent picker but are invoked automatically via parent-agent handoffs. In the GitHub Copilot Coding Agent, all sub-agents are available through the `task` tool regardless of `user-invocable`.
+
+**DDD Cluster** — invoke via `@ddd-orchestrator` or `/ddd-slice-scaffold`:
+
+| Sub-Agent | Layer |
+|-----------|-------|
+| `ddd-domain-modeler` | Domain Layer: aggregates, entities, value objects, invariants |
+| `ddd-application-layer` | Application Layer: use cases, actions, queries, port orchestration |
+| `ddd-infrastructure` | Infrastructure Layer: Firebase adapters, repositories, event buses |
+
+**Architecture Cluster** — invoke via `@xuanwu-architecture-chief` or `/xuanwu-architecture-realign`:
+
+| Sub-Agent | Role |
+|-----------|------|
+| `xuanwu-architecture-refactor` | Architecture documentation structure refactoring |
+| `xuanwu-diagram-designer` | Mermaid diagram refinement and standardization |
+| `xuanwu-repo-browser` | Read-only architecture analysis and structure extraction |
+
 ## References
 
 - Customization guide: `.github/README.md`
