@@ -134,3 +134,37 @@ revokeMembership(membershipId: string): AccountEntity
 function submitNewClaim(record: SettlementRecord, items: ClaimLineItem[]): SettlementRecord
 // 確保 cycleIndex 遞增，stage 轉換，並驗證金額不超過 contractAmount
 ```
+
+---
+
+## WF-006 建立 Workspace 流程在 account/dimension 未就緒時可點擊但無可見結果
+
+| 屬性 | 值 |
+|------|-----|
+| **嚴重程度** | 中（🟡） |
+| **受影響模組** | `workspace.module`, `account.module` |
+| **受影響檔案** | `src/modules/workspace.module/_components/workspaces-view.tsx`, `src/modules/workspace.module/_components/create-workspace-dialog.tsx`, `src/app/(main)/[slug]/workspaces/page.tsx` |
+
+**問題描述**  
+目前 Workspace 列表頁的「建立空間」按鈕會直接執行 `setCreateOpen(true)`，但建立對話框只在 `effectiveDimensionId` 有值時才會被渲染。這造成一個流程斷點：
+
+1. 使用者可在 account context 尚未完成解析、或 dimension 尚未可用時點擊建立按鈕。
+2. 畫面 state 進入 `createOpen = true`，但 `CreateWorkspaceDialog` 因 `effectiveDimensionId` 為 `null` 而根本沒有掛載。
+3. 使用者看不到任何 Dialog、錯誤提示或 loading feedback，主觀感受就是「按了沒反應」。
+
+目前相關實作為：
+
+- `workspaces-view.tsx` 中，按鈕永遠可按：`onClick={() => setCreateOpen(true)}`
+- `workspaces-view.tsx` 中，`CreateWorkspaceDialog` 僅在 `effectiveDimensionId && (...)` 條件成立時渲染
+- `[slug]/workspaces/page.tsx` 版本的頁面只傳入 `slug`，未先保證 dimension/account 已完成解析
+
+此外，`create-workspace-dialog.tsx` 的 `handleCreate()` 只有 `try/finally`，沒有 `catch`；若前端 runtime 例外發生，使用者同樣缺乏可見錯誤回饋，會放大「沒反應」的感受。
+
+**根本原因**  
+建立流程把「是否允許進入建立步驟」的守門條件放在 Dialog 是否渲染，而不是放在互動入口本身。也就是說，流程前置條件（dimension/account ready）沒有在按鈕層被顯式檢查、阻擋或提示，導致 UI 允許觸發一個無法完成的流程分支。
+
+**建議修正方向**  
+1. 將「建立空間」按鈕與空狀態 CTA 在 `effectiveDimensionId` 不可用時設為 disabled，並顯示明確原因（例如帳號內容載入中或目前無可用 dimension）。
+2. 或改為與 `7Spade/xuanwu` 一樣使用獨立路由／攔截式 modal 頁面開啟建立流程，避免以條件渲染承擔流程守門責任。
+3. 在 `CreateWorkspaceDialog.handleCreate()` 補上 `catch`，將 runtime 或 repository 例外轉為使用者可見的錯誤訊息。
+4. 在 `[slug]/workspaces/page.tsx` 路徑下補上 account/dimension ready gate，避免頁面在必要上下文尚未就緒時就暴露可互動的建立入口。
