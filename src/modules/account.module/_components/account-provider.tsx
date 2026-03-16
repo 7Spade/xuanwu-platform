@@ -90,7 +90,10 @@ export function AccountProvider({ children }: { children: ReactNode }) {
 
   const refreshOrganizations = useCallback(async () => {
     const ownerId = resolveOwnerAccountId(account, user?.uid ?? null);
-    if (!ownerId) return;
+    if (!ownerId) {
+      setOrganizations([]);
+      return;
+    }
     setOrgsLoading(true);
     try {
       const repo = new FirestoreAccountRepository();
