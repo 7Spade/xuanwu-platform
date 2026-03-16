@@ -27,8 +27,10 @@ import {
   SidebarMenuButton,
 } from "@/design-system/primitives/ui/sidebar";
 
+const HOME_ROUTE = "/dashboard";
+
 const NAV_ITEMS = [
-  { href: "/", icon: LayoutDashboard, labelKey: "nav.home" },
+  { href: HOME_ROUTE, icon: LayoutDashboard, labelKey: "nav.home" },
   { href: "/workspaces", icon: Layers, labelKey: "nav.workspaces" },
   { href: "/notifications", icon: Bell, labelKey: "nav.notifications" },
   { href: "/organizations", icon: Building2, labelKey: "nav.organizations" },
@@ -47,7 +49,7 @@ export function NavMain() {
             asChild
             isActive={
               pathname === href ||
-              (href !== "/" && pathname.startsWith(href))
+              (href !== HOME_ROUTE && pathname.startsWith(href))
             }
           >
             <Link href={href}>

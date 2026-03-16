@@ -87,7 +87,7 @@ export default function OnboardingPage() {
         {/* Skip */}
         <div className="flex justify-center">
           <Button asChild variant="ghost" size="sm" className="text-xs text-muted-foreground">
-            <Link href="/">{t("onboarding.skip")}</Link>
+            <Link href="/dashboard">{t("onboarding.skip")}</Link>
           </Button>
         </div>
       </div>

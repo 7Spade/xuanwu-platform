@@ -112,7 +112,7 @@ export function AccountSwitcher() {
   return (
     <>
       <Link
-        href="/"
+        href="/dashboard"
         className="mb-2 flex items-center px-1 transition-opacity hover:opacity-80"
       >
         <div className="select-none text-3xl" aria-label="Xuanwu">🐢</div>
