@@ -1,4 +1,4 @@
-This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+This file is a merged representation of a subset of the codebase, containing specifically included files, combined into a single document by Repomix.
 
 # Summary
 
@@ -31,36 +31,27 @@ This skill contains the following reference files:
 
 - Some files may have been excluded based on .gitignore rules and Repomix's configuration
 - Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Only files matching these patterns are included: **/*.md
 - Files matching patterns in .gitignore are excluded
 - Files matching default ignore patterns are excluded
 - Files are sorted by Git change count (files with more changes are at the bottom)
 
 ## Statistics
 
-853 files | 82,801 lines
+330 files | 39,044 lines
 
 | Language | Files | Lines |
 |----------|------:|------:|
 | Markdown | 330 | 39,044 |
-| TypeScript | 282 | 21,138 |
-| TypeScript (TSX) | 195 | 20,616 |
-| No Extension | 21 | 71 |
-| JSON | 10 | 582 |
-| MERMAID | 4 | 747 |
-| YAML | 3 | 259 |
-| JavaScript (ESM) | 2 | 58 |
-| RULES | 2 | 46 |
-| EXAMPLE | 1 | 29 |
-| Other | 3 | 211 |
 
 **Largest files:**
-- `src/shared/i18n/index.ts` (1,251 lines)
 - `docs/copilot/customization/hooks.md` (830 lines)
 - `docs/architecture/notes/model-driven-hexagonal-architecture.md` (755 lines)
-- `src/design-system/primitives/ui/sidebar.tsx` (726 lines)
 - `docs/architecture/catalog/business-entities.md` (632 lines)
-- `src/modules/workspace.module/core/_use-cases.ts` (496 lines)
 - `.serena/memories/tasks/BACKLOG.md` (466 lines)
-- `src/modules/workspace.module/_components/workspace-settings-dialog.tsx` (449 lines)
-- `src/modules/workspace.module/_components/workspace-capabilities-view.tsx` (446 lines)
 - `docs/copilot/customization/custom-instructions.md` (443 lines)
+- `docs/management/issues.md` (441 lines)
+- `.serena/memories/project/domain-lookup.md` (440 lines)
+- `docs/copilot/agents/agent-tools.md` (395 lines)
+- `.agents/skills/developing-genkit-dart/references/genkit.md` (380 lines)
+- `.agents/skills/firebase-data-connect/examples.md` (377 lines)
