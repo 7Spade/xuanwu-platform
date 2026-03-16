@@ -23,12 +23,12 @@
 //   utils       — formatDate, formatDateTime, capitalise, toKebabCase,
 //                 omit, pick, unique, chunk
 //
-// NOTE: Client-side React hooks (useToggle, useDebounce, useLocalStorage,
-//       usePrevious, useIsMounted, useLocale) are in @/shared/directives.
+// NOTE: Client-side React hooks are in @/shared/hooks (useToggle, useDebounce,
+//       useLocalStorage, usePrevious, useIsMounted, useLocale, useAuthState).
 //       They carry a "use client" directive and must be imported separately
 //       from within Client Components only:
 //
-//   import { useToggle, useDebounce, useLocale } from "@/shared/directives"
+//   import { useToggle, useDebounce, useLocale } from "@/shared/hooks"
 
 export * from './constants';
 export * from './errors';
