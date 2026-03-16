@@ -6,7 +6,7 @@
  * Uses SidebarProvider from design system to enable sidebar state.
  */
 import { SidebarInset, SidebarProvider } from "@/design-system/primitives/ui/sidebar";
-import { AccountProvider } from "@/modules/account.module/_components/account-provider";
+import { AccountProvider } from "@/modules/account.module";
 import { DashboardSidebar, ShellHeader } from "@/design-system/layout/dashboard";
 
 export default function MainLayout({

@@ -36,3 +36,9 @@ export type {
 // Presentation hook — stable public API for cross-module session access
 export { useCurrentAccount } from "./_components/account-provider";
 export type { AccountContextValue } from "./_components/account-provider";
+
+// Presentation components (UI surfaces for this bounded context)
+export { AccountProvider } from "./_components/account-provider";
+export { AccountSwitcher } from "./_components/account-switcher";
+export { SecurityView } from "./_components/security-view";
+export { UserSettingsView } from "./_components/user-settings-view";

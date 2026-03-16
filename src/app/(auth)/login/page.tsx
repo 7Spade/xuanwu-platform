@@ -1,4 +1,4 @@
-import { AuthView } from "@/modules/identity.module/_components/auth-view";
+import { AuthView } from "@/modules/identity.module";
 
 export default function LoginPage() {
   return <AuthView />;
