@@ -58,7 +58,7 @@ export function WorkItemRow({ item, onUpdated, onDeleted }: WorkItemRowProps) {
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      await deleteWorkItem(getRepo(), item.workspaceId, item.id);
+      await deleteWorkItem(item.workspaceId, item.id);
       setDeleteOpen(false);
       onDeleted?.();
     } finally {

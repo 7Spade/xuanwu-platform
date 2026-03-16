@@ -82,7 +82,7 @@ export function WorkItemEditDialog({
     setLoading(true);
     setError(null);
     try {
-      const result = await updateWorkItem(getRepo(), item.id, {
+      const result = await updateWorkItem(item.id, {
         title: title.trim(),
         description: description.trim() || undefined,
         status,

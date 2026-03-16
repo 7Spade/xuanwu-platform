@@ -5,6 +5,7 @@
 // NEVER export entities, value objects, repositories, or domain events directly.
 
 export type { WorkspaceDTO, WorkspaceGrantDTO, GrantWorkspaceAccessInput } from "./core/_actions";
+export type { WorkspaceRole } from "./core/_use-cases";
 
 export {
   createWorkspace,
@@ -13,6 +14,9 @@ export {
   revokeWorkspaceAccess,
   updateWorkspaceRole,
   deleteWorkspace,
+  mountCapabilities,
+  unmountCapability,
+  updateWorkspaceSettings,
 } from "./core/_actions";
 export {
   filterVisibleWorkspaces,

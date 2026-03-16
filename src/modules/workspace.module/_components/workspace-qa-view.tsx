@@ -48,7 +48,7 @@ export function WorkspaceQaView({ workspaceId }: WorkspaceQaViewProps) {
 
   const handleVerify = useCallback(
     async (itemId: string) => {
-      const result = await updateWorkItem(getRepo(), itemId, {
+      const result = await updateWorkItem(itemId, {
         status: "verified",
       });
       if (result.ok) refresh();

@@ -2,19 +2,14 @@
 /**
  * useWorkItems — client-side hook that fetches work items for a workspace.
  *
- * Source equivalent: workspace.slice/domain.tasks/_hooks/use-work-items.ts
- * Adapted: uses FirestoreWorkItemRepository (Web SDK) + getWorkItemsByWorkspace
- * use-case. Returns sorted items (by createdAt desc).
+ * Presentation code stays adapter-agnostic and only calls the work.module
+ * query facade.
  *
  * Refreshes when workspaceId changes or `refresh()` is called.
  */
 
-import { useEffect, useMemo, useState } from "react";
-import { FirestoreWorkItemRepository } from "@/modules/work.module/infra.firestore/_repository";
-import {
-  getWorkItemsByWorkspace,
-  type WorkItemDTO,
-} from "@/modules/work.module";
+import { useEffect, useState } from "react";
+import { getWorkItemsByWorkspace, type WorkItemDTO } from "@/modules/work.module";
 
 export interface UseWorkItemsResult {
   items: WorkItemDTO[];
@@ -36,8 +31,6 @@ export function useWorkItems(
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
 
-  const repo = useMemo(() => new FirestoreWorkItemRepository(), []);
-
   useEffect(() => {
     if (!workspaceId) {
       setItems([]);
@@ -49,7 +42,7 @@ export function useWorkItems(
     setLoading(true);
     setError(null);
 
-    getWorkItemsByWorkspace(repo, workspaceId)
+    getWorkItemsByWorkspace(workspaceId)
       .then((result) => {
         if (cancelled) return;
         if (result.ok) {
@@ -74,7 +67,7 @@ export function useWorkItems(
     return () => {
       cancelled = true;
     };
-  }, [workspaceId, repo, tick]);
+  }, [workspaceId, tick]);
 
   const refresh = () => setTick((n) => n + 1);
 

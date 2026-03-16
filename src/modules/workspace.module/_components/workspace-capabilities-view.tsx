@@ -230,7 +230,7 @@ export function WorkspaceCapabilitiesView({
     setIsUnmounting(true);
     setOpError(null);
     try {
-      const result = await unmountCapability(getRepo(), workspaceId, pendingUnmount.id);
+      const result = await unmountCapability(workspaceId, pendingUnmount.id);
       if (!result.ok) {
         setOpError(result.error.message);
         return;

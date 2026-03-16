@@ -46,7 +46,7 @@ export function WorkspaceAcceptanceView({ workspaceId }: WorkspaceAcceptanceView
 
   const handleAccept = useCallback(
     async (itemId: string) => {
-      const result = await updateWorkItem(getRepo(), itemId, {
+      const result = await updateWorkItem(itemId, {
         status: "accepted",
       });
       if (result.ok) refresh();

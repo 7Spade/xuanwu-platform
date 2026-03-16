@@ -96,7 +96,7 @@ export function TaskEditorDialog({
     setSaving(true);
     setError(null);
     try {
-      const result = await updateWorkItem(getRepo(), item.id, {
+      const result = await updateWorkItem(item.id, {
         title: title.trim(),
         type: type || null,
         priority,

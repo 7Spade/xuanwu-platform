@@ -42,11 +42,11 @@ import {
 import { Switch } from "@/design-system/primitives/ui/switch";
 import { useTranslation } from "@/shared/i18n";
 
-import type { WorkspaceDTO } from "@/modules/workspace.module/core/_use-cases";
-import type { WorkspaceLifecycleState } from "@/modules/workspace.module/domain.workspace/_value-objects";
-import type { WorkspaceAddress, WorkspacePersonnel } from "@/modules/workspace.module/domain.workspace/_entity";
-import { updateWorkspaceSettings, deleteWorkspace } from "@/modules/workspace.module/core/_actions";
-import { FirestoreWorkspaceRepository } from "@/modules/workspace.module/infra.firestore/_repository";
+import {
+  deleteWorkspace,
+  updateWorkspaceSettings,
+  type WorkspaceDTO,
+} from "@/modules/workspace.module";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -60,12 +60,9 @@ const EMPTY_ADDRESS: WorkspaceAddress = {
   country: "",
 };
 
-// Memoized repo instance (module-level singleton).
-let _repo: FirestoreWorkspaceRepository | null = null;
-function getRepo() {
-  if (!_repo) _repo = new FirestoreWorkspaceRepository();
-  return _repo;
-}
+type WorkspaceLifecycleState = WorkspaceDTO["lifecycleState"];
+type WorkspaceAddress = NonNullable<WorkspaceDTO["address"]>;
+type WorkspacePersonnel = NonNullable<WorkspaceDTO["personnel"]>;
 
 // ---------------------------------------------------------------------------
 // Props
@@ -135,7 +132,7 @@ export function WorkspaceSettingsDialog({
     setLoading(true);
     setError(null);
     try {
-      const result = await updateWorkspaceSettings(getRepo(), workspace.id, {
+      const result = await updateWorkspaceSettings(workspace.id, {
         name,
         visibility: visibility as "visible" | "hidden",
         lifecycleState,
@@ -157,7 +154,7 @@ export function WorkspaceSettingsDialog({
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      const result = await deleteWorkspace(getRepo(), workspace.id);
+      const result = await deleteWorkspace(workspace.id);
       if (!result.ok) {
         setError(result.error.message);
         setIsDeleteOpen(false);

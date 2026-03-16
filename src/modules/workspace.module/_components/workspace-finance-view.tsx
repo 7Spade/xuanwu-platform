@@ -150,7 +150,7 @@ function FinanceItemRow({ item, workspaceId: _workspaceId, onUpdated }: FinanceI
   const handleStageChange = useCallback(
     async (newStage: string) => {
       setUpdating(true);
-      const result = await updateWorkItem(getRepo(), item.id, {
+      const result = await updateWorkItem(item.id, {
         type: `finance:${newStage}`,
       });
       if (result.ok) onUpdated();

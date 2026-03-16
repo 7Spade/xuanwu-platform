@@ -35,17 +35,10 @@ import {
   deleteWorkItem,
   updateWorkItem,
 } from "@/modules/work.module";
-import { FirestoreWorkItemRepository } from "@/modules/work.module/infra.firestore/_repository";
 import { TaskEditorDialog } from "./task-editor-dialog";
 import { ProgressReportDialog } from "./progress-report-dialog";
 import { AttachmentsDialog } from "./attachments-dialog";
 import { CreateWorkItemDialog } from "./create-work-item-dialog";
-
-let _repo: FirestoreWorkItemRepository | null = null;
-function getRepo() {
-  if (!_repo) _repo = new FirestoreWorkItemRepository();
-  return _repo;
-}
 
 function statusVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
   switch (status) {
@@ -78,7 +71,7 @@ export function TaskTreeNode({ node, depth = 0, onChanged }: TaskTreeNodeProps) 
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      await deleteWorkItem(getRepo(), node.workspaceId, node.id);
+      await deleteWorkItem(node.workspaceId, node.id);
       setDeleteOpen(false);
       onChanged();
     } finally {
@@ -87,12 +80,12 @@ export function TaskTreeNode({ node, depth = 0, onChanged }: TaskTreeNodeProps) 
   };
 
   const handleMarkBlocked = async () => {
-    await updateWorkItem(getRepo(), node.id, { status: "blocked" });
+    await updateWorkItem(node.id, { status: "blocked" });
     onChanged();
   };
 
   const handleSaveAttachments = async (photoURLs: string[]) => {
-    await updateWorkItem(getRepo(), node.id, { photoURLs: photoURLs.length ? photoURLs : null });
+    await updateWorkItem(node.id, { photoURLs: photoURLs.length ? photoURLs : null });
     onChanged();
   };
 

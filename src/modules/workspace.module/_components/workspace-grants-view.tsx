@@ -198,7 +198,8 @@ export function WorkspaceGrantsView({ workspaceId }: WorkspaceGrantsViewProps) {
     setOpError(null);
     try {
       const result = await revokeWorkspaceAccess(
-        getGrantRepo(), workspaceId, pendingRevoke.grantId,
+        workspaceId,
+        pendingRevoke.grantId,
       );
       if (!result.ok) { setOpError(result.error.message); return; }
       setPendingRevoke(null);
@@ -214,7 +215,8 @@ export function WorkspaceGrantsView({ workspaceId }: WorkspaceGrantsViewProps) {
     setOpError(null);
     try {
       const result = await updateWorkspaceRole(
-        getGrantRepo(), workspaceId, grantId,
+        workspaceId,
+        grantId,
         newRole as WorkspaceRole,
       );
       if (!result.ok) { setOpError(result.error.message); return; }

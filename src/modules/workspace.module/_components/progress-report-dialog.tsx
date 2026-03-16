@@ -62,7 +62,7 @@ export function ProgressReportDialog({
     setSaving(true);
     setError(null);
     try {
-      const result = await reportProgress(getRepo(), item.id, num);
+      const result = await reportProgress(item.id, num);
       if (!result.ok) throw result.error;
       onUpdated();
       onOpenChange(false);
