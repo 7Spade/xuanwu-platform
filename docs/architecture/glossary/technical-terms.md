@@ -147,6 +147,6 @@ These patterns describe the different integration relationships between Bounded 
 
 | Term | 中文 | Definition |
 |------|------|------------|
-| **User Profile** | 使用者檔案 | The public-facing page for a user. Displays contribution history, earned badges, workspace memberships, and follower / following counts. |
+| **Account Profile** | 帳號檔案 | The public-facing page for an account. Displays contribution history, earned badges, workspace memberships, and follower / following counts. Sub-aggregate of `account.module`. |
 | **Achievement Rules** | 成就規則 | The rule engine that evaluates completed WBS task activity against milestone criteria. Stateless evaluation — runs after each qualifying activity event. |
 | **Contribution Graph** | 貢獻圖譜 | A time-series visualization of a user's accepted WBS task activity. Displayed on the User Profile. |

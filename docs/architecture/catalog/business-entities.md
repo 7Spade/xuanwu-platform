@@ -3,18 +3,22 @@
 Canonical definitions of every first-class domain object in the system.
 Each entity maps directly to a Firestore collection and a bounded context boundary.
 
+> **SSOT reference**: Entity ownership and module boundaries are defined in
+> [`docs/architecture/notes/model-driven-hexagonal-architecture.md`](../notes/model-driven-hexagonal-architecture.md).
+> `account.module` is the authoritative bounded context for all Account aggregates.
+> `identity.module` owns auth credentials and sessions — it does **not** own Account data.
+
 ---
 
 ## Entity Overview / 實體總覽
 
 ```
 SaaS Layer
-├── User
-├── Organization
+├── Account  (accountType: personal | organization)
 ├── Namespace
 ├── Team
 │   └── TeamMember
-└── UserProfile
+└── AccountProfile
 
 Workspace Layer
 ├── Workspace
@@ -52,58 +56,51 @@ Settlement Layer
 
 ---
 
-### User / 使用者
+### Account / 帳號
 
-The root identity entity. Every actor in the system is a User.
+The unified platform account. Represents both individual people (`personal`) and organizations (`organization`). Owned by `account.module`.
+
+> **Auth boundary**: Firebase Auth credentials (UID, provider tokens, sessions) are managed by
+> `identity.module`. The `account.module` maps the identity UID to an Account aggregate at
+> first login and owns all platform-level account data from that point forward.
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `uid` | `string` | Firebase Auth UID — primary key |
+| `accountId` | `string` | UUID — primary key |
+| `accountType` | `string` | `personal \| organization` |
 | `email` | `string` | Verified email address |
 | `displayName` | `string` | Public display name |
 | `avatarUrl` | `string` | Profile image URL |
-| `personalNamespaceId` | `string` | FK → Namespace created at registration |
+| `namespaceId` | `string` | FK → Namespace (personal accounts: personal namespace; org accounts: org namespace) |
+| `billingStatus` | `string` | `active \| suspended \| cancelled` — organization accounts only |
 | `createdAt` | `timestamp` | |
 | `updatedAt` | `timestamp` | |
 
 **Invariants**
-- A User always has exactly one personal Namespace upon registration.
-- A User may belong to zero or more Organizations via TeamMember.
-- A User may own zero or more Organizations directly.
+- An Account of type `personal` always has exactly one personal Namespace upon registration.
+- An Account of type `organization` must have exactly one org-scoped Namespace.
+- Only `organization`-type Accounts own Teams and Workspaces at the org level.
+- Deleting an organization Account requires all Workspaces to be archived first.
 
 **Relationships**
-- `1 User → 1 Namespace` (personal)
-- `1 User → N TeamMember`
-- `1 User → N WorkspaceMember`
-- `1 User → N WBSTask` (as assignee)
+- `1 Account → 1 Namespace`
+- `1 Account → N TeamMember` (personal accounts participate as members)
+- `1 Account → N WorkspaceMember`
+- `1 Account → N WBSTask` (as assignee)
+- `1 Account (organization) → N Team`
+- `1 Account (organization) → N Workspace`
+- `1 Account (organization) → N ARRecord` (as billing entity)
 
 ---
 
-### Organization / 組織
+### Organization → Account (accountType: organization)
 
-The top-level billing and governance unit. Groups workspaces and members.
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `orgId` | `string` | UUID — primary key |
-| `namespaceId` | `string` | FK → Namespace (org-scoped) |
-| `displayName` | `string` | |
-| `slug` | `string` | URL-safe, immutable after creation |
-| `ownerId` | `string` | FK → User |
-| `billingStatus` | `string` | `active \| suspended \| cancelled` |
-| `createdAt` | `timestamp` | |
-
-**Invariants**
-- An Organization must have exactly one registered Namespace.
-- The creating User becomes the initial OrgOwner.
-- An Organization owns zero or more Workspaces.
-- Deleting an Organization requires all Workspaces to be archived first.
-
-**Relationships**
-- `1 Org → 1 Namespace`
-- `1 Org → N Team`
-- `1 Org → N Workspace`
-- `1 Org → N ARRecord` (as billing entity)
+> **Removed as a separate entity.** Organizations are now represented as `Account` records
+> with `accountType = "organization"`. See [Account](#account--帳號) above.
+>
+> `orgId` foreign-key references throughout this document refer to `Account.accountId`
+> where `accountType = "organization"`. The `account.module` is the owning bounded context.
+> The `org.module` has been removed; Team and Membership logic is absorbed into `account.module`.
 
 ---
 
@@ -116,13 +113,13 @@ A unique, URL-safe path prefix scoping all workspace addresses.
 | `namespaceId` | `string` | UUID — primary key |
 | `slug` | `string` | Globally unique. e.g. `acme` or `john` |
 | `type` | `string` | `org \| personal` |
-| `ownerId` | `string` | FK → Organization or User |
+| `ownerId` | `string` | FK → Account (personal or organization) |
 | `createdAt` | `timestamp` | |
 
 **Invariants**
 - Slug is globally unique and immutable once registered.
-- A Namespace of type `org` is owned by exactly one Organization.
-- A Namespace of type `personal` is owned by exactly one User.
+- A Namespace of type `org` is owned by exactly one Account (accountType=organization).
+- A Namespace of type `personal` is owned by exactly one Account (accountType=personal).
 - All Workspaces under this namespace inherit the slug as a path prefix: `{slug}/{workspace-slug}`.
 
 ---
@@ -134,14 +131,14 @@ A named group of org members used to manage workspace access in bulk.
 | Field | Type | Notes |
 |-------|------|-------|
 | `teamId` | `string` | UUID — primary key |
-| `orgId` | `string` | FK → Organization |
+| `orgId` | `string` | FK → Account (accountType=organization) |
 | `name` | `string` | Display name |
 | `slug` | `string` | URL-safe. Unique within org. |
 | `description` | `string` | Optional |
 | `createdAt` | `timestamp` | |
 
 **Invariants**
-- A Team belongs to exactly one Organization.
+- A Team belongs to exactly one organization Account.
 - A Team can be assigned to one or more Workspaces as a permissions group.
 - `@team` mentions in a ChangeRequest route review notifications to all TeamMembers.
 
@@ -149,27 +146,28 @@ A named group of org members used to manage workspace access in bulk.
 
 ### TeamMember / 團隊成員
 
-Junction entity binding a User to a Team with a role.
+Junction entity binding an Account to a Team with a role.
 
 | Field | Type | Notes |
 |-------|------|-------|
 | `teamMemberId` | `string` | UUID — primary key |
 | `teamId` | `string` | FK → Team |
-| `userId` | `string` | FK → User |
+| `accountId` | `string` | FK → Account |
 | `role` | `string` | `member \| lead` |
 | `joinedAt` | `timestamp` | |
 
 ---
 
-### UserProfile / 使用者檔案
+### AccountProfile / 帳號檔案
 
-The public-facing representation of a User. Separated from User to allow independent read scaling.
+The public-facing representation of an Account. A sub-aggregate of `account.module`,
+separated from Account to allow independent read scaling.
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `profileId` | `string` | Same as `uid` — 1:1 with User |
-| `displayName` | `string` | Denormalized from User |
-| `avatarUrl` | `string` | Denormalized from User |
+| `profileId` | `string` | Same as `accountId` — 1:1 with Account |
+| `displayName` | `string` | Denormalized from Account |
+| `avatarUrl` | `string` | Denormalized from Account |
 | `bio` | `string` | Optional |
 | `badges` | `string[]` | Achievement badge IDs earned |
 | `contributionSummary` | `map` | Accepted task count by month |
@@ -191,10 +189,10 @@ The primary logical container for a project or engagement. Analogous to a GitHub
 |-------|------|-------|
 | `workspaceId` | `string` | UUID — primary key |
 | `namespaceId` | `string` | FK → Namespace |
-| `orgId` | `string` | FK → Organization. `null` if personal |
+| `orgId` | `string` | FK → Account (accountType=organization). `null` if personal |
 | `displayName` | `string` | |
 | `slug` | `string` | Unique within namespace |
-| `ownerId` | `string` | FK → User |
+| `ownerId` | `string` | FK → Account |
 | `visibility` | `string` | `public \| private` |
 | `baselineRef` | `string` | FK → BaselineHistory (latest accepted) |
 | `createdAt` | `timestamp` | |
@@ -210,16 +208,16 @@ The primary logical container for a project or engagement. Analogous to a GitHub
 
 ### WorkspaceMember / 工作空間成員
 
-Grants a User or Team scoped access to a Workspace.
+Grants an Account or Team scoped access to a Workspace.
 
 | Field | Type | Notes |
 |-------|------|-------|
 | `memberId` | `string` | UUID — primary key |
 | `workspaceId` | `string` | FK → Workspace |
-| `userId` | `string` | FK → User. `null` if team grant |
-| `teamId` | `string` | FK → Team. `null` if direct user grant |
+| `accountId` | `string` | FK → Account. `null` if team grant |
+| `teamId` | `string` | FK → Team. `null` if direct account grant |
 | `role` | `string` | `maintainer \| collaborator` |
-| `grantedById` | `string` | FK → User (who made the grant) |
+| `grantedById` | `string` | FK → Account (who made the grant) |
 | `grantedAt` | `timestamp` | |
 
 ---
@@ -235,7 +233,7 @@ A large body of work composed of multiple WBS tasks sharing a business objective
 | `title` | `string` | |
 | `description` | `string` | |
 | `status` | `string` | `active \| completed \| archived` |
-| `createdById` | `string` | FK → User |
+| `createdById` | `string` | FK → Account |
 | `createdAt` | `timestamp` | |
 | `completedAt` | `timestamp` | `null` until all tasks accepted |
 
@@ -252,7 +250,7 @@ A time-bound checkpoint grouping tasks into a delivery stage.
 | `title` | `string` | |
 | `dueDate` | `timestamp` | |
 | `status` | `string` | `open \| closed` |
-| `createdById` | `string` | FK → User |
+| `createdById` | `string` | FK → Account |
 | `createdAt` | `timestamp` | |
 
 ---
@@ -281,13 +279,13 @@ The atomic unit of work. Central entity of the entire system.
 | `epicId` | `string` | FK → Epic. `null` if standalone |
 | `title` | `string` | |
 | `description` | `string` | |
-| `assigneeId` | `string` | FK → User. Set by AssignmentSchedule |
+| `assigneeId` | `string` | FK → Account. Set by AssignmentSchedule |
 | `state` | `string` | See state machine below |
 | `scheduledStart` | `timestamp` | Set by Workforce Scheduling |
 | `scheduledEnd` | `timestamp` | Set by Workforce Scheduling |
 | `effortEstimate` | `number` | Person-hours |
 | `skillRequirement` | `string[]` | Tags used for workforce matching |
-| `createdById` | `string` | FK → User (Maintainer who created) |
+| `createdById` | `string` | FK → Account (Maintainer who created) |
 | `createdAt` | `timestamp` | |
 | `updatedAt` | `timestamp` | |
 | `acceptedAt` | `timestamp` | `null` until state = `accepted` |
@@ -327,8 +325,8 @@ A discrete blocker or defect raised against a WBS task.
 | `title` | `string` | |
 | `description` | `string` | |
 | `state` | `string` | `open \| resolved` |
-| `openedById` | `string` | FK → User |
-| `resolvedById` | `string` | FK → User. `null` until resolved |
+| `openedById` | `string` | FK → Account |
+| `resolvedById` | `string` | FK → Account. `null` until resolved |
 | `openedAt` | `timestamp` | |
 | `resolvedAt` | `timestamp` | `null` until resolved |
 
@@ -349,7 +347,7 @@ A versioned proposal to update the Protected Baseline.
 | `taskId` | `string` | FK → WBSTask |
 | `snapshotRef` | `string` | Reference to the submitted work snapshot |
 | `state` | `string` | `open \| changes_requested \| approved \| merged \| closed` |
-| `authorId` | `string` | FK → User (Assignee) |
+| `authorId` | `string` | FK → Account (Assignee) |
 | `mergeQueueId` | `string` | FK → MergeQueue. `null` if direct merge |
 | `createdAt` | `timestamp` | |
 | `mergedAt` | `timestamp` | `null` until merged |
@@ -364,7 +362,7 @@ A single reviewer's decision on a ChangeRequest.
 |-------|------|-------|
 | `reviewId` | `string` | UUID — primary key |
 | `crId` | `string` | FK → ChangeRequest |
-| `reviewerId` | `string` | FK → User |
+| `reviewerId` | `string` | FK → Account |
 | `decision` | `string` | `approved \| changes_requested` |
 | `comment` | `string` | Optional |
 | `reviewedAt` | `timestamp` | |
@@ -394,7 +392,7 @@ Append-only log of every successful merge into the Protected Baseline.
 | `historyId` | `string` | UUID — primary key |
 | `workspaceId` | `string` | FK → Workspace |
 | `crId` | `string` | FK → ChangeRequest |
-| `mergedById` | `string` | FK → User (Maintainer) |
+| `mergedById` | `string` | FK → Account (Maintainer) |
 | `snapshotRef` | `string` | Immutable reference to the merged content |
 | `mergedAt` | `timestamp` | |
 
@@ -416,7 +414,7 @@ Logical file record. Stable across version updates.
 |-------|------|-------|
 | `fileId` | `string` | UUID — primary key |
 | `workspaceId` | `string` | FK → Workspace |
-| `uploadedById` | `string` | FK → User |
+| `uploadedById` | `string` | FK → Account |
 | `name` | `string` | Original filename |
 | `mimeType` | `string` | |
 | `currentVersionId` | `string` | FK → FileVersion (latest) |
@@ -434,7 +432,7 @@ Immutable snapshot of a file's binary content at a point in time.
 | `fileId` | `string` | FK → File |
 | `storageUri` | `string` | Firebase Storage path |
 | `sizeBytes` | `number` | |
-| `uploadedById` | `string` | FK → User |
+| `uploadedById` | `string` | FK → Account |
 | `createdAt` | `timestamp` | |
 
 **Invariants**
@@ -508,10 +506,10 @@ The approved output of Workforce Scheduling. Binds a member to a task with a con
 | `scheduleId` | `string` | UUID — primary key |
 | `requestId` | `string` | FK → WorkforceRequest |
 | `taskId` | `string` | FK → WBSTask |
-| `assigneeId` | `string` | FK → User |
+| `assigneeId` | `string` | FK → Account |
 | `scheduledStart` | `timestamp` | |
 | `scheduledEnd` | `timestamp` | |
-| `approvedById` | `string` | FK → User (OrgOwner) |
+| `approvedById` | `string` | FK → Account (OrgOwner) |
 | `approvedAt` | `timestamp` | |
 
 ---
@@ -529,7 +527,7 @@ Root record triggered when a WBSTask reaches `accepted`. Parent of AR and AP rec
 | `settlementId` | `string` | UUID — primary key |
 | `taskId` | `string` | FK → WBSTask |
 | `workspaceId` | `string` | FK → Workspace |
-| `orgId` | `string` | FK → Organization |
+| `orgId` | `string` | FK → Account (accountType=organization) |
 | `triggerEvent` | `string` | Always `task_accepted` |
 | `triggeredAt` | `timestamp` | |
 
@@ -543,8 +541,8 @@ Represents money owed to the organization by a client.
 |-------|------|-------|
 | `arId` | `string` | UUID — primary key |
 | `settlementId` | `string` | FK → SettlementRecord |
-| `orgId` | `string` | FK → Organization |
-| `clientId` | `string` | FK → User or external client ref |
+| `orgId` | `string` | FK → Account (accountType=organization) |
+| `clientId` | `string` | FK → Account or external client ref |
 | `invoiceRef` | `string` | Generated invoice document reference |
 | `amount` | `number` | |
 | `currency` | `string` | ISO 4217 e.g. `TWD`, `USD` |
@@ -562,7 +560,7 @@ Represents money owed to an assignee or vendor by the organization.
 |-------|------|-------|
 | `apId` | `string` | UUID — primary key |
 | `settlementId` | `string` | FK → SettlementRecord |
-| `assigneeId` | `string` | FK → User |
+| `assigneeId` | `string` | FK → Account |
 | `amount` | `number` | |
 | `currency` | `string` | ISO 4217 |
 | `state` | `string` | `pending \| scheduled \| paid` |

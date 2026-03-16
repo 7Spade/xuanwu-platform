@@ -18,6 +18,7 @@ domain modeling, runtime behavior, or operational constraints.
 | ADR-007 | Use `@atlaskit/pragmatic-drag-and-drop` for drag-and-drop interactions + Visual Indicators (VIs) | Accepted | — |
 | [ADR-008](./20260316-navigation-logic-gaps.md) | Navigation logic gaps — auth guard, post-login redirect, dead-end routes (E2E audit) | Proposed | 2026-03-16 |
 | [ADR-009](./20260316-ui-ux-navigation-gaps.md) | UI/UX navigation gaps — unreachable pages, missing back-links, active state (E2E audit) | Proposed | 2026-03-16 |
+| [ADR-010](./20260317-ssot-alignment-account-model.md) | SSOT designation and Account model unification — `User`→`Account`, `Organization`→`Account(org)`, event rename | Accepted | 2026-03-17 |
 
 When adding new ADRs, update this index with links in chronological order.
 
