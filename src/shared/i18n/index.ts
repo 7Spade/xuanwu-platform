@@ -180,6 +180,7 @@ const dictionary: Dictionary = {
     "organizations.newOrg.handlePlaceholder": "例如：xuanwu-tech",
     "organizations.newOrg.slugTaken": "此代號已被使用，請選擇其他代號",
     "organizations.newOrg.slugInvalid": "代號格式不符（3–39 個小寫英文字母、數字或連字號）",
+    "organizations.newOrg.ownerMissing": "無法建立組織：找不到目前帳號資訊，請重新整理後再試一次",
     // --- settings ---
     "settings.general.title": "一般設定",
     "settings.general.orgName": "組織名稱",
@@ -777,6 +778,7 @@ const dictionary: Dictionary = {
     "organizations.newOrg.handlePlaceholder": "e.g. xuanwu-tech",
     "organizations.newOrg.slugTaken": "This handle is already taken, please choose another",
     "organizations.newOrg.slugInvalid": "Handle format invalid (3–39 lowercase letters, digits or hyphens)",
+    "organizations.newOrg.ownerMissing": "Unable to create organization: missing current account context, please refresh and try again",
     // --- settings ---
     "settings.general.title": "General Settings",
     "settings.general.orgName": "Organization Name",

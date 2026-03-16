@@ -1,5 +1,3 @@
-import type { AccountDTO } from "./_use-cases";
-
 /**
  * Resolves the owner account ID used for organization ownership queries/writes.
  *
@@ -8,8 +6,8 @@ import type { AccountDTO } from "./_use-cases";
  * has not been loaded yet.
  */
 export function resolveOrganizationOwnerAccountId(
-  account: AccountDTO | null,
+  personalAccountId: string | null,
   userUid: string | null,
 ): string | null {
-  return account?.id ?? userUid;
+  return personalAccountId ?? userUid;
 }

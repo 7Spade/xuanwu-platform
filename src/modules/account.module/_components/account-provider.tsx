@@ -83,13 +83,15 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [orgsLoading, setOrgsLoading] = useState(false);
   const [activeAccount, setActiveAccountState] = useState<AccountDTO | null>(null);
+  const accountId = account?.id ?? null;
+  const userUid = user?.uid ?? null;
 
   const setActiveAccount = useCallback((next: AccountDTO | null) => {
     setActiveAccountState(next);
   }, []);
 
   const refreshOrganizations = useCallback(async () => {
-    const ownerAccountId = resolveOrganizationOwnerAccountId(account, user?.uid ?? null);
+    const ownerAccountId = resolveOrganizationOwnerAccountId(accountId, userUid);
     if (!ownerAccountId) {
       setOrganizations([]);
       return;
@@ -102,7 +104,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     } finally {
       setOrgsLoading(false);
     }
-  }, [account, user]);
+  }, [accountId, userUid]);
 
   useEffect(() => {
     const auth = getAuth(getFirebaseApp());
@@ -133,7 +135,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         setOrgsLoading(true);
         try {
           const ownerAccountId = resolveOrganizationOwnerAccountId(
-            personalAccount,
+            personalAccount?.id ?? null,
             firebaseUser.uid,
           );
           if (!ownerAccountId) {

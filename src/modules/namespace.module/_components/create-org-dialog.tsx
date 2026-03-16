@@ -132,9 +132,9 @@ export function CreateOrgDialog({
     setError(null);
 
     try {
-      const ownerAccountId = resolveOrganizationOwnerAccountId(account, user.uid);
+      const ownerAccountId = resolveOrganizationOwnerAccountId(account?.id ?? null, user.uid);
       if (!ownerAccountId) {
-        setError(t("common.error"));
+        setError(t("organizations.newOrg.ownerMissing"));
         return;
       }
 
