@@ -11,6 +11,7 @@ Xuanwu 平台的 GitHub Copilot 客製化完整文件，包含代理架構、智
 | `.github/README.md` | 倉庫維護指南（customization 結構、資料夾規則） |
 | `.github/copilot-instructions.md` | 全域 always-on 規則 |
 | `AGENTS.md` | 多代理共用約定 |
+| [`../management/documentation-index.md`](../management/documentation-index.md) | 全域文件治理索引（SSOT 定義、分類結構、重複規則） |
 
 ---
 
