@@ -1,263 +1,75 @@
-# Xuanwu Platform --- AI Development Rules
+# `.github/` — Copilot Customization Agent Rules
 
-This repository follows **Model-Driven Domain Discovery (MDDD)**
-combined with\
-**Domain-Driven Design (DDD)** and **Hexagonal Architecture (Ports &
-Adapters)**.
+This file applies to work under `.github/` only. Use it as folder-scoped guidance for Copilot customization assets, workflows, and maintenance documents.
 
-The **Domain Model is the centre of the system**.\
-Frameworks, databases, and UI are replaceable details.
+## Scope
 
-Authoritative architecture reference: docs/architecture.md
+- This directory contains repository-scoped Copilot customization assets: agents, prompts, instructions, hooks, MCP configuration, and customization maintenance docs.
+- Treat this file as a `.github/`-local supplement to the workspace-level [AGENTS.md](../AGENTS.md) and the always-on [.github/copilot-instructions.md](./copilot-instructions.md).
+- Keep this file concise. Put long procedures in the canonical docs instead of duplicating them here.
 
-If any documentation conflicts, **follow this file first**.
+## Single Sources of Truth
 
-------------------------------------------------------------------------
+- Architecture philosophy and boundary rules: [docs/architecture/notes/model-driven-hexagonal-architecture.md](../docs/architecture/notes/model-driven-hexagonal-architecture.md)
+- Architecture baseline and domain terminology: [docs/architecture/README.md](../docs/architecture/README.md)
+- Copilot customization system overview: [docs/copilot/README.md](../docs/copilot/README.md)
+- Repository customization structure and consolidation rules: [.github/README.md](./README.md)
+- Always-on repository rules: [.github/copilot-instructions.md](./copilot-instructions.md)
 
-# 1 Architecture Overview
+If these sources conflict, follow the architecture SSOT first for business and boundary decisions, then follow the customization docs for packaging and tool-boundary decisions.
 
-Xuanwu uses a **4-layer Hexagonal Architecture**.
+## What `.github/` Changes Must Preserve
 
-Presentation → Application → Domain\
-Infrastructure interacts via Ports
+1. Xuanwu is model-driven first: Domain Model → Use Case → Ports → Infrastructure → UI. Customizations must reinforce this order, not invert it.
+2. Hexagonal and DDD boundaries stay explicit. Do not author agents, prompts, or instructions that normalize domain logic in UI, Server Actions, repositories, or infrastructure adapters.
+3. Each customization type has one responsibility. Follow the official VS Code taxonomy before adding or moving files:
+   - always-on rules → `.github/copilot-instructions.md` or workspace/root `AGENTS.md`
+   - file-scoped rules → `.github/instructions/*.instructions.md`
+   - reusable slash workflows → `.github/prompts/*.prompt.md`
+   - specialized personas with tools and handoffs → `.github/agents/*.agent.md`
+   - portable capabilities → `.github/skills/<skill>/SKILL.md`
+   - lifecycle automation → `.github/hooks/*.json`
+4. Repository customizations must stay aligned with official VS Code Copilot terminology. Do not introduce local naming that conflicts with “agents”, “skills”, “hooks”, or “agent plugins”.
 
-## Layers
+## Agent System Rules
 
-### Presentation
+1. Default repository entry point is `xuanwu-commander`. New top-level workflows should assume the six-step intent pipeline, not bypass it.
+2. Repository-scoped agents that initiate substantive repo work must expose `serena/*` and prefer Serena over raw search for code intelligence.
+3. Tool lists must follow least privilege. Add only the MCP servers and built-in tools the agent genuinely needs.
+4. Sub-agents must remain `user-invocable: false` unless there is a deliberate decision to promote them to direct user entry points.
+5. Handoffs must use explicit `label` and `agent` objects, and should reflect real Xuanwu workflow transitions rather than generic persona chaining.
+6. Keep the canonical Xuanwu suite aligned with [docs/copilot/README.md](../docs/copilot/README.md) and [.github/README.md](./README.md). Do not create overlapping personas when an existing `xuanwu-*` agent already owns the responsibility.
 
-Location
+## Serena and Context Rules
 
-src/app/\
-src/modules/\*/\_components/
+1. When authoring agents or prompts that begin substantive repository work, remind them to follow the Serena startup sequence documented in [docs/copilot/README.md](../docs/copilot/README.md): onboarding check, memory list, architecture memory, conventions memory.
+2. For cross-module or version-sensitive work, prefer the documented Context7 + Repomix global-awareness flow instead of ad-hoc context stuffing.
+3. Use `agent-memory/*` only where cross-session semantic recall is warranted. Do not add it broadly to every agent.
 
-Responsibilities
+## Editing Rules for `.github/` Assets
 
--   UI rendering
--   React components
--   user interaction
+1. Prefer links to canonical docs over copying long policy blocks into prompts, agents, or skills.
+2. Keep always-on files lean. Move file-specific or workflow-specific guidance into scoped instructions, prompts, skills, or agent bodies.
+3. Keep stable names aligned with the `xuanwu-*` naming strategy and current agent catalog.
+4. Do not reference files, prompts, agents, hooks, or skills that do not exist.
+5. Do not embed secrets, tokens, or personal credentials in examples, hooks, agent bodies, or MCP configuration.
+6. Keep Markdown readable and operational: short sections, direct rules, and only the minimum examples needed to clarify a non-obvious constraint.
 
-Must NOT contain
+## Sync Requirements
 
--   business logic
--   database queries
--   domain rules
+When a `.github/` change alters behavior, structure, naming, or discoverability, update the relevant companion docs in the same change set:
 
-------------------------------------------------------------------------
+- [.github/README.md](./README.md) for repository layout, ownership, and consolidation rules
+- [docs/copilot/README.md](../docs/copilot/README.md) for agent-system overview, six-step pipeline, Serena workflow, or MCP matrix changes
+- [.github/copilot-instructions.md](./copilot-instructions.md) only when the rule is truly always-on and repository-wide
 
-### Application
+## Review Checklist
 
-Location
-
-src/modules/\*/core/
-
-Responsibilities
-
--   Use Cases
--   Server Actions
--   orchestration
-
-Typical flow
-
-load aggregate\
-→ call domain logic\
-→ persist via repository\
-→ emit events
-
-Must NOT contain
-
--   business invariants
--   direct database queries
-
-------------------------------------------------------------------------
-
-### Domain
-
-Location
-
-src/modules/*/domain.*
-
-Responsibilities
-
--   Entities
--   Aggregates
--   Value Objects
--   Domain Services
--   Domain Events
-
-Rules
-
--   Domain must be **framework independent**
--   Domain must NOT import
-    -   React
-    -   Firebase
-    -   Redis
-    -   Next.js
-
-All **business invariants live here**.
-
-------------------------------------------------------------------------
-
-### Infrastructure
-
-Location
-
-src/modules/*/infra.*\
-src/infrastructure/
-
-Responsibilities
-
--   Repository implementations
--   cache
--   event publishing
--   database access
-
-Infrastructure implements **Ports defined in Domain**.
-
-------------------------------------------------------------------------
-
-# 2 Dependency Rules
-
-Allowed dependency direction
-
-Presentation\
-↓\
-Application\
-↓\
-Domain
-
-Infrastructure → Domain (via ports)
-
-Forbidden
-
-Domain → Infrastructure\
-Domain → React\
-Domain → Next.js\
-Application → database\
-UI → database
-
-------------------------------------------------------------------------
-
-# 3 Bounded Context Rules
-
-Each module is a **Bounded Context**.
-
-src/modules/{context}.module/
-
-Rules
-
--   Do NOT import internal files from another module
--   Only import from its `index.ts`
--   Cross-context communication uses
-    -   DTO
-    -   Domain Events
-
-------------------------------------------------------------------------
-
-# 4 Aggregate Rules
-
--   Each Aggregate has **one Aggregate Root**
--   External references use **ID only**
--   Repositories operate only on Aggregate Roots
-
-Example
-
-Task { workspaceId: string }
-
-Never
-
-Task { workspace: Workspace }
-
-------------------------------------------------------------------------
-
-# 5 Ports & Adapters
-
-Outbound ports are defined in domain
-
-Example
-
-interface TaskRepository { save(task: Task): Promise`<void>`{=html} }
-
-Infrastructure implements the interface (e.g. FirestoreTaskRepository).
-
-Adapters must contain **no business logic**.
-
-------------------------------------------------------------------------
-
-# 6 Naming Conventions
-
-Domain events
-
-{domain}.{entity}.{verb}
-
-Example
-
-wbs.task.created\
-workspace.member.invited\
-task.state.changed
-
-Identifiers must follow **Ubiquitous Language** defined in the glossary.
-
-------------------------------------------------------------------------
-
-# 7 Anti-Patterns (Never Do)
-
-Do NOT introduce
-
--   MVC controllers with business logic
--   database queries inside React components
--   business rules inside Server Actions
--   cross-module deep imports
--   mutable Value Objects
-
-------------------------------------------------------------------------
-
-# 8 Preferred Technology Stack
-
-Framework
-
--   Next.js (App Router)
-
-Language
-
--   TypeScript
-
-Infrastructure
-
--   Firebase / Firestore
--   Upstash Redis
--   QStash
--   Vector search
-
-These must be used through **Ports & Adapters**.
-
-------------------------------------------------------------------------
-
-# 9 When Adding New Features
-
-Follow this order
-
-1 Define or extend **Domain Model**\
-(entity, value object, aggregate)
-
-2 Define **ports**\
-(repository, event bus)
-
-3 Implement **use case**\
-(core/\_use-cases.ts)
-
-4 Implement **infrastructure adapter**\
-(infra.firestore/)
-
-5 Add **UI**\
-(\_components/)
-
-Domain model must exist **before UI or database code**.
-
-------------------------------------------------------------------------
-
-# 10 Architecture Priority
-
-When making design decisions follow this order
+- Does the change strengthen, or at least preserve, MDDD + Hexagonal boundaries?
+- Is the chosen customization type the official and minimal one for the job?
+- Are agent tool lists least-privilege and Serena-aware?
+- Are links, names, and catalogs synchronized with the current repository state?
+- Is long policy text linked instead of duplicated?
 
 Domain Model\
 ↓\
