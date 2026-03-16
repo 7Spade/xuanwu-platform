@@ -31,6 +31,7 @@ import { useTranslation } from "@/shared/i18n";
 import { useCurrentAccount } from "@/modules/account.module";
 import type { AccountDTO } from "@/modules/account.module";
 import { createOrganizationAccount } from "@/modules/account.module";
+import { resolveOrganizationOwnerAccountId } from "@/modules/account.module/core/_owner-account";
 import { FirestoreAccountRepository } from "@/modules/account.module/infra.firestore/_repository";
 import { registerNamespace } from "@/modules/namespace.module";
 import { FirestoreNamespaceRepository } from "@/modules/namespace.module/infra.firestore/_repository";
@@ -94,7 +95,7 @@ export function CreateOrgDialog({
   onCreated,
 }: CreateOrgDialogProps) {
   const t = useTranslation("zh-TW");
-  const { user } = useCurrentAccount();
+  const { user, account } = useCurrentAccount();
 
   const [displayName, setDisplayName] = useState("");
   const [handle, setHandle] = useState("");
@@ -131,12 +132,18 @@ export function CreateOrgDialog({
     setError(null);
 
     try {
+      const ownerAccountId = resolveOrganizationOwnerAccountId(account, user.uid);
+      if (!ownerAccountId) {
+        setError(t("common.error"));
+        return;
+      }
+
       // 1. Create the org Account (Application use case — account.module)
       const orgId = crypto.randomUUID();
       const accountResult = await createOrganizationAccount(
         getAccountRepo(),
         orgId,
-        user.uid,
+        ownerAccountId,
         nameTrimmed,
       );
       if (!accountResult.ok) {
