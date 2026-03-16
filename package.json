@@ -11,6 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "repomix:skill": "repomix --skill-generate xuanwu-skill --skill-output .github/skills/xuanwu-platform-skill --force",
+    "repomix:md": "repomix --style markdown --output repomix-output.md",
     "deploy:firebase": "firebase deploy --except apphosting --config ./firebase.json && npm run deploy:apphosting",
     "deploy:apphosting": "firebase deploy --only apphosting --project xuanwu-i-00708880-4e2d8 --config ./firebase.json",
     "deploy:functions": "firebase deploy --only functions --config ./firebase.json",
