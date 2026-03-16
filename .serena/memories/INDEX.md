@@ -16,6 +16,7 @@ Xuanwu Platform 所有 Serena 記憶檔案的主索引。
 | **MCP 工具** | [mcp/INDEX.md](./mcp/INDEX.md) | 已配置的 MCP servers 使用指南 |
 | **PR 歷史** | [pr-history/INDEX.md](./pr-history/INDEX.md) | 每個合併 PR 的摘要與決策記錄 |
 | **專案知識** | [project/](./project/) | 架構概覽、Domain 路由表、慣例文件、指令清單 |
+| **管理文檔** | [../docs/management/](../docs/management/) | `docs/management/` 下 11 個問題分類檔案 + 文件治理索引 |
 
 ---
 
@@ -33,6 +34,9 @@ Xuanwu Platform 所有 Serena 記憶檔案的主索引。
 - 架構 SSOT：`docs/architecture/notes/model-driven-hexagonal-architecture.md`
 - Domain 路由表：[project/domain-lookup.md](./project/domain-lookup.md)
 - ADR 索引：`docs/architecture/adr/README.md`
+- 文件層次索引：`docs/README.md`（四層結構總覽）
+- 文件治理索引：`docs/management/documentation-index.md`
+- 問題追蹤：`docs/management/issues.md`（架構問題）、`docs/management/doc-issues.md`（文件缺陷）
 
 ### 我要了解如何操作某個 MCP Server
 - [mcp/INDEX.md](./mcp/INDEX.md)

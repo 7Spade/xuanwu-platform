@@ -6,11 +6,15 @@ Xuanwu 平台的 GitHub Copilot 客製化完整文件，包含代理架構、智
 
 | 文件 | 說明 |
 |------|------|
-| 本文件 | 總覽與快速導航 |
+| 本文件 | Copilot 客製化 SSOT — 代理架構、工具指派、指令速查 |
 | [`mcp.md`](./mcp.md) | GitHub Coding Agent 完整 MCP 設定（可直接貼至 GitHub 設定頁） |
 | `.github/README.md` | 倉庫維護指南（customization 結構、資料夾規則） |
 | `.github/copilot-instructions.md` | 全域 always-on 規則 |
 | `AGENTS.md` | 多代理共用約定 |
+| [`../README.md`](../README.md) | 全專案文件層次索引 |
+| [`../management/documentation-index.md`](../management/documentation-index.md) | 全域文件治理索引（SSOT 定義、分類結構、重複規則） |
+
+> **VS Code 官方文件**（客製化類型規格等）請直接參考 https://code.visualstudio.com/docs/copilot/customization，不在本倉庫維護。
 
 ---
 
