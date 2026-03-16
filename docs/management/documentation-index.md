@@ -7,6 +7,25 @@
 
 ---
 
+## 目錄說明
+
+| 檔案 | 說明 |
+|------|------|
+| [`documentation-index.md`](./documentation-index.md) | 全域文件治理索引，定義 SSOT、分類結構，以及重複內容指引 |
+| [`issues.md`](./issues.md) | 全平台問題統一追蹤清單（架構、整合、API、安全、效能、欄位、流程、UI、語意、文件、邊界） |
+
+---
+
+## 問題嚴重程度說明
+
+| 等級 | 符號 | 說明 |
+|------|------|------|
+| 高 | 🔴 | 影響系統正確性或架構合規性，需立即處理 |
+| 中 | 🟡 | 影響開發體驗或文件一致性，應盡快解決 |
+| 低 | 🟢 | 技術債或改善建議，排入計劃處理 |
+
+---
+
 ## Governance Map / 治理地圖
 
 ```mermaid
@@ -113,9 +132,8 @@ graph LR
 
 | 類別 | 位置 | 職責 |
 |------|------|------|
-| **本索引** | `docs/management/documentation-index.md` | 全域文件治理（唯一） |
-| **目錄說明** | `docs/management/README.md` | 目錄導覽 |
-| **問題追蹤清單** | `docs/management/issues.md` | 全平台問題統一追蹤（架構、整合、API、安全、效能、欄位、流程、UI、語意、文件） |
+| **本索引** | `docs/management/documentation-index.md` | 全域文件治理（唯一），含目錄說明 |
+| **問題追蹤清單** | `docs/management/issues.md` | 全平台問題統一追蹤（架構、整合、API、安全、效能、欄位、流程、UI、語意、文件、邊界） |
 
 ---
 
@@ -169,3 +187,4 @@ graph LR
 |------|------|------|
 | 2026-03-16 | 初始建立；定義 SSOT 範圍、分類結構、重複規則 | `xuanwu-docs` |
 | 2025-07-10 | 新增 Governance Map Mermaid 圖表；補充標籤欄位 | `xuanwu-librarian` |
+| 2026-03-16 | 合併 management/README.md；刪除 notes/README.md；將 new-issues.md BDY 系列合入 issues.md；減少文件數量 | `xuanwu-librarian` |

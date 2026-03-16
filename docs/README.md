@@ -79,8 +79,7 @@ docs/
 │   ├── README.md              ★ Copilot SSOT
 │   └── mcp.md                 ← GitHub Coding Agent MCP 設定
 └── management/                ← 問題追蹤與文件治理
-    ├── documentation-index.md ← 全域文件治理索引
-    ├── README.md              ← 目錄說明
+    ├── documentation-index.md ← 全域文件治理索引（含目錄說明與嚴重程度說明）
     └── issues.md              ← 全平台問題統一追蹤清單
 ```
 
@@ -115,7 +114,6 @@ docs/
 |------|------|
 | [架構導覽](./architecture/README.md) | 架構文件導覽索引（含建議閱讀順序） |
 | [架構快速參考](./architecture/overview.md) | 新人入門：技術棧、目錄佈局、DDD 4 層架構快速說明 |
-| [架構筆記目錄](./architecture/notes/README.md) | notes/ 子目錄說明 |
 | [Diagrams](./architecture/diagrams/) | Mermaid 原始圖表（核心邏輯、ERD、狀態機、L1-L7 層次） |
 | [MCP 設定](./copilot/mcp.md) | GitHub Coding Agent 完整 MCP JSON 設定 |
 | [Document AI 設計](./architecture/notes/document-ai.md) | OCR 雙階段管道、GenKit 語意萃取、ParsingIntent 聚合 |
