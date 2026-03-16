@@ -38,6 +38,12 @@
    - 8.2 [Adding a New Port](#82-adding-a-new-port)
    - 8.3 [Crossing a Bounded Context Boundary](#83-crossing-a-bounded-context-boundary)
    - 8.4 [Common Anti-Patterns to Avoid](#84-common-anti-patterns-to-avoid)
+  - 8.5 [Consistency Boundary & Transaction Semantics](#85-consistency-boundary--transaction-semantics)
+  - 8.6 [Event Contract Versioning (Simple Rules)](#86-event-contract-versioning-simple-rules)
+  - 8.7 [Authorization Boundary](#87-authorization-boundary)
+  - 8.8 [Composition Root & Dependency Wiring](#88-composition-root--dependency-wiring)
+  - 8.9 [Read/Write Separation (CQRS)](#89-readwrite-separation-cqrs)
+  - 8.10 [Observability Baseline](#810-observability-baseline)
 9. [Quick Reference](#9-quick-reference)
 
 ---
@@ -626,6 +632,76 @@ eventBus.subscribe("wbs.task.state_changed", handleTaskStateChange);
 | **Layer Bypass** | Presentation component calls `getDoc(db, "workspaces", id)` directly | Breaks encapsulation; forces UI to understand DB schema | Route through a query in `core/_queries.ts` |
 | **Cross-module Domain Coupling** | Module A imports `WorkspaceEntity` from Module B's domain | Modules become entangled; B can't change without breaking A | Use DTOs + Domain Events for cross-boundary data |
 | **God Aggregate** | Workspace aggregate holds all tasks, issues, CRs, members | Performance and consistency problems | Keep aggregates small; reference by ID |
+
+### 8.5 Consistency Boundary & Transaction Semantics
+
+In Xuanwu, **Aggregate boundary = default strong consistency boundary**.
+
+- Within one Aggregate in one use case, preserve invariants atomically.
+- Across multiple Aggregates or modules, default to **event-driven eventual consistency**.
+- Do not claim cross-module strong consistency unless a dedicated transaction mechanism is explicitly designed and documented.
+
+Minimal execution guideline:
+
+1. Load Aggregate Root
+2. Apply invariant-protected domain mutation
+3. Persist Aggregate
+4. Publish Domain Event
+
+If step 4 fails, handle it as an application/infrastructure reliability concern (for example with an outbox-style mechanism), not by moving business rules into adapters.
+
+### 8.6 Event Contract Versioning (Simple Rules)
+
+Use simple, explicit event compatibility rules:
+
+- Add `version` in event metadata (e.g. `v1`, `v2`).
+- Prefer additive changes (new optional fields) over breaking field renames/removals.
+- If a breaking change is required, publish a new version and run old/new consumers in parallel for a transition window.
+
+### 8.7 Authorization Boundary
+
+Authorization is split by responsibility:
+
+- **Presentation/Application**: authenticate caller identity and enforce request-level access guard.
+- **Domain**: enforce business authorization invariants (who is allowed to do what in domain terms).
+- **Infrastructure**: enforce storage and platform security policies.
+
+Rule of thumb: if violating the rule makes the business state invalid, the rule belongs in Domain.
+
+### 8.8 Composition Root & Dependency Wiring
+
+Ports and adapters must be wired at composition boundaries only:
+
+- Allowed wiring points: Server Action boundary, Route Handler boundary, or module composition root.
+- Application/use case code depends on interfaces (ports), never concrete adapters.
+- Domain code must never instantiate adapters.
+
+```typescript
+// ✅ Compose at boundary
+const repo: IWorkspaceRepository = new FirestoreWorkspaceRepository(db);
+const eventBus: IEventBusPort = new EventBusAdapter(busClient);
+const useCase = new ArchiveWorkspaceUseCase(repo, eventBus);
+```
+
+### 8.9 Read/Write Separation (CQRS)
+
+Xuanwu uses **read/write separation**:
+
+- **Write side**: commands/use cases mutate aggregates and emit domain events.
+- **Read side**: queries/read models serve UI and reporting.
+- Read models may be denormalized and optimized for retrieval; they must not enforce domain invariants.
+
+When read freshness is temporarily behind writes, treat it as expected eventual consistency behavior unless a use case explicitly requires synchronous read-after-write guarantees.
+
+### 8.10 Observability Baseline
+
+All production-facing flows should carry minimal observability context:
+
+- `requestId`: traces one inbound request lifecycle.
+- `eventId`: traces one published/consumed domain event.
+- `module` and `useCase`: identifies ownership and execution path.
+
+At minimum, log start/fail/success for use cases and event handlers with structured fields so cross-module diagnosis is possible without inspecting raw code paths.
 
 ---
 
