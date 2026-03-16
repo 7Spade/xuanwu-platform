@@ -46,6 +46,60 @@ const config = [
       "prefer-const": "error",
     },
   },
+  {
+    files: ["src/modules/**/*.{ts,tsx,js,jsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "warn",
+        {
+          patterns: [
+            {
+              group: [
+                "@/modules/*.module/core/*",
+                "@/modules/*.module/domain.*/*",
+                "@/modules/*.module/infra.*/*",
+                "@/modules/*.module/_components/*",
+              ],
+              message:
+                "跨模組相依必須走目標 module 的 public index.ts barrel。",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/modules/**/_components/**/*.{ts,tsx,js,jsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "warn",
+        {
+          patterns: [
+            {
+              group: [
+                "@/modules/*.module/core/*",
+                "@/modules/*.module/domain.*/*",
+                "@/modules/*.module/infra.*/*",
+                "@/modules/*.module/_components/*",
+              ],
+              message:
+                "跨模組相依必須走目標 module 的 public index.ts barrel。",
+            },
+            {
+              group: ["../domain.*/*", "../infra.*/*"],
+              message:
+                "Presentation 層不得直接依賴同模組的 domain/infra；請改經由 core facade。",
+            },
+            {
+              group: ["firebase/auth", "firebase/firestore", "firebase/storage"],
+              message:
+                "Presentation 層不得直接使用 Firebase SDK；請改由 module facade 或 adapter 邊界封裝。",
+            },
+          ],
+        },
+      ],
+    },
+  },
 ];
 
 export default config;
