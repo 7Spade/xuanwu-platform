@@ -37,11 +37,11 @@ This skill contains the following reference files:
 
 ## Statistics
 
-812 files | 73,677 lines
+809 files | 73,636 lines
 
 | Language | Files | Lines |
 |----------|------:|------:|
-| Markdown | 296 | 29,612 |
+| Markdown | 293 | 29,571 |
 | TypeScript | 290 | 21,590 |
 | TypeScript (TSX) | 196 | 20,397 |
 | JSON | 10 | 606 |
@@ -55,7 +55,7 @@ This skill contains the following reference files:
 
 **Largest files:**
 - `src/shared/i18n/index.ts` (1,251 lines)
-- `docs/management/issues.md` (952 lines)
+- `docs/management/issues.md` (1,145 lines)
 - `src/design-system/primitives/ui/sidebar.tsx` (726 lines)
 - `docs/architecture/notes/model-driven-hexagonal-architecture.md` (654 lines)
 - `docs/architecture/catalog/business-entities.md` (632 lines)
