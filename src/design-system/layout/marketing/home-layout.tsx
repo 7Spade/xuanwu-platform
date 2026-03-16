@@ -1,8 +1,10 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import { useLocale, useAuthState } from "@/shared/directives";
 import { RootShell } from "@/design-system/layout/base";
+import { clientSignOut } from "@/modules/identity.module/_client-actions";
 import { MarketingHeader } from "./marketing-header";
 
 interface HomeLayoutProps {
@@ -15,16 +17,27 @@ interface HomeLayoutProps {
  *
  * Composes:
  *   - `RootShell`       — structural chrome (base/)
- *   - `MarketingHeader` — sticky top nav with locale toggle + login CTA
+ *   - `MarketingHeader` — sticky top nav with locale toggle + auth CTA
  *
- * Owns the `useLocale` state so `page.tsx` only handles routing and
- * page-level content composition. The children receive the translated
- * locale indirectly via the header; if `page.tsx` also needs `locale`
- * (e.g. for `useTranslation`), use the `useLocale` directive directly.
+ * Owns the `useLocale` state and `useAuthState` so `page.tsx` only handles
+ * routing and page-level content composition.
+ *
+ * Auth flow:
+ *   - Unauthenticated: header shows "Login" button.
+ *   - Authenticated:   header shows user avatar + dropdown (Enter Platform / Sign Out).
  */
 export function HomeLayout({ children }: HomeLayoutProps) {
   const [locale, setLocale] = useLocale();
   const { user, loading } = useAuthState();
+  const router = useRouter();
+
+  async function handleSignOut() {
+    const result = await clientSignOut();
+    if (result.ok) {
+      router.push("/");
+      router.refresh();
+    }
+  }
 
   return (
     <RootShell
@@ -33,6 +46,8 @@ export function HomeLayout({ children }: HomeLayoutProps) {
           locale={locale}
           onLocaleChange={setLocale}
           isAuthenticated={!loading && !!user}
+          user={user}
+          onSignOut={handleSignOut}
         />
       }
     >
