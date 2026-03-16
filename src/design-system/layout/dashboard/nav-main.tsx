@@ -47,10 +47,7 @@ export function NavMain() {
         <SidebarMenuItem key={href}>
           <SidebarMenuButton
             asChild
-            isActive={
-              pathname === href ||
-              (href !== HOME_ROUTE && pathname.startsWith(href))
-            }
+            isActive={pathname.startsWith(href)}
           >
             <Link href={href}>
               <Icon />

@@ -12,7 +12,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search } from "lucide-react";
+import { Bell, Search } from "lucide-react";
 
 import { useTranslation } from "@/shared/i18n";
 import { Separator } from "@/design-system/primitives/ui/separator";
@@ -148,6 +148,18 @@ export function ShellHeader() {
             aria-label={t("search.placeholder")}
           >
             <Search className="size-4" />
+          </Button>
+          {/* Notifications */}
+          <Button
+            variant="ghost"
+            size="icon"
+            asChild
+            className="size-8"
+            aria-label={t("nav.notifications")}
+          >
+            <Link href="/notifications">
+              <Bell className="size-4" />
+            </Link>
           </Button>
         </div>
       </header>
