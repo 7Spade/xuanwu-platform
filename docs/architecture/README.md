@@ -30,7 +30,7 @@ The structural backbone is **Hexagonal Architecture (Ports & Adapters)**: the do
 
 - [**Model-Driven Hexagonal Architecture Guide**](./model-driven-hexagonal-architecture.md) — MDDD design philosophy, Ports & Adapters, Context Mapping, and development guide *(start here for architecture questions)*
 - [**Architecture Overview**](./overview.md) — Quick reference for developers new to the repository
-- [**Architecture Issues**](./issues.md) — Known architecture issues and resolution status
+- [**Architecture Issues**](./docs/management/issues.md) — Known architecture issues and resolution status
 - [ADR (Architecture Decision Records)](./adr/README.md) — Architecture decisions and rationale
 - [Architecture Catalog](./catalog/index.md) — Entities, events, and service boundaries
 - [Glossary](./glossary/glossary.md) — Shared business and technical vocabulary

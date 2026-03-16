@@ -106,7 +106,7 @@ UI Action
 ```
 
 ## References
-- Model-Driven Hexagonal Architecture guide: `docs/architecture/model-driven-hexagonal-architecture.md`
+- Model-Driven Hexagonal Architecture guide: `docs/architecture/notes/model-driven-hexagonal-architecture.md`
 - Architecture SSOT: `docs/architecture/README.md`
 - Business entities: `docs/architecture/catalog/business-entities.md`
 - Event catalog: `docs/architecture/catalog/event-catalog.md`

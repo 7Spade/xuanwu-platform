@@ -672,7 +672,7 @@ New cross-module data flow?
 | Shared ACL ports | `src/shared/ports/index.ts` |
 | Infrastructure adapters | `src/infrastructure/` |
 | Module public API | `src/modules/{name}.module/index.ts` |
-| This document | `docs/architecture/model-driven-hexagonal-architecture.md` |
+| This document | `docs/architecture/notes/model-driven-hexagonal-architecture.md` |
 
 ---
 
