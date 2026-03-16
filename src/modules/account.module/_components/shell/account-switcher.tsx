@@ -52,7 +52,7 @@ function AccountSwitcherItem({
   activeAccount: AccountDTO | null;
   onSelect: (account: AccountDTO) => void;
 }) {
-  const isPersonal = account.accountType === "personal";
+  const isPersonal = account.accountType !== "organization";
   const avatarClass = isPersonal
     ? "bg-accent/10 text-accent border-accent/20"
     : "bg-primary/10 text-primary border-primary/20";
@@ -107,7 +107,7 @@ export function AccountSwitcher() {
   const isLoading = orgsLoading && organizations.length === 0;
   const displayName = activeAccount?.displayName ?? t("sidebar.selectAccount");
   const isPersonal =
-    !activeAccount || activeAccount.accountType === "personal";
+    !activeAccount || activeAccount.accountType !== "organization";
 
   return (
     <>

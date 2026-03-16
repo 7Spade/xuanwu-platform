@@ -6,7 +6,8 @@
  */
 
 import type { AccountEntity, AccountProfile, MembershipRecord, TeamRecord } from "../domain.account/_entity";
-import { AccountTypeSchema, type AccountId, type AccountHandle, type AccountType, type MemberRole, type MembershipStatus, type TeamId } from "../domain.account/_value-objects";
+import type { AccountId, AccountHandle, MemberRole, MembershipStatus, TeamId } from "../domain.account/_value-objects";
+import { normalizeAccountType } from "../domain.account/_value-objects";
 
 // ---------------------------------------------------------------------------
 // Firestore document shape (raw, unvalidated)
@@ -86,15 +87,10 @@ export function accountDocToEntity(doc: AccountDoc): AccountEntity {
     badgeSlugs: doc.badgeSlugs ?? [],
   };
 
-  const parsedAccountType = AccountTypeSchema.safeParse(doc.accountType);
-  const accountType: AccountType = parsedAccountType.success
-    ? parsedAccountType.data
-    : "personal";
-
   return {
     id: doc.id as AccountId,
     handle: (doc.handle ?? null) as AccountHandle | null,
-    accountType,
+    accountType: normalizeAccountType(doc.accountType, doc.ownerId),
     profile,
     ownerId: (doc.ownerId ?? null) as AccountId | null,
     members: doc.members ? doc.members.map(membershipDocToRecord) : null,

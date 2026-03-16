@@ -16,6 +16,28 @@ export type AccountId = z.infer<typeof AccountIdSchema>;
 export const AccountTypeSchema = z.enum(["personal", "organization"]);
 export type AccountType = z.infer<typeof AccountTypeSchema>;
 
+/**
+ * Normalizes unknown persisted accountType values to a safe domain value.
+ *
+ * Legacy Firebase documents may miss `accountType`. In that case we infer:
+ * - ownerId present  -> organization
+ * - ownerId missing  -> personal
+ */
+export function normalizeAccountType(
+  rawAccountType: unknown,
+  ownerId: string | null | undefined,
+): AccountType {
+  if (rawAccountType === "personal" || rawAccountType === "organization") {
+    return rawAccountType;
+  }
+
+  if (typeof ownerId === "string" && ownerId.trim().length > 0) {
+    return "organization";
+  }
+
+  return "personal";
+}
+
 // ---------------------------------------------------------------------------
 // AccountHandle
 // ---------------------------------------------------------------------------
