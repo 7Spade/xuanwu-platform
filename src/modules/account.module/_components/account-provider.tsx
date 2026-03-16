@@ -28,7 +28,10 @@ import {
   getOrganizationsByOwnerId,
   type AccountDTO,
 } from "@/modules/account.module/core/_use-cases";
-import { resolveOrganizationOwnerId } from "@/modules/account.module/core/_owner-account";
+import {
+  resolveOrganizationOwnerId,
+  resolvePersonalAccountLookupId,
+} from "@/modules/account.module/core/_owner-account";
 import { FirestoreAccountRepository } from "@/modules/account.module/infra.firestore/_repository";
 
 // ---------------------------------------------------------------------------
@@ -120,9 +123,29 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       try {
         const repo = new FirestoreAccountRepository();
 
-        // Load personal account
-        const result = await getAccountById(repo, firebaseUser.uid);
-        const personalAccount = result.ok ? result.value : null;
+        // Load personal account (claims accountId first, then uid fallback).
+        let primaryLookupId = firebaseUser.uid;
+        try {
+          const tokenResult = await firebaseUser.getIdTokenResult();
+          primaryLookupId = resolvePersonalAccountLookupId(
+            tokenResult.claims.accountId,
+            firebaseUser.uid,
+          );
+        } catch {
+          primaryLookupId = firebaseUser.uid;
+        }
+
+        const primaryResult = await getAccountById(repo, primaryLookupId);
+        const fallbackResult =
+          primaryLookupId === firebaseUser.uid || (primaryResult.ok && primaryResult.value)
+            ? null
+            : await getAccountById(repo, firebaseUser.uid);
+
+        const personalAccount = primaryResult.ok
+          ? primaryResult.value
+          : fallbackResult?.ok
+            ? fallbackResult.value
+            : null;
         setAccount(personalAccount);
 
         // Always reset to personal account when auth state changes (new sign-in)

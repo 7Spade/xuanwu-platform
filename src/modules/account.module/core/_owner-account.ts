@@ -14,3 +14,20 @@ export function resolveOrganizationOwnerId(
 
   return firebaseUid;
 }
+
+/**
+ * Resolve personal account lookup id from auth claims.
+ *
+ * Prefer the accountId claim when it is a non-empty string, otherwise fall
+ * back to Firebase uid for backward compatibility.
+ */
+export function resolvePersonalAccountLookupId(
+  claimsAccountId: unknown,
+  firebaseUid: string,
+): string {
+  if (typeof claimsAccountId === "string" && claimsAccountId.trim().length > 0) {
+    return claimsAccountId;
+  }
+
+  return firebaseUid;
+}
