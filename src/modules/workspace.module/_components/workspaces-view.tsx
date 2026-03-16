@@ -47,8 +47,9 @@ function filterWorkspaces(workspaces: WorkspaceDTO[], query: string): WorkspaceD
 export function WorkspacesView({ slug, dimensionId }: WorkspacesViewProps) {
   const t = useTranslation("zh-TW");
   const { account, activeAccount } = useCurrentAccount();
-  // Use the explicitly provided dimensionId, or fall back to the active account
-  // (org or personal), so switching accounts immediately shows the right workspaces.
+  // Priority: explicit prop → active account (org or personal) → personal account → null.
+  // This lets the caller (AccountWorkspacesPage) pin a specific dimension, while
+  // the fallback chain ensures switching accounts always shows the right workspaces.
   const effectiveDimensionId = dimensionId ?? activeAccount?.id ?? account?.id ?? null;
   const { workspaces, loading, error, refresh } = useWorkspaces(effectiveDimensionId);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -170,9 +171,9 @@ export function WorkspacesView({ slug, dimensionId }: WorkspacesViewProps) {
         </div>
       ) : null}
 
-      {account && (
+      {effectiveDimensionId && (
         <CreateWorkspaceDialog
-          dimensionId={account.id}
+          dimensionId={effectiveDimensionId}
           open={createOpen}
           onOpenChange={setCreateOpen}
           onCreated={() => { refresh(); }}
