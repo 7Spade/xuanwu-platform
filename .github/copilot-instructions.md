@@ -57,6 +57,18 @@ If a task touches business rules or domain terminology, read the SSOT documents 
 4. For Copilot customization changes, follow `.github/README.md` first, then the matching spec at https://code.visualstudio.com/docs/copilot/customization, before editing `.github/agents`, `.github/instructions`, `.github/prompts`, or `.github/skills`.
 5. For new or ambiguous requests, apply the **Six-Step Intent Pipeline** (`xuanwu-commander` or `.github/skills/xuanwu-intent-pipeline/SKILL.md`) before dispatching work to any specialist agent.
 
+## Custom Agents
+
+All repository-scoped agents live in `.github/agents/`. Use `@xuanwu-commander` as the general entry-point for any request — it applies the six-step intent pipeline and dispatches to the right specialist.
+
+**User-selectable agents:** `xuanwu-commander` · `xuanwu-orchestrator` · `xuanwu-product` · `xuanwu-research` · `xuanwu-architect` · `xuanwu-architecture-chief` · `xuanwu-implementer` · `xuanwu-ui` · `xuanwu-quality` · `xuanwu-docs` · `xuanwu-ops` · `xuanwu-test-expert` · `xuanwu-software-planner` · `xuanwu-sequential-thinking` · `ddd-orchestrator`
+
+**Sub-agent clusters** (`user-invocable: false` — invoked via parent handoffs, not shown in the agent picker):
+- **DDD cluster** (`ddd-domain-modeler`, `ddd-application-layer`, `ddd-infrastructure`) — trigger via `@ddd-orchestrator` or `/ddd-slice-scaffold`
+- **Architecture cluster** (`xuanwu-architecture-refactor`, `xuanwu-diagram-designer`, `xuanwu-repo-browser`) — trigger via `@xuanwu-architecture-chief` or `/xuanwu-architecture-realign`
+
+See `AGENTS.md` for the full agent catalog and `.github/README.md` for tool assignment rationale.
+
 ## Knowledge Persistence
 
 Two complementary memory systems are available. Use them together for best results.
