@@ -21,7 +21,10 @@ import {
   type ReactNode,
 } from "react";
 
-import { getFirebaseAuth, onAuthStateChanged, type User } from "@/infrastructure/firebase/client";
+import {
+  clientOnAuthStateChanged,
+  type AuthUser,
+} from "@/modules/identity.module";
 import {
   getAccountById,
   getOrganizationsByOwnerId,
@@ -35,8 +38,8 @@ import {
 // ---------------------------------------------------------------------------
 
 export interface AccountContextValue {
-  /** The Firebase Auth user (null while loading or signed-out). */
-  user: User | null;
+  /** The authenticated user identity (null while loading or signed-out). */
+  user: AuthUser | null;
   /** The Firestore AccountDTO for the current user (null until loaded or if missing). */
   account: AccountDTO | null;
   /** Organization accounts owned by the current user. */
@@ -82,7 +85,7 @@ const AccountContext = createContext<AccountContextValue>({
 // ---------------------------------------------------------------------------
 
 export function AccountProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [account, setAccount] = useState<AccountDTO | null>(null);
   const [organizations, setOrganizations] = useState<AccountDTO[]>([]);
   const [loading, setLoading] = useState(true);
@@ -115,12 +118,10 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   useEffect(() => {
-    const auth = getFirebaseAuth();
+    const unsubscribe = clientOnAuthStateChanged(async (authUser) => {
+      setUser(authUser);
 
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
-
-      if (!firebaseUser) {
+      if (!authUser) {
         setAccount(null);
         setOrganizations([]);
         setActiveAccountState(null);
@@ -130,7 +131,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
 
       try {
         // Load personal account
-        const result = await getAccountById(firebaseUser.uid);
+        const result = await getAccountById(authUser.uid);
         const personalAccount = result.ok ? result.value : null;
         setAccount(personalAccount);
 
@@ -140,7 +141,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         // Load owned organizations
         setOrgsLoading(true);
         try {
-          const orgsResult = await getOrganizationsByOwnerId(firebaseUser.uid);
+          const orgsResult = await getOrganizationsByOwnerId(authUser.uid);
           setOrganizations(orgsResult.ok ? orgsResult.value : []);
         } finally {
           setOrgsLoading(false);
