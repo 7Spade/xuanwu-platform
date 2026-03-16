@@ -9,7 +9,14 @@
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "repomix:skill": "repomix --skill-generate xuanwu-skill --skill-output .github/skills/xuanwu-platform-skill --force",
+    "deploy:firebase": "firebase deploy --except apphosting --config ./firebase.json && npm run deploy:apphosting",
+    "deploy:apphosting": "firebase deploy --only apphosting --project xuanwu-i-00708880-4e2d8 --config ./firebase.json",
+    "deploy:functions": "firebase deploy --only functions --config ./firebase.json",
+    "deploy:indexes": "firebase deploy --only firestore:indexes --config ./firebase.json",
+    "deploy:firestore-rules": "firebase deploy --only firestore:rules --config ./firebase.json",
+    "deploy:storage-rules": "firebase deploy --only storage --config ./firebase.json"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",
