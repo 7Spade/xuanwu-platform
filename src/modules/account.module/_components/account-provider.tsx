@@ -25,7 +25,9 @@ import { getFirebaseAuth, onAuthStateChanged, type User } from "@/infrastructure
 import {
   getAccountById,
   getOrganizationsByOwnerId,
+  getUserRoleInOrganization,
   type AccountDTO,
+  type MemberRole,
 } from "@/modules/account.module";
 
 // ---------------------------------------------------------------------------
@@ -48,6 +50,11 @@ export interface AccountContextValue {
    * Defaults to the personal account once loaded.
    */
   activeAccount: AccountDTO | null;
+  /**
+   * The current user's role in the activeAccount.
+   * Null for personal accounts; MemberRole ("owner"|"admin"|"member"|"viewer") for orgs.
+   */
+  activeAccountRole: MemberRole | null;
   /** Switch the active account context. Pass null to reset to personal. */
   setActiveAccount: (account: AccountDTO | null) => void;
   /** Re-fetch the list of organizations for the current user. */
@@ -65,6 +72,7 @@ const AccountContext = createContext<AccountContextValue>({
   loading: true,
   orgsLoading: false,
   activeAccount: null,
+  activeAccountRole: null,
   setActiveAccount: () => undefined,
   refreshOrganizations: () => Promise.resolve(),
 });
@@ -80,10 +88,20 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [orgsLoading, setOrgsLoading] = useState(false);
   const [activeAccount, setActiveAccountState] = useState<AccountDTO | null>(null);
+  const [activeAccountRole, setActiveAccountRole] = useState<MemberRole | null>(null);
 
   const setActiveAccount = useCallback((next: AccountDTO | null) => {
     setActiveAccountState(next);
-  }, []);
+    // When switching to an org, fetch the user's role in that org.
+    // Personal account always has null role.
+    if (next && next.accountType === "organization" && user) {
+      getUserRoleInOrganization(user.uid, next.id).then((result: any) => {
+        setActiveAccountRole(result.ok ? result.value : null);
+      });
+    } else {
+      setActiveAccountRole(null);
+    }
+  }, [user]);
 
   const refreshOrganizations = useCallback(async () => {
     if (!user) return;
@@ -148,6 +166,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         loading,
         orgsLoading,
         activeAccount,
+        activeAccountRole,
         setActiveAccount,
         refreshOrganizations,
       }}

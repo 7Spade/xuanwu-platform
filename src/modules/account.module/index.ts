@@ -21,6 +21,8 @@ export {
   getOrgMembersByHandle,
   getPublicProfile,
   getOrganizationsByOwnerId,
+  getUserRoleInOrganization,
+  type MemberRole,
 } from "./core/_queries";
 
 // Port interfaces (for infrastructure adapter implementors)

@@ -220,3 +220,25 @@ export async function getOrganizationsByOwnerId(
     return fail(err instanceof Error ? err : new Error(String(err)));
   }
 }
+
+/**
+ * GetUserRoleInOrganizationUseCase
+ * Returns the MemberRole of a user within a specific organization.
+ * Returns null when the user is not a member or the organization doesn't exist.
+ * Note: This is for looking up a user's role in an org they are a member of,
+ * not for checking if they own it.
+ */
+export async function getUserRoleInOrganization(
+  repo: IAccountRepository,
+  userId: string,
+  orgId: string,
+): Promise<Result<MemberRole | null>> {
+  try {
+    const org = await repo.findById(orgId as AccountId);
+    if (!org || org.accountType !== "organization") return ok(null);
+    const member = org.members?.find((m) => m.accountId === userId);
+    return ok(member?.role ?? null);
+  } catch (err) {
+    return fail(err instanceof Error ? err : new Error(String(err)));
+  }
+}
